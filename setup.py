@@ -1,10 +1,10 @@
-"""Packaging templateapp."""
+"""Packaging templatepro."""
 
 from setuptools import setup, find_packages
 
 
 setup(
-    name='templateapp',
+    name='templatepro',
     version='0.1.9',
     license='BSD-3-Clause',
     license_files=['LICENSE'],
@@ -17,11 +17,11 @@ setup(
     maintainer_email='tuyen@geekstrident.com',
     install_requires=[
         'textfsm',
-        'regexapp',
-        'dlapp',
+        'regexpro',
+        'dlpro',
         'pyyaml'
     ],
-    url='https://github.com/Geeks-Trident-LLC/templateapp',
+    url='https://github.com/Geeks-Trident-LLC/templatepro',
     packages=find_packages(
         exclude=(
             'tests*', 'testing*', 'examples*',
@@ -31,8 +31,8 @@ setup(
     test_suite='tests',
     entry_points={
         'console_scripts': [
-            'templateapp = templateapp.main:execute',
-            'template-app = templateapp.application:execute',
+            'templatepro = templatepro.main:execute',
+            'template-pro = templatepro.application:execute',
         ]
     },
     classifiers=[

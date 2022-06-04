@@ -1,12 +1,12 @@
-"""Top-level module for templateapp.
+"""Top-level module for templatepro.
 
 - allow end-user to create template or test script on GUI application.
 """
 
-from templateapp.core import ParsedLine
-from templateapp.core import TemplateBuilder
-from templateapp.config import version
-from templateapp.config import edition
+from templatepro.core import ParsedLine
+from templatepro.core import TemplateBuilder
+from templatepro.config import version
+from templatepro.config import edition
 
 __version__ = version
 __edition__ = edition

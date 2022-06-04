@@ -5,7 +5,7 @@ try:
 except ModuleNotFoundError:
     import sys
     from platform import python_version as py_version
-    items = ["Failed to launch TemplateApp application because",
+    items = ["Failed to launch TemplatePro application because",
              "Python{} binary doesn't have tkinter module.".format(py_version()),
              "Please install tkinter module and try it again."]
     max_len = max(len(item) for item in items)
@@ -32,15 +32,15 @@ from io import StringIO
 from textfsm import TextFSM
 
 from pprint import pformat
-from dlapp.collection import Tabular
+from dlpro.collection import Tabular
 
-from templateapp import TemplateBuilder
-from templateapp.exceptions import TemplateBuilderInvalidFormat
-from templateapp.core import save_file
-from templateapp.config import Data
+from templatepro import TemplateBuilder
+from templatepro.exceptions import TemplateBuilderInvalidFormat
+from templatepro.core import save_file
+from templatepro.config import Data
 
-from templateapp import version
-from templateapp import edition
+from templatepro import version
+from templatepro import edition
 
 
 __version__ = version
@@ -154,7 +154,7 @@ class UserTemplate:
 
     Attributes
     ----------
-    filename (str): user template file name i.e /home_dir/.geekstrident/templateapp/user_templates.yaml
+    filename (str): user template file name i.e /home_dir/.geekstrident/templatepro/user_templates.yaml
     status (str): a status message.
     content (str): user template file content.
 
@@ -172,12 +172,12 @@ class UserTemplate:
         self.content = ''
 
     def is_exist(self):
-        """return True if /home_dir/.geekstrident/templateapp/user_templates.yaml exists"""
+        """return True if /home_dir/.geekstrident/templatepro/user_templates.yaml exists"""
         node = Path(self.filename)
         return node.exists()
 
     def create(self, confirmed=True):
-        """create /home_dir/.geekstrident/templateapp/user_templates.yaml if it IS NOT existed.
+        """create /home_dir/.geekstrident/templatepro/user_templates.yaml if it IS NOT existed.
 
         Parameters
         ----------
@@ -226,7 +226,7 @@ class UserTemplate:
             create_msgbox(title=title, error=error)
 
     def read(self):
-        """return content of /home_dir/.geekstrident/templateapp/user_templates.yaml"""
+        """return content of /home_dir/.geekstrident/templatepro/user_templates.yaml"""
         if self.is_exist():
             with open(self.filename) as stream:
                 self.content = stream.read()
@@ -284,7 +284,7 @@ class UserTemplate:
             return ''
 
     def write(self, template_name, template):
-        """store template to /home_dir/.geekstrident/templateapp/user_templates.yaml
+        """store template to /home_dir/.geekstrident/templatepro/user_templates.yaml
 
         Parameters
         ----------
@@ -390,7 +390,7 @@ class Application:
         self.TextArea = tk.Text
         self.PanedWindow = ttk.PanedWindow
 
-        self._base_title = 'TemplateApp {}'.format(edition)
+        self._base_title = 'Template {}'.format(edition)
         self.root = tk.Tk()
         self.root.geometry('900x600+100+100')
         self.root.minsize(200, 200)
@@ -777,16 +777,16 @@ class Application:
             frame, text='Pypi.com Dependencies:', bold=True
         ).grid(row=2, column=0, sticky=tk.W)
 
-        # RegexApp package
+        # TemplatePro package
         self.create_custom_label(
-            frame, text=Data.regexapp_text,
-            link=Data.regexapp_link
+            frame, text=Data.regexpro_text,
+            link=Data.regexpro_link
         ).grid(row=3, column=0, padx=(20, 0), sticky=tk.W)
 
-        # DLApp package
+        # DLPro package
         self.create_custom_label(
-            frame, text=Data.dlapp_text,
-            link=Data.dlapp_link
+            frame, text=Data.dlpro_text,
+            link=Data.dlpro_link
         ).grid(row=4, column=0, padx=(20, 0), pady=(0, 10), sticky=tk.W)
 
         # TextFSM package

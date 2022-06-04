@@ -1,16 +1,16 @@
-"""Module containing the logic for the templateapp entry-points."""
+"""Module containing the logic for the templatepro entry-points."""
 
 import sys
 import argparse
 import re
 import yaml
 
-from templateapp.application import Application
-from templateapp import TemplateBuilder
+from templatepro.application import Application
+from templatepro import TemplateBuilder
 
 
 def run_gui_application(options):
-    """Run templateapp GUI application.
+    """Run templatepro GUI application.
 
     Parameters
     ----------
@@ -18,7 +18,7 @@ def run_gui_application(options):
 
     Returns
     -------
-    None: will invoke ``templateapp.Application().run()`` and ``sys.exit(0)``
+    None: will invoke ``templatepro.Application().run()`` and ``sys.exit(0)``
     if end user requests `--gui`
     """
     if options.gui:
@@ -30,7 +30,7 @@ def run_gui_application(options):
 def show_dependency(options):
     if options.dependency:
         from platform import uname, python_version
-        from templateapp.config import Data
+        from templatepro.config import Data
         lst = [
             Data.main_app_text,
             'Platform: {0.system} {0.release} - Python {1}'.format(
@@ -51,11 +51,11 @@ def show_dependency(options):
 
 
 class Cli:
-    """templateapp console CLI application."""
+    """templatepro console CLI application."""
 
     def __init__(self):
         parser = argparse.ArgumentParser(
-            prog='templateapp',
+            prog='templatepro',
             usage='%(prog)s [options]',
             description='%(prog)s application',
         )
@@ -96,7 +96,7 @@ class Cli:
 
         parser.add_argument(
             '-d', '--dependency', action='store_true',
-            help='Show TemplateApp dependent package(s).'
+            help='Show TemplatePro dependent package(s).'
         )
 
         self.parser = parser

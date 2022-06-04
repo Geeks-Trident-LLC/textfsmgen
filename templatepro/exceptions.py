@@ -1,4 +1,4 @@
-"""Module containing the exception class for templateapp."""
+"""Module containing the exception class for templatepro."""
 
 
 class TemplateError(Exception):

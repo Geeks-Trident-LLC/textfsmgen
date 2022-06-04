@@ -1,4 +1,4 @@
 textfsm
-regexapp
-dlapp
+# regexpro
+# dlpro
 pyyaml
