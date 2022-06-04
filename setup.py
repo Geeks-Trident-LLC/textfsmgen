@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 setup(
     name='templatepro',
     version='0.1.9',
-    license='BSD-3-Clause',
+    license='Geeks Trident License',
     license_files=['LICENSE'],
     description='The application to generate template format.',
     long_description=open('README.md').read(),
@@ -40,7 +40,7 @@ setup(
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: POSIX :: Linux',
         'Operating System :: Microsoft :: Windows',
-        'License :: OSI Approved :: BSD License',
+        'License :: Other/Proprietary License',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
