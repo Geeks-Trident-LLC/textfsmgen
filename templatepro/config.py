@@ -11,6 +11,9 @@ import dlpro
 import textfsm
 import yaml
 
+from genericlib import version as gtlib_version
+# from genericlib import File
+
 __version__ = '0.1.9'
 version = __version__
 __edition__ = 'Pro'
@@ -34,14 +37,17 @@ class Data:
     )
 
     # main app
-    main_app_text = 'Template Pro {}'.format(version)
+    main_app_text = 'TemplateApp v{}'.format(version)
 
     # packages
-    regexpro_text = 'regexpro v{}'.format(regexpro.version)
-    regexpro_link = 'https://pypi.org/project/regexpro/'
+    gtregexpro_text = 'regexapp v{}'.format(regexpro.version)
+    gtregexpro_link = ''
 
-    dlpro_text = 'dlpro v{}'.format(dlpro.version)
-    dlpro_link = 'https://pypi.org/project/dlpro/'
+    gtgenlib_text = f"genericlib v{gtlib_version}"
+    gtgenlib_link = ""
+
+    gtdlpro_text = 'dlapp v{}'.format(dlpro.version)
+    gtdlpro_link = ''
 
     textfsm_text = 'textfsm v{}'.format(textfsm.__version__)
     textfsm_link = 'https://pypi.org/project/textfsm/'
@@ -51,6 +57,8 @@ class Data:
 
     # company
     company = 'Geeks Trident LLC'
+    company_full_name = company
+    company_name = "Geeks Trident"
     company_url = 'https://www.geekstrident.com/'
 
     # URL
@@ -60,35 +68,36 @@ class Data:
     license_url = path.join(repo_url, 'blob/develop/LICENSE')
 
     # License
-    years = '2022-2080'
-    license_name = 'Geeks Trident License'
-    copyright_text = 'Copyright @ {}'.format(years)
+    years = '2022'
+    license_name = f'{company_name} License'
+    copyright_text = f'Copyright \xa9 {years}'
     license = dedent(
-        """
-        Geeks Trident License
+        f"""
+        {company_name} License
 
-        Copyright (c) {}, {}
-        All rights reserved.
+        {copyright_text} {company}.  All rights reserved.
 
-        Unauthorized copying of file, source, and binary forms without 
-        Geeks Trident permissions, via any medium is strictly prohibited.
+        Unauthorized copying of file, source, and binary forms without {company_name} permissions, via any medium is strictly prohibited.
 
         Proprietary and confidential.
 
         Written by Tuyen Mathew Duong <tuyen@geekstrident.com>, Jan 14, 2022.
-        """.format(years, company)
-    ).strip()
+        """).strip()    # noqa
 
     @classmethod
     def get_dependency(cls):
         dependencies = dict(
-            regexpro=dict(
-                package=cls.regexpro_text,
-                url=cls.regexpro_link
+            gtregexapp=dict(
+                package=cls.gtregexpro_text,
+                url=""
             ),
-            dlpro=dict(
-                package=cls.dlpro_text,
-                url=cls.dlpro_link
+            gtdlapp=dict(
+                package=cls.gtdlpro_text,
+                url=""
+            ),
+            gtgenlib=dict(
+                package=cls.gtgenlib_text,
+                url=""
             ),
             textfsm=dict(
                 package=cls.textfsm_text,
