@@ -12,9 +12,8 @@ import textfsm
 import yaml
 
 from genericlib import version as gtlib_version
-# from genericlib import File
 
-__version__ = '0.1.10'
+__version__ = '0.1.11'
 version = __version__
 __edition__ = 'Pro'
 edition = __edition__
@@ -35,6 +34,8 @@ class Data:
             'templatepro',
             'user_templates.yaml')
     )
+
+    app_version = version
 
     # main app
     main_app_text = 'TemplateApp v{}'.format(version)
