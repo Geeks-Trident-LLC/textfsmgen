@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='templatepro',
-    version='0.1.10',
+    version='0.1.11',
     license='Geeks Trident License',
     license_files=['LICENSE'],
     description='The application to generate template format.',

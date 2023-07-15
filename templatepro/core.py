@@ -701,7 +701,7 @@ class NonCommercialUseCls:
                 print('Total-rows-count: %s' % total_rows_count)
                 print(rows)
               else:
-                print("??? Generated template failed to parse test data ???")
+                print('??? Generated template failed to parse test data ???')
 
             template = '''...'''    # replace actual template in ellipsis
             test_data = '''...'''   # replace actual data in ellipsis
@@ -727,7 +727,7 @@ class NonCommercialUseCls:
                   print('Total-rows-count: %s' % total_rows_count)
                   print(rows)
                 else:
-                  print("??? Generated template failed to parse data-block #%s ???" % i)
+                  print('??? Generated template failed to parse data-block #%s ???' % i)
 
             template = '''...'''    # replace actual template in ellipsis
             test_data = '''...'''   # replace actual data in ellipsis
