@@ -5,7 +5,6 @@ from datetime import datetime
 from textwrap import indent
 from textfsm import TextFSM
 from io import StringIO
-from pprint import pformat
 from textwrap import dedent
 
 from regexpro import LinePattern
@@ -424,11 +423,11 @@ class TemplateBuilder:
             print(self.test_data + '\n')
             if expected_result is not None:
                 printer.print('Expected Result:'.ljust(width))
-                print(pformat(expected_result) + '\n')
+                print(f'{expected_result}\n')
             if test_result is not None:
                 printer.print('Test Result:'.ljust(width))
-                txt = get_data_as_tabular(test_result) if tabular else pformat(test_result)
-                print(txt + '\n')
+                new_result = get_data_as_tabular(test_result) if tabular else test_result
+                print(f'{new_result}\n')
 
             verified_msg = 'Verified Message: {}'.format(self.verified_message)
             printer.print(verified_msg.ljust(width))
@@ -612,7 +611,6 @@ class TemplateBuilder:
 
             from textfsm import TextFSM
             from io import StringIO
-            from pprint import pformat
 
             template = r{template}
 
@@ -643,7 +641,7 @@ class TemplateBuilder:
                 
                 # print parsed result
                 print("\n%s\n" % ("+" * 40))
-                print("Result:\n-------\n%s\n" % pformat(rows))
+                print("Result:\n-------\n%s\n" % rows)
             
             # function call
             test_textfsm_template(template, test_data)
@@ -694,15 +692,14 @@ class NonCommercialUseCls:
         script = dedent("""
             from textfsm import TextFSM
             from io import StringIO
-            from pprint import pprint
 
             def test_generated_template(template, test_data):
               parser = TextFSM(StringIO(template))
               rows = parser.ParseTextToDicts(test_data)
               total_rows_count = len(rows)
               if total_rows_count:
-                print("Total-rows-count: %s" % total_rows_count)
-                pprint(rows)
+                print('Total-rows-count: %s' % total_rows_count)
+                print(rows)
               else:
                 print("??? Generated template failed to parse test data ???")
 
@@ -717,21 +714,20 @@ class NonCommercialUseCls:
         script = dedent("""
             from textfsm import TextFSM
             from io import StringIO
-            from pprint import pprint
 
             def test_generated_template(template, test_data):
-              split_pat = r"(?i)[\\r\\n]{1,2} *<<(?:split[_.-])?separator>> *[\\r\\n]{1,2}"
+              split_pat = r'(?i)\\r?\\n? *<<separator>> *\\r?\\n?'
               blocks = re.split(split_pat, test_data)
               for i, block in enumerate(blocks, 1):
                 parser = TextFSM(StringIO(template))
                 rows = parser.ParseTextToDicts(block)
                 total_rows_count = len(rows)
-                print("##### block #%s #####" % i)
+                print('##### block #%s #####' % i)
                 if total_rows_count:
-                  print("Total-rows-count: %s" % total_rows_count)
-                  pprint(rows)
+                  print('Total-rows-count: %s' % total_rows_count)
+                  print(rows)
                 else:
-                  print("??? Generated template failed to parse data-block #%s ???\\n" % i)
+                  print("??? Generated template failed to parse data-block #%s ???" % i)
 
             template = '''...'''    # replace actual template in ellipsis
             test_data = '''...'''   # replace actual data in ellipsis
@@ -754,30 +750,33 @@ class NonCommercialUseCls:
         rows = parser.ParseTextToDicts(test_data)
         total_rows_count = len(rows)
         if total_rows_count:
-            func = get_data_as_tabular if self.is_tabular else pformat
-            result = func(rows)
-            test_result = f"Total-rows-count: {total_rows_count}\n{result}"
+            result = get_data_as_tabular(rows) if self.is_tabular else rows
+            stream = StringIO()
+            print(f"Total-rows-count: {total_rows_count}", file=stream)
+            print(result, file=stream)
+            stream.seek(0)
+            test_result = stream.read()
             return test_result
         else:
             return "??? Generated template failed to parse test data ???"
 
     def get_tresult_v2(self, test_data):
         template = self.get_generated_template()
-        split_pat = r"(?i)[\r\n]{1,2} *<<(?:split[_.-])?separator>> *[\r\n]{1,2}"
+        split_pat = r"(?i)\r?\n? *<<separator>> *\r?\n?"
         blocks = re.split(split_pat, test_data)
-        lst = list()
+        stream = StringIO()
         for i, block in enumerate(blocks, 1):
             parser = TextFSM(StringIO(template))
             rows = parser.ParseTextToDicts(block)
             total_rows_count = len(rows)
-            lst.append(f"##### block #{i} #####")
+            print(f"##### block #{i} #####", file=stream)
             if not total_rows_count:
-                lst.append(f"??? Generated template failed to parse data-block #{i} ???\n")
+                print(f"??? Generated template failed to parse data-block #{i} ???", file=stream)
                 continue
 
-            func = get_data_as_tabular if self.is_tabular else pformat
-            result = func(rows)
-            lst.append(f"Total-rows-count: {total_rows_count}\n{result}")
+            result = get_data_as_tabular(rows) if self.is_tabular else rows
+            print(f"Total-rows-count: {total_rows_count}\n{result}", file=stream)
 
-        test_result = str.join("\n", lst)
+        stream.seek(0)
+        test_result = stream.read()
         return test_result
