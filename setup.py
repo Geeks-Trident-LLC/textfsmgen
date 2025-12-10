@@ -17,6 +17,7 @@ setup(
     maintainer_email='tuyen@geekstrident.com',
     install_requires=[
         'textfsm',
+        'genericlib',
         'regexbuilder',
         'dictlistlib',
         'pyyaml'
