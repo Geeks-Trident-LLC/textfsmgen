@@ -218,6 +218,8 @@ class TemplateBuilder:
     description (str): a description about template.  Default is empty.
     filename (str): a saving file name for a generated test script to file name.
     other_options (dict): other options for Pro or Enterprise edition.
+            Template Pro Edition and Enterprise Edition will be deprecated
+            and removed in the upcoming migration to textfsmgenerator version 1.x.
     variables (list): a list of variable.
     statements (list): a list of template statement.
     template (str): a generated template.

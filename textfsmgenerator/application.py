@@ -582,7 +582,7 @@ class Application:
         self.set_title(title=self.snapshot.title)   # noqa
 
     def shift_to_backup_app(self):
-        """Switch from main app to backup app"""
+        """Switch from main app to back up app"""
         self.snapshot.update(curr_app='backup_app')
         self.paned_window.remove(self.entry_frame)
         self.paned_window.insert(1, self.backup_frame)
