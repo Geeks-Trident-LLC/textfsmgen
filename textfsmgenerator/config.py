@@ -1,4 +1,5 @@
-"""Module defining core attributes for the TextFSM Generator library."""
+"""This module defines and organizes the essential core attributes powering
+functionality, structure, and extensibility of the TextFSM Generator library."""
 
 from os import path
 from textwrap import dedent
