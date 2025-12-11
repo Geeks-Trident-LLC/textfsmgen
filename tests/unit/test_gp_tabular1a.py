@@ -8,7 +8,7 @@ from genericlib import get_data_as_tabular
 from textfsmgenerator.core import verify
 from textfsmgenerator.core import get_textfsm_template
 
-from genericlib.gptabular import TabularTextPatternByVarColumns
+from textfsmgenerator.gptabular import TabularTextPatternByVarColumns
 
 
 def test_to_tabular_multi_spaces_divider_ex1():

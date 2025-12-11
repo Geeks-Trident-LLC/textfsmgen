@@ -6,7 +6,7 @@ from textwrap import dedent
 from textfsmgenerator.core import verify
 from textfsmgenerator.core import get_textfsm_template
 
-from genericlib.gpcategory import CategoryLinesPattern, CategoryLinePattern
+from textfsmgenerator.gpcategory import CategoryLinesPattern, CategoryLinePattern
 
 
 class TestCategoryLinesPattern:
