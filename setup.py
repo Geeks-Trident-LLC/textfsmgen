@@ -1,25 +1,33 @@
-"""Packaging textFSM Generator."""
+"""
+setup.py configuration for packaging and distributing the TextFSM Generator
+library. Defines metadata, dependencies, and build instructions to ensure
+consistent installation across supported Python environments.
+"""
 
 from setuptools import setup, find_packages
 
+with open("README.md", encoding="utf-8") as f:
+    long_description = f.read()
 
 setup(
     name='textfsmgenerator',
-    version='0.2.0',
+    version='0.2.0a1',
     license='BSD-3-Clause',
     license_files=['LICENSE'],
-    description='The application to generate template format.',
-    long_description=open('README.md').read(),
+    description='TextFSM Generator simplifies template creation by converting '
+                'plain English snippets into reusable parsing rules, '
+                'standardizing workflows and enhancing collaboration across teams.',
+    long_description=long_description,
     long_description_content_type='text/markdown',
     author='Tuyen Mathew Duong',
     author_email='tuyen@geekstrident.com',
     maintainer='Tuyen Mathew Duong',
     maintainer_email='tuyen@geekstrident.com',
     install_requires=[
-        'textfsm',
-        'pyyaml',
-        'genericlib',
-        'regexapp',
+        "textfsm>=1.1.0",
+        "pyyaml>=6.0",
+        "genericlib",
+        "regexapp",
     ],
     url='https://github.com/Geeks-Trident-LLC/textfsmgenerator',
     packages=find_packages(
@@ -28,26 +36,53 @@ setup(
             'build*', 'dist*', 'docs*', 'venv*'
         )
     ),
-    test_suite='tests',
+    project_urls={
+        "Documentation": "https://github.com/Geeks-Trident-LLC/textfsmgenerator/wiki",
+        "Source": "https://github.com/Geeks-Trident-LLC/textfsmgenerator",
+        "Tracker": "https://github.com/Geeks-Trident-LLC/textfsmgenerator/issues",
+    },
+    python_requires=">=3.9",
+    include_package_data=True,
     entry_points={
         'console_scripts': [
             'textfsmgenerator = textfsmgenerator.main:execute',
             'textfsmgenerator-gui = textfsmgenerator.application:execute',
+            'textfsmgenerator-app = textfsmgenerator.application:execute',
+            'textfsm-generator-app = textfsmgenerator.application:execute',
         ]
     },
     classifiers=[
-        'Intended Audience :: Developers',
-        'Operating System :: MacOS :: MacOS X',
-        'Operating System :: POSIX :: Linux',
-        'Operating System :: Microsoft :: Windows',
-        'License :: Other/Proprietary License',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
-        'Topic :: Software Development :: Libraries :: Python Modules',
+        # development status
+        "Development Status :: 3 - Alpha",
+        # natural language
+        "Natural Language :: English",
+        # intended audience
+        "Intended Audience :: Developers",
+        "Intended Audience :: Education",
+        "Intended Audience :: End Users/Desktop",
+        "Intended Audience :: Information Technology",
+        "Intended Audience :: Manufacturing",
+        "Intended Audience :: Other Audience",
+        "Intended Audience :: Science/Research",
+        # operating system
+        "Operating System :: MacOS :: MacOS X",
+        "Operating System :: POSIX :: Linux",
+        "Operating System :: Microsoft :: Windows",
+        # programming language
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        # topic
+        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: Software Development :: Code Generators",
+        "Topic :: Software Development :: Quality Assurance",
+        "Topic :: Software Development :: Testing",
+        "Topic :: Scientific/Engineering",
+        "Topic :: Text Processing",
     ],
+    keywords="textfsm, textfsm generator, text parsing, automation, "
+             "verification, validation, qa",
 )
