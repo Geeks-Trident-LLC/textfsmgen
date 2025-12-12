@@ -56,15 +56,14 @@ class ParsedLine:
     kept_str (str): a kept text.
     variables (list): a list of variables.
 
-    Properties
-    ----------
-    is_empty (bool): True if a line does not have data, otherwise False.
-    is_a_word (bool): True if text is a single word, otherwise False.
-    is_not_containing_letter (bool): True if line is not containing any letter,
-            otherwise, False.
-
     Methods
     -------
+    is_empty() -> bool
+        True if a line does not have data, otherwise False.
+    is_a_word() -> bool
+        True if text is a single word, otherwise False.
+    is_not_containing_letter() -> bool
+        True if line is not containing any letter, otherwise, False.
     build() -> None
     get_statement() -> str
 
