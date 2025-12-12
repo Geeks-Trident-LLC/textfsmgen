@@ -354,9 +354,8 @@ class EditingSnippet(LData):
         items = re.split(PATTERN.SPACES, self.capture)
         for item in items:
             item = item.strip(',')
-            is_empty = bool(re.search('[_-]?or([_-]empty)?', item, re.I))
-            item = re.sub('[_-]?or([_-]empty)?', STRING.EMPTY, item, re.I)
-
+            is_empty = bool(re.search('[_-]?or([_-]empty)?', item, flags=re.I))
+            item = re.sub('[_-]?or([_-]empty)?', STRING.EMPTY, item, flags=re.I)
             if re.match(r'\d+:\d+$', item):
                 first, last = item.split(':', NUMBER.ONE)
                 var_names = ['v%s' % i for i in range(int(first), int(last) + 1)]
@@ -367,6 +366,8 @@ class EditingSnippet(LData):
                     )
             elif re.match(r'\w+(,\w+)*', item):
                 var_names = ['v%s' % i if i.isdigit() else i for i in item.split(',')]
+            else:
+                var_names = []
 
             for var_name in var_names:  # noqa
                 index, node = self.find_element(var_name)
