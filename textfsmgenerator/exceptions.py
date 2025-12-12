@@ -1,25 +1,53 @@
-"""Module containing the exception class for textFSM Generator."""
+"""Exception classes for the TextFSM Generator.
+
+This module defines custom exceptions used throughout the TextFSM
+Generator library to handle template parsing, building, and validation
+errors in a structured way.
+"""
 
 
 class TemplateError(Exception):
-    """Use to capture error template construction."""
+    """
+    Base class for all template-related errors in the TextFSM Generator.
+
+    Raised when a general error occurs during template construction
+    or processing.
+    """
 
 
 class TemplateParsedLineError(TemplateError):
-    """Use to capture error parsed line for template builder."""
+    """
+    Raised when a parsed line cannot be processed correctly
+    by the template builder.
+
+    This typically indicates invalid syntax or an unsupported format
+    within a template line.
+    """
 
 
 class TemplateBuilderError(TemplateError):
-    """Use to capture error template construction."""
+    """
+    Raised when an error occurs during template building.
+
+    Serves as a general-purpose exception for builder failures.
+    """
 
 
 class TemplateBuilderInvalidFormat(TemplateError):
-    """Use to capture error if user_data has invalid format."""
+    """
+    Raised when user-provided data has an invalid format
+    during template building.
+    """
 
 
 class NoUserTemplateSnippetError(TemplateError):
-    """Use to capture error if user_data is empty"""
+    """
+    Raised when user-provided template data is empty or missing.
+    """
 
 
 class NoTestDataError(TemplateError):
-    """Use to capture error if there is no test_data"""
+    """
+    Raised when no test data is available for validation
+    or execution of a template.
+    """
