@@ -19,7 +19,6 @@ setup(
         'textfsm',
         'genericlib',
         'regexbuilder',
-        'dictlistlib',
         'pyyaml'
     ],
     url='https://github.com/Geeks-Trident-LLC/textfsmgenerator',

@@ -8,7 +8,6 @@ from pathlib import Path
 from pathlib import PurePath
 
 import regexbuilder
-import dictlistlib
 import textfsm
 import yaml
 
@@ -47,9 +46,6 @@ class Data:
 
     gtgenlib_text = f"genericlib v{gtlib_version}"
     gtgenlib_link = ""
-
-    gtdictlistlib_text = 'dlapp v{}'.format(dictlistlib.version)
-    gtdictlistlib_link = ''
 
     textfsm_text = 'textfsm v{}'.format(textfsm.__version__)
     textfsm_link = 'https://pypi.org/project/textfsm/'
@@ -111,10 +107,6 @@ class Data:
         dependencies = dict(
             gtregexapp=dict(
                 package=cls.gtregexbuilder_text,
-                url=""
-            ),
-            gtdlapp=dict(
-                package=cls.gtdictlistlib_text,
                 url=""
             ),
             gtgenlib=dict(
