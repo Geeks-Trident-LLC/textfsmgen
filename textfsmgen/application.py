@@ -34,13 +34,13 @@ from textfsm import TextFSM
 from pprint import pformat
 from genericlib import get_data_as_tabular
 
-from textfsmgenerator import TemplateBuilder
-from textfsmgenerator.exceptions import TemplateBuilderInvalidFormat
-from textfsmgenerator.core import save_file
-from textfsmgenerator.config import Data
+from textfsmgen import TemplateBuilder
+from textfsmgen.exceptions import TemplateBuilderInvalidFormat
+from textfsmgen.core import save_file
+from textfsmgen.config import Data
 
-from textfsmgenerator import version
-from textfsmgenerator import edition
+from textfsmgen import version
+from textfsmgen import edition
 
 
 __version__ = version
@@ -154,7 +154,7 @@ class UserTemplate:
 
     Attributes
     ----------
-    filename (str): user template file name i.e /home_dir/.geekstrident/textfsmgenerator/user_templates.yaml
+    filename (str): user template file name i.e /home_dir/.geekstrident/textfsmgen/user_templates.yaml
     status (str): a status message.
     content (str): user template file content.
 
@@ -172,12 +172,12 @@ class UserTemplate:
         self.content = ''
 
     def is_exist(self):
-        """return True if /home_dir/.geekstrident/textfsmgenerator/user_templates.yaml exists"""
+        """return True if /home_dir/.geekstrident/textfsmgen/user_templates.yaml exists"""
         node = Path(self.filename)
         return node.exists()
 
     def create(self, confirmed=True):
-        """create /home_dir/.geekstrident/textfsmgenerator/user_templates.yaml if it IS NOT existed.
+        """create /home_dir/.geekstrident/textfsmgen/user_templates.yaml if it IS NOT existed.
 
         Parameters
         ----------
@@ -226,7 +226,7 @@ class UserTemplate:
             create_msgbox(title=title, error=error)
 
     def read(self):
-        """return content of /home_dir/.geekstrident/textfsmgenerator/user_templates.yaml"""
+        """return content of /home_dir/.geekstrident/textfsmgen/user_templates.yaml"""
         if self.is_exist():
             with open(self.filename) as stream:
                 self.content = stream.read()
@@ -284,7 +284,7 @@ class UserTemplate:
             return ''
 
     def write(self, template_name, template):
-        """store template to /home_dir/.geekstrident/textfsmgenerator/user_templates.yaml
+        """store template to /home_dir/.geekstrident/textfsmgen/user_templates.yaml
 
         Parameters
         ----------

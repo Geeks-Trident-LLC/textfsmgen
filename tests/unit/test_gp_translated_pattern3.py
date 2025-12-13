@@ -1,20 +1,20 @@
 import pytest           # noqa
 
-from textfsmgenerator.gp import TranslatedDigitPattern
-from textfsmgenerator.gp import TranslatedDigitsPattern
+from textfsmgen.gp import TranslatedDigitPattern
+from textfsmgen.gp import TranslatedDigitsPattern
 
-from textfsmgenerator.gp import TranslatedLetterPattern
-from textfsmgenerator.gp import TranslatedLettersPattern
+from textfsmgen.gp import TranslatedLetterPattern
+from textfsmgen.gp import TranslatedLettersPattern
 
-from textfsmgenerator.gp import TranslatedAlphabetNumericPattern
+from textfsmgen.gp import TranslatedAlphabetNumericPattern
 
-from textfsmgenerator.gp import TranslatedPunctPattern
-from textfsmgenerator.gp import TranslatedPunctsPattern
-from textfsmgenerator.gp import TranslatedPunctsGroupPattern
-from textfsmgenerator.gp import TranslatedGraphPattern
+from textfsmgen.gp import TranslatedPunctPattern
+from textfsmgen.gp import TranslatedPunctsPattern
+from textfsmgen.gp import TranslatedPunctsGroupPattern
+from textfsmgen.gp import TranslatedGraphPattern
 
-from textfsmgenerator.gp import TranslatedWordPattern
-from textfsmgenerator.gp import TranslatedWordsPattern
+from textfsmgen.gp import TranslatedWordPattern
+from textfsmgen.gp import TranslatedWordsPattern
 
 
 class TestTranslatedSymbolPattern:

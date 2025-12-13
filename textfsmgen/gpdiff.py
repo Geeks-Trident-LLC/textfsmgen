@@ -8,7 +8,7 @@ from regexapp import LinePattern        # noqa
 
 from genericlib import STRING, PATTERN, Misc, NUMBER, INDEX
 from genericlib import Text
-from textfsmgenerator.gp import RuntimeException, TranslatedPattern
+from textfsmgen.gp import RuntimeException, TranslatedPattern
 
 
 class NDiffBaseText:

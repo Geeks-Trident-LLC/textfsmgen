@@ -30,7 +30,7 @@ class Data:
         PurePath(
             Path.home(),
             '.geekstrident',
-            'textfsmgenerator',
+            'textfsmgen',
             'user_templates.yaml')
     )
 
@@ -59,7 +59,7 @@ class Data:
     company_url = 'https://www.geekstrident.com/'
 
     # URL
-    repo_url = 'https://github.com/Geeks-Trident-LLC/textfsmgenerator'
+    repo_url = 'https://github.com/Geeks-Trident-LLC/textfsmgen'
     documentation_url = path.join(repo_url, 'blob/develop/README.md')
     license_url = path.join(repo_url, 'blob/develop/LICENSE')
 

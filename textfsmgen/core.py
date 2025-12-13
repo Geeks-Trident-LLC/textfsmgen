@@ -14,14 +14,14 @@ from genericlib import get_data_as_tabular
 from genericlib import Printer
 from genericlib import MiscObject
 
-from textfsmgenerator.exceptions import TemplateParsedLineError
-from textfsmgenerator.exceptions import TemplateBuilderError
-from textfsmgenerator.exceptions import TemplateBuilderInvalidFormat
-from textfsmgenerator.exceptions import NoUserTemplateSnippetError
-from textfsmgenerator.exceptions import NoTestDataError
+from textfsmgen.exceptions import TemplateParsedLineError
+from textfsmgen.exceptions import TemplateBuilderError
+from textfsmgen.exceptions import TemplateBuilderInvalidFormat
+from textfsmgen.exceptions import NoUserTemplateSnippetError
+from textfsmgen.exceptions import NoTestDataError
 
-from textfsmgenerator.config import edition
-from textfsmgenerator.config import version
+from textfsmgen.config import edition
+from textfsmgen.config import version
 
 import logging
 logger = logging.getLogger(__file__)
@@ -218,7 +218,7 @@ class TemplateBuilder:
     filename (str): a saving file name for a generated test script to file name.
     other_options (dict): other options for Pro or Enterprise edition.
             Template Pro Edition and Enterprise Edition will be deprecated
-            and removed in the upcoming migration to textfsmgenerator version 1.x.
+            and removed in the upcoming migration to textfsmgen version 1.x.
     variables (list): a list of variable.
     statements (list): a list of template statement.
     template (str): a generated template.

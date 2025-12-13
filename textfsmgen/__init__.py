@@ -3,11 +3,11 @@
 - allow end-user to create template or test script on GUI application.
 """
 
-from textfsmgenerator.core import ParsedLine
-from textfsmgenerator.core import TemplateBuilder
-from textfsmgenerator.core import NonCommercialUseCls
-from textfsmgenerator.config import version
-from textfsmgenerator.config import edition
+from textfsmgen.core import ParsedLine
+from textfsmgen.core import TemplateBuilder
+from textfsmgen.core import NonCommercialUseCls
+from textfsmgen.config import version
+from textfsmgen.config import edition
 
 __version__ = version
 __edition__ = edition

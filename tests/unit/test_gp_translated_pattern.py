@@ -1,6 +1,6 @@
 import pytest           # noqa
 
-from textfsmgenerator.gp import TranslatedPattern
+from textfsmgen.gp import TranslatedPattern
 
 
 class TestTranslatedPattern:

@@ -32,10 +32,10 @@ By reducing the complexity of manual template writing, TextFSM Generator empower
 
 ## ⚙️ Installation  
 
-You can install the **regexapp** package directly from PyPI using `pip`:  
+You can install the **textfsmgen** package directly from PyPI using `pip`:  
 
 ```bash
-pip install textfsmgenerator
+pip install textfsmgen
 ```  
 
 ### ✅ Requirements  
@@ -57,13 +57,13 @@ This project depends on the following Python packages to provide core functional
 
 ## 🐞 Bugs & Feature Requests  
 
-If you encounter a bug or have a feature request, please submit it through the official [GitHub Issue Tracker](https://github.com/Geeks-Trident-LLC/textfsmgenerator/issues). This helps us track, prioritize, and resolve issues efficiently while keeping all feedback in one place.
+If you encounter a bug or have a feature request, please submit it through the official [GitHub Issue Tracker](https://github.com/Geeks-Trident-LLC/textfsmgen/issues). This helps us track, prioritize, and resolve issues efficiently while keeping all feedback in one place.
 
 ---
 
 ## 🛣️ Roadmap  
 
-- ⚠️ **Deprecation Notice** - *TextFSM Generator Pro Edition* and *Enterprise Edition* will be deprecated and removed during the upcoming migration to 🚀 `textfsmgenerator` version **1.x**.   
+- ⚠️ **Deprecation Notice** - *TextFSM Generator Pro Edition* and *Enterprise Edition* will be deprecated and removed during the upcoming migration to 🚀 `textfsmgen` version **1.x**.   
 - ✨ **Template Generation Improvements** – Ongoing refinements to TextFSM template creation, deeper integration with parsing libraries, and streamlined developer workflows.  
 - 🐳 **Containerization** – Official Docker images and containerized deployment options for portability, scalability, and simplified setup.  
 - 🔄 **CI/CD Integration** – Automated pipelines for testing, building, and releasing to ensure faster and more reliable delivery.  
@@ -87,7 +87,7 @@ If you encounter a bug or have a feature request, please submit it through the o
 
 This project is licensed under the **BSD 3‑Clause License**.  
 You can review the full license text here:  
-- [BSD 3‑Clause License](https://github.com/Geeks-Trident-LLC/textfsmgenerator/blob/develop/LICENSE)  
+- [BSD 3‑Clause License](https://github.com/Geeks-Trident-LLC/textfsmgen/blob/develop/LICENSE)  
 
 ### 🔍 What the BSD 3‑Clause License Means  
 - ✅ **Freedom to Use** – You may use this library in both open‑source and proprietary projects.  

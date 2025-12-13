@@ -3,10 +3,10 @@ import re
 import pytest           # noqa
 from textwrap import dedent
 
-from textfsmgenerator.core import verify
-from textfsmgenerator.core import get_textfsm_template
+from textfsmgen.core import verify
+from textfsmgen.core import get_textfsm_template
 
-from textfsmgenerator.gpcategory import CategoryLinesPattern, CategoryLinePattern
+from textfsmgen.gpcategory import CategoryLinesPattern, CategoryLinePattern
 
 
 class TestCategoryLinesPattern:

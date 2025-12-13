@@ -10,7 +10,7 @@ with open("README.md", encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
-    name='textfsmgenerator',
+    name='textfsmgen',
     version='0.2.1a1',
     license='BSD-3-Clause',
     license_files=['LICENSE'],
@@ -29,7 +29,7 @@ setup(
         "genericlib",
         "regexapp",
     ],
-    url='https://github.com/Geeks-Trident-LLC/textfsmgenerator',
+    url='https://github.com/Geeks-Trident-LLC/textfsmgen',
     packages=find_packages(
         exclude=(
             'tests*', 'testing*', 'examples*',
@@ -37,18 +37,17 @@ setup(
         )
     ),
     project_urls={
-        "Documentation": "https://github.com/Geeks-Trident-LLC/textfsmgenerator/wiki",
-        "Source": "https://github.com/Geeks-Trident-LLC/textfsmgenerator",
-        "Tracker": "https://github.com/Geeks-Trident-LLC/textfsmgenerator/issues",
+        "Documentation": "https://github.com/Geeks-Trident-LLC/textfsmgen/wiki",
+        "Source": "https://github.com/Geeks-Trident-LLC/textfsmgen",
+        "Tracker": "https://github.com/Geeks-Trident-LLC/textfsmgen/issues",
     },
     python_requires=">=3.9",
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'textfsmgenerator = textfsmgenerator.main:execute',
-            'textfsmgenerator-gui = textfsmgenerator.application:execute',
-            'textfsmgenerator-app = textfsmgenerator.application:execute',
-            'textfsm-generator-app = textfsmgenerator.application:execute',
+            'textfsmgen = textfsmgen.main:execute',
+            'textfsmgen-gui = textfsmgen.application:execute',
+            'textfsmgen-app = textfsmgen.application:execute',
         ]
     },
     classifiers=[
@@ -84,5 +83,6 @@ setup(
         "Topic :: Text Processing",
     ],
     keywords="textfsm, textfsm generator, text parsing, automation, "
-             "verification, validation, qa",
+             "verification, validation, qa, robotframework, test script, "
+             "test case, test plan, ai integration",
 )

@@ -3,9 +3,9 @@ import re
 from regexapp import TextPattern
 
 from genericlib import STRING, PATTERN, NUMBER, Misc
-from textfsmgenerator.gp import LData, TranslatedPattern, RuntimeException
-from textfsmgenerator.gpiteractive import IterativeLinePattern
-from textfsmgenerator.gpcommon import GPCommon
+from textfsmgen.gp import LData, TranslatedPattern, RuntimeException
+from textfsmgen.gpiteractive import IterativeLinePattern
+from textfsmgen.gpcommon import GPCommon
 
 
 class BaseCategoryPattern(LData):

@@ -1,6 +1,6 @@
 import pytest           # noqa
 
-from textfsmgenerator.gpdiff import DiffLinePattern
+from textfsmgen.gpdiff import DiffLinePattern
 
 
 class TestDiffLinePattern:

@@ -5,7 +5,7 @@ import pytest           # noqa
 from genericlib import Misc
 from genericlib import MiscObject
 
-from textfsmgenerator.gptabular import TabularTextPatternByVarColumns
+from textfsmgen.gptabular import TabularTextPatternByVarColumns
 
 
 def test_to_regex_ex1():

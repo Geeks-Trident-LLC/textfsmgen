@@ -5,12 +5,12 @@ import argparse
 import re
 import yaml
 
-from textfsmgenerator.application import Application
-from textfsmgenerator import TemplateBuilder
+from textfsmgen.application import Application
+from textfsmgen import TemplateBuilder
 
 
 def run_gui_application(options):
-    """Run textfsmgenerator GUI application.
+    """Run textfsmgen GUI application.
 
     Parameters
     ----------
@@ -18,7 +18,7 @@ def run_gui_application(options):
 
     Returns
     -------
-    None: will invoke ``textfsmgenerator.Application().run()`` and ``sys.exit(0)``
+    None: will invoke ``textfsmgen.Application().run()`` and ``sys.exit(0)``
     if end user requests `--gui`
     """
     if options.gui:
@@ -30,7 +30,7 @@ def run_gui_application(options):
 def show_dependency(options):
     if options.dependency:
         from platform import uname, python_version
-        from textfsmgenerator.config import Data
+        from textfsmgen.config import Data
         lst = [
             Data.main_app_text,
             'Platform: {0.system} {0.release} - Python {1}'.format(
@@ -51,11 +51,11 @@ def show_dependency(options):
 
 
 class Cli:
-    """textfsmgenerator console CLI application."""
+    """textfsmgen console CLI application."""
 
     def __init__(self):
         parser = argparse.ArgumentParser(
-            prog='textfsmgenerator',
+            prog='textfsmgen',
             usage='%(prog)s [options]',
             description='%(prog)s application',
         )

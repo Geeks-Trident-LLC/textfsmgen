@@ -1,6 +1,6 @@
 import pytest           # noqa
 from textwrap import dedent
-from textfsmgenerator.gptabular import TabularTextPattern
+from textfsmgen.gptabular import TabularTextPattern
 
 
 def test_fixed_columns():

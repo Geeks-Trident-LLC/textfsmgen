@@ -1,15 +1,15 @@
 import pytest           # noqa
 
-from textfsmgenerator.gp import TranslatedDigitPattern
-from textfsmgenerator.gp import TranslatedDigitsPattern
+from textfsmgen.gp import TranslatedDigitPattern
+from textfsmgen.gp import TranslatedDigitsPattern
 
-from textfsmgenerator.gp import TranslatedNumberPattern
-from textfsmgenerator.gp import TranslatedMixedNumberPattern
+from textfsmgen.gp import TranslatedNumberPattern
+from textfsmgen.gp import TranslatedMixedNumberPattern
 
-from textfsmgenerator.gp import TranslatedLetterPattern
-from textfsmgenerator.gp import TranslatedLettersPattern
+from textfsmgen.gp import TranslatedLetterPattern
+from textfsmgen.gp import TranslatedLettersPattern
 
-from textfsmgenerator.gp import TranslatedAlphabetNumericPattern
+from textfsmgen.gp import TranslatedAlphabetNumericPattern
 
 
 class TestTranslatedDigitPattern:

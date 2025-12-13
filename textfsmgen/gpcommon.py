@@ -4,7 +4,7 @@ from regexapp import TextPattern
 
 from genericlib import Misc, STRING, Wildcard, NUMBER, PATTERN
 from genericlib import Text
-from textfsmgenerator.gp import TranslatedPattern
+from textfsmgen.gp import TranslatedPattern
 
 
 class GPCommon:

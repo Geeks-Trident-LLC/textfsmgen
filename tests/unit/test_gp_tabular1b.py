@@ -5,10 +5,10 @@ import pytest           # noqa
 
 from genericlib import get_data_as_tabular
 
-# from textfsmgenerator.core import verify
-# from textfsmgenerator.core import get_textfsm_template
+# from textfsmgen.core import verify
+# from textfsmgen.core import get_textfsm_template
 
-from textfsmgenerator.gptabular import TabularTextPatternByVarColumns
+from textfsmgen.gptabular import TabularTextPatternByVarColumns
 
 
 def test_to_tabular_custom_divider_ex1():

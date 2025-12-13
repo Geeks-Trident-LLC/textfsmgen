@@ -7,9 +7,9 @@ import re
 from regexapp import LinePattern
 
 from genericlib import Misc, STRING, NUMBER, PATTERN, INDEX
-from textfsmgenerator.gp import RuntimeException, TranslatedPattern
+from textfsmgen.gp import RuntimeException, TranslatedPattern
 
-from textfsmgenerator.gpcommon import GPCommon
+from textfsmgen.gpcommon import GPCommon
 
 
 class TabularTextPattern(RuntimeException):
