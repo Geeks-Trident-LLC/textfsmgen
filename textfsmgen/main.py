@@ -52,6 +52,32 @@ def show_dependency(options):
         sys.exit(ECODE.SUCCESS)
 
 
+def show_version(options):
+    """
+    Display the current textfsmgen version and exit.
+
+    This function checks whether the `--version` flag was provided
+    in the parsed CLI options. If so, it imports the `version`
+    string from the `textfsmgen` package, prints it to stdout, and
+    terminates the process with a success exit code.
+
+    Parameters
+    ----------
+    options : argparse.Namespace
+        Parsed command-line options. Must contain the `version` flag.
+
+    Returns
+    -------
+    None
+        Prints the application version and exits with
+        ``ECODE.SUCCESS`` if `--version` is specified.
+    """
+    if options.version:
+        from textfsmgen import version
+        print(f'textfsmgen {version}')
+        sys.exit(ECODE.SUCCESS)
+
+
 class Cli:
     """textfsmgen console CLI application."""
 
@@ -99,6 +125,11 @@ class Cli:
         parser.add_argument(
             '-d', '--dependency', action='store_true',
             help='Show textFSM Generator dependent package(s).'
+        )
+
+        parser.add_argument(
+            '-v', '--version', action='store_true',
+            help='Show textFSM Generator version.'
         )
 
         self.parser = parser
@@ -236,6 +267,7 @@ class Cli:
 
     def run(self):
         """Take CLI arguments, parse it, and process."""
+        show_version(self.options)
         show_dependency(self.options)
         self.validate_cli_flags()
         if not self.options.test_data:
