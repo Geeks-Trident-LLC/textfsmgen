@@ -1,20 +1,26 @@
-"""Module containing the logic for the TextFSM Generator application."""
+"""
+textfsmgen.application
+======================
 
-try:
-    import tkinter as tk
-except ModuleNotFoundError:
-    import sys
-    from platform import python_version as py_version
-    items = ["Failed to launch textFSM Generator application because",
-             "Python{} binary doesn't have tkinter module.".format(py_version()),
-             "Please install tkinter module and try it again."]
-    max_len = max(len(item) for item in items)
-    txt = '\n'.join('| {} |'.format(item.ljust(max_len)) for item in items)
-    txt = '+-{0}-+\n{1}\n+-{0}-+'.format(max_len * '-', txt)
-    print(txt)
-    sys.exit(1)
-except Exception as exc:
-    raise exc
+Main logic and user interface components for the `textfsmgen` library.
+
+This module integrates with `tkinter` to provide a graphical interface
+for building, customizing, and testing TextFSM templates. It serves as
+the entry point for launching the application with GUI support, offering
+tools for regex construction, template validation, and interactive
+pattern testing.
+
+
+Notes
+-----
+- If `tkinter` is not installed, the module prints a descriptive error
+  message and terminates gracefully.
+- This module is intended primarily for interactive use; programmatic
+  access to template generation is available via `textfsmgen.__init__`.
+"""
+
+from genericlib.misc import ensure_tkinter_available
+tk = ensure_tkinter_available(app_name="textfsmgen")
 
 from tkinter import ttk
 from tkinter import filedialog
