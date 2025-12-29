@@ -40,6 +40,7 @@ from textfsm import TextFSM
 from pprint import pformat
 from genericlib import get_data_as_tabular
 from genericlib import DotObject
+from genericlib.exceptions import raise_exception
 
 from textfsmgen import TemplateBuilder
 from textfsmgen.exceptions import TemplateBuilderInvalidFormat
@@ -55,25 +56,35 @@ __edition__ = edition
 
 
 def get_relative_center_location(parent, width, height):
-    """get relative a center location of parent window.
+    """
+    Compute the coordinates for centering a child window relative to its parent.
 
     Parameters
     ----------
-    parent (tkinter): tkinter widget instance.
-    width (int): a width of a child window.
-    height (int): a height of a child window.
+    parent : tkinter.Tk or tkinter.Toplevel
+        The parent window whose geometry is used as a reference.
+    width : int
+        The width of the child window.
+    height : int
+        The height of the child window.
 
     Returns
     -------
-    tuple: x, y location.
+    tuple of int
+        (x, y) coordinates for placing the child window centered
+        within the parent window.
     """
-    pwh, px, py = parent.winfo_geometry().split('+')
-    px, py = int(px), int(py)
-    pw, ph = [int(i) for i in pwh.split('x')]
-
-    x = int(px + (pw - width) / 2)
-    y = int(py + (ph - height) / 2)
-    return x, y
+    try:
+        # Geometry string format: "WxH+X+Y"
+        geometry = parent.winfo_geometry()
+        pw, ph, px, py = re.split("[x+]", geometry)
+        parent_x_loc, parent_y_loc = int(px), int(py)
+        parent_width, parent_width = int(pw), int(ph)
+        x_loc = int(parent_x_loc + (parent_width - width) / 2)
+        y_loc = int(parent_y_loc + (parent_width - height) / 2)
+        return x_loc, y_loc
+    except Exception as ex:
+        raise_exception(ex)
 
 
 def create_msgbox(title=None, error=None, warning=None, info=None,
