@@ -41,6 +41,7 @@ from pprint import pformat
 from genericlib import get_data_as_tabular
 from genericlib import DotObject
 from genericlib.exceptions import raise_exception
+import genericlib.file as file
 
 from textfsmgen import TemplateBuilder
 from textfsmgen.exceptions import TemplateBuilderInvalidFormat
@@ -169,51 +170,115 @@ def set_modal_dialog(dialog):
 
 
 class UserTemplate:
-    """User template
+    """
+    Manage user-defined TextFSM templates stored in the application.
+
+    This class provides an interface for creating, reading, searching,
+    and writing user templates. It encapsulates the template file path,
+    its content, and status information, ensuring consistent handling
+    of template persistence and retrieval.
 
     Attributes
     ----------
-    filename (str): user template file name i.e /home_dir/.geekstrident/textfsmgen/user_templates.yaml
-    status (str): a status message.
-    content (str): user template file content.
+    filename : str
+        Path to the user template file, e.g.,
+        ``/home_dir/.geekstrident/textfsmgen/user_templates.yaml``.
+    status : str
+        Current status message describing the template state
+        (e.g., "created", "updated", "not found").
+    content : str
+        Raw content of the user template file.
 
     Methods
     -------
     is_exist() -> bool
+        Check whether the template file exists at the given path.
     create(confirmed=True) -> bool
+        Create a new template file. If `confirmed` is True, overwrite
+        existing files when necessary.
     read() -> str
-    search(template_name) -> str
-    write(template_name, data) -> str
+        Read and return the content of the template file.
+    search(template_name: str) -> str
+        Search for a template by name and return its content.
+    write(template_name: str, data: str) -> str
+        Write or update a template with the given name and data.
+        Returns a status message indicating the result.
+
+    Notes
+    -----
+    - Templates are stored in YAML format for readability and portability.
+    - This class is intended for internal use within the `textfsmgen`
+      application to manage user-defined templates.
     """
     def __init__(self):
+        # Data.user_template_filename is
+        #      /home_dir/.geekstrident/textfsmgen/user_templates.yaml
         self.filename = Data.user_template_filename
         self.status = ''
         self.content = ''
 
     def is_exist(self):
-        """return True if /home_dir/.geekstrident/textfsmgen/user_templates.yaml exists"""
+        """
+        Check whether the user template file exists.
+
+        This method verifies if the file specified by `self.filename`
+        is present in the filesystem.
+
+        Returns
+        -------
+        bool
+            True if the user template file exists, False otherwise.
+
+        Notes
+        -----
+        - Typical default path:
+          ``/home_dir/.geekstrident/textfsmgen/user_templates.yaml``.
+        - Uses `pathlib.Path.exists()` for filesystem validation.
+        """
+
         node = Path(self.filename)
         return node.exists()
 
     def create(self, confirmed=True):
-        """create /home_dir/.geekstrident/textfsmgen/user_templates.yaml if it IS NOT existed.
+        """
+        Create the user template file if it does not already exist.
+
+        This method ensures that the user template file defined by
+        `self.filename` is created on disk. If the file already exists,
+        the method returns immediately. When `confirmed` is True, a
+        confirmation dialog is shown before creating the file.
 
         Parameters
         ----------
-        confirmed (bool): pop up messagebox for confirmation.
+        confirmed : bool, optional
+            Whether to prompt the user with a confirmation messagebox
+            before creating the file. Defaults to True.
 
         Returns
         -------
-        bool: True or False.
+        bool
+            True if the file exists or was successfully created.
+            False if creation was declined or failed.
+
+        Notes
+        -----
+        - The default file path is typically:
+          ``/home_dir/.geekstrident/textfsmgen/user_templates.yaml``.
+        - If the parent directory does not exist, it is created.
+        - If the parent path is a file instead of a directory,
+          creation fails and an error messagebox is displayed.
+        - On successful creation, `self.content` is updated with
+          the file’s initial (empty) content.
         """
         if self.is_exist():
             return True
 
         try:
             if confirmed:
-                title = 'Creating User Template File'
-                yesno = 'Do you want to create {!r} file?'.format(self.filename)
-                response = create_msgbox(title=title, yesno=yesno)
+                response = create_msgbox(
+                    title ="Create User Template File",
+                    yesno=f"Would you like to create the file {repr(self.filename)}?"
+                )
             else:
                 response = 'yes'
 
@@ -224,57 +289,119 @@ class UserTemplate:
                     parent.mkdir(parents=True, exist_ok=True)
                 else:
                     if parent.is_file():
-                        title = 'Directory Violation'
-                        fmt = 'CANT create {!r} file because its parent, {!r}, is a file.'
-                        error = fmt.format(str(node), str(parent))
-                        create_msgbox(title=title, error=error)
+                        create_msgbox(
+                            title="Directory Error",
+                            error="Cannot create file '{str(node)}' because "
+                                  "its parent path '{str(parent)}' is a file."
+                        )
                         return False
                 node.touch()
                 self.content = node.read_text()
                 if confirmed:
-                    title = 'Created User Template File'
-                    info = '{!r}? is created.'.format(self.filename)
-                    create_msgbox(title=title, info=info)
+                    create_msgbox(
+                        title="User Template File Created",
+                        info=f"{repr(self.filename)}? created successfully."
+                    )
                 return True
             else:
                 return False
         except Exception as ex:
-            title = 'Creating User Template File Issue'
-            error = '{}: {}.'.format(type(ex).__name__, ex)
-            self.status = error
-            create_msgbox(title=title, error=error)
+            self.status = f"{type(ex).__name__}: {ex}."
+            create_msgbox(
+                title="User Template File Creation Error",
+                error=self.status
+            )
 
     def read(self):
-        """return content of /home_dir/.geekstrident/textfsmgen/user_templates.yaml"""
-        if self.is_exist():
-            with open(self.filename) as stream:
-                self.content = stream.read()
-            return self.content
-        else:
-            title = 'User Template File Not Found'
-            error = "{!r} IS NOT existed.".format(self.filename)
-            self.status = error
-            create_msgbox(title=title, error=error)
-            return ''
+        """
+        Read and return the content of the user template file.
 
-    def search(self, template_name):
-        """search template via template_name
-
-        Parameters
-        ----------
-        template_name (str): a template name
+        This method attempts to open and read the file specified by
+        `self.filename`. If the file exists, its content is stored in
+        `self.content` and returned. If the file does not exist, an
+        error messagebox is displayed, `self.status` is updated with
+        the error message, and an empty string is returned.
 
         Returns
         -------
-        str: a template content
+        str
+            The content of the user template file if it exists,
+            otherwise an empty string.
+
+        Notes
+        -----
+        - Default file path is typically:
+          ``/home_dir/.geekstrident/textfsmgen/user_templates.yaml``.
+        - On failure, a messagebox is shown with the title
+          `"User Template File Not Found"`.
+        - The error message is also stored in `self.status` for
+          dia
+        """
+        if self.is_exist():
+            self.content = file.read(self.filename)
+            return self.content
+        else:
+            self.status = f"File '{self.filename}' does not exist."
+            create_msgbox(
+                title="Error: User Template File Not Found",
+                error=self.status
+            )
+            return ''
+
+    def search(self, template_name):
+        """
+        Search for a user-defined template by name.
+
+        This method looks up a template within the user template file
+        (YAML format) using the provided `template_name`. It validates
+        the naming convention, loads the YAML content, and returns the
+        template content if found. Status messages are updated to reflect
+        the outcome of the search.
+
+        Parameters
+        ----------
+        template_name : str
+            The name of the template to search for. Must follow the
+            naming convention: alphanumeric segments separated by
+            `+`, `.`, `_`, or `-`.
+
+        Returns
+        -------
+        str
+            The content of the template if found. Returns an empty string
+            if the template file does not exist, the name is invalid, the
+            template is not found, or the file format is incorrect.
+
+        Raises
+        ------
+        None
+            Errors are handled internally. Message boxes are displayed
+            and `self.status` is updated with diagnostic codes such as:
+            - 'INVALID-TEMPLATE-NAME-FORMAT'
+            - 'INVALID-TEMPLATE-FORMAT'
+            - 'NOT_FOUND'
+            - 'FOUND'
+            - or an error message if the file is missing.
+
+        Notes
+        -----
+        - Templates are stored in a YAML file, typically located at:
+          ``/home_dir/.geekstrident/textfsmgen/user_templates.yaml``.
+        - The method uses `yaml.SafeLoader` to ensure safe parsing.
+        - `self.status` is updated after each operation to indicate
+          success or failure.
+        - Message boxes are shown for invalid names, missing files,
+          or incorrect formats.
         """
         self.status = ''
         if self.is_exist():
             if not re.match(r'[a-z0-9]+([+._-][a-z0-9]+)*$', template_name):
-                title = 'Invalid Template Naming Convention'
-                error = 'Template name must be alphanum+[+._-]?alphanum+?[+._-]?alphanum+?'
                 self.status = 'INVALID-TEMPLATE-NAME-FORMAT'
-                create_msgbox(title=title, error=error)
+                create_msgbox(
+                    title="Error: Invalid Template Naming Convention",
+                    error="Template names must follow the convention: "
+                          "alphanumeric segments separated by '+', '.', '_', or '-'."
+                )
                 return ''
 
             yaml_obj = yaml.load(self.read(), Loader=yaml.SafeLoader)
@@ -290,10 +417,11 @@ class UserTemplate:
                     self.status = 'NOT_FOUND'
                     return ''
             else:
-                title = 'Invalid User Template Format'
-                error = "{!r} IS NOT correct format.".format(self.filename)
                 self.status = 'INVALID-TEMPLATE-FORMAT'
-                create_msgbox(title=title, error=error)
+                create_msgbox(
+                    title="Error: Invalid User Template Format",
+                    error=f"File '{self.filename}' is not in the correct format."
+                )
                 return ''
         else:
             title = 'User Template File Not Found'
@@ -303,16 +431,52 @@ class UserTemplate:
             return ''
 
     def write(self, template_name, template):
-        """store template to /home_dir/.geekstrident/textfsmgen/user_templates.yaml
+        """
+        Write or update a user-defined template in the YAML file.
+
+        This method stores a template under the given `template_name`
+        in the user template file (YAML format), typically located at
+        ``/home_dir/.geekstrident/textfsmgen/user_templates.yaml``.
+        It handles duplicate names and duplicate content by prompting
+        the user for confirmation or rename decisions via message boxes.
+        The YAML file is rewritten with updated content if the operation
+        succeeds.
 
         Parameters
         ----------
-        template_name (str): a template name
-        template (str): a template content
+        template_name : str
+            The name of the template to store. Must follow the valid
+            naming convention enforced by `search`.
+        template : str
+            The template content to be stored.
 
         Returns
         -------
-        bool: True if success written, otherwise False.
+        bool
+            True if the template was successfully written or updated.
+            False if the file does not exist, the user denies overwrite
+            or rename, a duplicate violation occurs, or an error is
+            encountered while writing.
+
+        Status Codes
+        ------------
+        - 'USER_TEMPLATE_NOT_EXISTED' : File does not exist.
+        - 'FOUND' / 'NOT_FOUND'       : Result of initial search.
+        - 'DENIED-OVERWRITE'          : User declined overwriting a duplicate name.
+        - 'DUPLICATE-NAME-AND-CONTENT-VIOLATION' : Duplicate name and content detected.
+        - 'DENIED-RENAME'             : User declined renaming when duplicate content found.
+        - 'INVALID-TEMPLATE-FORMAT'   : File format invalid.
+        - Error message string         : Exception occurred while writing.
+
+        Notes
+        -----
+        - Templates are stored in YAML with block scalar style (``|``).
+        - Existing templates with identical content may be removed if
+          the user agrees to rename.
+        - The file is fully rewritten after modifications, preserving
+          sorted template names.
+        - Message boxes are used to interact with the user for overwrite
+          or rename decisions.
         """
         self.status = ''
         if not self.is_exist():
@@ -325,21 +489,22 @@ class UserTemplate:
             yaml_obj = yaml.load(content, Loader=yaml.SafeLoader)
             yaml_obj = yaml_obj or dict()
             if template_name in yaml_obj:
-                title = 'Duplicate Template Name'
-                fmt = ('{!r} template name is already existed.\n'
-                       'Do you want to overwrite?')
-                question = fmt.format(template_name)
-                response = create_msgbox(title=title, question=question)
+                response = create_msgbox(
+                    title="Error: Duplicate Template Name",
+                    question=f"Template name '{template_name}' already "
+                             f"exists.\nDo you want to overwrite?"
+                )
                 if response == 'yes':
                     yaml_obj[template_name] = template
                     for name, tmpl in yaml_obj.items():
                         if tmpl.strip() == template.strip() and name != template_name:
-                            title = 'Duplicate Template Name And Content'
-                            fmt = ('{!r} template name is a duplicate name and '
-                                   'duplicate content with other {!r}.\n  '
-                                   'CANT NOT overwrite')
-                            error = fmt.format(template_name, name)
-                            create_msgbox(title=title, error=error)
+                            create_msgbox(
+                                title="Error: Duplicate Template Name and Content",
+                                error=(
+                                    f"Template name '{template_name}' is a duplicate and "
+                                    f"has identical content to '{name}'.\nCannot overwrite."
+                                )
+                            )
                             self.status = 'DUPLICATE-NAME-AND-CONTENT-VIOLATION'
                             return False
                 else:
@@ -349,11 +514,19 @@ class UserTemplate:
                 removed_lst = []
                 for name, tmpl in yaml_obj.items():
                     if tmpl.strip() == template.strip():
-                        title = 'Duplicate Template Content'
-                        fmt = ('{!r} template name (i.e. your template) has a '
-                               'same content with {!r}.\n  Do you want to rename?')
-                        question = fmt.format(template_name, name)
-                        response = create_msgbox(title=title, question=question)
+                        title = "Error: Duplicate Template Content"
+                        question = (
+                            f"Template name '{template_name}' (your template) has the same content as '{name}'.\n"
+                            "Do you want to rename?"
+                        )
+                        response = create_msgbox(
+                            title="Error: Duplicate Template Content",
+                            question=(
+                                f"Template name '{template_name}' (your template) "
+                                f"has the same content as '{name}'.\n"
+                                "Do you want to rename?"
+                            )
+                        )
                         if response == 'yes':
                             removed_lst.append(name)
                         else:
@@ -373,16 +546,15 @@ class UserTemplate:
                 lst.append(data)
 
             try:
-                with open(self.filename, 'w') as stream:
-                    content = '\n\n'.join(lst)
-                    stream.write(content)
-                    self.content = content
-                    return True
+                self.content = '\n\n'.join(lst)
+                file.write(self.filename, self.content)
+                return True
             except Exception as ex:
-                title = 'Writing User Template File Error'
-                error = "{}: {}.".format(type(ex).__name__, ex)
-                self.status = error
-                create_msgbox(title=title, error=error)
+                self.status = f"{type(ex).__name__}: {ex}"
+                create_msgbox(
+                    title="Error: Writing User Template File",
+                    error=self.status
+                )
                 return False
         else:
             return False
