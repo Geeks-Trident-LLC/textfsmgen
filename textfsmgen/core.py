@@ -1,4 +1,28 @@
-"""Module containing the logic for textFSM generator."""
+"""
+textfsmgen.core
+===============
+
+Core functionality for the TextFSM Generator.
+
+This module provides the foundational logic for building and validating
+TextFSM templates. It defines the primary classes and functions that
+transform user-provided snippets into structured parsing templates,
+support test execution, and integrate with configuration options.
+
+Purpose
+-------
+- Parse and process user input into TextFSM templates.
+- Provide template generation and validation utilities.
+- Support integration with test data and configuration settings.
+- Serve as the central engine for CLI and GUI workflows.
+
+Notes
+-----
+- Acts as the backbone of the TextFSM Generator package.
+- Designed for extensibility: additional parsing strategies or test
+  frameworks can be integrated via `TemplateBuilder`.
+- Errors are surfaced with descriptive messages to aid debugging.
+"""
 
 import re
 from datetime import datetime
@@ -13,6 +37,7 @@ from regexapp.core import enclose_string
 from genericlib import get_data_as_tabular
 from genericlib import Printer
 from genericlib import MiscObject
+import genericlib.file as file
 
 from textfsmgen.exceptions import TemplateParsedLineError
 from textfsmgen.exceptions import TemplateBuilderError
@@ -26,19 +51,6 @@ from textfsmgen.config import version
 import logging
 logger = logging.getLogger(__file__)
 
-
-def save_file(filename, content):
-    """Save data to file
-
-    Parameters
-    ----------
-    filename (str): a file name
-    content (str): a file content
-    """
-    filename = str(filename).strip()
-    if filename:
-        with open(filename, 'w') as stream:
-            stream.write(content)
 
 
 class ParsedLine:
@@ -557,8 +569,7 @@ class TemplateBuilder:
             template=enclose_string(self.template),
             test_data=enclose_string(self.test_data)
         )
-
-        save_file(self.filename, script)
+        file.write(self.filename, script)
         return script
 
     def create_pytest(self):
@@ -603,7 +614,7 @@ class TemplateBuilder:
             test_data=enclose_string(self.test_data)
         )
 
-        save_file(self.filename, script)
+        file.write(self.filename, script)
         return script
 
     def create_python_test(self):
@@ -669,7 +680,7 @@ class TemplateBuilder:
             test_data=enclose_string(self.test_data)
         )
 
-        save_file(self.filename, script)
+        file.write(self.filename, script)
         return script
 
 

@@ -46,7 +46,6 @@ import genericlib.file as file
 
 from textfsmgen import TemplateBuilder
 from textfsmgen.exceptions import TemplateBuilderInvalidFormat
-from textfsmgen.core import save_file
 from textfsmgen.config import Data
 
 from textfsmgen import version
@@ -2100,7 +2099,7 @@ class Application:
                 response = 'yes'
 
             if response == 'yes':
-                save_file(filename, content)
+                file.write(filename, content)
 
         def callback_clear_text_btn():
             """
