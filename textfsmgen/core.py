@@ -36,7 +36,7 @@ from regexapp.core import enclose_string
 from genericlib import get_data_as_tabular
 from genericlib import Printer
 from genericlib import MiscObject
-from genericlib.text import dedent_and_strip
+import genericlib.text as text
 import genericlib.file as file
 
 from textfsmgen.exceptions import TemplateParsedLineError
@@ -332,57 +332,88 @@ class ParsedLine:
 
 
 class TemplateBuilder:
-    """Create template and test script
+    """
+    Build TextFSM templates and generate associated test scripts.
+
+    The TemplateBuilder class constructs parsing templates from user-provided
+    data and test data, and can generate unit test scripts in multiple formats
+    (unittest, pytest, or generic Python). It supports metadata such as author,
+    company, and description, and provides verification utilities to ensure
+    template correctness.
 
     Attributes
     ----------
-    test_data (str): a test data.
-    user_data (str): a user data.
-    namespace (str): a reference name for template datastore.
-    author (str): author name.  Default is empty.
-    email (str): author email.  Default is empty.
-    company (str): company name.  Default is empty.
-    description (str): a description about template.  Default is empty.
-    filename (str): a saving file name for a generated test script to file name.
-    variables (list): a list of variable.
-    statements (list): a list of template statement.
-    template (str): a generated template.
-    template_parser (TextFSM): instance of TextFSM.
-    verified_message (str): a verified message.
-    debug (bool): a flag to check bad template.
-    bad_template (str): a bad generated template.
+    test_data : str
+        Sample test data used to validate the generated template.
+    user_data : str
+        Raw user input data from which the template is derived.
+    namespace : str
+        Reference name for the template datastore.
+    author : str, optional
+        Author name. Defaults to an empty string.
+    email : str, optional
+        Author email. Defaults to an empty string.
+    company : str, optional
+        Company name. Defaults to an empty string.
+    description : str, optional
+        Description of the template. Defaults to an empty string.
+    filename : str, optional
+        File name to save the generated test script. Defaults to an empty string.
+    variables : list
+        List of variables extracted from the template.
+    statements : list
+        List of template statements.
+    template : str
+        The generated TextFSM template string.
+    template_parser : TextFSM
+        Instance of the TextFSM parser for the generated template.
+    verified_message : str
+        Message returned after successful verification.
+    debug : bool
+        Flag indicating whether to enable debug mode for template validation.
+    bad_template : str
+        Representation of an invalid or failed template.
 
     Methods
     -------
-    TemplateBuilder.convert_to_string(data) -> str
     prepare() -> None
+        Prepare internal structures before building the template.
     build_template_comment() -> None
+        Generate template comments for documentation.
     reformat() -> None
+        Reformat the template for readability and consistency.
     build() -> None
+        Build the final template from user and test data.
     show_debug_info(test_result=None, expected_result=None) -> None
+        Display debug information comparing test results with expectations.
     verify(expected_rows_count=None, expected_result=None, debug=False) -> bool
+        Verify the generated template against expected results.
     create_unittest() -> str
+        Generate a Python unittest script for the template.
     create_pytest() -> str
+        Generate a Python pytest script for the template.
     create_python_test() -> str
+        Generate a generic Python test script snippet.
 
     Raises
     ------
-    TemplateBuilderError: will raise exception if a created template is invalid.
-    TemplateBuilderInvalidFormat: will raise exception if
-            user_data has invalid format.
+    TemplateBuilderError
+        Raised if the generated template is invalid.
+    TemplateBuilderInvalidFormat
+        Raised if `user_data` has an invalid format.
     """
     logger = logger
 
     def __init__(self, test_data='', user_data='', namespace='',
                  author='', email='', company='', description='',
                  filename='', debug=False):
-        self.test_data = TemplateBuilder.convert_to_string(test_data)
-        self.user_data = TemplateBuilder.convert_to_string(user_data)
+        self.test_data = text.list_to_text(test_data)
+        self.user_data = text.list_to_text(user_data)
         self.namespace = str(namespace)
         self.author = str(author)
         self.email = str(email)
         self.company = str(company)
-        self.description = TemplateBuilder.convert_to_string(description)
+        self.description = text.list_to_text(description)
         self.filename = str(filename)
         self.variables = []
         self.statements = []
@@ -394,23 +425,6 @@ class TemplateBuilder:
         self.bad_template = ''
 
         self.build()
-
-    @classmethod
-    def convert_to_string(cls, data):
-        """convert data to string
-
-        Parameters
-        ----------
-        data (str, list): a data
-
-        Returns
-        -------
-        str: a text
-        """
-        if isinstance(data, list):
-            return '\n'.join(str(item) for item in data)
-        else:
-            return str(data)
 
     def prepare(self):
         """prepare data to build template"""
@@ -641,7 +655,7 @@ class TemplateBuilder:
             error = 'CANT create Python unittest script without test data.'
             raise TemplateBuilderError(error)
 
-        fmt = dedent_and_strip("""
+        fmt = text.dedent_and_strip("""
             {docstring}
             
             import unittest
@@ -685,7 +699,7 @@ class TemplateBuilder:
             error = 'CANT create Python pytest script without test data.'
             raise TemplateBuilderError(error)
 
-        fmt = dedent_and_strip("""
+        fmt = text.dedent_and_strip("""
             {docstring}
 
             from textfsm import TextFSM
@@ -729,7 +743,7 @@ class TemplateBuilder:
             error = 'CANT create Python snippet script without test data.'
             raise TemplateBuilderError(error)
 
-        fmt = dedent_and_strip(r'''
+        fmt = text.dedent_and_strip(r'''
             {docstring}
 
             from textfsm import TextFSM
