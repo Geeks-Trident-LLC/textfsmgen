@@ -50,34 +50,51 @@ logger = logging.getLogger(__file__)
 
 
 class ParsedLine:
-    """Parse line to template format
+    """
+    Represent and parse a single line into template format.
+
+    The `ParsedLine` class encapsulates the logic for interpreting a line
+    of text as part of a template definition. It supports parsing operators,
+    handling comments, preserving raw text, and extracting variables.
 
     Attributes
     ----------
-    text (str): a data.
-    line (str): a line data.
-    template_op (str): template operator.
-    ignore_case (bool): a case-insensitive flag.
-    is_comment (bool): an indicator for comment.
-    comment_str (str): a comment text.
-    is_kept (bool): an indicator to keep AS-IS.
-    kept_str (str): a kept text.
-    variables (list): a list of variables.
+    text : str
+        Raw text content associated with the line.
+    line : str
+        Original line data before parsing.
+    template_op : str
+        Template operator applied to the line.
+    ignore_case : bool
+        Flag indicating whether parsing should be case-insensitive.
+    is_comment : bool
+        True if the line is a comment, otherwise False.
+    comment_text : str
+        The comment text if the line is marked as a comment.
+    is_kept : bool
+        True if the line should be preserved as-is, otherwise False.
+    kept_text : str
+        The preserved text when `is_kept` is True.
+    variables : list
+        List of variables extracted from the line.
 
     Methods
     -------
     is_empty() -> bool
-        True if a line does not have data, otherwise False.
+        Return True if the line contains no data, otherwise False.
     is_a_word() -> bool
-        True if text is a single word, otherwise False.
+        Return True if the text represents a single word, otherwise False.
     is_not_containing_letter() -> bool
-        True if line is not containing any letter, otherwise, False.
+        Return True if the line contains no alphabetic characters, otherwise False.
     build() -> None
+        Construct the internal representation of the parsed line.
     get_statement() -> str
+        Return the formatted statement derived from the parsed line.
 
     Raises
-    -------
-    TemplateParsedLineError: raise exception if there is invalid format for parsing.
+    ------
+    TemplateParsedLineError
+        Raised if the line cannot be parsed due to invalid format.
     """
     def __init__(self, text):
         self.text = str(text)
@@ -92,32 +109,85 @@ class ParsedLine:
         self.build()
 
     @property
-    def is_empty(self):
-        """return True if a line is empty"""
-        return not bool(self.line.strip())
+    def is_empty(self) -> bool:
+        """
+        Check whether the line is empty.
 
-    @property
-    def is_a_word(self):
-        """return True if text is a single word"""
-        return bool(re.match(r'[a-z]\w+$', self.text.rstrip(), re.I))
-
-    @property
-    def is_not_containing_letter(self):
-        """return True if a line doesn't contain any alphanum"""
-        if self.is_empty:
-            return False
-
-        return bool(re.match(r'[^a-z0-9]+$', self.line, re.I))
-
-    def get_statement(self):
-        """return a statement for building template
+        This property evaluates the current line and determines if it
+        contains only whitespace or no characters at all.
 
         Returns
         -------
-        str: a statement for template
+        bool
+            True if the line is empty or consists solely of whitespace,
+            False otherwise.
+        """
+        return not bool(self.line.strip())
+
+    @property
+    def is_a_word(self) -> bool:
+        """
+        Check whether the text represents a single word.
+
+        This property evaluates the `text` attribute and determines if it
+        consists of exactly one word. A valid word is defined as starting
+        with an alphabetic character and followed by zero or more
+        alphanumeric or underscore characters.
+
+        Returns
+        -------
+        bool
+            True if the text is a single word, False otherwise.
+        """
+        return bool(re.match(r'^[A-Za-z]\w*$', self.text.strip()))
+
+    @property
+    def is_not_containing_letter(self) -> bool:
+        """
+        Check whether the line contains no alphabetic characters.
+
+        This property evaluates the current line and determines if it
+        consists entirely of non-alphanumeric characters. Empty lines
+        are explicitly excluded and return False.
+
+        Returns
+        -------
+        bool
+            True if the line contains no alphabetic characters (only
+            digits, symbols, or whitespace), False otherwise.
         """
         if self.is_empty:
-            return ''
+            return False
+        return bool(re.match(r'[^a-z0-9]+$', self.line, flags=re.I))
+
+    def get_statement(self) -> str:
+        """
+        Construct the template statement for the current line.
+
+        This method interprets the line according to its type (empty,
+        comment, preserved text, single word, or regex pattern) and
+        generates a formatted statement suitable for building a template.
+        It applies validation, whitespace handling, and optional template
+        operators.
+
+        Returns
+        -------
+        str
+            A formatted template statement. Returns an empty string if
+            the line is empty.
+
+        Notes
+        -----
+        - Empty lines return an empty string.
+        - Comment lines return the associated comment text.
+        - Preserved lines return the kept text as-is.
+        - Single words return the raw text.
+        - Regex patterns are validated and adjusted for case-insensitivity,
+          anchors, and optional template operators.
+        - Variables extracted from the line are stored in `self.variables`.
+        """
+        if self.is_empty:
+            return ""
 
         if self.is_comment:
             return self.comment_text
@@ -146,69 +216,119 @@ class ParsedLine:
             except Exception as ex:     # noqa
                 statement = pat_obj
 
+        # Normalize case-insensitive flag placement
         statement = statement.replace('(?i)^', '^(?i)')
+
+        # Ensure proper start anchor spacing
         spacer = '  ' if statement.startswith('^') else '  ^'
-        statement = '{}{}'.format(spacer, statement)
+        statement = f"{spacer}{statement}"
+
+        # Ensure proper end anchor
         if statement.endswith('$') and not statement.endswith(r'\$'):
-            statement = '{}$'.format(statement)
+            statement = f"{statement}$"
+
+        # Append template operator if present
         if self.template_op:
-            statement = '{} -> {}'.format(statement, self.template_op)
+            statement = f"{statement} -> {self.template_op}"
+
         return statement
 
-    def build(self):
-        """parse line to reapply for building template"""
-        lst = self.text.rsplit(' -> ', 1)
+    def build(self) -> None:
+        """
+        Parse the line and reapply formatting for template construction.
+
+        This method interprets the raw `text` attribute, extracts template
+        operators, and applies flags for case-insensitivity, comments, or
+        preserved lines. It normalizes operator names, validates syntax,
+        and prepares internal attributes (`template_op`, `line`, `comment_text`,
+        `kept_text`) for later use in template generation.
+
+        Workflow
+        --------
+        1. Split the text into template content and operator (if present).
+        2. Normalize operator names (e.g., `norecord` → `NoRecord`,
+           `clearall` → `ClearAll`).
+        3. Handle compound operators (e.g., `next.norecord`, `error.clear`).
+        4. Apply flags:
+           - `ignore_case__` → mark line as case-insensitive.
+           - `comment__`     → mark line as a comment.
+           - `keep__`        → preserve line as-is.
+        5. Construct `comment_text` or `kept_text` when applicable.
+        6. Raise `TemplateParsedLineError` if the format is invalid.
+
+        Attributes Set
+        --------------
+        template_op : str
+            Normalized template operator string (if present).
+        line : str
+            Parsed line content without flags.
+        ignore_case : bool
+            True if the line should be case-insensitive.
+        is_comment : bool
+            True if the line is a comment.
+        is_kept : bool
+            True if the line should be preserved as-is.
+        comment_text : str
+            Formatted comment text (if applicable).
+        kept_text : str
+            Formatted preserved text (if applicable).
+
+        Raises
+        ------
+        TemplateParsedLineError
+            If the line format is invalid or cannot be parsed.
+        """
+        lst = self.text.rsplit(" -> ", 1)
         if len(lst) == 2:
             tmpl_op = lst[-1].strip()
             first, *remaining = tmpl_op.split(' ', 1)
 
-            tbl = {'norecord': 'NoRecord', 'clearall': 'ClearAll'}
+            mapping = {'norecord': 'NoRecord', 'clearall': 'ClearAll'}
             if '.' in first:
                 pat = r'(?P<lop>next|continue|error)\.' \
                       r'(?P<rop>norecord|record|clearall|clear)$'
-                match = re.match(pat, first, re.I)
+                match = re.match(pat, first, flags=re.I)
                 if match:
-                    lop = match.group('lop').title()
-                    rop = match.group('rop').title()
-                    rop = tbl.get(rop.lower(), rop)
-                    op = '{}.{}'.format(lop, rop)
+                    lop = match.group("lop").title()
+                    rop = match.group("rop").title()
+                    rop = mapping.get(rop.lower(), rop)
+                    op = f"{lop}.{rop}"
                 else:
                     op = first
-                tmpl_op = '{} {}'.format(op, ''.join(remaining))
+                tmpl_op = f"{op} {''.join(remaining)}"
             else:
                 pat = r'(next|continue|error|norecord|record|clearall|clear)$'
-                if re.match(pat, first, re.I):
+                if re.match(pat, first, flags=re.I):
                     op = first.title()
-                    op = tbl.get(op.lower(), op)
+                    op = mapping.get(op.lower(), op)
                 else:
                     op = first
-                tmpl_op = '{} {}'.format(op, ''.join(remaining))
+                tmpl_op = f"{op} {''.join(remaining)}"
 
             self.template_op = tmpl_op.strip()
             text = lst[0].rstrip()
         else:
             text = self.text
 
-        pat = r'^(?P<flag>(ignore_case|comment|keep)__+ )?(?P<line>.*)'
-        match = re.match(pat, text, re.I)
+        pat = r"^(?P<flag>(ignore_case|comment|keep)__+ )?(?P<line>.*)"
+        match = re.match(pat, text, flags=re.I)
         if match:
-            value = match.group('flag') or ''
-            flag = value.lower().strip().rstrip('_')
-            self.ignore_case = flag == 'ignore_case'
-            self.is_comment = flag == 'comment'
-            self.is_kept = flag == 'keep'
-            self.line = match.group('line') or ''
+            value = match.group("flag") or ""
+            flag = value.lower().strip().rstrip("_")
+            self.ignore_case = flag == "ignore_case"
+            self.is_comment = flag == "comment"
+            self.is_kept = flag == "keep"
+            self.line = match.group("line") or ""
 
             if self.is_comment:
-                prefix = '  ' if value.count('_') == 2 else ''
-                self.comment_text = '{}# {}'.format(prefix, self.line)
+                prefix = "  " if value.count("_") == 2 else ""
+                self.comment_text = f"{prefix}# {self.line}"
 
             if self.is_kept:
                 self.kept_text = '  ^{}'.format(self.line.strip().lstrip('^'))
 
         else:
-            error = 'Invalid format - {!r}'.format(self.text)
-            raise TemplateParsedLineError(error)
+            raise TemplateParsedLineError(f"Invalid format - {self.text!r}")
 
 
 class TemplateBuilder:
