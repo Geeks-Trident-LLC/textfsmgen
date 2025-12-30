@@ -4,7 +4,7 @@ from regexapp import TextPattern
 
 from genericlib import STRING, PATTERN, NUMBER, Misc
 from textfsmgen.gp import LData, TranslatedPattern, RuntimeException
-from textfsmgen.gpiteractive import IterativeLinePattern
+from textfsmgen.gpiterative import IterativeLinePattern
 from textfsmgen.gpcommon import GPCommon
 
 

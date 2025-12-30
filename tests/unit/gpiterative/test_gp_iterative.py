@@ -6,7 +6,7 @@ from textwrap import dedent
 from textfsmgen.core import verify
 from textfsmgen.core import get_textfsm_template
 
-from textfsmgen.gpiteractive import IterativeLinePattern, IterativeLinesPattern
+from textfsmgen.gpiterative import IterativeLinePattern, IterativeLinesPattern
 
 
 class TestIterativeLinePattern:
