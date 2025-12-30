@@ -1443,15 +1443,15 @@ class Application:
 
         # regex app package
         label = self.create_custom_label(
-            frame, text=Data.gtregexapp_text,
-            link=Data.gtregexapp_link
+            frame, text=Data.regexapp_text,
+            link=Data.regexapp_link
         )
         label.grid(row=3, column=0, padx=(20, 0), sticky=tk.W)
 
         # genericlib package
         label = self.create_custom_label(
-            frame, text=Data.gtgenlib_text,
-            link=Data.gtgenlib_link
+            frame, text=Data.genlib_text,
+            link=Data.genlib_link
         )
         label.grid(row=4, column=0, padx=(20, 0), sticky=tk.W)
 
