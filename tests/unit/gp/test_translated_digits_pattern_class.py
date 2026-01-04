@@ -81,7 +81,7 @@ class TestTranslatedDigitsPatternClass:
     )
     def test_is_not_subset_of(self, other):
         """
-        Verify that digits data is not a subset of (digit, letters,
+        Verify that digits data is not a subset of (digit, letter(s),
         punctuation(s), punctuation-group)
         """
         args = to_list(other)
