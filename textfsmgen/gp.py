@@ -1965,56 +1965,152 @@ class TranslatedMixedNumberPattern(TranslatedPattern):
 
 
 class TranslatedLetterPattern(TranslatedPattern):
-    def __init__(self, data, *other):
-        super().__init__(data, *other, name=TEXT.LETTER,
-                         defined_pattern=PATTERN.LETTER,
-                         root_name='non_whitespace')
+    """
+    Specialized translated pattern for single-letter inputs.
+
+    This subclass of `TranslatedPattern` defines behavior specific to
+    letters. It provides subset and superset checks against other
+    translated patterns and supports recommendation logic for
+    generalization when combined with different pattern types.
+
+    Parameters
+    ----------
+    data : str
+        The input string representing a letter.
+    *other : list of arguments, optional
+        Additional arguments passed to the base class initializer.
+
+    Attributes
+    ----------
+    name : str
+        Identifier for this pattern type ("letter").
+    defined_pattern : str
+        Regex pattern used to match a single letter.
+    root_name : str
+        Root category name for this pattern ("non_whitespace").
+    """
+
+    def __init__(self, data: str, *other: object) -> None:
+        super().__init__(
+            data,
+            *other,
+            name=TEXT.LETTER,
+            defined_pattern=PATTERN.LETTER,
+            root_name="non_whitespace",
+        )
 
     def is_subset_of(self, other):
+        """
+        Determine whether this letter pattern is a subset of another translated pattern.
+
+        A letter is considered a subset of broader categories such as
+        letters, alphanumeric, graphs, words, mixed words, non-whitespace
+        sequences, and non-whitespace groups.
+
+        Parameters
+        ----------
+        other : TranslatedPattern or inherited of TranslatedPattern
+            The pattern instance to compare against.
+
+        Returns
+        -------
+        bool
+            True if this letter pattern is a subset of `other`,
+            otherwise False.
+
+        Raises
+        ------
+        RuntimeError
+            If `other` is not an instance of `TranslatedPattern`.
+        """
         if not isinstance(other, TranslatedPattern):
             self.raise_recommend_exception(other)
-        chk = other.is_letter() or other.is_letters()
-        chk |= other.is_alphabet_numeric() or other.is_graph()
-        chk |= other.is_word() or other.is_words()
-        chk |= other.is_mixed_word() or other.is_mixed_words()
-        chk |= other.is_non_whitespace() or other.is_non_whitespaces()
-        chk |= other.is_non_whitespaces_group()
 
-        return chk
+        return any([
+            other.is_letter(),
+            other.is_letters(),
+            other.is_alphabet_numeric(),
+            other.is_graph(),
+            other.is_word(),
+            other.is_words(),
+            other.is_mixed_word(),
+            other.is_mixed_words(),
+            other.is_non_whitespace(),
+            other.is_non_whitespaces(),
+            other.is_non_whitespaces_group(),
+        ])
 
     def is_superset_of(self, other):
+        """
+        Determine whether this letter pattern is a superset of another translated pattern.
+
+        A letter pattern is not considered a superset of any other
+        translated pattern. This method always returns False.
+
+        Parameters
+        ----------
+        other : TranslatedPattern or inherited of TranslatedPattern
+            The pattern instance to compare against.
+
+        Returns
+        -------
+        bool
+            Always False.
+
+        Raises
+        ------
+        RuntimeError
+            If `other` is not an instance of `TranslatedPattern`.
+        """
         if not isinstance(other, TranslatedPattern):
             self.raise_recommend_exception(other)
         return False
 
     def recommend(self, other):
-        if self.is_subset_of(other) or self.is_superset_of(other):
-            if self.is_subset_of(other):
-                return self.get_new_subset(other)
-            else:
-                return self.get_new_superset(other)
-        else:
-            case1 = other.is_digit()
-            case2 = other.is_digits()
-            case3 = other.is_number() or other.is_mixed_number()
-            case4 = other.is_symbol()
-            case5 = other.is_symbols()
-            case6 = other.is_symbols_group()
+        """
+        Recommend a generalized translated pattern when combined with another pattern.
 
-            if case1:
-                return TranslatedAlphabetNumericPattern(self.data, other.data)
-            elif case2:
-                return TranslatedWordPattern(self.data, other.data)
-            elif case3:
-                return TranslatedMixedWordPattern(self.data, other.data)
-            elif case4:
-                return TranslatedGraphPattern(self.data, other.data)
-            elif case5:
-                return TranslatedNonWhitespacesPattern(self.data, other.data)
-            elif case6:
-                return TranslatedNonWhitespacesGroupPattern(self.data, other.data)
-            else:
-                return self.raise_recommend_exception(other)
+        If this letter pattern is a subset or superset of `other`,
+        a new subset or superset pattern is returned. Otherwise,
+        specific combinations with digits, numbers, symbols, or
+        non-whitespace categories produce broader generalized
+        patterns.
+
+        Parameters
+        ----------
+        other : TranslatedPattern or inherited of TranslatedPattern
+            The pattern to combine with this letter pattern.
+
+        Returns
+        -------
+        TranslatedPattern or inherited of TranslatedPattern
+            A generalized translated pattern instance based on the
+            relationship between this letter and `other`.
+
+        Raises
+        ------
+        RuntimeError
+            If no recommendation logic is implemented for the given case.
+        """
+        if self.is_subset_of(other):
+            return self.get_new_subset(other)
+        if self.is_superset_of(other):
+            return self.get_new_superset(other)
+
+        if other.is_digit():
+            return TranslatedAlphabetNumericPattern(self.data, other.data)
+        if other.is_digits():
+            return TranslatedWordPattern(self.data, other.data)
+        if other.is_number() or other.is_mixed_number():
+            return TranslatedMixedWordPattern(self.data, other.data)
+        if other.is_symbol():
+            return TranslatedGraphPattern(self.data, other.data)
+        if other.is_symbols():
+            return TranslatedNonWhitespacesPattern(self.data, other.data)
+        if other.is_symbols_group():
+            return TranslatedNonWhitespacesGroupPattern(self.data, other.data)
+
+        return self.raise_recommend_exception(other)
 
 
 class TranslatedLettersPattern(TranslatedPattern):

@@ -102,28 +102,20 @@ class TestTranslatedNumberPatternClass:
         "number, expected_class",
         [
             (
-                "1.1",  # number
-                # When number is combined with a number,
-                # the recommendation should produce a number pattern.
-                TranslatedNumberPattern
+                "1.1",                  # number
+                TranslatedNumberPattern # (number, number) => number
             ),
             (
-                "-1.1", # mixed number
-                # When number is combined with a mixed number,
-                # the recommendation should produce a mixed number pattern.
-                TranslatedMixedNumberPattern
+                "-1.1",                         # mixed-number
+                TranslatedMixedNumberPattern    # (number, mixed-number) => mixed-number
             ),
             (
-                "abc\xc8",  # non-whitespaces
-                # When number is combined with non-whitespaces,
-                # the recommendation should produce non-whitespaces pattern.
-                TranslatedNonWhitespacesPattern
+                "abc\xc8",                      # non-whitespaces
+                TranslatedNonWhitespacesPattern # (number, non-whitespaces) => non-whitespaces
             ),
             (
-                "abc\xc8 xyz",  # non-whitespace group
-                # When number is combined with non-whitespaces,
-                # the recommendation should produce non-whitespace group pattern.
-                TranslatedNonWhitespacesGroupPattern
+                "abc\xc8 xyz",                       # non-whitespace-group
+                TranslatedNonWhitespacesGroupPattern # (number, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -141,16 +133,12 @@ class TestTranslatedNumberPatternClass:
         "number, expected_class",
         [
             (
-                "1",    # digit
-                # When number are combined with a digit,
-                # the recommendation should produce number pattern.
-                TranslatedNumberPattern
+                "1",                    # digit
+                TranslatedNumberPattern # (number, digit) => number
             ),
             (
-                "12",  # digits
-                # When number are combined with digits,
-                # the recommendation should produce number pattern.
-                TranslatedNumberPattern
+                "12",                   # digits
+                TranslatedNumberPattern # (number, digits) => number
             ),
         ],
     )
@@ -167,64 +155,49 @@ class TestTranslatedNumberPatternClass:
     @pytest.mark.parametrize(
         "number, expected_class",
         [
-            # When a number is combined with letters, alphanumeric characters,
-            # graphs, or words,
-            # the recommendation should produce a TranslatedMixedWordPattern.
             (
-                "a",  # letter
-                TranslatedMixedWordPattern
+                "a",                        # letter
+                TranslatedMixedWordPattern  # (number, letter) => mixed-word
             ),
             (
-                "ab",  # letters
-                TranslatedMixedWordPattern
+                "ab",                       # letters
+                TranslatedMixedWordPattern  # (number, letters) => mixed-word
             ),
             (
-                ["a", "1"], # an alphabet or numeric
-                TranslatedMixedWordPattern
+                ["a", "1"],                 # alphabet-numeric
+                TranslatedMixedWordPattern  # (number, alphabet-numeric) => mixed-word
             ),
             (
-                ["a", "1", "#"], # a graph character
-                TranslatedMixedWordPattern
+                ["a", "1", "#"],            # graph
+                TranslatedMixedWordPattern  # (number, graph) => mixed-word
             ),
             (
-                "abc123",   # a word
-                TranslatedMixedWordPattern
-            ),
-
-            # ====================
-            # When a number is combined with words
-            # the recommendation should produce a TranslatedMixedWordsPattern.
-            (
-                    "a1 b1",  # words
-                    TranslatedMixedWordsPattern
-            ),
-
-            # ====================
-            # When a number is combined with punctuation(s) or non-whitespace(s)
-            # the recommendation should produce a TranslatedNonWhitespacesPattern.
-            (
-                "+",  # a punctuation
-                TranslatedNonWhitespacesPattern
+                "abc123",                   # word
+                TranslatedMixedWordPattern  # (number, word) => mixed-word
             ),
             (
-                "++--==",   # punctuations
-                TranslatedNonWhitespacesPattern
+                    "a1 b1",                    # words
+                    TranslatedMixedWordsPattern # (number, words) => mixed-words
             ),
             (
-                "\xc8",  # a non-whitespace
-                TranslatedNonWhitespacesPattern
+                "+",                            # punctuation
+                TranslatedNonWhitespacesPattern # (number, punct) => non-whitespaces
             ),
             (
-                "abc\xc8",  # multi-non-whitespace
-                TranslatedNonWhitespacesPattern
+                "++--==",                       # punctuations
+                TranslatedNonWhitespacesPattern # (number, puncts) => non-whitespaces
             ),
-
-            # ====================
-            # When a number is combined with punctuation-group
-            # the recommendation should produce a TranslatedNonWhitespacesGroupPattern.
             (
-                    "++ -- ** ==",  # punctuation-group
-                    TranslatedNonWhitespacesGroupPattern
+                "\xc8",                         # non-whitespace
+                TranslatedNonWhitespacesPattern # (number, non-whitespace) => non-whitespaces
+            ),
+            (
+                "abc\xc8",                      # non-whitespaces
+                TranslatedNonWhitespacesPattern # (number, non-whitespaces) => non-whitespaces
+            ),
+            (
+                    "++ -- ** ==",                       # punctuation-group
+                    TranslatedNonWhitespacesGroupPattern # (number, non-whitespace-group) => non-whitespace-group
             ),
 
         ],

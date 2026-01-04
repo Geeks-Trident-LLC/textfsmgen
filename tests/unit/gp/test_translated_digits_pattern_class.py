@@ -33,8 +33,6 @@ TranslatedNonWhitespacesPattern,
 TranslatedNonWhitespacesGroupPattern
 )
 
-from tests.unit.gp import TranslatedDummyPattern
-
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
 
 
@@ -106,58 +104,40 @@ class TestTranslatedDigitsPatternClass:
         "data, expected_class",
         [
             (
-                "123",  # digits
-                # When digits are combined with digits,
-                # the recommendation should produce a digits pattern.
-                TranslatedDigitsPattern
+                "123",                  # digits
+                TranslatedDigitsPattern # (digits, digits) => digits
             ),
             (
-                "1.1",  # number
-                # When digits are combined with a number,
-                # the recommendation should produce a number pattern.
-                TranslatedNumberPattern
+                "1.1",                  # number
+                TranslatedNumberPattern # (digits, number) => number
             ),
             (
-                "-1.1", # mixed number
-                # When digits are combined with a mixed-number,
-                # the recommendation should produce a mixed-number pattern.
-                TranslatedMixedNumberPattern
+                "-1.1",                         # mixed-number
+                TranslatedMixedNumberPattern    # (digits, mixed-number) => mixed-number
             ),
             (
-                "abc123",   # a word
-                # When digits are combined with a word,
-                # the recommendation should produce a word pattern.
-                TranslatedWordPattern
+                "abc123",               # word
+                TranslatedWordPattern   # (digits, word) => word
             ),
             (
-                "a1 a12",   # words
-                # When digits is combined with words,
-                # the recommendation should produce words pattern.
-                TranslatedWordsPattern
+                "a1 a12",               # words
+                TranslatedWordsPattern  # (digits, words) => words
             ),
             (
-                "abc.123",  # a mixed word
-                # When digit is combined with a mixed-word,
-                # the recommendation should produce a mixed-word pattern.
-                TranslatedMixedWordPattern
+                "abc.123",                  # mixed-word
+                TranslatedMixedWordPattern  # (digits, mixed-word) => mixed-word
             ),
             (
-                "a.1 b.1",  # mixed words
-                # When digits are combined with mixed-words,
-                # the recommendation should produce mixed-words pattern.
-                TranslatedMixedWordsPattern
+                "a.1 b.1",                  # mixed-words
+                TranslatedMixedWordsPattern # (digits, mixed-words) => mixed-words
             ),
             (
-                "abc\xc8",  # non-whitespaces
-                # When digits are combined with non-whitespaces,
-                # the recommendation should produce non-whitespaces pattern.
-                TranslatedNonWhitespacesPattern
+                "abc\xc8",                      # non-whitespaces
+                TranslatedNonWhitespacesPattern # (digits, non-whitespaces) => non-whitespaces
             ),
             (
-                "abc\xc8 xyz",  # non-whitespace group
-                # When digits are combined with non-whitespaces,
-                # the recommendation should produce non-whitespace group pattern.
-                TranslatedNonWhitespacesGroupPattern
+                "abc\xc8 xyz",                          # non-whitespace-group
+                TranslatedNonWhitespacesGroupPattern    # (digits, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -175,10 +155,8 @@ class TestTranslatedDigitsPatternClass:
         "data, expected_class",
         [
             (
-                "1",    # digit
-                # When digits are combined with a digit,
-                # the recommendation should produce digits pattern.
-                TranslatedDigitsPattern
+                "1",                    # digit
+                TranslatedDigitsPattern # (digits, digit) => digits
             ),
         ],
     )
@@ -196,28 +174,20 @@ class TestTranslatedDigitsPatternClass:
         "data, expected_class",
         [
             (
-                "ab",  # letters
-                # When digits are combined with letters,
-                # the recommendation should produce a word pattern.
-                TranslatedWordPattern
+                "ab",                   # letters
+                TranslatedWordPattern   # (digits, letters) => word
             ),
             (
-                "+",  # a punctuation
-                # When digits are combined with a punctuation,
-                # the recommendation should produce a punctuation pattern.
-                TranslatedNonWhitespacesPattern
+                "+",                            # punctuation
+                TranslatedNonWhitespacesPattern # (digits, punct) => non-whitespaces
             ),
             (
-                "++",  # punctuations
-                # When digits are combined with punctuations,
-                # the recommendation should produce punctuations pattern.
-                TranslatedNonWhitespacesPattern
+                "++",                           # punctuations
+                TranslatedNonWhitespacesPattern # (digits, puncts) => non-whitespaces
             ),
             (
-                "++ -- ==",  # punctuation group
-                # When digits are combined with punctuation group,
-                # the recommendation should produce punctuation group pattern.
-                TranslatedNonWhitespacesGroupPattern
+                "++ -- ==",                             # punctuation-group
+                TranslatedNonWhitespacesGroupPattern    # (digits, punct-group) => non-whitespace-group
             ),
         ],
     )

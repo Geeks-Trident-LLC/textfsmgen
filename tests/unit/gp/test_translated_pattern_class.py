@@ -37,8 +37,10 @@ class TestGetReadableSnippetMethod:
     def test_digits(self, digits, var_name, expected_snippet, expected_pattern):
         """
         Verify that single-digit and multi-digit inputs generate the correct
-        snippet strings ("digit" or "digits") along with their corresponding
-        translated pattern.
+        snippet strings (
+            "digit"
+            or  "digits"
+        ) along with their corresponding translated pattern.
         """
         args = to_list(digits)
         node = TranslatedPattern.do_factory_create(*args)
@@ -87,8 +89,10 @@ class TestGetReadableSnippetMethod:
     def test_number(self, number, var_name, expected_snippet, expected_pattern):
         """
         Verify that number inputs generate the correct snippet
-        strings ("number" or "mixed_number") along with their corresponding
-        translated pattern.
+        strings (
+            "number" or
+            "mixed_number"
+        ) along with their corresponding translated pattern.
         """
         args = to_list(number)
         node = TranslatedPattern.do_factory_create(*args)
@@ -152,7 +156,12 @@ class TestGetReadableSnippetMethod:
     def test_punctuations(self, puncts, var_name, expected_snippet, expected_pattern):
         """
         Verify that punctuation inputs generate the correct snippet
-        strings ("punct", "puncts", "puncts_or_group",  or "puncts_group")
+        strings (
+            "punct",
+            "puncts",
+            "puncts_or_group",
+            or "puncts_group"
+        )
         along with their corresponding translated pattern.
         """
         args = to_list(puncts)
@@ -220,8 +229,16 @@ class TestGetReadableSnippetMethod:
     def test_creating_text_snippet(self, text, var_name, expected_snippet, expected_pattern):
         """
         Verify that text inputs generate the correct snippet strings
-        ("letter", "letters", "word",  "words", "phrase", "mixed_word",
-        "mixed_words", or "mixed_phrases")
+        (
+            "letter",
+            "letters",
+            "word",
+            "words",
+            "phrase",
+            "mixed_word",
+            "mixed_words",
+            or "mixed_phrases"
+        )
         along with their corresponding translated pattern.
         """
         args = to_list(text)
@@ -284,8 +301,12 @@ class TestGetReadableSnippetMethod:
     def test_creating_non_white_space_snippet(self, data, var_name, expected_snippet, expected_pattern):
         """
         Verify that data inputs generate the correct snippet strings
-        ("non_whitespace", "non_whitespaces", "non_whitespaces_or_phrase",
-        or "non_whitespaces_phrase")
+        (
+            "non_whitespace",
+            "non_whitespaces",
+            "non_whitespaces_or_phrase",
+            or "non_whitespaces_phrase"
+        )
         along with their corresponding translated pattern.
         """
         args = to_list(data)

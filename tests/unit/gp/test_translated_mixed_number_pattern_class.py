@@ -105,34 +105,24 @@ class TestTranslatedMixedNumberPatternClass:
         "number, expected_class",
         [
             (
-                "-1.1",  # mixed-number
-                # When mixed-number is combined with a mixed-number,
-                # the recommendation should produce a mixed-number pattern.
-                TranslatedMixedNumberPattern
+                "-1.1",                         # mixed-number
+                TranslatedMixedNumberPattern    # (mixed-number, mixed-number) => mixed-number
             ),
             (
-                "abc.123",  # mixed-word
-                # When mixed-number is combined with a mixed-word,
-                # the recommendation should produce a mixed-word pattern.
-                TranslatedMixedWordPattern
+                "abc.123",                  # mixed-word
+                TranslatedMixedWordPattern  # (mixed-number, mixed-word) => mixed-word
             ),
             (
-                "a.1 b.2",  # mixed-words
-                # When mixed-number is combined with mixed-words,
-                # the recommendation should produce mixed-words pattern.
-                TranslatedMixedWordsPattern
+                "a.1 b.2",                  # mixed-words
+                TranslatedMixedWordsPattern # (mixed-number, mixed-words) => mixed-words
             ),
             (
-                "abc\xc8",  # non-whitespaces
-                # When mixed-number is combined with non-whitespaces,
-                # the recommendation should produce non-whitespaces pattern.
-                TranslatedNonWhitespacesPattern
+                "abc\xc8",                      # non-whitespaces
+                TranslatedNonWhitespacesPattern # (mixed-number, non-whitespaces) => non-whitespaces
             ),
             (
-                "abc\xc8 xyz",  # non-whitespace group
-                # When mixed-number is combined with non-whitespaces,
-                # the recommendation should produce non-whitespace group pattern.
-                TranslatedNonWhitespacesGroupPattern
+                "abc\xc8 xyz",                       # non-whitespace-group
+                TranslatedNonWhitespacesGroupPattern # (mixed-number, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -150,22 +140,16 @@ class TestTranslatedMixedNumberPatternClass:
         "number, expected_class",
         [
             (
-                "1",    # digit
-                # When mixed-number are combined with a digit,
-                # the recommendation should produce mixed-number pattern.
-                TranslatedMixedNumberPattern
+                "1",                            # digit
+                TranslatedMixedNumberPattern    # (mixed-number, digit) => mixed-number
             ),
             (
-                "12",  # digits
-                # When mixed-number are combined with digits,
-                # the recommendation should produce mixed-number pattern.
-                TranslatedMixedNumberPattern
+                "12",                           # digits
+                TranslatedMixedNumberPattern    # (mixed-number, digits) => mixed-number
             ),
             (
-                "1.2",  # number
-                # When mixed-number are combined with number,
-                # the recommendation should produce mixed-number pattern.
-                TranslatedMixedNumberPattern
+                "1.2",                          # number
+                TranslatedMixedNumberPattern    # (mixed-number, number) => mixed-number
             ),
         ],
     )
@@ -182,71 +166,56 @@ class TestTranslatedMixedNumberPatternClass:
     @pytest.mark.parametrize(
         "number, expected_class",
         [
-            # When a mixed-number is combined with letters, alphanumeric characters,
-            # graphs, or word,
-            # the recommendation should produce a TranslatedMixedWordPattern.
             (
-                "a",  # letter
-                TranslatedMixedWordPattern
+                "a",                        # letter
+                TranslatedMixedWordPattern  # (mixed-number, letter) => mixed-word
             ),
             (
-                "ab",  # letters
-                TranslatedMixedWordPattern
+                "ab",                       # letters
+                TranslatedMixedWordPattern  # (mixed-number, letters) => mixed-word
             ),
             (
-                ["a", "1"], # an alphabet or numeric
-                TranslatedMixedWordPattern
+                ["a", "1"],                 # alphabet-numeric
+                TranslatedMixedWordPattern  # (mixed-number, alphabet-numeric) => mixed-word
             ),
             (
-                ["a", "1", "#"], # a graph character
-                TranslatedMixedWordPattern
+                ["a", "1", "#"],            # graph
+                TranslatedMixedWordPattern  # (mixed-number, graph) => mixed-word
             ),
             (
-                "abc123",   # a word
-                TranslatedMixedWordPattern
-            ),
-
-            # ====================
-            # When a mixed-number is combined with words,
-            # the recommendation should produce a TranslatedMixedWordPattern.
-            (
-                    "a1 b2",  # words
-                    TranslatedMixedWordsPattern
-            ),
-
-            # ====================
-            # When a mixed-number is combined with punctuation(s) or non-whitespace(s)
-            # the recommendation should produce a TranslatedNonWhitespacesPattern.
-            (
-                "+",  # a punctuation
-                TranslatedNonWhitespacesPattern
+                "abc123",                   # word
+                TranslatedMixedWordPattern  # (mixed-number, word) => mixed-word
             ),
             (
-                "++--==",   # punctuations
-                TranslatedNonWhitespacesPattern
+                "a1 b2",                    # words
+                TranslatedMixedWordsPattern # (mixed-number, words) => mixed-words
             ),
             (
-                "\xc8",  # a non-whitespace
-                TranslatedNonWhitespacesPattern
+                "+",                            # punctuation
+                TranslatedNonWhitespacesPattern # (mixed-number, punct) => non-whitespaces
             ),
             (
-                "abc\xc8",  # multi-non-whitespace
-                TranslatedNonWhitespacesPattern
+                "++--==",                       # punctuations
+                TranslatedNonWhitespacesPattern # (mixed-number, puncts) => non-whitespaces
             ),
-
-            # ====================
-            # When a number is combined with punctuation-group
-            # the recommendation should produce a TranslatedNonWhitespacesGroupPattern.
             (
-                    "++ -- ** ==",  # punctuation-group
-                    TranslatedNonWhitespacesGroupPattern
+                "\xc8",                         # non-whitespace
+                TranslatedNonWhitespacesPattern # (mixed-number, non-whitespace) => non-whitespaces
+            ),
+            (
+                "abc\xc8",                      # non-whitespaces
+                TranslatedNonWhitespacesPattern # (mixed-number, non-whitespaces) => non-whitespaces
+            ),
+            (
+                    "++ -- ** ==",                       # punctuation-group
+                    TranslatedNonWhitespacesGroupPattern # (mixed-number, punct-group) => non-whitespace-group
             ),
 
         ],
     )
     def test_recommend_method_case_aggregating(self, number, expected_class):
         """
-        Verify that mixed-type type correctly recommends a subset type
+        Verify that mixed-number type correctly recommends a subset type
         when combined with compatible mixed-number.
         """
         args = to_list(number)
