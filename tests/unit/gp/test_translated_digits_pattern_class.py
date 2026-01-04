@@ -107,55 +107,55 @@ class TestTranslatedDigitsPatternClass:
         [
             (
                 "123",  # digits
-                # When a digit is combined with digits,
+                # When digits are combined with digits,
                 # the recommendation should produce a digits pattern.
                 TranslatedDigitsPattern
             ),
             (
                 "1.1",  # number
-                # When a digit is combined with a number,
+                # When digits are combined with a number,
                 # the recommendation should produce a number pattern.
                 TranslatedNumberPattern
             ),
             (
                 "-1.1", # mixed number
-                # When a digit is combined with a mixed number,
-                # the recommendation should produce a mixed number pattern.
+                # When digits are combined with a mixed-number,
+                # the recommendation should produce a mixed-number pattern.
                 TranslatedMixedNumberPattern
             ),
             (
                 "abc123",   # a word
-                # When a digit is combined with a word,
+                # When digits are combined with a word,
                 # the recommendation should produce a word pattern.
                 TranslatedWordPattern
             ),
             (
                 "a1 a12",   # words
-                # When a digit is combined with words,
+                # When digits is combined with words,
                 # the recommendation should produce words pattern.
                 TranslatedWordsPattern
             ),
             (
                 "abc.123",  # a mixed word
-                # When a digit is combined with a mixed word,
-                # the recommendation should produce a mixed word pattern.
+                # When digit is combined with a mixed-word,
+                # the recommendation should produce a mixed-word pattern.
                 TranslatedMixedWordPattern
             ),
             (
                 "a.1 b.1",  # mixed words
-                # When a digit is combined with mixed words,
-                # the recommendation should produce mixed words pattern.
+                # When digits are combined with mixed-words,
+                # the recommendation should produce mixed-words pattern.
                 TranslatedMixedWordsPattern
             ),
             (
                 "abc\xc8",  # non-whitespaces
-                # When a digit is combined with non-whitespaces,
+                # When digits are combined with non-whitespaces,
                 # the recommendation should produce non-whitespaces pattern.
                 TranslatedNonWhitespacesPattern
             ),
             (
                 "abc\xc8 xyz",  # non-whitespace group
-                # When a digit is combined with non-whitespaces,
+                # When digits are combined with non-whitespaces,
                 # the recommendation should produce non-whitespace group pattern.
                 TranslatedNonWhitespacesGroupPattern
             ),
@@ -163,7 +163,7 @@ class TestTranslatedDigitsPatternClass:
     )
     def test_recommend_method_case_subset(self, data, expected_class):
         """
-        Verify that a digit type correctly recommends a subset type
+        Verify that digits type correctly recommends a subset type
         when combined with compatible data.
         """
         args = to_list(data)
@@ -184,7 +184,7 @@ class TestTranslatedDigitsPatternClass:
     )
     def test_recommend_method_case_superset(self, data, expected_class):
         """
-        Verify that a digit type correctly recommends a subset type
+        Verify that digits type correctly recommends a subset type
         when combined with compatible data.
         """
         args = to_list(data)
@@ -197,25 +197,25 @@ class TestTranslatedDigitsPatternClass:
         [
             (
                 "ab",  # letters
-                # When a digit is combined with letters,
+                # When digits are combined with letters,
                 # the recommendation should produce a word pattern.
                 TranslatedWordPattern
             ),
             (
                 "+",  # a punctuation
-                # When a digit is combined with a punctuation,
+                # When digits are combined with a punctuation,
                 # the recommendation should produce a punctuation pattern.
                 TranslatedNonWhitespacesPattern
             ),
             (
                 "++",  # punctuations
-                # When a digit is combined with punctuations,
+                # When digits are combined with punctuations,
                 # the recommendation should produce punctuations pattern.
                 TranslatedNonWhitespacesPattern
             ),
             (
                 "++ -- ==",  # punctuation group
-                # When a digit is combined with punctuation group,
+                # When digits are combined with punctuation group,
                 # the recommendation should produce punctuation group pattern.
                 TranslatedNonWhitespacesGroupPattern
             ),
@@ -223,7 +223,7 @@ class TestTranslatedDigitsPatternClass:
     )
     def test_recommend_method_case_aggregating(self, data, expected_class):
         """
-        Verify that a digit type correctly recommends a subset type
+        Verify that digits type correctly recommends a subset type
         when combined with compatible data.
         """
         args = to_list(data)
