@@ -13,19 +13,19 @@ import pytest
 
 from textfsmgen.gp import (
 TranslatedPattern,
-TranslatedDigitPattern,
-TranslatedDigitsPattern,
-TranslatedNumberPattern,
-TranslatedMixedNumberPattern,
-TranslatedLetterPattern,
-TranslatedLettersPattern,
-TranslatedAlphabetNumericPattern,
-TranslatedPunctPattern,
-TranslatedPunctsPattern,
-TranslatedPunctsGroupPattern,
+# TranslatedDigitPattern,
+# TranslatedDigitsPattern,
+# TranslatedNumberPattern,
+# TranslatedMixedNumberPattern,
+# TranslatedLetterPattern,
+# TranslatedLettersPattern,
+# TranslatedAlphabetNumericPattern,
+# TranslatedPunctPattern,
+# TranslatedPunctsPattern,
+# TranslatedPunctsGroupPattern,
 TranslatedGraphPattern,
-TranslatedWordPattern,
-TranslatedWordsPattern,
+# TranslatedWordPattern,
+# TranslatedWordsPattern,
 TranslatedMixedWordPattern,
 TranslatedMixedWordsPattern,
 TranslatedNonWhitespacePattern,
@@ -199,10 +199,6 @@ class TestTranslatedGraphPatternClass:
     )
     def test_recommend_method_case_aggregating(self, data, expected_class):
         """
-
-        if other.is_words():
-            return TranslatedMixedWordsPattern(self.data, other.data)
-
         Verify that graph type correctly recommends a subset type
         when combined with compatible data.
         """
