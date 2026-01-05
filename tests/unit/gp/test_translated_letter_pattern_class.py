@@ -47,7 +47,7 @@ class TestTranslatedLetterPatternClass:
         "other",
         [
             "a",                # a letter is a subset of letter
-            "ab",                # a letter is a subset of letters
+            "ab",               # a letter is a subset of letters
             ["a", "1"],         # a letter is a subset of alphabet numeric
             ["a", "1", "#"],    # a letter is a subset of graph
             "abc123",           # a letter is a subset of word
@@ -61,18 +61,7 @@ class TestTranslatedLetterPatternClass:
     )
     def test_is_subset_of(self, other):
         """
-                    other.is_letter(),
-            other.is_letters(),
-            other.is_alphabet_numeric(),
-            other.is_graph(),
-            other.is_word(),
-            other.is_words(),
-            other.is_mixed_word(),
-            other.is_mixed_words(),
-            other.is_non_whitespace(),
-            other.is_non_whitespaces(),
-            other.is_non_whitespaces_group(),
-        Verify that a letter data is a subset of (letter(s), alphabet-numeric,
+        Verify that a letter data is a subset of (letter(s), alpha-num,
         graph, word(s), mixed-word(s), non-whitespace(s), non-whitespace-group)
         """
         args = to_list(other)
@@ -129,8 +118,8 @@ class TestTranslatedLetterPatternClass:
                 TranslatedLettersPattern    # (letter, letters) => letters
             ),
             (
-                ["a", "1"],                         # alphabet-numeric
-                TranslatedAlphabetNumericPattern    # (letter, alphabet-numeric) => alphabet-numeric
+                ["a", "1"],                         # alpha-num
+                TranslatedAlphabetNumericPattern    # (letter, alpha-num) => alpha-num
             ),
             (
                 ["a", "1", "#"],        # graph
@@ -181,7 +170,7 @@ class TestTranslatedLetterPatternClass:
         [
             (
                 "1",                                # digit
-                TranslatedAlphabetNumericPattern    # (letter, digit) => alphabet-numeric
+                TranslatedAlphabetNumericPattern    # (letter, digit) => alpha-num
             ),
             (
                 "123",                  # digits
