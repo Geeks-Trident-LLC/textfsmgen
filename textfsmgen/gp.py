@@ -2557,49 +2557,152 @@ class TranslatedPunctPattern(TranslatedPattern):
 
 
 class TranslatedPunctsPattern(TranslatedPattern):
-    def __init__(self, data, *other):
-        super().__init__(data, *other, name=TEXT.PUNCTS,
-                         defined_pattern=PATTERN.PUNCTS,
-                         root_name='non_whitespaces')
+    """
+    Specialized translated pattern for multiple punctuation characters.
 
-    def is_subset_of(self, other):
+    This subclass of `TranslatedPattern` defines behavior specific to
+    sequences of punctuation marks. It provides subset and superset
+    checks against other translated patterns and supports recommendation
+    logic for generalization when combined with different pattern types.
+
+    Parameters
+    ----------
+    data : str
+        The input string representing one or more punctuation characters.
+    *other : tuple, optional
+        Additional arguments passed to the base class initializer.
+
+    Attributes
+    ----------
+    name : str
+        Identifier for this pattern type ("puncts").
+    defined_pattern : str
+        Regex pattern used to match sequences of punctuation characters.
+    root_name : str
+        Root category name for this pattern ("non_whitespaces").
+    """
+
+    def __init__(self, data: str, *other: object) -> None:
+        super().__init__(
+            data,
+            *other,
+            name=TEXT.PUNCTS,
+            defined_pattern=PATTERN.PUNCTS,
+            root_name="non_whitespaces",
+        )
+
+    def is_subset_of(self, other) -> bool:
+        """
+        Determine whether this punctuation sequence is a subset of another translated pattern.
+
+        A sequence of punctuation marks is considered a subset of broader categories such as
+        symbols, mixed words, non-whitespace sequences, and non-whitespace groups.
+
+        Parameters
+        ----------
+        other : TranslatedPattern or inherited of TranslatedPattern
+            The pattern instance to compare against.
+
+        Returns
+        -------
+        bool
+            True if this punctuation sequence is a subset of `other`,
+            otherwise False.
+
+        Raises
+        ------
+        RuntimeError
+            If `other` is not an instance of `TranslatedPattern`.
+        """
         if not isinstance(other, TranslatedPattern):
             self.raise_recommend_exception(other)
-        chk = other.is_symbols() or other.is_symbols_group()
-        chk |= other.is_mixed_word() or other.is_mixed_words()
-        chk |= other.is_non_whitespaces() or other.is_non_whitespaces_group()
 
-        return chk
+        return any([
+            other.is_symbols(),
+            other.is_symbols_group(),
+            other.is_mixed_word(),
+            other.is_mixed_words(),
+            other.is_non_whitespaces(),
+            other.is_non_whitespaces_group(),
+        ])
 
-    def is_superset_of(self, other):
+    def is_superset_of(self, other) -> bool:
+        """
+        Determine whether this punctuation sequence is a superset of another translated pattern.
+
+        A sequence of punctuation marks is considered a superset when the other pattern
+        represents a single symbol.
+
+        Parameters
+        ----------
+        other : TranslatedPattern or inherited of TranslatedPattern
+            The pattern instance to compare against.
+
+        Returns
+        -------
+        bool
+            True if this punctuation sequence is a superset of `other`,
+            otherwise False.
+
+        Raises
+        ------
+        RuntimeError
+            If `other` is not an instance of `TranslatedPattern`.
+        """
         if not isinstance(other, TranslatedPattern):
             self.raise_recommend_exception(other)
-        chk = other.is_symbol()
 
-        return chk
+        return other.is_symbol()
 
     def recommend(self, other):
+        """
+        Recommend a generalized translated pattern when combined with another pattern.
 
-        if self.is_subset_of(other) or self.is_superset_of(other):
-            if self.is_subset_of(other):
-                return self.get_new_subset(other)
-            else:
-                return self.get_new_superset(other)
-        else:
-            case1 = other.is_letter() or other.is_digit()
-            case1 |= other.is_alphabet_numeric() or other.is_graph()
-            case1 |= other.is_letters() or other.is_digits()
-            case1 |= other.is_number() or other.is_mixed_number()
-            case1 |= other.is_word() or other.is_non_whitespace()
+        If this punctuation sequence is a subset or superset of `other`,
+        a new subset or superset pattern is returned. Otherwise,
+        specific combinations with letters, digits, numbers, symbols,
+        or non-whitespace categories produce broader generalized
+        patterns.
 
-            case2 = other.is_words()
+        Parameters
+        ----------
+        other : TranslatedPattern or inherited of TranslatedPattern
+            The pattern to combine with this punctuation sequence.
 
-            if case1:
-                return TranslatedNonWhitespacesPattern(self.data, other.data)
-            elif case2:
-                return TranslatedNonWhitespacesGroupPattern(self.data, other.data)
-            else:
-                return self.raise_recommend_exception(other)
+        Returns
+        -------
+        TranslatedPattern or inherited of TranslatedPattern
+            A generalized translated pattern instance based on the
+            relationship between this punctuation sequence and `other`.
+
+        Raises
+        ------
+        RuntimeError
+            If no recommendation logic is implemented for the given case.
+        """
+        if self.is_subset_of(other):
+            return self.get_new_subset(other)
+        if self.is_superset_of(other):
+            return self.get_new_superset(other)
+
+        if any([
+            other.is_letter(),
+            other.is_digit(),
+            other.is_alphabet_numeric(),
+            other.is_graph(),
+            other.is_letters(),
+            other.is_digits(),
+            other.is_number(),
+            other.is_mixed_number(),
+            other.is_word(),
+            other.is_non_whitespace(),
+        ]):
+            return TranslatedNonWhitespacesPattern(self.data, other.data)
+
+        if other.is_words():
+            return TranslatedNonWhitespacesGroupPattern(self.data, other.data)
+
+        return self.raise_recommend_exception(other)
 
 
 class TranslatedPunctsGroupPattern(TranslatedPattern):
