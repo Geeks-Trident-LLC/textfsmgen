@@ -35,7 +35,7 @@ class TestTranslatedWordPattern:
             ('a', TranslatedLettersPattern('ab'), "[a-zA-Z][a-zA-Z0-9]*"),
             ('a', TranslatedDigitPattern('1'), '\\S+'),
             ('a', TranslatedDigitsPattern('4'), '\\S+'),
-            ('a', TranslatedAlphabetNumericPattern('a'), "[a-zA-Z][a-zA-Z0-9]*"),
+            ('a', TranslatedAlphabetNumericPattern('a'), r"\S+"),
         ]
     )
     def test_recommend_pattern(self, data, other, expected_pattern):
@@ -70,7 +70,7 @@ class TestTranslatedWordsPattern:
             ('a b', TranslatedLettersPattern('ab'), "[a-zA-Z][a-zA-Z0-9]*( [a-zA-Z][a-zA-Z0-9]*)*"),
             ('a b', TranslatedDigitPattern('1'), "\\S+( \\S+)*"),
             ('a b', TranslatedDigitsPattern('4'), "\\S+( \\S+)*"),
-            ('a b', TranslatedAlphabetNumericPattern('a'), "[a-zA-Z][a-zA-Z0-9]*( [a-zA-Z][a-zA-Z0-9]*)*"),
+            ('a b', TranslatedAlphabetNumericPattern('a'), r"\S+( \S+)*"),
             ('a b', TranslatedWordPattern('a4'), "[a-zA-Z][a-zA-Z0-9]*( [a-zA-Z][a-zA-Z0-9]*)*"),
             ('a b', TranslatedWordsPattern('ab  xy'), "[a-zA-Z][a-zA-Z0-9]*( +[a-zA-Z][a-zA-Z0-9]*)+"),
         ]
