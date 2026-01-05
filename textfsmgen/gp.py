@@ -2562,47 +2562,147 @@ class TranslatedPunctsGroupPattern(TranslatedPattern):
 
 
 class TranslatedGraphPattern(TranslatedPattern):
-    def __init__(self, data, *other):
-        super().__init__(data, *other, name=TEXT.GRAPH,
-                         defined_pattern=PATTERN.GRAPH,
-                         root_name='non_whitespace')
+    """
+    Specialized translated pattern for graphical characters.
 
-    def is_subset_of(self, other):
+    This subclass of `TranslatedPattern` defines behavior specific to
+    graphical symbols (e.g., printable non-alphanumeric characters).
+    It provides subset and superset checks against other translated
+    patterns and supports recommendation logic for generalization
+    when combined with different pattern types.
+
+    Parameters
+    ----------
+    data : str
+        The input string representing a graphical character.
+    *other : list of other arguments, optional
+        Additional arguments passed to the base class initializer.
+
+    Attributes
+    ----------
+    name : str
+        Identifier for this pattern type ("graph").
+    defined_pattern : str
+        Regex pattern used to match graphical characters.
+    root_name : str
+        Root category name for this pattern ("non_whitespace").
+    """
+
+    def __init__(self, data: str, *other: object) -> None:
+        super().__init__(
+            data,
+            *other,
+            name=TEXT.GRAPH,
+            defined_pattern=PATTERN.GRAPH,
+            root_name="non_whitespace",
+        )
+
+    def is_subset_of(self, other) -> bool:
+        """
+        Determine whether this graph pattern is a subset of another translated pattern.
+
+        A graphical character is considered a subset of broader categories such as
+        mixed words, non-whitespace sequences, and non-whitespace groups.
+
+        Parameters
+        ----------
+        other : TranslatedPattern or inherited of TranslatedPattern
+            The pattern instance to compare against.
+
+        Returns
+        -------
+        bool
+            True if this graph pattern is a subset of `other`,
+            otherwise False.
+
+        Raises
+        ------
+        RuntimeError
+            If `other` is not an instance of `TranslatedPattern`.
+        """
         if not isinstance(other, TranslatedPattern):
             self.raise_recommend_exception(other)
-        chk = other.is_mixed_word() or other.is_mixed_words()
-        chk |= other.is_non_whitespace() or other.is_non_whitespaces()
-        chk |= other.is_non_whitespaces_group()
 
-        return chk
+        return any([
+            other.is_graph(),
+            other.is_mixed_word(),
+            other.is_mixed_words(),
+            other.is_non_whitespace(),
+            other.is_non_whitespaces(),
+            other.is_non_whitespaces_group(),
+        ])
 
-    def is_superset_of(self, other):
+    def is_superset_of(self, other) -> bool:
+        """
+        Determine whether this graph pattern is a superset of another translated pattern.
+
+        A graphical character is considered a superset when the other pattern
+        represents a letter, digit, alphanumeric sequence, or symbol.
+
+        Parameters
+        ----------
+        other : TranslatedPattern or inherited of TranslatedPattern
+            The pattern instance to compare against.
+
+        Returns
+        -------
+        bool
+            True if this graph pattern is a superset of `other`,
+            otherwise False.
+
+        Raises
+        ------
+        RuntimeError
+            If `other` is not an instance of `TranslatedPattern`.
+        """
         if not isinstance(other, TranslatedPattern):
             self.raise_recommend_exception(other)
-        chk = other.is_letter() or other.is_digit()
-        chk |= other.is_alphabet_numeric() or other.is_symbol()
 
-        return chk
+        return any([
+            other.is_letter(),
+            other.is_digit(),
+            other.is_alphabet_numeric(),
+            other.is_symbol(),
+        ])
 
     def recommend(self, other):
+        """
+        Recommend a generalized translated pattern when combined with another pattern.
 
-        if self.is_subset_of(other) or self.is_superset_of(other):
-            if self.is_subset_of(other):
-                return self.get_new_subset(other)
-            else:
-                return self.get_new_superset(other)
-        else:
-            case1 = other.is_letters() or other.is_digits()
-            case1 |= other.is_number() or other.is_mixed_number() or other.is_word()
+        If this graph pattern is a subset or superset of `other`,
+        a new subset or superset pattern is returned. Otherwise,
+        specific combinations with letters, digits, numbers, or words
+        produce broader generalized patterns.
 
-            case2 = other.is_words()
+        Parameters
+        ----------
+        other : TranslatedPattern or inherited of TranslatedPattern
+            The pattern to combine with this graph pattern.
 
-            if case1:
-                return TranslatedMixedWordPattern(self.data, other.data)
-            elif case2:
-                return TranslatedMixedWordsPattern(self.data, other.data)
-            else:
-                return self.raise_recommend_exception(other)
+        Returns
+        -------
+        TranslatedPattern or inherited of TranslatedPattern
+            A generalized translated pattern instance based on the
+            relationship between this graph pattern and `other`.
+
+        Raises
+        ------
+        RuntimeError
+            If no recommendation logic is implemented for the given case.
+        """
+        if self.is_subset_of(other):
+            return self.get_new_subset(other)
+        if self.is_superset_of(other):
+            return self.get_new_superset(other)
+
+        if any([other.is_letters(), other.is_digits(),
+                other.is_number(), other.is_mixed_number(), other.is_word()]):
+            return TranslatedMixedWordPattern(self.data, other.data)
+
+        if other.is_words():
+            return TranslatedMixedWordsPattern(self.data, other.data)
+
+        return self.raise_recommend_exception(other)
 
 
 class TranslatedWordPattern(TranslatedPattern):
