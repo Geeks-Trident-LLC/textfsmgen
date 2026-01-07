@@ -24,8 +24,10 @@ Notes
 - Exception messages are designed to be user‑friendly for GUI dialogs
   while still informative for developers.
 """
-from genericlib import MiscFunction
+from genericlib.exceptions import raise_runtime_error
+from genericlib.exceptions import raise_exception
 
+raise_exception = raise_exception
 
 class TemplateError(Exception):
     """
@@ -79,7 +81,7 @@ class RuntimeException:
     Utility class for raising dynamically created runtime exceptions.
 
     This class provides convenience methods that delegate to
-    `MiscFunction.raise_runtime_error` to generate and raise custom
+    `genericlib.exceptions.raise_runtime_error` to generate and raise custom
     exception types at runtime. The exception class name is derived
     from either a provided string or the class name of an object.
     """
@@ -105,7 +107,7 @@ class RuntimeException:
         """
         name = name.strip()
         obj = name or self
-        MiscFunction.raise_runtime_error(obj=obj, msg=msg)
+        raise_runtime_error(obj=obj, msg=msg)
 
     @classmethod
     def do_raise_runtime_error(cls, obj=None, msg: str = ""):
@@ -127,4 +129,4 @@ class RuntimeException:
             A dynamically created exception instance with the specified
             message.
         """
-        MiscFunction.raise_runtime_error(obj=obj, msg=msg)
+        raise_runtime_error(obj=obj, msg=msg)

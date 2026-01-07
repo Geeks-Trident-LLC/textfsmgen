@@ -70,16 +70,20 @@ class TestGetFixedLineSnippet:
         """Setup test fixture with sample lines."""
         self.lines = [
             " ",
-            "line1: _abc =123",
+            " \t ",
+            "line1: _abc 1 23",
             "line2: 1.1.1.1 a::b",
+            "line3: ........ abc",
             "line22: 1.23",
         ]
 
     @pytest.mark.parametrize(
         "index, expected",
-        [   (0, "start() end(space)"),
-            (1, "line1: _abc =123"),
-            (2, "line2: 1.1.1.1 a::b"),
+        [
+            (0, "start() end(space)"),
+            (1, "start() end(whitespace)"),
+            (2, "line1: _abc digit() digits()"),
+            (3, "line2: 1.1.1.1 a::b"),
             (-1, "line22: number()"),
         ],
     )
@@ -92,3 +96,23 @@ class TestGetFixedLineSnippet:
         assert result == expected, (
             f"For index={index!r}, expected {expected!r} but got {result!r}"
         )
+
+    @pytest.mark.parametrize(
+        "line, expected",
+        [
+            ("", "start() end(space)"),
+            (" \t ", "start() end(whitespace)"),
+
+            ("line1: _abc 1 23", "line1: _abc digit() digits()"),
+            ("line2: 1.1.1.1 a::b", "line2: 1.1.1.1 a::b"),
+            ("line3: ++++++++ abc", "line3: puncts() abc"),
+            ("line22: 1.23", "line22: number()"),
+        ],
+    )
+    def test_get_fixed_line_snippet_passing_line(self, line, expected):
+        """
+        Verify that `get_fixed_line_snippet` returns the correct line index
+        for various input types.
+        """
+        result = get_fixed_line_snippet(self.lines, line=line)
+        assert result == expected

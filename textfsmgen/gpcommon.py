@@ -32,8 +32,8 @@ from regexapp import TextPattern
 from genericlib import Misc, STRING, Wildcard, PATTERN, Text
 from textfsmgen.gp import TranslatedPattern
 
-from genericlib.exceptions import raise_runtime_error
-from genericlib.exceptions import raise_exception
+from textfsmgen.exceptions import RuntimeException
+from textfsmgen.exceptions import raise_exception
 
 def get_line_position_by(lines: list[str], item: str | int | None) -> int | None:
     """
@@ -85,31 +85,45 @@ def get_line_position_by(lines: list[str], item: str | int | None) -> int | None
     return None
 
 
-def get_fixed_line_snippet(lines, line: str = '', index: int = None) -> str:
+def get_fixed_line_snippet(lines: list[str], line: str = "", index: int | None = None) -> str:
     """
     Generate a normalized snippet representation of a line.
+
+    This function extracts a line either directly (via the `line` argument)
+    or by index from the provided list of lines. It then normalizes the line
+    into a template snippet representation:
+
+    - Empty lines are represented as ``start() end(space|whitespace)``.
+    - Digits, numbers, and mixed numbers are replaced with template
+      placeholders via `TranslatedPattern`.
+    - Leading and trailing whitespace are preserved using `Misc.get_leading_line`
+      and `Misc.get_trailing_line`.
 
     Parameters
     ----------
     lines : list of str
         The list of lines to extract from.
     line : str, optional
-        The line to process. If `index` is provided, this is ignored.
+        The line to process. Ignored if `index` is provided.
     index : int, optional
-        Index of the line in `lines` to process.
+        Index of the line in `lines` to process. Must be a valid integer.
 
     Returns
     -------
     str
-        A snippet representation of the line, with numeric tokens
-        replaced by template placeholders.
+        A snippet representation of the line, with numeric tokens replaced
+        by template placeholders.
 
-    Notes
-    -----
-    - Empty lines are represented as ``start() end(space|whitespace)``.
-    - Digits, numbers, and mixed numbers are replaced with template
-      snippets via `TranslatedPattern`.
+    Raises
+    ------
+    UnknownParamIndexTypeError
+        If `index` is not an integer.
+    UnknownParamLineTypeError
+        If `line` is not a string or bytes.
+    RuntimeError
+        If `index` is out of range or another unexpected error occurs.
     """
+    # Resolve line by index if provided
     if index is not None:
         is_number, converted_index = Misc.try_to_get_number(index, return_type=int)
         if is_number:
@@ -123,9 +137,9 @@ def get_fixed_line_snippet(lines, line: str = '', index: int = None) -> str:
                 )
                 raise_exception(ex, msg=msg)
             except Exception as ex:
-                raise_runtime_error(ex)
+                RuntimeException.do_raise_runtime_error(ex)
         else:
-            raise_runtime_error(
+            RuntimeException.do_raise_runtime_error(
                 obj="UnknownParamIndexTypeError",
                 msg=(
                     f"Invalid index type: expected an integer to access list, "
@@ -139,7 +153,7 @@ def get_fixed_line_snippet(lines, line: str = '', index: int = None) -> str:
 
     # Validate type
     if not isinstance(line, str):
-        raise_runtime_error(
+        RuntimeException.do_raise_runtime_error(
             obj="UnknownParamLineTypeError",
             msg=(
                 f"Invalid line type: expected a string, "
@@ -147,19 +161,21 @@ def get_fixed_line_snippet(lines, line: str = '', index: int = None) -> str:
             ),
         )
 
+    # Handle empty or whitespace-only lines
     if not line.strip():
-        ws_type = 'whitespace' if line.strip(STRING.SPACE_CHAR) else 'space'
-        return f'start() end({ws_type})'
+        ws_type = "whitespace" if line.strip(STRING.SPACE_CHAR) else "space"
+        return f"start() end({ws_type})"
 
+    # Tokenize and normalize numeric tokens
     tokens = Text(line.strip()).do_finditer_split(PATTERN.NON_WHITESPACES)
     for i, token in enumerate(tokens):
         if token.strip():
             factory = TranslatedPattern.do_factory_create(token)
-            if factory.name in {'digit', 'digits', 'number', 'mixed_number'}:
+            if factory.name in {"digit", "digits", "number", "mixed_number", "puncts"}:
                 tokens[i] = factory.get_template_snippet()
 
     snippet_body = Misc.join_string(*tokens)
     leading = Misc.get_leading_line(line)
     trailing = Misc.get_trailing_line(line)
 
-    return f'{leading}{snippet_body}{trailing}'
+    return f"{leading}{snippet_body}{trailing}"
