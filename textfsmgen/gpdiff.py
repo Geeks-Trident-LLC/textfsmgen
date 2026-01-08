@@ -162,8 +162,9 @@ class NDiffBaseText:
         other : NDiffBaseText
             Another diff node whose fragments will be merged.
         """
-        self._lst.extend(other.lst)
-        self._lst_other.extend(other.lst_other)
+        if self.name and self.name == other.name:
+            self._lst.extend(other.lst)
+            self._lst_other.extend(other.lst_other)
 
     def readjust_lst(self, *lst_of_txt: str) -> None:
         """

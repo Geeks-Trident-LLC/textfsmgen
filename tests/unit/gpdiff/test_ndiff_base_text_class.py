@@ -47,20 +47,20 @@ class TestNDiffBaseText:
         "txt, ext_txt, exp_lst, exp_lst_other",
         [
             ("  unchanged_a", "  unchanged_b", ["unchanged_a", "unchanged_b"], []),
-            ("  unchanged_a", "+ added_a", ["unchanged_a"], ["added_a"]),
-            ("  unchanged_a", "- removed_a", ["unchanged_a", "removed_a"], []),
+            ("  unchanged_a", "+ added_a", ["unchanged_a"], []),
+            ("  unchanged_a", "- removed_a", ["unchanged_a"], []),
             ("+ added_a", "+ added_b", [], ["added_a", "added_b"]),
             ("+ added_a", "- removed_a", ["removed_a"], ["added_a"]),
-            ("+ added_a", "  unchanged_a", ["unchanged_a"], ["added_a"]),
+            ("+ added_a", "  unchanged_a", [], ["added_a"]),
             ("- removed_a", "- removed_b", ["removed_a", "removed_b"], []),
             ("- removed_a", "+ added_a", ["removed_a"], ["added_a"]),
-            ("- removed_a", "  unchanged_a", ["removed_a", "unchanged_a"], []),
+            ("- removed_a", "  unchanged_a", ["removed_a"], []),
         ],
     )
     def test_extend(self, txt, ext_txt, exp_lst, exp_lst_other):
         """Test extending one node with another."""
-        node = NDiffBaseText(txt)
-        ext_node = NDiffBaseText(ext_txt)
+        node = NDiffBaseText.do_factory_create(txt)
+        ext_node = NDiffBaseText.do_factory_create(ext_txt)
         node.extend(ext_node)
         assert node.lst == exp_lst
         assert node.lst_other == exp_lst_other
