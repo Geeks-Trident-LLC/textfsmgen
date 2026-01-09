@@ -182,7 +182,7 @@ class UserTemplate:
     ----------
     filename : str
         Path to the user template file, e.g.,
-        ``/home_dir/.geekstrident/textfsmgen/user_templates.yaml``.
+        ``/home_dir/.textfsmgen/user_templates.yaml``.
     status : str
         Current status message describing the template state
         (e.g., "created", "updated", "not found").
@@ -212,7 +212,7 @@ class UserTemplate:
     """
     def __init__(self):
         # Data.user_template_filename is
-        #      /home_dir/.geekstrident/textfsmgen/user_templates.yaml
+        #      /home_dir/.textfsmgen/user_templates.yaml
         self.filename = Data.user_template_filename
         self.status = ''
         self.content = ''
@@ -232,7 +232,7 @@ class UserTemplate:
         Notes
         -----
         - Typical default path:
-          ``/home_dir/.geekstrident/textfsmgen/user_templates.yaml``.
+          ``/home_dir/.textfsmgen/user_templates.yaml``.
         - Uses `pathlib.Path.exists()` for filesystem validation.
         """
 
@@ -263,7 +263,7 @@ class UserTemplate:
         Notes
         -----
         - The default file path is typically:
-          ``/home_dir/.geekstrident/textfsmgen/user_templates.yaml``.
+          ``/home_dir/.textfsmgen/user_templates.yaml``.
         - If the parent directory does not exist, it is created.
         - If the parent path is a file instead of a directory,
           creation fails and an error messagebox is displayed.
@@ -331,7 +331,7 @@ class UserTemplate:
         Notes
         -----
         - Default file path is typically:
-          ``/home_dir/.geekstrident/textfsmgen/user_templates.yaml``.
+          ``/home_dir/.textfsmgen/user_templates.yaml``.
         - On failure, a messagebox is shown with the title
           `"User Template File Not Found"`.
         - The error message is also stored in `self.status` for
@@ -386,7 +386,7 @@ class UserTemplate:
         Notes
         -----
         - Templates are stored in a YAML file, typically located at:
-          ``/home_dir/.geekstrident/textfsmgen/user_templates.yaml``.
+          ``/home_dir/.textfsmgen/user_templates.yaml``.
         - The method uses `yaml.SafeLoader` to ensure safe parsing.
         - `self.status` is updated after each operation to indicate
           success or failure.
@@ -436,7 +436,7 @@ class UserTemplate:
 
         This method stores a template under the given `template_name`
         in the user template file (YAML format), typically located at
-        ``/home_dir/.geekstrident/textfsmgen/user_templates.yaml``.
+        ``/home_dir/.textfsmgen/user_templates.yaml``.
         It handles duplicate names and duplicate content by prompting
         the user for confirmation or rename decisions via message boxes.
         The YAML file is rewritten with updated content if the operation
@@ -581,7 +581,7 @@ class Application:
     -----
     - Templates are stored in YAML format under the user's home
       directory, typically at:
-      ``~/.geekstrident/textfsmgen/user_templates.yaml``.
+      ``~/.textfsmgen/user_templates.yaml``.
     - Error handling is performed via message boxes rather than
       exceptions, making this class suitable for interactive use.
     - For programmatic access to template generation without GUI,

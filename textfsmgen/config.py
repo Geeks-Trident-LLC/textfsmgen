@@ -30,7 +30,7 @@ import yaml
 from genericlib import version as genericlib_version
 import genericlib.file as file
 
-__version__ = '0.2.1a2'
+__version__ = '0.3.0a1'
 version = __version__
 __edition__ = 'Community'
 edition = __edition__
@@ -56,8 +56,7 @@ class Data:
     user_template_filename = str(
         PurePath(
             Path.home(),
-            '.geekstrident',
-            'textfsmgen',
+            '.textfsmgen',
             'user_templates.yaml')
     )
 
@@ -92,7 +91,7 @@ class Data:
 
     # License
     years = '2022'
-    license_name = f'{company_name} License'
+    license_name = f'TextFSM Generator License'
     copyright_text = f'Copyright \xa9 {years}'
 
     license = file.read("LICENSE")
