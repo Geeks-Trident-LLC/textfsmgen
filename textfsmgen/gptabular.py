@@ -50,7 +50,7 @@ from textfsmgen.deps import genericlib_NUMBER as NUMBER     # noqa
 from textfsmgen.deps import genericlib_STRING as STRING     # noqa
 from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
 from textfsmgen.deps import genericlib_INDEX as INDEX       # noqa
-from textfsmgen.deps import genericlib_Misc as Misc
+from textfsmgen.deps import genericlib_datatype_module as datatype
 from textfsmgen.deps import genericlib_text_module as text
 from textfsmgen.deps import genericlib_number_module as number
 
@@ -136,7 +136,7 @@ class TabularTextPattern(RuntimeException):
             return
 
         normalized = []
-        if text.is_string(col_widths) or Misc.is_list(col_widths):
+        if text.is_string(col_widths) or datatype.is_list(col_widths):
             if text.is_string(col_widths):
                 col_widths = col_widths.strip()
                 widths = re.split(r"[ ,]+", col_widths)
@@ -355,7 +355,7 @@ class TabularTextPatternByVarColumns(RuntimeException):
                         if sub_line in line and line not in lst:
                             lst.append(line)
 
-        elif Misc.is_list(data):
+        elif datatype.is_list(data):
             for item in data:
                 is_number, index = number.try_to_get_number(item, return_type=int)
                 if is_number and index < total_lines:
@@ -377,7 +377,7 @@ class TabularTextPatternByVarColumns(RuntimeException):
         if text.is_string(header_names):
             header_names = re.split('[ ,]+', header_names.strip())
 
-        if Misc.is_list(header_names) and len(header_names) == self.columns_count:
+        if datatype.is_list(header_names) and len(header_names) == self.columns_count:
             pat = '[ %s' % PATTERN.PUNCTS[1:]
             repl = STRING.UNDERSCORE_CHAR
             for i, hdr in enumerate(header_names):
@@ -723,7 +723,7 @@ class TabularTable(RuntimeException):
 
     def __repr__(self) -> str:
         """Return a string representation of the table."""
-        cls_name = Misc.get_instance_class_name(self)
+        cls_name = datatype.get_class_name(self)
         return f"{cls_name}(rows_count={len(self.rows)}, columns_count={len(self.columns)})"
 
     # -------------------------------
@@ -1441,7 +1441,7 @@ class TabularCell(RuntimeException):
 
     def __repr__(self) -> str:
         """Return a string representation with text, data, and boundaries."""
-        cls_name = Misc.get_instance_class_name(self)
+        cls_name = datatype.get_class_name(self)
         return f"{cls_name}(text={self.text!r}, data={self.data!r}, left={self.left}, right={self.right})"
 
     # -----------------------------
@@ -1620,7 +1620,7 @@ class TabularCell(RuntimeException):
         if isinstance(ref_cell, self.__class__) or ref_cell is None:
             self.ref_cell = ref_cell
         else:
-            cls_name = Misc.get_instance_class_name(self)
+            cls_name = datatype.get_class_name(self)
             self.raise_runtime_error(
                 msg=(
                     f"Invalid ref_cell type detected in {cls_name}.\n"
@@ -1709,7 +1709,7 @@ class TabularRow(RuntimeException):
 
     def __repr__(self) -> str:
         """Return a string representation with the number of columns."""
-        cls_name = Misc.get_instance_class_name(self)
+        cls_name = datatype.get_class_name(self)
         return f"{cls_name}(columns_count={len(self.cells)})"
 
     @property
@@ -1962,7 +1962,7 @@ class TabularColumn:
 
     def __repr__(self) -> str:
         """Return a string representation of the column with name and cell count."""
-        cls_name = Misc.get_instance_class_name(self)
+        cls_name = datatype.get_class_name(self)
         return f"{cls_name}(name={self.name!r}, cells_count={len(self.cells)})"
 
     @property

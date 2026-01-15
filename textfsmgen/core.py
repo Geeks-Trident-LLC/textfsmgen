@@ -38,7 +38,7 @@ from textfsmgen.deps import regexapp_enclose_string as enclose_string
 
 from textfsmgen.deps import genericlib_get_data_as_tabular as get_data_as_tabular
 from textfsmgen.deps import genericlib_Printer as Printer
-from textfsmgen.deps import genericlib_MiscObject as MiscObject
+from textfsmgen.deps import genericlib_datatype_module as datatype
 
 from textfsmgen.exceptions import TemplateParsedLineError
 from textfsmgen.exceptions import TemplateBuilderError
@@ -777,7 +777,7 @@ class TemplateBuilder:
 
             # Validate expected result
             if expected_result is not None:
-                rows_to_compare = MiscObject.cleanup_list_of_dict(rows) if ignore_space else rows
+                rows_to_compare = datatype.clean_list_of_dicts(rows) if ignore_space else rows
                 chk = rows_to_compare == expected_result
                 is_verified &= chk
                 index = int(chk)

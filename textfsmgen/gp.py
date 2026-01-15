@@ -46,7 +46,7 @@ from textfsmgen.deps import genericlib_STRING as STRING     # noqa
 from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
 from textfsmgen.deps import genericlib_TEXT as TEXT         # noqa
 from textfsmgen.deps import genericlib_SYMBOL as SYMBOL     # noqa
-from textfsmgen.deps import genericlib_Misc as Misc
+from textfsmgen.deps import genericlib_datatype_module as datatype
 from textfsmgen.deps import genericlib_Line as Line
 
 from textfsmgen.exceptions import RuntimeException
@@ -855,8 +855,8 @@ class TranslatedPattern(RuntimeException):
             Always raised to indicate that subset verification
             is not yet implemented.
         """
-        cls_name = Misc.get_instance_class_name(self)
-        other_cls_name = Misc.get_instance_class_name(other)
+        cls_name = datatype.get_class_name(self)
+        other_cls_name = datatype.get_class_name(other)
         error = f"Subset verification not implemented for ({cls_name}, {other_cls_name})"
         raise NotImplementedError(error)
 
@@ -881,8 +881,8 @@ class TranslatedPattern(RuntimeException):
             Always raised to indicate that superset verification
             is not yet implemented.
         """
-        cls_name = Misc.get_instance_class_name(self)
-        other_cls_name = Misc.get_instance_class_name(other)
+        cls_name = datatype.get_class_name(self)
+        other_cls_name = datatype.get_class_name(other)
         error = f"Superset verification not implemented for ({cls_name}, {other_cls_name})"
         raise NotImplementedError(error)
 
@@ -1074,7 +1074,7 @@ class TranslatedPattern(RuntimeException):
             A dynamically created runtime exception with the name
             "NotImplementRecommendedRTPattern" and a descriptive message.
         """
-        cls_name = Misc.get_instance_class_name(self)
+        cls_name = datatype.get_class_name(self)
 
         if isinstance(other, TranslatedPattern):
             other_repr = repr(other.data)

@@ -17,8 +17,8 @@ import pytest           # noqa
 from textwrap import dedent
 
 from textfsmgen.deps import genericlib_text_module as text
-from genericlib import MiscObject
-from genericlib import get_data_as_tabular
+from textfsmgen.deps import genericlib_datatype_module as datatype
+from textfsmgen.deps import genericlib_get_data_as_tabular as get_data_as_tabular
 
 from textfsmgen.gptabular import TabularTextPatternByVarColumns
 
@@ -52,7 +52,7 @@ LastWriteTime          Name
         expected_result = expected_results[index]
         match = re.match(pattern, line)
         if match:
-            lst_of_dict = MiscObject.cleanup_list_of_dict([match.groupdict()])
+            lst_of_dict = datatype.clean_list_of_dicts([match.groupdict()])
             result = lst_of_dict.pop()
             assert result == expected_result
         else:
@@ -81,7 +81,7 @@ peach               pepsi soda
         expected_result = expected_results[index]
         match = re.match(pattern, line)
         if match:
-            lst_of_dict = MiscObject.cleanup_list_of_dict([match.groupdict()])
+            lst_of_dict = datatype.clean_list_of_dicts([match.groupdict()])
             result = lst_of_dict.pop()
             assert result == expected_result
         else:

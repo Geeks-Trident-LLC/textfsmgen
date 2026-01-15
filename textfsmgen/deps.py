@@ -32,15 +32,14 @@ Notes
 import genericlib.file as genericlib_file_module        # noqa
 import genericlib.text as genericlib_text_module        # noqa
 import genericlib.number as genericlib_number_module    # noqa
+import genericlib.datatype as genericlib_datatype_module    # noqa
 
 # Core classes
 # Fundamental data structures and helpers for object handling, printing, and text manipulation.
 from genericlib import DotObject as genericlib_DotObject    # noqa
 from genericlib import Printer as genericlib_Printer        # noqa
-from genericlib import MiscObject as genericlib_MiscObject  # noqa
 from genericlib import Wildcard as genericlib_Wildcard      # noqa
 from genericlib import Text as genericlib_Text              # noqa
-from genericlib import Misc as genericlib_Misc              # noqa
 from genericlib.text import Line as genericlib_Line         # noqa
 
 # Constant classes
