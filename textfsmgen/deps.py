@@ -41,6 +41,7 @@ from genericlib import MiscObject as genericlib_MiscObject  # noqa
 from genericlib import Wildcard as genericlib_Wildcard      # noqa
 from genericlib import Text as genericlib_Text              # noqa
 from genericlib import Misc as genericlib_Misc              # noqa
+from genericlib.text import Line as genericlib_Line         # noqa
 
 # Constant classes
 # Common symbolic constants for numbers, strings, regex patterns, and indexing.

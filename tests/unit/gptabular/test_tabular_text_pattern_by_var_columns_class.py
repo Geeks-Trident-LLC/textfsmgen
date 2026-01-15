@@ -16,7 +16,7 @@ import pytest           # noqa
 
 from textwrap import dedent
 
-from genericlib import Misc
+from textfsmgen.deps import genericlib_text_module as text
 from genericlib import MiscObject
 from genericlib import get_data_as_tabular
 
@@ -48,7 +48,7 @@ LastWriteTime          Name
     node = TabularTextPatternByVarColumns(test_data, columns_count=2, divider='  ')
     pattern = node.to_regex()
     assert pattern == expected_pattern
-    for index, line in enumerate(Misc.get_list_of_lines(test_data)):
+    for index, line in enumerate(text.get_list_of_lines(test_data)):
         expected_result = expected_results[index]
         match = re.match(pattern, line)
         if match:
@@ -77,7 +77,7 @@ peach               pepsi soda
     node = TabularTextPatternByVarColumns(test_data, columns_count=3, divider='  ')
     pattern = node.to_regex()
     assert pattern == expected_pattern
-    for index, line in enumerate(Misc.get_list_of_lines(test_data)):
+    for index, line in enumerate(text.get_list_of_lines(test_data)):
         expected_result = expected_results[index]
         match = re.match(pattern, line)
         if match:

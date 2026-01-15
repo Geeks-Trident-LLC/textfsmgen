@@ -21,7 +21,7 @@ from textfsmgen.deps import regexapp_TextPattern as TextPattern
 from textfsmgen.deps import genericlib_NUMBER as NUMBER     # noqa
 from textfsmgen.deps import genericlib_STRING as STRING     # noqa
 from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
-from textfsmgen.deps import genericlib_Misc as Misc
+from textfsmgen.deps import genericlib_text_module as text
 
 from textfsmgen.gp import LData, TranslatedPattern
 from textfsmgen.exceptions import RuntimeException
@@ -807,7 +807,7 @@ class CategoryLinesPattern(RuntimeException):
         starting_from: str | int | None = None,
         ending_to: str | int | None = None,
     ) -> None:
-        self.lines = Misc.get_list_of_lines(*lines)
+        self.lines = text.get_list_of_lines(*lines)
         self.options = options or dict()
         self.count = count
         self.separator = separator
@@ -931,7 +931,7 @@ class CategoryLinesPattern(RuntimeException):
             for item in self._lst
         ]
 
-        tmpl_snippet = Misc.join_string(*result, separator=STRING.NEWLINE)
+        tmpl_snippet = text.join_string(*result, separator=STRING.NEWLINE)
 
         if self.index_a is not None:
             line_snippet = get_fixed_line_snippet(self.lines, index=self.index_a)

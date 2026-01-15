@@ -51,6 +51,7 @@ from textfsmgen.deps import genericlib_STRING as STRING     # noqa
 from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
 from textfsmgen.deps import genericlib_INDEX as INDEX       # noqa
 from textfsmgen.deps import genericlib_Misc as Misc
+from textfsmgen.deps import genericlib_text_module as text
 from textfsmgen.deps import genericlib_number_module as number
 
 from textfsmgen.gp import TranslatedPattern
@@ -103,7 +104,7 @@ class TabularTextPattern(RuntimeException):
                  header_names=None, headers_data=None, custom_headers_data='',
                  starting_from=None, ending_to=None,
                  is_headers_row=True):
-        self.lines = Misc.get_list_of_lines(*lines)
+        self.lines = text.get_list_of_lines(*lines)
         self.kwargs = dict(
             divider=divider,
             columns_count=columns_count,
@@ -135,8 +136,8 @@ class TabularTextPattern(RuntimeException):
             return
 
         normalized = []
-        if Misc.is_string(col_widths) or Misc.is_list(col_widths):
-            if Misc.is_string(col_widths):
+        if text.is_string(col_widths) or Misc.is_list(col_widths):
+            if text.is_string(col_widths):
                 col_widths = col_widths.strip()
                 widths = re.split(r"[ ,]+", col_widths)
             else:
@@ -196,7 +197,7 @@ class TabularTextPattern(RuntimeException):
             line_snippet = get_fixed_line_snippet(self.lines, index=self.index_a)
             if line_snippet:
                 if re.search(LinePattern(line_snippet), first_line):
-                    tmpl_snippet = Misc.join_string(*lines[1:], separator="\n")
+                    tmpl_snippet = text.join_string(*lines[1:], separator="\n")
                 tmpl_snippet = f"{line_snippet} -> Table\nTable\n{tmpl_snippet}"
 
         lines = tmpl_snippet.splitlines()
@@ -207,7 +208,7 @@ class TabularTextPattern(RuntimeException):
             line_snippet = get_fixed_line_snippet(self.lines, index=self.index_b)
             if line_snippet:
                 if re.search(LinePattern(line_snippet), last_line):
-                    tmpl_snippet = Misc.join_string(*lines[:-1], separator="\n")
+                    tmpl_snippet = text.join_string(*lines[:-1], separator="\n")
                 tmpl_snippet = f"{tmpl_snippet}\n{line_snippet} -> EOF"
 
         return tmpl_snippet
@@ -276,7 +277,7 @@ class TabularTextPatternByVarColumns(RuntimeException):
         self._is_start_with_divider = None
         self._is_end_with_divider = None
 
-        self.lines = Misc.get_list_of_lines(*lines)
+        self.lines = text.get_list_of_lines(*lines)
         self.total_lines = len(self.lines)
         self.divider = divider
         self.col_widths = col_widths or []
@@ -340,7 +341,7 @@ class TabularTextPatternByVarColumns(RuntimeException):
         data = self.headers_data
         total_lines = len(self.lines)
 
-        if Misc.is_string(data):
+        if text.is_string(data):
             pat = r' *[0-9]+([ ,]+[0-9]+)* *$'
             if re.match(pat, data):
                 for index in map(int, re.split('[ ,]+', data)):
@@ -373,7 +374,7 @@ class TabularTextPatternByVarColumns(RuntimeException):
         if not header_names:
             return variables
 
-        if Misc.is_string(header_names):
+        if text.is_string(header_names):
             header_names = re.split('[ ,]+', header_names.strip())
 
         if Misc.is_list(header_names) and len(header_names) == self.columns_count:
@@ -408,8 +409,8 @@ class TabularTextPatternByVarColumns(RuntimeException):
 
     def find_ref_row_by_separator_divider(self, custom_line=''):
         """Find reference row using explicit separator divider."""
-        fmt = ' *%(sep)s?(%(p)s%(sep)s){%(rep)s}%(p)s%(sep)s? *$'
-        kwargs = dict(p=r'[^%s]+' % self.divider, rep=self.columns_count - NUMBER.ONE, sep=re.escape(self.divider))
+        fmt = ' *%(separator)s?(%(p)s%(separator)s){%(rep)s}%(p)s%(separator)s? *$'
+        kwargs = dict(p=r'[^%s]+' % self.divider, rep=self.columns_count - NUMBER.ONE, separator=re.escape(self.divider))
         pat = fmt % kwargs
 
         found_line = custom_line or next((line for line in self.lines if re.match(pat, line)), STRING.EMPTY)
@@ -470,7 +471,7 @@ class TabularTextPatternByVarColumns(RuntimeException):
             else f'(?P<v{index:03d}>.*)'
             for index, width in enumerate(self.col_widths)
         ]
-        pattern = Misc.join_string(*lst)
+        pattern = text.join_string(*lst)
 
         found_line = custom_line or next((line for line in self.lines if re.match(pattern, line)), None)
         if not found_line:
@@ -736,10 +737,10 @@ class TabularTable(RuntimeException):
             lst = []
             for cell in self.first_column.cells:
                 if cell.text.strip():
-                    lst.append(Misc.is_leading_line(cell.data))
+                    lst.append(text.Line.has_leading(cell.data))
             for key, data in self.first_column_data_info.items():
                 if isinstance(key, int):
-                    lst.append(Misc.is_leading_line(data))
+                    lst.append(text.Line.has_leading(data))
             self._is_leading = any(lst)
         return self._is_leading
 
@@ -748,7 +749,7 @@ class TabularTable(RuntimeException):
         """Check if any line contains trailing markers."""
         if self._is_trailing is None:
             for line in self.lines:
-                self._is_trailing = Misc.is_trailing_line(line)
+                self._is_trailing = text.Line.has_trailing(line)
                 if self._is_trailing:
                     break
         return self._is_trailing
@@ -819,7 +820,7 @@ class TabularTable(RuntimeException):
                 spacers[1] = max(spacers[1], spacers_count_)
 
         pattern = r'^ *< *user[ ._+-]marker[ ._+-](?P<case>one|multi)[ ._+-]?line *>'
-        all_lines = Misc.get_list_of_lines(*lines)
+        all_lines = text.get_list_of_lines(*lines)
 
         lst: List[str] = []
         is_continue = False
@@ -831,7 +832,7 @@ class TabularTable(RuntimeException):
 
             # Handle continuation case
             if is_continue:
-                spacers_count = len(Misc.get_leading_line(line))
+                spacers_count = len(text.Line.get_leading(line))
                 if baseline_spacers_count is None:
                     baseline_spacers_count = spacers_count
                     update_last_column_info(
@@ -859,7 +860,7 @@ class TabularTable(RuntimeException):
                     first_col_data = re.sub(pattern, '', line)
                     next_line = re.sub(pattern, '',
                                        all_lines[index + NUMBER.ONE])
-                    leading = Misc.get_leading_line(next_line)
+                    leading = text.Line.get_leading(next_line)
 
                     self.first_column_data_info[len(lst)] = first_col_data
                     self.first_column_data_info['spacers_count'] = len(leading)
@@ -1083,7 +1084,7 @@ class TabularTable(RuntimeException):
         if self._is_trailing:
             lst.append(PATTERN.ZOSPACES)
 
-        return Misc.join_string(*lst)
+        return text.join_string(*lst)
 
     def get_header_lines_snippet(self) -> str:
         """
@@ -1097,13 +1098,13 @@ class TabularTable(RuntimeException):
         headers_lines = self.raw_headers_data or self.header_lines
         lst: List[str] = []
 
-        for line in Misc.get_list_of_lines(*headers_lines):
+        for line in text.get_list_of_lines(*headers_lines):
             is_line_of_symbols = bool(re.match(PATTERN.CHECK_PUNCTS_GROUP, line))
-            is_header_line = Misc.is_data_line(line) and not is_line_of_symbols
+            is_header_line = text.Line.has_data(line) and not is_line_of_symbols
             if is_header_line:
                 lst.append(line)
 
-        return Misc.join_string(*lst, sep=STRING.NEWLINE)
+        return text.join_string(*lst, separator=STRING.NEWLINE)
 
     def to_template_snippet(self) -> str:
         """
@@ -1126,7 +1127,7 @@ class TabularTable(RuntimeException):
         self.build_snippet_for_first_column_case(lst_of_snippet)
         self.build_snippet_for_other_case(lst_of_snippet)
 
-        return Misc.join_string(*lst_of_snippet, sep=STRING.NEWLINE)
+        return text.join_string(*lst_of_snippet, separator=STRING.NEWLINE)
 
     def build_snippet_for_first_column_case(self, lst_of_snippet: List[str]) -> None:
         """
@@ -1173,7 +1174,7 @@ class TabularTable(RuntimeException):
                 parts.append(col_snippet if int(bit) else space_snippet)
 
             sep = self.divider_snippet if self.is_divider else STRING.DOUBLE_SPACES
-            next_snippet = Misc.join_string(*parts, sep=sep)
+            next_snippet = text.join_string(*parts, separator=sep)
 
             if self.is_divider:
                 next_snippet = f'{self.divider_leading_snippet}{next_snippet}{self.divider_trailing_snippet}'
@@ -1248,7 +1249,7 @@ class TabularTable(RuntimeException):
                         lst.append(space_snippet)
 
             sep = self.divider_snippet if self.is_divider else STRING.DOUBLE_SPACES
-            line_snippet = Misc.join_string(*lst, sep=sep)
+            line_snippet = text.join_string(*lst, separator=sep)
             if self.is_divider:
                 line_snippet = f'{self.divider_leading_snippet}{line_snippet}{self.divider_trailing_snippet}'
 
@@ -1333,7 +1334,7 @@ class TabularTable(RuntimeException):
                         parts.append(space_snippet)
 
             sep = self.divider_snippet if self.is_divider else STRING.DOUBLE_SPACES
-            line_snippet = Misc.join_string(*parts, sep=sep)
+            line_snippet = text.join_string(*parts, separator=sep)
             if self.is_divider:
                 line_snippet = f'{self.divider_leading_snippet}{line_snippet}{self.divider_trailing_snippet}'
 
@@ -1456,7 +1457,7 @@ class TabularCell(RuntimeException):
     def leading(self) -> str:
         """Return leading spaces of the cell content."""
         if self._leading is None:
-            self._leading = Misc.get_leading_line(self.data)
+            self._leading = text.Line.get_leading(self.data)
         return self._leading or STRING.EMPTY
 
     @property
@@ -1818,19 +1819,19 @@ class TabularRow(RuntimeException):
         # Handle edge cases with prefix/postfix separators
         if total == columns_count + NUMBER.TWO:
             prefix, first = tokens.pop(NUMBER.ZERO), tokens.pop(NUMBER.ZERO)
-            tokens.insert(NUMBER.ZERO, Misc.join_string(prefix, first, sep=separator))
+            tokens.insert(NUMBER.ZERO, text.join_string(prefix, first, separator=separator))
 
             postfix, last = tokens.pop(), tokens.pop()
-            tokens.append(Misc.join_string(last, postfix, sep=separator))
+            tokens.append(text.join_string(last, postfix, separator=separator))
             total = len(tokens)
 
         elif total == columns_count + NUMBER.ONE:
             if line.strip().startswith(separator):
                 prefix, first = tokens.pop(NUMBER.ZERO), tokens.pop(NUMBER.ZERO)
-                tokens.insert(NUMBER.ZERO, Misc.join_string(prefix, first, sep=separator))
+                tokens.insert(NUMBER.ZERO, text.join_string(prefix, first, separator=separator))
             elif line.strip().endswith(separator):
                 postfix, last = tokens.pop(), tokens.pop()
-                tokens.append(Misc.join_string(last, postfix, sep=separator))
+                tokens.append(text.join_string(last, postfix, separator=separator))
             total = len(tokens)
 
         if columns_count > 0 and columns_count != total:
@@ -2017,7 +2018,7 @@ class TabularColumn:
             return NUMBER.ZERO
 
         trailing_lengths = [
-            len(Misc.get_leading_line(cell.data))
+            len(text.Line.get_leading(cell.data))
             for cell in self.right_column.cells
             if cell.data.strip()
         ]
@@ -2034,7 +2035,7 @@ class TabularColumn:
             return NUMBER.ZERO
 
         leading_lengths = [
-            len(Misc.get_trailing_line(cell.data))
+            len(text.Line.get_trailing(cell.data))
             for cell in self.left_column.cells
             if cell.data.strip()
         ]

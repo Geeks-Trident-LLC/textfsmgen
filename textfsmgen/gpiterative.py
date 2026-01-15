@@ -39,7 +39,7 @@ from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
 from textfsmgen.deps import genericlib_NUMBER as NUMBER     # noqa
 from textfsmgen.deps import genericlib_SYMBOL as SYMBOL     # noqa
 
-from textfsmgen.deps import genericlib_Misc as Misc
+from textfsmgen.deps import genericlib_text_module as text
 from textfsmgen.deps import genericlib_get_ref_pattern_by_name as get_ref_pattern_by_name
 
 from textfsmgen.gp import TranslatedPattern
@@ -887,7 +887,7 @@ class IterativeLinesPattern(RuntimeException):
     """
 
     def __init__(self, *lines_or_snippets: str) -> None:
-        self.lines_or_snippets: List[str] = Misc.get_list_of_readonly_lines(*lines_or_snippets)
+        self.lines_or_snippets: List[str] = list(text.get_list_of_readonly_lines(*lines_or_snippets))
 
     def to_snippet(self) -> str:
         """
@@ -900,7 +900,7 @@ class IterativeLinesPattern(RuntimeException):
         """
         snippets: List[str] = []
         for index, line_or_snippet in enumerate(self.lines_or_snippets):
-            if Misc.is_data_line(line_or_snippet):
+            if text.Line.has_data(line_or_snippet):
                 label = str(index) if index > 0 else STRING.EMPTY
                 node = IterativeLinePattern(line_or_snippet, label=label)
                 snippets.append(node.to_snippet())
@@ -919,7 +919,7 @@ class IterativeLinesPattern(RuntimeException):
         """
         patterns: List[str] = []
         for snippet in self.lines_or_snippets:
-            if Misc.is_data_line(snippet):
+            if text.Line.has_data(snippet):
                 node = IterativeLinePattern(snippet)
                 patterns.append(node.to_regex())
             else:
@@ -947,7 +947,7 @@ class IterativeLinesPattern(RuntimeException):
         is_captured = False
 
         for snippet in self.lines_or_snippets:
-            if Misc.is_data_line(snippet):
+            if text.Line.has_data(snippet):
                 node = IterativeLinePattern(snippet)
                 tmpl_snippets.append(node.to_template_snippet())
                 is_captured |= node.is_captured_in_template_snippet()

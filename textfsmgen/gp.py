@@ -47,6 +47,7 @@ from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
 from textfsmgen.deps import genericlib_TEXT as TEXT         # noqa
 from textfsmgen.deps import genericlib_SYMBOL as SYMBOL     # noqa
 from textfsmgen.deps import genericlib_Misc as Misc
+from textfsmgen.deps import genericlib_Line as Line
 
 from textfsmgen.exceptions import RuntimeException
 
@@ -100,7 +101,7 @@ class LData(RuntimeException):
         str
             Leading whitespace characters, or an empty string if none.
         """
-        leading_spaces = Misc.get_leading_line(self.raw_data)
+        leading_spaces = Line.get_leading(self.raw_data)
         return leading_spaces
 
     @property
@@ -113,7 +114,7 @@ class LData(RuntimeException):
         str
             Trailing whitespace characters, or an empty string if none.
         """
-        trailing_spaces = Misc.get_trailing_line(self.raw_data)
+        trailing_spaces = Line.get_trailing(self.raw_data)
         return trailing_spaces
 
     @property

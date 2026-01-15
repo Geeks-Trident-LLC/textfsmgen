@@ -31,10 +31,10 @@ import re
 from textfsmgen.deps import regexapp_TextPattern as TextPattern
 from textfsmgen.deps import genericlib_Wildcard as Wildcard
 from textfsmgen.deps import genericlib_Text as Text
-from textfsmgen.deps import genericlib_Misc as Misc
 from textfsmgen.deps import genericlib_STRING as STRING     # noqa
 from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
 from textfsmgen.deps import genericlib_number_module as number
+from textfsmgen.deps import genericlib_text_module as text
 
 from textfsmgen.gp import TranslatedPattern
 
@@ -71,7 +71,7 @@ def get_line_position_by(lines: list[str], item: str | int | None) -> int | None
 
     regex_prefix = r'(?i)^\s*--regex\s+'
     wildcard_prefix = r'(?i)^\s*--wildcard\s+'
-    if Misc.is_string(item):
+    if text.is_string(item):
         if re.search(regex_prefix, item):
             pattern = re.sub(regex_prefix, STRING.EMPTY, item)
         elif re.search(wildcard_prefix, item):
@@ -102,8 +102,8 @@ def get_fixed_line_snippet(lines: list[str], line: str = "", index: int | None =
     - Empty lines are represented as ``start() end(space|whitespace)``.
     - Digits, numbers, and mixed numbers are replaced with template
       placeholders via `TranslatedPattern`.
-    - Leading and trailing whitespace are preserved using `Misc.get_leading_line`
-      and `Misc.get_trailing_line`.
+    - Leading and trailing whitespace are preserved using `text.Line.get_leading`
+      and `text.Line.get_trailing`.
 
     Parameters
     ----------
@@ -180,8 +180,8 @@ def get_fixed_line_snippet(lines: list[str], line: str = "", index: int | None =
             if factory.name in {"digit", "digits", "number", "mixed_number", "puncts"}:
                 tokens[i] = factory.get_template_snippet()
 
-    snippet_body = Misc.join_string(*tokens)
-    leading = Misc.get_leading_line(line)
-    trailing = Misc.get_trailing_line(line)
+    snippet_body = text.join_string(*tokens)
+    leading = text.Line.get_leading(line)
+    trailing = text.Line.get_trailing(line)
 
     return f"{leading}{snippet_body}{trailing}"

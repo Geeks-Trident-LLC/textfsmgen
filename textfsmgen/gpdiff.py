@@ -35,8 +35,8 @@ from textfsmgen.deps import genericlib_STRING as STRING     # noqa
 from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
 from textfsmgen.deps import genericlib_NUMBER as NUMBER     # noqa
 from textfsmgen.deps import genericlib_INDEX as INDEX       # noqa
-from textfsmgen.deps import genericlib_Misc as Misc
 from textfsmgen.deps import genericlib_Text as Text
+from textfsmgen.deps import genericlib_text_module as text
 
 from textfsmgen.gp import TranslatedPattern
 from textfsmgen.exceptions import RuntimeException
@@ -519,7 +519,7 @@ class NDiffLinePattern:
     ) -> None:
         self.whitespace = whitespace
         if not self.whitespace:
-            is_ws = any(Misc.is_whitespace_in_line(line) for line in [line_a, line_b])
+            is_ws = any(text.Line.has_whitespace_in_line(line) for line in [line_a, line_b])
             self.whitespace = PATTERN.WHITESPACE if is_ws else PATTERN.SPACE
 
         self.label = label
@@ -527,12 +527,12 @@ class NDiffLinePattern:
         self.is_root = is_root
 
         # Leading whitespace detection
-        self.is_leading = Misc.is_leading_line(line_a) or Misc.is_leading_line(line_b)
-        self.are_leading = Misc.is_leading_line(line_a) and Misc.is_leading_line(line_b)
+        self.is_leading = text.Line.has_leading(line_a) or text.Line.has_leading(line_b)
+        self.are_leading = text.Line.has_leading(line_a) and text.Line.has_leading(line_b)
 
         # trailing whitespace detection
-        self.is_trailing = Misc.is_trailing_line(line_a) or Misc.is_trailing_line(line_b)
-        self.are_trailing = Misc.is_trailing_line(line_a) and Misc.is_trailing_line(line_b)
+        self.is_trailing = text.Line.has_trailing(line_a) or text.Line.has_trailing(line_b)
+        self.are_trailing = text.Line.has_trailing(line_a) and text.Line.has_trailing(line_b)
 
         multi = '+' if self.are_leading else '*'
         ws = self.whitespace
@@ -991,7 +991,7 @@ class DiffLinePattern(RuntimeException):
             True if every line in `raw_lines` begins with leading whitespace,
             False otherwise.
         """
-        return all(Misc.is_leading_line(line) for line in self.raw_lines)
+        return all(text.Line.has_leading(line) for line in self.raw_lines)
 
     @property
     def are_trailing(self) -> bool:
@@ -1004,7 +1004,7 @@ class DiffLinePattern(RuntimeException):
             True if every line in `raw_lines` ends with trailing whitespace,
             False otherwise.
         """
-        return all(Misc.is_trailing_line(line) for line in self.raw_lines)
+        return all(text.Line.has_trailing(line) for line in self.raw_lines)
 
     @property
     def is_leading(self) -> bool:
@@ -1017,7 +1017,7 @@ class DiffLinePattern(RuntimeException):
             True if at least one line in `raw_lines` begins with leading whitespace,
             False otherwise.
         """
-        return any(Misc.is_leading_line(line) for line in self.raw_lines)
+        return any(text.Line.has_leading(line) for line in self.raw_lines)
 
     @property
     def is_trailing(self) -> bool:
@@ -1030,7 +1030,7 @@ class DiffLinePattern(RuntimeException):
             True if at least one line in `raw_lines` ends with trailing whitespace,
             False otherwise.
         """
-        return any(Misc.is_trailing_line(line) for line in self.raw_lines)
+        return any(text.Line.has_trailing(line) for line in self.raw_lines)
 
     @property
     def is_whitespace_in_line(self) -> bool:
@@ -1043,7 +1043,7 @@ class DiffLinePattern(RuntimeException):
             True if at least one line in `raw_lines` contains whitespace,
             False otherwise.
         """
-        return any(Misc.is_whitespace_in_line(line) for line in self.raw_lines)
+        return any(text.Line.has_whitespace_in_line(line) for line in self.raw_lines)
 
     @property
     def whitespace(self) -> str:
@@ -1293,7 +1293,7 @@ class DiffLinePattern(RuntimeException):
                     other_lst.pop()
                 other_lst.append(f"(?P<c{key}>.*)")
 
-            generic_pattern = Misc.join_string(*other_lst)
+            generic_pattern = text.join_string(*other_lst)
             match = re.match(generic_pattern, line)
 
             if lst:
@@ -1421,7 +1421,7 @@ class CommonDiffLinePattern(RuntimeException):
             True if every line in `raw_lines` begins with leading whitespace,
             False otherwise.
         """
-        return all(Misc.is_leading_line(line) for line in self.raw_lines)
+        return all(text.Line.has_leading(line) for line in self.raw_lines)
 
     @property
     def are_trailing(self) -> bool:
@@ -1434,7 +1434,7 @@ class CommonDiffLinePattern(RuntimeException):
             True if every line in `raw_lines` ends with trailing whitespace,
             False otherwise.
         """
-        return all(Misc.is_trailing_line(line) for line in self.raw_lines)
+        return all(text.Line.has_trailing(line) for line in self.raw_lines)
 
     @property
     def is_leading(self) -> bool:
@@ -1447,7 +1447,7 @@ class CommonDiffLinePattern(RuntimeException):
             True if at least one line in `raw_lines` begins with leading whitespace,
             False otherwise.
         """
-        return any(Misc.is_leading_line(line) for line in self.raw_lines)
+        return any(text.Line.has_leading(line) for line in self.raw_lines)
 
     @property
     def is_trailing(self) -> bool:
@@ -1460,7 +1460,7 @@ class CommonDiffLinePattern(RuntimeException):
             True if at least one line in `raw_lines` ends with trailing whitespace,
             False otherwise.
         """
-        return any(Misc.is_trailing_line(line) for line in self.raw_lines)
+        return any(text.Line.has_trailing(line) for line in self.raw_lines)
 
     @property
     def is_whitespace_in_line(self) -> bool:
@@ -1473,7 +1473,7 @@ class CommonDiffLinePattern(RuntimeException):
             True if at least one line in `raw_lines` contains whitespace,
             False otherwise.
         """
-        return any(Misc.is_whitespace_in_line(line) for line in self.raw_lines)
+        return any(text.Line.has_whitespace_in_line(line) for line in self.raw_lines)
 
     @property
     def whitespace(self) -> str:
@@ -1731,7 +1731,7 @@ class DText:
 
     Parameters
     ----------
-    text : str
+    txt : str
         The initial text fragment.
 
     Attributes
@@ -1746,19 +1746,19 @@ class DText:
         Original text fragment.
     """
 
-    def __init__(self, text: str) -> None:
-        self.lst: List[str] = [text]
+    def __init__(self, txt: str) -> None:
+        self.lst: List[str] = [txt]
         self.leading_lst: List[str] = []
         self.trailing_lst: List[str] = []
-        self.text: str = text
+        self.text: str = txt
 
-        leading = Misc.get_leading_line(text)
+        leading = text.Line.get_leading(txt)
         if leading:
             self.leading_lst.append(leading)
 
-        trailing = Misc.get_trailing_line(text)
+        trailing = text.Line.get_trailing(txt)
         if trailing:
-            if text.strip():
+            if txt.strip():
                 self.trailing_lst.append(trailing)
 
     @property
@@ -1851,30 +1851,30 @@ class DText:
         clean_lst = [item.strip() for item in self.lst if item.strip()]
         return len(set(clean_lst)) == NUMBER.ONE
 
-    def concatenate(self, text: str) -> None:
+    def concatenate(self, txt: str) -> None:
         """
         Concatenate text to the last fragment.
 
         Parameters
         ----------
-        text : str
+        txt : str
             Text to append to the last fragment.
         """
         if self.lst:
-            self.lst[-INDEX.ONE] = self.lst[-INDEX.ONE] + text
+            self.lst[-INDEX.ONE] = self.lst[-INDEX.ONE] + txt
         else:
-            self.lst.append(text)
+            self.lst.append(txt)
 
-    def add(self, text: str) -> None:
+    def add(self, txt: str) -> None:
         """
         Add a new text fragment.
 
         Parameters
         ----------
-        text : str
+        txt : str
             Text fragment to add.
         """
-        self.lst.append(text)
+        self.lst.append(txt)
 
     def to_group(self) -> List[List[str]]:
         """
@@ -1971,7 +1971,7 @@ class DChange:
 
     Parameters
     ----------
-    text : str
+    txt : str
         The initial text fragment.
     var : str
         Variable name used in snippet/pattern generation.
@@ -1988,22 +1988,22 @@ class DChange:
         Flag indicating whether the fragment is empty.
     """
 
-    def __init__(self, text: str, var: str) -> None:
+    def __init__(self, txt: str, var: str) -> None:
         self.var: str = var
         self.lst: List[str] = []
-        self.text: str = text
-        self.is_empty: bool = text.strip() == STRING.EMPTY
+        self.text: str = txt
+        self.is_empty: bool = txt.strip() == STRING.EMPTY
 
         if not self.is_empty:
-            self.lst.append(text)
+            self.lst.append(txt)
 
-    def add(self, text: str) -> None:
+    def add(self, txt: str) -> None:
         """
         Add a new text fragment to the change node.
 
         Parameters
         ----------
-        text : str
+        txt : str
             Text fragment to add.
 
         Side Effects
@@ -2011,10 +2011,10 @@ class DChange:
         - Updates `is_empty` if the provided text is empty.
         - Appends non-empty text to `lst` if not already present.
         """
-        if text.strip() == STRING.EMPTY:
+        if txt.strip() == STRING.EMPTY:
             self.is_empty = True
-        elif text not in self.lst:
-            self.lst.append(text)
+        elif txt not in self.lst:
+            self.lst.append(txt)
 
     def get_pattern(self) -> "ElementPattern":
         """
