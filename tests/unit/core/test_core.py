@@ -13,7 +13,7 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/unit/core/test_core.py
 """
 
-from textfsmgen.core import verify
+from textfsmgen.verify import verify
 from textfsmgen.core import get_textfsm_template
 
 from tests.unit.core import get_user_data

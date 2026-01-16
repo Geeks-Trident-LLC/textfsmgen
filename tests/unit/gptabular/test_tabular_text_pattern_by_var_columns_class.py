@@ -22,7 +22,7 @@ from textfsmgen.deps import genericlib_get_data_as_tabular as get_data_as_tabula
 
 from textfsmgen.gptabular import TabularTextPatternByVarColumns
 
-from textfsmgen.core import verify
+from textfsmgen.verify import verify
 from textfsmgen.core import get_textfsm_template
 
 

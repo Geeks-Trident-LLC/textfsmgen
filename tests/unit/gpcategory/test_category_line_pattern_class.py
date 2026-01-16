@@ -14,7 +14,7 @@ import re
 
 import pytest
 
-from textfsmgen.core import verify
+from textfsmgen.verify import verify
 from textfsmgen.core import get_textfsm_template
 
 from textfsmgen.gpcategory import CategoryLinePattern
