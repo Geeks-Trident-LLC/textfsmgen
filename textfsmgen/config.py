@@ -69,8 +69,11 @@ class Data:
     regexapp_text = 'regexapp v{}'.format(regexapp.version)
     regexapp_link = 'https://pypi.org/project/regexapp'
 
-    genlib_text = f"genericlib v{genericlib_version}"
-    genlib_link = "https://pypi.org/project/genericlib"
+    # genlib_text = f"genericlib v{genericlib_version}"
+    # genlib_link = "https://pypi.org/project/genericlib"
+
+    genericlib_text = f"genericlib v{genericlib_version}"
+    genericlib_link = "https://pypi.org/project/genericlib"
 
     textfsm_text = 'textfsm v{}'.format(textfsm.__version__)
     textfsm_link = 'https://pypi.org/project/textfsm/'
@@ -112,9 +115,9 @@ class Data:
                 package=cls.regexapp_text,
                 url=cls.regexapp_link
             ),
-            genlib=dict(
-                package=cls.genlib_text,
-                url=cls.genlib_link
+            genericlib=dict(
+                package=cls.genericlib_text,
+                url=cls.genericlib_link
             ),
             textfsm=dict(
                 package=cls.textfsm_text,

@@ -1449,8 +1449,8 @@ class Application:
 
         # genericlib package
         label = self.create_custom_label(
-            frame, text=Data.genlib_text,
-            link=Data.genlib_link
+            frame, text=Data.genericlib_text,
+            link=Data.genericlib_link
         )
         label.grid(row=4, column=0, padx=(20, 0), sticky=tk.W)
 
