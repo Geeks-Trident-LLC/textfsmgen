@@ -29,7 +29,7 @@ import yaml
 
 from textfsmgen.deps import genericlib_version
 from textfsmgen.deps import genericlib_file_module as file
-from textfsmgen.deps import genericlib_dedent_and_strip as dedent_and_strip
+from textfsmgen.libs.common import dedent_and_strip
 
 __version__ = '0.3.1a2'
 version = __version__   # noqa

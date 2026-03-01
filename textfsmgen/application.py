@@ -41,7 +41,7 @@ from pprint import pformat
 from textfsmgen.deps import genericlib_get_data_as_tabular as get_data_as_tabular
 from textfsmgen.deps import genericlib_DotObject as DotObject
 from textfsmgen.deps import genericlib_raise_exception as raise_exception
-from textfsmgen.deps import genericlib_dedent_and_strip as dedent_and_strip
+from textfsmgen.libs.common import dedent_and_strip
 from textfsmgen.deps import genericlib_file_module as file
 
 from textfsmgen import TemplateBuilder
