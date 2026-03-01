@@ -40,7 +40,7 @@ from pprint import pformat
 
 from textfsmgen.deps import genericlib_get_data_as_tabular as get_data_as_tabular
 from textfsmgen.libs.generic import DotObject
-from textfsmgen.deps import genericlib_raise_exception as raise_exception
+from textfsmgen.exceptions import raise_exception
 from textfsmgen.libs.common import dedent_and_strip
 from textfsmgen.deps import genericlib_file_module as file
 

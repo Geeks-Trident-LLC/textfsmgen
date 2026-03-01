@@ -4,29 +4,9 @@ textfsmgen.exceptions
 
 Custom exception classes for the TextFSM Generator library.
 
-This module defines application‑specific exceptions that provide
-clearer error reporting and handling across the `textfsmgen` package.
-By centralizing exception definitions, the library ensures consistent
-messaging and easier debugging for both developers and end users.
-
-Purpose
--------
-- Provide meaningful exception types for template generation, parsing,
-  and configuration errors.
-- Improve error handling by distinguishing between different failure
-  scenarios.
-- Support GUI and CLI workflows with user‑friendly error messages.
-
-Notes
------
-- All custom exceptions inherit from `TextFSMGenError` to allow
-  consistent catching at a higher level.
-- Exception messages are designed to be user‑friendly for GUI dialogs
-  while still informative for developers.
 """
-from textfsmgen.deps import genericlib_raise_runtime_error as raise_runtime_error
-from textfsmgen.deps import genericlib_raise_exception as raise_exception   # noqa
 
+from typing import Type, Optional
 
 class TemplateError(Exception):     # noqa
     """
@@ -75,34 +55,73 @@ class NoTestDataError(TemplateError):
     """
 
 
+def raise_exception(
+    ex: Exception,
+    cls: Optional[Type[Exception]] = None,
+    fmt: str = "{} - {}",
+    msg: str = "",
+    is_skipped: bool = False
+):
+    """
+    Raise a formatted exception or skip raising.
+    """
+
+    if not is_skipped:
+        fmt = str(fmt)
+
+        if not isinstance(ex, Exception):   # if ex is NOT instance of Exception
+            ex_type_name = ex.__name__ if isinstance(ex, type) else type(ex).__name__
+            failure = f"Invalid argument: expected an Exception instance, got {ex_type_name}."
+            raise InvalidExceptionType(failure)
+
+        # Determine which exception class to use
+
+        is_cls_exception = isinstance(cls, type) and issubclass(cls, Exception)
+        exception_cls = cls if is_cls_exception else type(ex)
+        if msg:
+            raise exception_cls(msg)
+        try:
+            ex_name = type(ex).__name__
+            failure = fmt.format(ex_name, ex)
+            raise exception_cls(failure)
+        except Exception as other_ex:
+            other_failure = f"{type(other_ex).__name__} - {other_ex}"
+            raise other_ex.__class__(other_failure)
+
+
+def create_runtime_error(obj=None, msg=''):
+    """
+    Dynamically create a custom runtime exception instance.
+    """
+    if obj is None:
+        exc_cls_name = "RuntimeError"
+    else:
+        exc_cls_name = obj if isinstance(obj, str) else f"{type(obj).__name__}RTError"
+
+    # Normalize class name: ensure first character is uppercase
+    exc_cls_name = str(exc_cls_name)
+    exc_cls_name = exc_cls_name[0].upper() + exc_cls_name[1:]
+
+    exc_cls = type(exc_cls_name, (Exception,), {})
+    return exc_cls(msg)
+
+
+def raise_runtime_error(obj=None, msg=''):
+    """
+    Raise a dynamically created runtime exception.
+    """
+    exc_obj = create_runtime_error(obj=obj, msg=msg)
+    raise exc_obj
+
+
 class RuntimeException:
     """
     Utility class for raising dynamically created runtime exceptions.
-
-    This class provides convenience methods that delegate to
-    `genericlib.exceptions.raise_runtime_error` to generate and raise custom
-    exception types at runtime. The exception class name is derived
-    from either a provided string or the class name of an object.
     """
 
     def raise_runtime_error(self, name: str = "", msg: str = ""):
         """
         Raise a dynamically created runtime exception (instance method).
-
-        Parameters
-        ----------
-        name : str, optional
-            The name to use for the exception class. If empty, the
-            instance itself is used to derive the class name.
-        msg : str, optional
-            The error message to associate with the raised exception.
-            Defaults to an empty string.
-
-        Raises
-        ------
-        Exception
-            A dynamically created exception instance with the specified
-            message.
         """
         name = name.strip()
         obj = name or self
@@ -112,20 +131,5 @@ class RuntimeException:
     def do_raise_runtime_error(cls, obj=None, msg: str = ""):
         """
         Raise a dynamically created runtime exception (class method).
-
-        Parameters
-        ----------
-        obj : Any, optional
-            The object or string used to derive the exception class name.
-            Defaults to None, which results in "RuntimeError".
-        msg : str, optional
-            The error message to associate with the raised exception.
-            Defaults to an empty string.
-
-        Raises
-        ------
-        Exception
-            A dynamically created exception instance with the specified
-            message.
         """
         raise_runtime_error(obj=obj, msg=msg)
