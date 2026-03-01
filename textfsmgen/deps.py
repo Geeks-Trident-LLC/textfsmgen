@@ -61,7 +61,6 @@ from genericlib import get_data_as_tabular as genericlib_get_data_as_tabular    
 from genericlib.misc import sys_exit as genericlib_sys_exit                                  # noqa
 from genericlib.text import decorate_list_of_line as genericlib_decorate_list_of_line        # noqa
 from genericlib.constpattern import get_ref_pattern_by_name as genericlib_get_ref_pattern_by_name  # noqa
-from genericlib.decorators import normalize_return_output_text as genericlib_normalize_return_output_text  # noqa
 
 # Exception handling
 # Unified error raising utilities for runtime and generic exceptions.

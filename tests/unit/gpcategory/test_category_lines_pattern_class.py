@@ -18,7 +18,7 @@ from textfsmgen.gpcategory import CategoryLinesPattern
 
 from tests.unit import replace_dates_with_placeholder
 
-from textfsmgen.deps import genericlib_normalize_return_output_text as normalize_return_output_text
+from textfsmgen.libs.decorators import normalize_output
 
 
 class DataForStartingEndingArgumentsTests:
@@ -26,7 +26,7 @@ class DataForStartingEndingArgumentsTests:
     Test data provider for verifying `CategoryLinesPattern` behavior
     with `starting_from` and `ending_to` arguments.
     """
-    @normalize_return_output_text
+    @normalize_output
     def get_test_data(self):
         """
         Returns sample multiline input data containing categories such as
@@ -46,7 +46,7 @@ class DataForStartingEndingArgumentsTests:
         return test_data
 
 
-    @normalize_return_output_text
+    @normalize_output
     def get_expected_snippet(self):
         """
         Returns the expected template snippet generated from the test data,
@@ -63,7 +63,7 @@ class DataForStartingEndingArgumentsTests:
         return expected_snippet
 
 
-    @normalize_return_output_text
+    @normalize_output
     def get_expected_textfsm_template(self):
         """
         Returns the expected full TextFSM template with normalized date
@@ -98,7 +98,7 @@ class DataForStartingEndingArgumentsTests:
 
 
 class DataForToRegexTests:
-    @normalize_return_output_text
+    @normalize_output
     def get_test_data(self):
         test_data = """
             fruits: orange, peach
@@ -107,7 +107,7 @@ class DataForToRegexTests:
             """
         return test_data
 
-    @normalize_return_output_text
+    @normalize_output
     def get_other_test_data(self):
         test_data = """
             blab blab 1 - +++ ***
@@ -118,7 +118,7 @@ class DataForToRegexTests:
             """
         return test_data
 
-    @normalize_return_output_text
+    @normalize_output
     def get_expected_pattern(self):
         fruits_pat = r"fruits: *(?P<fruits>[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*( [\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)+)(\r?\n|\r)"  # noqa
         meat_pat = r"meat: *(?P<meat>[a-zA-Z]+)(\r?\n|\r)"
@@ -126,7 +126,7 @@ class DataForToRegexTests:
         expected_pattern = f"{fruits_pat}{meat_pat}{drink_pat}"
         return expected_pattern
 
-    @normalize_return_output_text
+    @normalize_output
     def get_other_expected_pattern(self):
         line1_pat = r'blab blab 1 - \+{2,} \*{2,}(\r?\n|\r)'
         fruits_pat = r"fruits: *(?P<fruits>[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*( [\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)+)(\r?\n|\r)"  # noqa
@@ -146,15 +146,15 @@ class DataForToRegexTests:
 class DataForToTemplateSnippetTests:
     reference_data = DataForToRegexTests()
 
-    @normalize_return_output_text
+    @normalize_output
     def get_test_data(self):
         return self.reference_data.get_test_data()
 
-    @normalize_return_output_text
+    @normalize_output
     def get_other_test_data(self):
         return self.reference_data.get_other_test_data()
 
-    @normalize_return_output_text
+    @normalize_output
     def get_expected_snippet(self):
         expected_snippet = """
             fruits: mixed_phrase(var_fruits)
@@ -163,7 +163,7 @@ class DataForToTemplateSnippetTests:
         """
         return expected_snippet
 
-    @normalize_return_output_text
+    @normalize_output
     def get_other_expected_snippet(self):
         other_expected_snippet = """
             blab blab 1 - +++ ***
@@ -174,7 +174,7 @@ class DataForToTemplateSnippetTests:
         """
         return other_expected_snippet
 
-    @normalize_return_output_text
+    @normalize_output
     def get_expected_textfsm_template(self):
         expected_textfsm_template = r"""
             ################################################################################
@@ -192,7 +192,7 @@ class DataForToTemplateSnippetTests:
         """
         return expected_textfsm_template
 
-    @normalize_return_output_text
+    @normalize_output
     def get_other_expected_textfsm_template(self):
         other_expected_textfsm_template = r"""
              ################################################################################
