@@ -55,7 +55,6 @@ from genericlib import INDEX as genericlib_INDEX        # noqa
 
 # Utility functions
 # General-purpose helpers for text normalization, system exit, tabular data, and decorators.
-from genericlib.misc import ensure_tkinter_available as genericlib_ensure_tkinter_available  # noqa
 from genericlib import get_data_as_tabular as genericlib_get_data_as_tabular                 # noqa
 
 from genericlib.misc import sys_exit as genericlib_sys_exit                                  # noqa

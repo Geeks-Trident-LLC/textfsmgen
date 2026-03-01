@@ -19,7 +19,7 @@ Notes
   access to template generation is available via `textfsmgen.__init__`.
 """
 
-from textfsmgen.deps import genericlib_ensure_tkinter_available as ensure_tkinter_available
+from textfsmgen.libs.common import ensure_tkinter_available
 tk = ensure_tkinter_available(app_name="textfsmgen")
 
 from tkinter import ttk
