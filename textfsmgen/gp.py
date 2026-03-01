@@ -46,7 +46,7 @@ from textfsmgen.deps import genericlib_STRING as STRING     # noqa
 from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
 from textfsmgen.deps import genericlib_TEXT as TEXT         # noqa
 from textfsmgen.deps import genericlib_SYMBOL as SYMBOL     # noqa
-from textfsmgen.deps import genericlib_datatype_module as datatype
+from textfsmgen.libs import datatype
 from textfsmgen.deps import genericlib_Line as Line
 
 from textfsmgen.exceptions import RuntimeException

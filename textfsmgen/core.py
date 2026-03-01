@@ -38,7 +38,7 @@ from textfsmgen.deps import regexapp_enclose_string as enclose_string
 
 from textfsmgen.deps import genericlib_get_data_as_tabular as get_data_as_tabular
 from textfsmgen.deps import genericlib_Printer as Printer
-from textfsmgen.deps import genericlib_datatype_module as datatype
+from textfsmgen.libs import datatype
 
 from textfsmgen.exceptions import TemplateParsedLineError
 from textfsmgen.exceptions import TemplateBuilderError
