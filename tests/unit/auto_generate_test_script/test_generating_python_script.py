@@ -12,7 +12,7 @@ Run pytest in the project root to execute these tests:
 from datetime import datetime
 from textfsmgen import TemplateBuilder
 
-from textfsmgen.deps import genericlib_dedent_and_strip as dedent_and_strip
+from textfsmgen.libs.common import dedent_and_strip
 
 
 class TestTemplateBuilderPythonScript:

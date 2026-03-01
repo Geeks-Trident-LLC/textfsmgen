@@ -21,7 +21,7 @@ from textfsmgen.gpcategory import CategoryLinePattern
 
 from tests.unit import replace_dates_with_placeholder
 
-from textfsmgen.deps import genericlib_dedent_and_strip as dedent_and_strip
+from textfsmgen.libs.common import dedent_and_strip
 
 
 class TestCategoryLinePattern:
