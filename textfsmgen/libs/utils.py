@@ -7,7 +7,7 @@ General-purpose utility functions used across TextFSMGen.
 
 import re
 
-from . import PATTERN
+from .pat import PATTERN
 
 
 def split_by_matches(text, pattern=r"(?u)\s+"):
