@@ -42,11 +42,11 @@ class TestData:
     def test_user_template_filename(self):
         """Check template filename path."""
         expected = str(PurePath(Path.home(), '.textfsmgen', 'user_templates.yaml'))
-        assert config.Data.user_template_filename == expected
+        assert config.user_template_filename == expected
 
     def test_main_app_text(self):
         """Check main app text."""
-        assert f"v{version}" in config.Data.main_app_text
+        assert f"v{version}" in config.main_app_text
 
     @pytest.mark.parametrize(
         "attr",
@@ -58,7 +58,7 @@ class TestData:
     def test_package_texts(self, attr):
         """Check package text strings."""
         expected = f"{attr} v"
-        assert getattr(config.Data, f"{attr}_text").lower().startswith(expected)
+        assert getattr(config, f"{attr}_text").lower().startswith(expected)
 
     @pytest.mark.parametrize(
         "attr",
@@ -70,24 +70,24 @@ class TestData:
     def test_package_links(self, attr):
         """Check package links."""
         expected = f"https://pypi.org/project/{attr}"
-        assert getattr(config.Data, f"{attr}_link").rstrip("/").lower() == expected
+        assert getattr(config, f"{attr}_link").rstrip("/").lower() == expected
 
     def test_company_info(self):
         """Check company info."""
-        assert config.Data.company == "Geeks Trident LLC"
-        assert "geekstrident.com" in config.Data.company_url
+        assert config.company == "Geeks Trident LLC"
+        assert "geekstrident.com" in config.company_url
 
     def test_repo_and_docs_urls(self):
         """Check repo and docs URLs."""
-        assert config.Data.repo_url.startswith("https://github.com/")
-        assert config.Data.documentation_url.endswith("README.md")
-        assert config.Data.license_url.endswith("LICENSE")
+        assert config.repo_url.startswith("https://github.com/")
+        assert config.documentation_url.endswith("README.md")
+        assert config.license_url.endswith("LICENSE")
 
     def test_license_info(self):
         """Check license info."""
-        assert "TextFSM Generator License" in config.Data.license_name
-        assert "2022" in config.Data.copyright_text
-        assert isinstance(config.Data.license, str)
+        assert "TextFSM Generator License" in config.license_name
+        assert "2022" in config.copyright_text
+        assert isinstance(config.license, str)
 
     @pytest.mark.parametrize(
         "pkg",
@@ -98,6 +98,6 @@ class TestData:
     )
     def test_get_dependency(self, pkg):
         """Check dependency dict."""
-        pkg_name, pkg_url = config.Data.get_dependency().get(pkg).values()
+        pkg_name, pkg_url = config.get_dependency().get(pkg).values()
         assert pkg_name.startswith(f"{pkg} v")
         assert pkg_url.rstrip("/").lower() == f"https://pypi.org/project/{pkg}"

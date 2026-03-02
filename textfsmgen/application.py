@@ -46,14 +46,12 @@ from textfsmgen.libs import file
 
 from textfsmgen import TemplateBuilder
 from textfsmgen.exceptions import TemplateBuilderInvalidFormat
-from textfsmgen.config import Data
+from textfsmgen import config
 
 from textfsmgen import version
-from textfsmgen import edition
 
 
 __version__ = version
-__edition__ = edition
 
 
 def get_relative_center_location(parent, width, height):
@@ -211,9 +209,9 @@ class UserTemplate:
       application to manage user-defined templates.
     """
     def __init__(self):
-        # Data.user_template_filename is
+        # config.user_template_filename is
         #      /home_dir/.textfsmgen/user_templates.yaml
-        self.filename = Data.user_template_filename
+        self.filename = config.user_template_filename
         self.status = ''
         self.content = ''
 
@@ -607,7 +605,7 @@ class Application:
         self.TextArea = tk.Text
         self.PanedWindow = ttk.PanedWindow
 
-        self._base_title = 'TextFSM Generator {} Edition'.format(edition)
+        self._base_title = 'TextFSM Generator CE'
         self.root = tk.Tk()
         self.root.geometry('900x600+100+100')
         self.root.minsize(200, 200)
@@ -1316,11 +1314,11 @@ class Application:
         This callback opens the application's official documentation in a
         new browser tab. It provides users with quick access to the
         "Getting Started" guide or reference materials hosted at the URL
-        defined in `Data.documentation_url`.
+        defined in `config.documentation_url`.
 
         Workflow
         --------
-        1. Retrieve the documentation URL from `Data.documentation_url`.
+        1. Retrieve the documentation URL from `config.documentation_url`.
         2. Open the URL in a new browser tab using the application's
            `self.browser` instance.
 
@@ -1336,7 +1334,7 @@ class Application:
         - The documentation URL is centralized in the `Data` class for
           maintainability and consistency.
         """
-        self.browser.open_new_tab(Data.documentation_url)
+        self.browser.open_new_tab(config.documentation_url)
 
     def callback_help_view_licenses(self):
         """
@@ -1345,11 +1343,11 @@ class Application:
         This callback opens the application's license information in a new
         browser tab. It provides users with direct access to the license text
         and related legal details hosted at the URL defined in
-        `Data.license_url`.
+        `config.license_url`.
 
         Workflow
         --------
-        1. Retrieve the license URL from `Data.license_url`.
+        1. Retrieve the license URL from `config.license_url`.
         2. Open the URL in a new browser tab using the application's
            `self.browser` instance.
 
@@ -1365,7 +1363,7 @@ class Application:
         - The license URL is centralized in the `Data` class for maintainability
           and consistency.
         """
-        self.browser.open_new_tab(Data.license_url)
+        self.browser.open_new_tab(config.license_url)
 
     def callback_help_about(self):
         """
@@ -1420,7 +1418,7 @@ class Application:
         paned_window.add(frame, weight=4)
 
         label = self.create_custom_label(
-            frame, text=Data.main_app_text,
+            frame, text=config.main_app_text,
             increased_size=2, bold=True
         )
         label.grid(row=0, column=0, columnspan=2, sticky=tk.W)
@@ -1429,7 +1427,7 @@ class Application:
         cell_frame = self.Frame(frame, width=450, height=5)
         cell_frame.grid(row=1, column=0, sticky=tk.W, columnspan=2)
 
-        url = Data.repo_url
+        url = config.repo_url
         label = self.Label(cell_frame, text='URL:')
         label.pack(side=tk.LEFT)
 
@@ -1442,22 +1440,22 @@ class Application:
 
         # TextFSM package
         label = self.create_custom_label(
-            frame, text=Data.textfsm_text,
-            link=Data.textfsm_link
+            frame, text=config.textfsm_text,
+            link=config.textfsm_link
         )
         label.grid(row=3, column=0, padx=(20, 0), sticky=tk.W)
 
         # PyYAML package
         label = self.create_custom_label(
-            frame, text=Data.pyyaml_text,
-            link=Data.pyyaml_link
+            frame, text=config.pyyaml_text,
+            link=config.pyyaml_link
         )
         label.grid(row=3, column=1, padx=(20, 0), pady=(0, 10), sticky=tk.W)
 
         # license textbox
         label_frame = self.LabelFrame(
             paned_window, height=200, width=450,
-            text=Data.license_name
+            text=config.license_name
         )
         paned_window.add(label_frame, weight=7)
 
@@ -1470,18 +1468,18 @@ class Application:
         scrollbar.grid(row=0, column=1, sticky='nsew')
         textbox.config(yscrollcommand=scrollbar.set)
 
-        textbox.insert(tk.INSERT, Data.license)
+        textbox.insert(tk.INSERT, config.license)
         textbox.config(state=tk.DISABLED)
 
         # Footer - copyright
         frame = self.Frame(paned_window, width=450, height=20)
         paned_window.add(frame, weight=1)
 
-        label = self.Label(frame, text=Data.copyright_text)
+        label = self.Label(frame, text=config.copyright_text)
         label.pack(side=tk.LEFT, pady=(10, 10))
 
         label = self.create_custom_label(
-            frame, text=Data.company, link=Data.company_url
+            frame, text=config.company, link=config.company_url
         )
         label.pack(side=tk.LEFT, pady=(10, 10))
 
@@ -1699,9 +1697,9 @@ class Application:
                              command=self.callback_help_about)),
         )
 
-        for menu, config in menu_structure:
-            if config:
-                menu.add_command(**config)
+        for menu, config_ in menu_structure:
+            if config_:
+                menu.add_command(**config_)
             else:
                 menu.add_separator()
 

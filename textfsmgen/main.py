@@ -103,19 +103,19 @@ def show_dependency(options):
     if options.dependency:
         from platform import uname
         from platform import python_version
-        from textfsmgen.config import Data
+        from textfsmgen import config
 
         os_name = uname().system
         os_release = uname().release
         py_ver = python_version()
         lst = [
-            Data.main_app_text,
+            config.main_app_text,
             f'Platform: {os_name} {os_release} - Python {py_ver}',
             '--------------------',
             'Dependencies:'
         ]
 
-        for pkg in Data.get_dependency().values():
+        for pkg in config.get_dependency().values():
             lst.append(f'  + Package: {pkg["package"]}')
             lst.append(f'             {pkg["url"]}')
 
