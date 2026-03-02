@@ -38,7 +38,7 @@ from io import StringIO
 from textfsm import TextFSM
 from pprint import pformat
 
-from textfsmgen.deps import genericlib_get_data_as_tabular as get_data_as_tabular
+from textfsmgen.libs.utils import get_data_as_tabular
 from textfsmgen.libs.generic import DotObject
 from textfsmgen.exceptions import raise_exception
 from textfsmgen.libs.common import dedent_and_strip

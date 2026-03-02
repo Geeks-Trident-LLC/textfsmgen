@@ -27,11 +27,6 @@ Notes
 # GenericLib dependencies API
 ##############################
 
-# Utility functions
-# General-purpose helpers for text normalization, system exit, tabular data, and decorators.
-from genericlib import get_data_as_tabular as genericlib_get_data_as_tabular                 # noqa
-
-
 # Versioning
 # Provides version metadata for GenericLib.
 from genericlib import version as genericlib_version    # noqa

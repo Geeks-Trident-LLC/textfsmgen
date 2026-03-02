@@ -18,7 +18,8 @@ from textwrap import dedent
 
 from textfsmgen.libs import text
 from textfsmgen.libs import datatype
-from genericlib import get_data_as_tabular
+# from genericlib import get_data_as_tabular
+from textfsmgen.libs.utils import get_data_as_tabular
 
 from textfsmgen.gptabular import TabularTextPatternByVarColumns
 
@@ -44,7 +45,6 @@ LastWriteTime          Name
         {'lastwritetime': '11/2/2021 11:58:45 PM', 'name': 'README.md'},
         {'lastwritetime': '12/16/2021 12:30:59 PM', 'name': 'CONTRIBUTING.md'}
     ]
-
     node = TabularTextPatternByVarColumns(test_data, columns_count=2, divider='  ')
     pattern = node.to_regex()
     assert pattern == expected_pattern

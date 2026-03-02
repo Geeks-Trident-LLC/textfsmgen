@@ -1,6 +1,6 @@
 """
 textfsmgen.libs.utils
-====================
+=====================
 
 General-purpose utility functions used across TextFSMGen.
 """
@@ -178,7 +178,7 @@ class Printer:
         if failure_msg:
             result.append(failure_msg)
 
-        txt = str.join(STRING.NEWLINE, result)
+        txt = "\n".join(result)
         return txt
 
     @classmethod
@@ -214,3 +214,139 @@ class Printer:
         print_func = print_func if callable(print_func) else print
         print_func(message)
 
+
+class Tabular:
+    """A utility class for constructing and displaying tabular data."""
+    def __init__(self, data, columns=None, justify='left', missing='not_found'):
+        self.result = ''
+        if isinstance(data, dict):
+            self.data = [data]
+        else:
+            self.data = data
+        self.columns = columns
+        self.justify = str(justify).lower()
+        self.missing = missing
+        self.is_ready = True
+        self.is_tabular = False
+        self.failure = ''
+        self.validate_list_of_dicts()
+        self.process()
+
+    def validate_list_of_dicts(self):
+        """Validate that data is a non‑empty list of dicts with identical keys."""
+        if not isinstance(self.data, (list, tuple)):
+            self.is_ready = False
+            self.failure = "data MUST be a list."
+            return
+
+        if not self.data:
+            self.is_ready = False
+            self.failure = "data MUST NOT be empty."
+            return
+
+        expected_keys = None
+        for item in self.data:
+            if not isinstance(item, dict):
+                self.is_ready = False
+                self.failure = "all elements MUST be dictionaries."
+                return
+
+            if not item:
+                self.is_ready = False
+                self.failure = "dictionary elements MUST NOT be empty."
+                return
+
+            keys = list(item.keys())
+            if expected_keys is None:
+                expected_keys = keys
+            elif keys != expected_keys:
+                self.is_ready = False
+                self.failure = "all dictionaries MUST have identical keys."
+                return
+
+    def compute_column_widths(self, columns):
+        """Return max display width for each column based on data and defaults."""
+        widths = {col: len(str(col)) for col in columns}
+
+        for row in self.data:
+            for col in columns:
+                value = row.get(col, self.missing)
+                widths[col] = max(widths[col], len(str(value)))
+
+        return widths
+
+    def format_cell(self, text, width):
+        """Return text aligned to the given width using the current justification."""
+        text = str(text)
+
+        if self.justify == "center":
+            return text.center(width)
+        if self.justify == "right":
+            return text.rjust(width)
+        return text.ljust(width)
+
+    def format_header_row(self, columns, widths):
+        """Return a formatted header row using column names and computed widths."""
+        cells = [self.format_cell(col, widths[col]) for col in columns]
+        return f"| {' | '.join(cells)} |"
+
+    def format_body_rows(self, columns, widths):
+        """Return formatted body rows using column values and computed widths."""
+        rows = []
+
+        for row in self.data:
+            cells = []
+            for col in columns:
+                value = row.get(col, self.missing)
+                cells.append(self.format_cell(value, widths[col]))
+            rows.append(f"| {' | '.join(cells)} |")
+
+        return "\n".join(rows)
+
+    def process(self):
+        """Assemble the full tabular output using columns, widths, and formatted rows."""
+        if not self.is_ready:
+            return
+
+        try:
+            columns = self.columns or list(self.data[0].keys())
+            widths = self.compute_column_widths(columns)
+
+            border = "+-{}-+".format(
+                "-+-".join("-" * widths[c] for c in columns))
+            header = self.format_header_row(columns, widths)
+            body = self.format_body_rows(columns, widths)
+
+            parts = [border, header, border, body, border]
+            self.result = "\n".join(parts)
+            self.is_tabular = True
+
+        except Exception as ex:
+            self.failure = f"{type(ex).__name__}: {ex}"
+            self.is_tabular = False
+
+    def get(self):
+        """Retrieve the processed tabular output or the raw data."""
+        tabular_data = self.result if self.is_tabular else self.data
+        return tabular_data
+
+    def print(self):
+        """Print the tabular content or raw data."""
+        tabular_data = self.get()
+        if isinstance(tabular_data, (dict, list, tuple, set)):
+            pprint(tabular_data)
+        else:
+            print(tabular_data)
+
+
+def get_data_as_tabular(data, columns=None, justify='left', missing='not_found'):
+    """Convert structured data into a tabular string representation."""
+    node = Tabular(data, columns=columns, justify=justify, missing=missing)
+    result = node.get()
+    return result
+
+
+def print_data_as_tabular(data, columns=None, justify='left', missing='not_found'):
+    """Print structured data in a tabular format."""
+    node = Tabular(data, columns=columns, justify=justify, missing=missing)
+    node.print()
