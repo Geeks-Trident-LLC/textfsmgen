@@ -26,8 +26,6 @@ setup(
     install_requires=[
         "textfsm>=1.1.0",
         "pyyaml>=6.0",
-        "genericlib",
-        "regexapp",
     ],
     url='https://github.com/Geeks-Trident-LLC/textfsmgen',
     packages=find_packages(
@@ -49,6 +47,7 @@ setup(
             'textfsmgen = textfsmgen.main:execute',
             'textfsmgen-gui = textfsmgen.application:execute',
             'textfsmgen-app = textfsmgen.application:execute',
+            'textfsm-app = textfsmgen.application:execute',
         ]
     },
     classifiers=[

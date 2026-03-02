@@ -1,3 +1,6 @@
 # Core libraries used by RewordApp
 pyyaml
 textfsm
+
+# Development & testing
+pytest

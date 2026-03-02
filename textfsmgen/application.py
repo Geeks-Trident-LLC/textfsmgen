@@ -1440,33 +1440,19 @@ class Application:
         label = self.create_custom_label(frame, text='Pypi.com Dependencies:', bold=True)
         label.grid(row=2, column=0, sticky=tk.W)
 
-        # regex app package
-        label = self.create_custom_label(
-            frame, text=Data.regexapp_text,
-            link=Data.regexapp_link
-        )
-        label.grid(row=3, column=0, padx=(20, 0), sticky=tk.W)
-
-        # genericlib package
-        label = self.create_custom_label(
-            frame, text=Data.genericlib_text,
-            link=Data.genericlib_link
-        )
-        label.grid(row=4, column=0, padx=(20, 0), sticky=tk.W)
-
         # TextFSM package
         label = self.create_custom_label(
             frame, text=Data.textfsm_text,
             link=Data.textfsm_link
         )
-        label.grid(row=3, column=1, padx=(20, 0), sticky=tk.W)
+        label.grid(row=3, column=0, padx=(20, 0), sticky=tk.W)
 
         # PyYAML package
         label = self.create_custom_label(
             frame, text=Data.pyyaml_text,
             link=Data.pyyaml_link
         )
-        label.grid(row=4, column=1, padx=(20, 0), pady=(0, 10), sticky=tk.W)
+        label.grid(row=3, column=1, padx=(20, 0), pady=(0, 10), sticky=tk.W)
 
         # license textbox
         label_frame = self.LabelFrame(

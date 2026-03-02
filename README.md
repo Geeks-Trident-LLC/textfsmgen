@@ -49,9 +49,7 @@ pip install textfsmgen
 This project depends on the following Python packages to provide core functionality and seamless integration:  
 
 - [**textfsm**](https://pypi.org/project/textfsm/) – Template‑based state machine for parsing semi‑structured text.  
-- [**PyYAML**](https://pypi.org/project/PyYAML/) – YAML parser and emitter, enabling structured configuration management.  
-- [**genericlib**](https://pypi.org/project/genericlib/) – Lightweight utility library offering reusable functions to reduce boilerplate code.  
-- [**regexapp**](https://pypi.org/project/regexapp/) – Regular expression utilities for advanced text processing.
+- [**PyYAML**](https://pypi.org/project/PyYAML/) – YAML parser and emitter, enabling structured configuration management.
 
 ---
 

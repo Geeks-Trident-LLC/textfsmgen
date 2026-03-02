@@ -51,8 +51,6 @@ class TestData:
     @pytest.mark.parametrize(
         "attr",
         [
-            "regexapp",
-            "genericlib",
             "textfsm",
             "pyyaml",
         ],
@@ -65,8 +63,6 @@ class TestData:
     @pytest.mark.parametrize(
         "attr",
         [
-            "regexapp",
-            "genericlib",
             "textfsm",
             "pyyaml",
         ],
@@ -96,8 +92,6 @@ class TestData:
     @pytest.mark.parametrize(
         "pkg",
         [
-            "regexapp",
-            "genericlib",
             "textfsm",
             "pyyaml",
         ],
