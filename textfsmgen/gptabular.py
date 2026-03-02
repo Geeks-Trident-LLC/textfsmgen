@@ -49,7 +49,7 @@ from textfsmgen.deps import regexapp_LinePattern as LinePattern
 from textfsmgen.libs import PATTERN
 from textfsmgen.libs import datatype
 from textfsmgen.libs import text
-from textfsmgen.deps import genericlib_number_module as number
+from textfsmgen.libs import number
 
 from textfsmgen.gp import TranslatedPattern
 from textfsmgen.exceptions import RuntimeException

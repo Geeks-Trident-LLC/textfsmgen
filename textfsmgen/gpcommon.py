@@ -32,7 +32,7 @@ from typing import Optional
 from textfsmgen.deps import regexapp_TextPattern as TextPattern
 from textfsmgen.deps import genericlib_Wildcard as Wildcard
 from textfsmgen.libs import PATTERN
-from textfsmgen.deps import genericlib_number_module as number
+from textfsmgen.libs import number
 from textfsmgen.libs import text
 
 from textfsmgen.gp import TranslatedPattern

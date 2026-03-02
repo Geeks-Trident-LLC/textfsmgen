@@ -27,10 +27,6 @@ Notes
 # GenericLib dependencies API
 ##############################
 
-# Module imports
-# Provide file and text utilities for parsing, formatting, and I/O operations.
-import genericlib.number as genericlib_number_module    # noqa
-
 # Core classes
 # Fundamental data structures and helpers for object handling, printing, and text manipulation.
 from genericlib import Wildcard as genericlib_Wildcard      # noqa
