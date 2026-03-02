@@ -103,3 +103,117 @@ class TextMatcher:
     def matches(self, text: str) -> bool:
         """Return True if any stored pattern matches the given text."""
         return any(re.search(pattern, text) for pattern in self._patterns)
+
+
+class Printer:
+    """
+    A utility class for formatted printing of data.
+    """
+    @classmethod
+    def get(
+        cls, data, header='', footer='',
+        width=80, width_limit=20, failure_msg=''
+    ):
+        """Format data into a readable string with optional header and footer."""
+        lst = []
+        result = []
+
+        if width > 0:
+            right_bound = width - 4
+        else:
+            right_bound = 76
+
+        headers = []
+        if header:
+            if datatype.is_mutable_sequence(header):
+                for item in header:
+                    for line in str(item).splitlines():
+                        headers.extend(wrap(line, width=right_bound))
+            else:
+                headers.extend(wrap(str(header), width=right_bound))
+
+        footers = []
+        if footer:
+            if datatype.is_mutable_sequence(footer):
+                for item in footer:
+                    for line in str(item).splitlines():
+                        footers.extend(wrap(line, width=right_bound))
+            else:
+                footers.extend(wrap(str(footer), width=right_bound))
+
+        if data:
+            data = data if datatype.is_mutable_sequence(data) else [data]
+        else:
+            data = []
+
+        for item in data:
+            if width > 0:
+                if width >= width_limit:
+                    for line in str(item).splitlines():
+                        lst.extend(wrap(line, width=right_bound + 4))
+                else:
+                    lst.extend(line.rstrip() for line in str(item).splitlines())
+            else:
+                lst.append(str(item))
+        length = max(len(str(i)) for i in lst + headers + footers)
+
+        if width >= width_limit:
+            length = right_bound if right_bound > length else length
+
+        result.append(Text.format('+-{}-+', '-' * length))      # noqa
+        if header:
+            for item in headers:
+                result.append(Text.format('| {} |', item.ljust(length)))    # noqa
+            result.append(Text.format('+-{}-+', '-' * length))  # noqa
+
+        for item in lst:
+            result.append(item)
+        result.append(Text.format('+-{}-+', '-' * length))      # noqa
+
+        if footer:
+            for item in footers:
+                result.append(Text.format('| {} |', item.ljust(length)))    # noqa
+            result.append(Text.format('+-{}-+', '-' * length))  # noqa
+
+        if failure_msg:
+            result.append(failure_msg)
+
+        txt = str.join(STRING.NEWLINE, result)
+        return txt
+
+    @classmethod
+    def print(
+        cls, data, header='', footer='', width=80, width_limit=20,
+        failure_msg='', print_func=None
+    ):
+        """Print formatted data with optional header and footer."""
+
+        txt = Printer.get(data, header=header, footer=footer,
+                          failure_msg=failure_msg, width=width,
+                          width_limit=width_limit)
+
+        print_func = print_func if callable(print_func) else print
+        print_func(txt)
+
+    @classmethod
+    def get_message(cls, fmt, *args, style='format', prefix=''):
+        """
+        Construct a formatted message string with optional prefix.
+        """
+
+        if args:
+            message = fmt.format(*args) if style == 'format' else fmt % args
+        else:
+            message = fmt
+
+        message = '{} {}'.format(prefix, message) if prefix else message
+        return message
+
+    @classmethod
+    def print_message(cls, fmt, *args, style='format', prefix='', print_func=None):
+        """
+        Format and print a message with optional prefix.
+        """
+        message = cls.get_message(fmt, *args, style=style, prefix=prefix)
+        print_func = print_func if callable(print_func) else print
+        print_func(message)
