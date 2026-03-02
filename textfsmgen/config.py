@@ -28,7 +28,6 @@ import textfsm
 import yaml
 
 from textfsmgen.deps import genericlib_version
-from textfsmgen.deps import genericlib_file_module as file
 from textfsmgen.libs.common import dedent_and_strip
 
 __version__ = '0.3.1a2'

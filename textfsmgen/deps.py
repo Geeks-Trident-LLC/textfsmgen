@@ -29,7 +29,6 @@ Notes
 
 # Module imports
 # Provide file and text utilities for parsing, formatting, and I/O operations.
-import genericlib.file as genericlib_file_module        # noqa
 import genericlib.number as genericlib_number_module    # noqa
 import genericlib.decorators as genericlib_decorators_module    # noqa
 import genericlib.shell as genericlib_shell_module      # noqa

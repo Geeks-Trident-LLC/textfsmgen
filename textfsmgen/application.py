@@ -42,7 +42,7 @@ from textfsmgen.deps import genericlib_get_data_as_tabular as get_data_as_tabula
 from textfsmgen.libs.generic import DotObject
 from textfsmgen.exceptions import raise_exception
 from textfsmgen.libs.common import dedent_and_strip
-from textfsmgen.deps import genericlib_file_module as file
+from textfsmgen.libs import file
 
 from textfsmgen import TemplateBuilder
 from textfsmgen.exceptions import TemplateBuilderInvalidFormat

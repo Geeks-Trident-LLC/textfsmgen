@@ -30,7 +30,7 @@ import yaml
 
 from textfsmgen.deps import genericlib_sys_exit as sys_exit
 from textfsmgen.deps import genericlib_decorate_list_of_line as decorate_list_of_line
-from textfsmgen.deps import genericlib_file_module as file
+from textfsmgen.libs import file
 
 from textfsmgen.application import Application
 from textfsmgen import TemplateBuilder
