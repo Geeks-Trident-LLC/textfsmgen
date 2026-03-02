@@ -45,7 +45,7 @@ import statistics
 import operator as op
 import re
 
-from textfsmgen.deps import regexapp_LinePattern as LinePattern
+from textfsmgen.collection import LinePattern
 from textfsmgen.libs import PATTERN
 from textfsmgen.libs import datatype
 from textfsmgen.libs import text

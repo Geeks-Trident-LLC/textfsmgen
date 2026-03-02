@@ -27,9 +27,9 @@ from typing import List
 from difflib import ndiff
 from itertools import combinations
 
-from textfsmgen.deps import regexapp_TextPattern as TextPattern
-from textfsmgen.deps import regexapp_ElementPattern as ElementPattern
-from textfsmgen.deps import regexapp_LinePattern as LinePattern
+from textfsmgen.collection import TextPattern
+from textfsmgen.collection import ElementPattern
+from textfsmgen.collection import LinePattern
 
 from textfsmgen.libs import PATTERN
 from textfsmgen.libs import text

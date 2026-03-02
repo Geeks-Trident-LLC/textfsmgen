@@ -10,6 +10,30 @@ from typing import Type, Optional
 import re
 
 
+class PatternError(Exception):
+    """Base exception for errors encountered during pattern conversion."""
+
+
+class EscapePatternError(PatternError):
+    """Raised when an error occurs while performing soft regex escaping."""
+
+
+class PatternReferenceError(PatternError):
+    """Raised when a PatternReference instance fails or is invalid."""
+
+
+class TextPatternError(Exception):
+    """Raised when text-based pattern conversion fails."""
+
+
+class ElementPatternError(Exception):
+    """Raised when element-level pattern conversion fails."""
+
+
+class LinePatternError(PatternError):
+    """Raised when line-based pattern conversion fails."""
+
+
 class LineError(Exception):
     """Base exception for errors raised by the `text.Line` class."""
 
@@ -20,10 +44,6 @@ class LineArgumentError(LineError):
 
 class InvalidExceptionType(Exception):
     """Raised when an invalid exception type is encountered."""
-
-
-class EscapePatternError(re.error):
-    """Custom exception raised when regex pattern validation fails."""
 
 
 class TemplateError(Exception):     # noqa
@@ -39,18 +59,11 @@ class TemplateParsedLineError(TemplateError):
     """
     Raised when a parsed line cannot be processed correctly
     by the template builder.
-
-    This typically indicates invalid syntax or an unsupported format
-    within a template line.
     """
 
 
 class TemplateBuilderError(TemplateError):
-    """
-    Raised when an error occurs during template building.
-
-    Serves as a general-purpose exception for builder failures.
-    """
+    """Raised when an error occurs during template building."""
 
 
 class TemplateBuilderInvalidFormat(TemplateError):
@@ -61,9 +74,7 @@ class TemplateBuilderInvalidFormat(TemplateError):
 
 
 class NoUserTemplateSnippetError(TemplateError):
-    """
-    Raised when user-provided template data is empty or missing.
-    """
+    """Raised when user-provided template data is empty or missing."""
 
 
 class NoTestDataError(TemplateError):

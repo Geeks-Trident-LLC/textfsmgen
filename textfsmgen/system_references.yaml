@@ -1,0 +1,1160 @@
+# file: system_references.yaml
+# version: 2021.09.10
+
+anything:
+  description: a pattern to match any character.
+  pattern: "."
+
+
+
+zero_or_anything: &zero_or_anything
+  description: a pattern to match zero or any character.
+  pattern: ".?"
+
+
+zanything: *zero_or_anything
+
+zoanything: *zero_or_anything
+
+something:
+  description: a pattern to match zero or some characters.
+  pattern: ".*"
+
+
+everything:
+  description: a pattern to match at least one character.
+  pattern: ".+"
+
+
+
+space:
+  description: a pattern to match a blank space character.
+  pattern: " "
+
+
+
+zero_or_space: &zero_or_space
+  description: a pattern to match zero or blank space character.
+  pattern: " ?"
+
+
+
+zspace: *zero_or_space
+
+zospace: *zero_or_space
+
+spaces:
+  description: a pattern to match at least one blank space.
+  pattern: " +"
+
+
+
+zero_or_spaces: &zero_or_spaces
+  description: a pattern to match zero or multiple spaces.
+  pattern: " *"
+
+
+
+zspaces: *zero_or_spaces
+
+zospaces: *zero_or_spaces
+
+non_space: &non_space
+  description: a pattern to match a non-blank space character.
+  pattern: "[^ ]"
+
+
+
+nonspace: *non_space
+
+zero_or_non_space: &zero_or_non_space
+  description: a pattern to match a zero or non-blank space character.
+  pattern: "[^ ]?"
+
+
+
+znonspace: *zero_or_non_space
+
+zononspace: *zero_or_non_space
+
+zero_or_non_spaces: &zero_or_non_spaces
+  description: a pattern to match zero or multiple non-blank space characters.
+  pattern: "[^ ]*"
+
+
+
+znonspaces: *zero_or_non_spaces
+
+zononspaces: *zero_or_non_spaces
+
+non_spaces:
+  description: a pattern to match at least one non-blank space character.
+  pattern: "[^ ]+"
+
+
+
+whitespace: &whitespace
+  description: a pattern to match a word divider such as space, tab, newline, and more.
+  pattern: "\\s"
+
+
+
+ws: *whitespace
+
+zero_or_whitespace: &zero_or_whitespace
+  description: a pattern to match a word divider such as space, tab, newline, and more.
+  pattern: "\\s?"
+
+
+
+zero_or_ws: *zero_or_whitespace
+
+zowhitespace: *zero_or_whitespace
+
+zws: *zero_or_whitespace
+
+zows: *zero_or_whitespace
+
+zero_or_whitespaces: &zero_or_whitespaces
+  description: a pattern to match zero or multiple word divider such as space, tab, newline, and more.
+  pattern: "\\s*"
+
+
+
+zwhitespaces: *zero_or_whitespaces
+
+zowhitespaces: *zero_or_whitespaces
+
+zwses: *zero_or_whitespaces
+
+zowses: *zero_or_whitespaces
+
+whitespaces: &whitespaces
+  description: a pattern to match multiple word divider such as space, tab, newline, and more.
+  pattern: "\\s+"
+
+
+
+wses: *whitespaces
+
+non_whitespace: &non_whitespace
+  description: a pattern to match any character which is not a white space character.
+  pattern: "\\S"
+
+
+
+non_ws: *non_whitespace
+
+zero_or_non_whitespace: &zero_or_non_whitespace
+  description: a pattern to match zero or any character which is not a white space character.
+  pattern: "\\S?"
+
+
+
+znonws: *zero_or_non_whitespace
+
+zero_or_non_ws: *zero_or_non_whitespace
+
+non_whitespaces: &non_whitespaces
+  description: a pattern to match multiple characters which is not a white space character.
+  pattern: "\\S+"
+
+
+
+nonwses: *non_whitespaces
+
+non_wses: *non_whitespaces
+
+zero_or_non_whitespaces: &zero_or_non_whitespaces
+  description: a pattern to match zero or multiple characters which is not a white space character.
+  pattern: "\\S*"
+
+
+
+znonwses: *zero_or_non_whitespaces
+
+zero_or_non_wses: *zero_or_non_whitespaces
+
+non_whitespaces_or_phrase: &non_whitespaces_or_phrase
+  description: a pattern to match non-whitespaces or group of non-whitespaces.
+  pattern: "\\S+( \\S+)*"
+
+
+
+nonwses_or_phrase: *non_whitespaces_or_phrase
+
+non_wses_or_or_phrase: *non_whitespaces_or_phrase
+
+nonwses_zphrase: *non_whitespaces_or_phrase
+
+non_wses_or_zphrase: *non_whitespaces_or_phrase
+
+non_whitespaces_or_wsphrase: &non_whitespaces_or_wsphrase
+  description: a pattern to match non-whitespaces or group of non-whitespaces.
+  pattern: "\\S+(\\s\\S+)*"
+
+
+
+nonwses_or_wsphrase: *non_whitespaces_or_wsphrase
+
+non_wses_or_wsphrase: *non_whitespaces_or_wsphrase
+
+nonwses_zwsphrase: *non_whitespaces_or_wsphrase
+
+non_wses_or_zwsphrase: *non_whitespaces_or_wsphrase
+
+non_whitespaces_or_group: &non_whitespaces_or_group
+  description: a pattern to match non-whitespaces or group of non-whitespaces.
+  pattern: "\\S+( +\\S+)*"
+
+
+
+nonwses_zgroup: *non_whitespaces_or_group
+
+non_wses_or_zgroup: *non_whitespaces_or_group
+
+non_whitespaces_or_wsgroup: &non_whitespaces_or_wsgroup
+  description: a pattern to match non-whitespaces or group of non-whitespaces.
+  pattern: "\\S+(\\s+\\S+)*"
+
+
+
+nonwses_or_wsgroup: *non_whitespaces_or_wsgroup
+
+non_wses_or_wsgroup: *non_whitespaces_or_wsgroup
+
+nonwses_zwsgroup: *non_whitespaces_or_wsgroup
+
+non_wses_or_zwsgroup: *non_whitespaces_or_wsgroup
+
+non_whitespaces_phrase: &non_whitespaces_phrase
+  description: a pattern to match group of non-whitespaces.
+  pattern: "\\S+( \\S+)+"
+
+
+
+nonwses_phrase: *non_whitespaces_phrase
+
+non_wses_phrase: *non_whitespaces_phrase
+
+non_whitespaces_wsphrase: &non_whitespaces_wsphrase
+  description: a pattern to match group of non-whitespaces.
+  pattern: "\\S+(\\s\\S+)+"
+
+
+
+non_wses_wsphrase: *non_whitespaces_wsphrase
+
+non_whitespaces_group: &non_whitespaces_group
+  description: a pattern to match group of non-whitespaces.
+  pattern: "\\S+( +\\S+)+"
+
+
+
+nonwses_group: *non_whitespaces_group
+
+non_wses_group: *non_whitespaces_group
+
+non_whitespaces_wsgroup: &non_whitespaces_wsgroup
+  description: a pattern to match group of non-whitespaces.
+  pattern: "\\S+(\\s+\\S+)+"
+
+
+
+nonwses_wsgroup: *non_whitespaces_wsgroup
+
+non_wses_wsgroup: *non_whitespaces_wsgroup
+
+punctuation: &punctuation
+  description: a pattern to match a punctuation.
+  pattern: "[\\x21-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\x7e]"
+
+
+
+punct: *punctuation
+
+punctuations: &punctuations
+  description: a pattern to match multiple punctuation.
+  pattern: "[\\x21-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\x7e]+"
+
+
+
+puncts: *punctuations
+
+punctuations_or_phrase: &punctuations_or_phrase
+  description: a pattern to match a group of multiple punctuation.
+  pattern: "[\\x21-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\x7e]+( [\\x21-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\x7e]+)*"
+
+
+
+puncts_or_phrase: *punctuations_or_phrase
+
+puncts_zphrase: *punctuations_or_phrase
+
+punctuations_or_wsphrase: &punctuations_or_wsphrase
+  description: a pattern to match a group of multiple punctuation.
+  pattern: "[\\x21-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\x7e]+(\\s[\\x21-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\x7e]+)*"
+
+
+
+puncts_or_wsphrase: *punctuations_or_wsphrase
+
+puncts_zwsphrase: *punctuations_or_wsphrase
+
+punctuations_phrase: &punctuations_phrase
+  description: a pattern to match a group of multiple punctuation.
+  pattern: "[\\x21-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\x7e]+( [\\x21-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\x7e]+)+"
+
+
+
+puncts_phrase: *punctuations_phrase
+
+punctuations_wsphrase: &punctuations_wsphrase
+  description: a pattern to match a group of multiple punctuation.
+  pattern: "[\\x21-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\x7e]+(\\s[\\x21-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\x7e]+)+"
+
+
+
+puncts_wsphrase: *punctuations_wsphrase
+
+punctuations_or_group: &punctuations_or_group
+  description: a pattern to match a group of multiple punctuation.
+  pattern: "[\\x21-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\x7e]+( +[\\x21-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\x7e]+)*"
+
+
+
+puncts_or_group: *punctuations_or_group
+
+puncts_zgroup: *punctuations_or_group
+
+punctuations_or_wsgroup: &punctuations_or_wsgroup
+  description: a pattern to match a group of multiple punctuation.
+  pattern: "[\\x21-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\x7e]+(\\s+[\\x21-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\x7e]+)*"
+
+
+
+puncts_or_wsgroup: *punctuations_or_wsgroup
+
+puncts_zwsgroup: *punctuations_or_wsgroup
+
+punctuations_group: &punctuations_group
+  description: a pattern to match a group of multiple punctuation.
+  pattern: "[\\x21-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\x7e]+( +[\\x21-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\x7e]+)+"
+
+
+
+puncts_group: *punctuations_group
+
+punctuations_wsgroup: &punctuations_wsgroup
+  description: a pattern to match a group of multiple punctuation.
+  pattern: "[\\x21-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\x7e]+(\\s+[\\x21-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\x7e]+)+"
+
+
+
+puncts_wsgroup: *punctuations_wsgroup
+
+non_punctuation: &non_punctuation
+  description: a pattern to match a non-punctuation.
+  pattern: "[^\\x21-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\x7e]"
+
+
+
+nonpunct: *non_punctuation
+
+non_punct: *non_punctuation
+
+non_punctuations: &non_punctuations
+  description: a pattern to match multiple non-punctuation.
+  pattern: "[^\\x21-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\x7e]+"
+
+
+
+nonpuncts: *non_punctuations
+
+non_puncts: *non_punctuations
+
+letter:
+  description: a pattern to match a letter.
+  pattern: "[a-zA-Z]"
+
+
+
+letters: &letters
+  description: a pattern to match letters.
+  pattern: "[a-zA-Z]+"
+
+
+
+letters_or_phrase: &letters_or_phrase
+  description: a pattern to match zero or group of letters.
+  pattern: "[a-zA-Z]+( [a-zA-Z]+)*"
+
+
+
+letters_zphrase: *letters_or_phrase
+
+zpletters: *letters_or_phrase
+
+letters_or_wsphrase: &letters_or_wsphrase
+  description: a pattern to match zero or group of letters.
+  pattern: "[a-zA-Z]+(\\s[a-zA-Z]+)*"
+
+
+
+letters_zwsphrase: *letters_or_wsphrase
+
+zwspletters: *letters_or_wsphrase
+
+letters_or_group: &letters_or_group
+  description: a pattern to match zero or group of letters.
+  pattern: "[a-zA-Z]+( +[a-zA-Z]+)*"
+
+
+
+letters_zgroup: *letters_or_group
+
+zgletters: *letters_or_group
+
+letters_or_wsgroup: &letters_or_wsgroup
+  description: a pattern to match zero or group of letters.
+  pattern: "[a-zA-Z]+(\\s+[a-zA-Z]+)*"
+
+
+
+letters_zwsgroup: *letters_or_wsgroup
+
+zwsgletters: *letters_or_wsgroup
+
+letters_phrase: &letters_phrase
+  description: a pattern to match a group of letters.
+  pattern: "[a-zA-Z]+( [a-zA-Z]+)+"
+
+
+
+pletters: *letters_phrase
+
+letters_wsphrase: &letters_wsphrase
+  description: a pattern to match a group of letters.
+  pattern: "[a-zA-Z]+(\\s[a-zA-Z]+)+"
+
+
+
+pwsletters: *letters_wsphrase
+
+letters_group: &letters_group
+  description: a pattern to match a group of letters.
+  pattern: "[a-zA-Z]+( +[a-zA-Z]+)+"
+
+
+
+gletters: *letters_group
+
+letters_wsgroup: &letters_wsgroup
+  description: a pattern to match a group of letters.
+  pattern: "[a-zA-Z]+(\\s+[a-zA-Z]+)+"
+
+
+
+gwsletters: *letters_wsgroup
+
+dictionary_word: &dictionary_word
+  description: a pattern to match a dictionary word.
+  pattern: "\\b[a-zA-Z]+(-[a-zA-Z]+)?\\b"
+
+
+
+dictword: *dictionary_word
+
+dword: *dictionary_word
+
+dictionary_word_or_phrase: &dictionary_word_or_phrase
+  description: a pattern to match a group of dictionary word.
+  pattern: "\\b[a-zA-Z]+(-[a-zA-Z]+)?( [a-zA-Z]+(-[a-zA-Z]+)?)*\\b"
+
+
+
+dictword_zphrase: *dictionary_word_or_phrase
+
+dword_zphrase: *dictionary_word_or_phrase
+
+zpdictword: *dictionary_word_or_phrase
+
+zpdword: *dictionary_word_or_phrase
+
+dwords: *dictionary_word_or_phrase
+
+dictionary_word_or_wsphrase: &dictionary_word_or_wsphrase
+  description: a pattern to match a group of dictionary word.
+  pattern: "\\b[a-zA-Z]+(-[a-zA-Z]+)?(\\s[a-zA-Z]+(-[a-zA-Z]+)?)*\\b"
+
+
+
+dictword_zwsphrase: *dictionary_word_or_wsphrase
+
+dword_zwsphrase: *dictionary_word_or_wsphrase
+
+zwspdictword: *dictionary_word_or_wsphrase
+
+zwspdword: *dictionary_word_or_wsphrase
+
+dwswords: *dictionary_word_or_wsphrase
+
+dictionary_word_phrase: &dictionary_word_phrase
+  description: a pattern to match a group of dictionary word.
+  pattern: "\\b[a-zA-Z]+(-[a-zA-Z]+)?( [a-zA-Z]+(-[a-zA-Z]+)?)+\\b"
+
+
+
+dictword_phrase: *dictionary_word_phrase
+
+dphrase: *dictionary_word_phrase
+
+dictionary_word_wsphrase: &dictionary_word_wsphrase
+  description: a pattern to match a group of dictionary word.
+  pattern: "\\b[a-zA-Z]+(-[a-zA-Z]+)?(\\s[a-zA-Z]+(-[a-zA-Z]+)?)+\\b"
+
+
+
+dictword_wsphrase: *dictionary_word_wsphrase
+
+dwsphrase: *dictionary_word_wsphrase
+
+dictionary_word_or_group: &dictionary_word_or_group
+  description: a pattern to match a group of dictionary word.
+  pattern: "\\b[a-zA-Z]+(-[a-zA-Z]+)?( +[a-zA-Z]+(-[a-zA-Z]+)?)*\\b"
+
+
+
+dictword_zgroup: *dictionary_word_or_group
+
+dword_zgroup: *dictionary_word_or_group
+
+dzgword: *dictionary_word_or_group
+
+dictionary_word_or_wsgroup: &dictionary_word_or_wsgroup
+  description: a pattern to match a group of dictionary word.
+  pattern: "\\b[a-zA-Z]+(-[a-zA-Z]+)?(\\s+[a-zA-Z]+(-[a-zA-Z]+)?)*\\b"
+
+
+
+dictword_zwsgroup: *dictionary_word_or_wsgroup
+
+dword_zwsgroup: *dictionary_word_or_wsgroup
+
+dzwsgword: *dictionary_word_or_wsgroup
+
+dictionary_word_group: &dictionary_word_group
+  description: a pattern to match group of dictionary word.
+  pattern: "\\b[a-zA-Z]+(-[a-zA-Z]+)?( +[a-zA-Z]+(-[a-zA-Z]+)?)+\\b"
+
+
+
+dictword_group: *dictionary_word_group
+
+dword_group: *dictionary_word_group
+
+dgword: *dictionary_word_group
+
+dictionary_word_wsgroup: &dictionary_word_wsgroup
+  description: a pattern to match group of dictionary word.
+  pattern: "\\b[a-zA-Z]+(-[a-zA-Z]+)?( +[a-zA-Z]+(-[a-zA-Z]+)?)+\\b"
+
+
+
+dictword_wsgroup: *dictionary_word_wsgroup
+
+dword_wsgroup: *dictionary_word_wsgroup
+
+dwsgword: *dictionary_word_wsgroup
+
+abbreviation: &abbreviation
+  description: a pattern to match an abbreviation.
+  pattern: "\\b(([a-zA-Z]{2,}[.],?)|([A-Z]([.][A-Z])+[.]?,)|([A-Za-z]+,)|[A-Z])\\b"
+
+
+
+abbr: *abbreviation
+
+alphanumeric: &alphanumeric
+  description: a pattern to match an alpha or a numeric.
+  pattern: "[a-zA-Z0-9]"
+
+
+
+alphanum: *alphanumeric
+
+alphanumerics: &alphanumerics
+  description: a pattern to match at least one alpha or numeric.
+  pattern: "[a-zA-Z0-9]+"
+
+
+
+alphanums: *alphanumerics
+
+alphanumerics_or_phrase: &alphanumerics_or_phrase
+  description: a pattern to match at least one group alpha or numeric.
+  pattern: "[a-zA-Z0-9]+( [a-zA-Z0-9]+)*"
+
+
+
+alphanums_zphrase: *alphanumerics_or_phrase
+
+zpalphanums: *alphanumerics_or_phrase
+
+alphanumerics_phrase: &alphanumerics_phrase
+  description: a pattern to match at least two group of alpha or numeric.
+  pattern: "[a-zA-Z0-9]+( [a-zA-Z0-9]+)+"
+
+
+
+alphanums_phrase: *alphanumerics_phrase
+
+palphanums: *alphanumerics_phrase
+
+alphanumerics_wsphrase: &alphanumerics_wsphrase
+  description: a pattern to match at least two group of alpha or numeric.
+  pattern: "[a-zA-Z0-9]+(\\s[a-zA-Z0-9]+)+"
+
+
+
+alphanums_wsphrase: *alphanumerics_wsphrase
+
+wspalphanums: *alphanumerics_wsphrase
+
+alphanumerics_or_group: &alphanumerics_or_group
+  description: a pattern to match at least one group of alpha or numeric.
+  pattern: "[a-zA-Z0-9]+( [a-zA-Z0-9]+)*"
+
+
+
+alphanums_zgroup: *alphanumerics_or_group
+
+zgalphanums: *alphanumerics_or_group
+
+alphanumerics_or_wsgroup: &alphanumerics_or_wsgroup
+  description: a pattern to match at least one group of alpha or numeric.
+  pattern: "[a-zA-Z0-9]+( [a-zA-Z0-9]+)*"
+
+
+
+alphanums_zwsgroup: *alphanumerics_or_wsgroup
+
+zwsgalphanums: *alphanumerics_or_wsgroup
+
+alphanumerics_group: &alphanumerics_group
+  description: a pattern to match at least one group of alpha or numeric.
+  pattern: "[a-zA-Z0-9]+( +[a-zA-Z0-9]+)+"
+
+
+
+alphanums_group: *alphanumerics_group
+
+galphanums: *alphanumerics_group
+
+alphanumerics_wsgroup: &alphanumerics_wsgroup
+  description: a pattern to match at least one group of alpha or numeric.
+  pattern: "[a-zA-Z0-9]+( +[a-zA-Z0-9]+)+"
+
+
+
+alphanums_wsgroup: *alphanumerics_wsgroup
+
+wsgalphanums: *alphanumerics_wsgroup
+
+hyphen_word: &hyphen_word
+  description: a pattern to match a hyphen-word, e.g., FF-AA-12-22.
+  pattern: "[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*"
+
+
+
+dash_word: *hyphen_word
+
+dot_word:
+  description: a pattern to match a dot-word, e.g., a, a.1, 1.2.3.4
+  pattern: "[a-zA-Z0-9]+(\\.[a-zA-Z0-9]+)*"
+
+
+
+comma_word: &comma_word
+  description: a pattern to match a comma-word, e.g., item1, item2.
+  pattern: "[a-zA-Z0-9]+(( *,)? *[a-zA-Z0-9]+)*"
+
+
+comma_words: *comma_word
+
+word:
+  description: a pattern to match a word.
+  pattern: "[a-zA-Z][a-zA-Z0-9]*"
+
+
+
+word_or_phrase: &word_or_phrase
+  description: a pattern to match at least one word.
+  pattern: "[a-zA-Z][a-zA-Z0-9]*( [a-zA-Z][a-zA-Z0-9]*)*"
+
+
+
+word_zphrase: *word_or_phrase
+
+words: *word_or_phrase
+
+word_or_wsphrase: &word_or_wsphrase
+  description: a pattern to match at least one word.
+  pattern: "[a-zA-Z][a-zA-Z0-9]*(\\s[a-zA-Z][a-zA-Z0-9]*)*"
+
+
+
+word_zwsphrase: *word_or_wsphrase
+
+wswords: *word_or_wsphrase
+
+word_or_group: &word_or_group
+  description: a pattern to match at least one word.
+  pattern: "[a-zA-Z][a-zA-Z0-9]*( +[a-zA-Z][a-zA-Z0-9]*)*"
+
+
+
+word_zgroup: *word_or_group
+
+word_or_wsgroup: &word_or_wsgroup
+  description: a pattern to match at least one word.
+  pattern: "[a-zA-Z][a-zA-Z0-9]*(\\s+[a-zA-Z][a-zA-Z0-9]*)*"
+
+
+
+word_zwsgroup: *word_or_wsgroup
+
+word_phrase:
+  description: a pattern to match at least two words.
+  pattern: "[a-zA-Z][a-zA-Z0-9]*( [a-zA-Z][a-zA-Z0-9]*)+"
+
+
+
+word_wsphrase:
+  description: a pattern to match at least two words.
+  pattern: "[a-zA-Z][a-zA-Z0-9]*(\\s[a-zA-Z][a-zA-Z0-9]*)+"
+
+
+
+word_group:
+  description: a pattern to match at least two words.
+  pattern: "[a-zA-Z][a-zA-Z0-9]*( +[a-zA-Z][a-zA-Z0-9]*)+"
+
+
+
+word_wsgroup:
+  description: a pattern to match at least two words.
+  pattern: "[a-zA-Z][a-zA-Z0-9]*(\\s+[a-zA-Z][a-zA-Z0-9]*)+"
+
+
+
+another_word: &another_word
+  description: a pattern to match a word.
+  pattern: "\\w*[a-zA-Z0-9]\\w*"
+
+
+
+aword: *another_word
+
+another_word_or_phrase: &another_word_or_phrase
+  description: a pattern to match at least one word.
+  pattern: "\\w*[a-zA-Z0-9]\\w*( \\w*[a-zA-Z0-9]\\w*)*"
+
+
+
+another_word_zphrase: *another_word_or_phrase
+
+aword_zphrase: *another_word_or_phrase
+
+another_words: *another_word_or_phrase
+
+awords: *another_word_or_phrase
+
+another_word_or_wsphrase: &another_word_or_wsphrase
+  description: a pattern to match at least one word.
+  pattern: "\\w*[a-zA-Z0-9]\\w*(\\s\\w*[a-zA-Z0-9]\\w*)*"
+
+
+
+another_word_zwsphrase: *another_word_or_wsphrase
+
+aword_zwsphrase: *another_word_or_wsphrase
+
+another_wswords: *another_word_or_wsphrase
+
+awswords: *another_word_or_wsphrase
+
+another_word_or_group: &another_word_or_group
+  description: a pattern to match at least one word.
+  pattern: "\\w*[a-zA-Z0-9]\\w*( +\\w*[a-zA-Z0-9]\\w*)*"
+
+
+
+aword_zgroup: *another_word_or_group
+
+another_word_or_wsgroup: &another_word_or_wsgroup
+  description: a pattern to match at least one word.
+  pattern: "\\w*[a-zA-Z0-9]\\w*(\\s+\\w*[a-zA-Z0-9]\\w*)*"
+
+
+
+aword_zwsgroup: *another_word_or_wsgroup
+
+another_word_phrase: &another_word_phrase
+  description: a pattern to match at least two words.
+  pattern: "\\w*[a-zA-Z0-9]\\w*( \\w*[a-zA-Z0-9]\\w*)+"
+
+
+
+aword_phrase: *another_word_phrase
+
+aphrase: *another_word_phrase
+
+another_word_wsphrase: &another_word_wsphrase
+  description: a pattern to match at least two words.
+  pattern: "\\w*[a-zA-Z0-9]\\w*(\\s\\w*[a-zA-Z0-9]\\w*)+"
+
+
+
+aword_wsphrase: *another_word_wsphrase
+
+awsphrase: *another_word_wsphrase
+
+another_word_group: &another_word_group
+  description: a pattern to match at least two words.
+  pattern: "\\w*[a-zA-Z0-9]\\w*( +\\w*[a-zA-Z0-9]\\w*)*"
+
+
+
+aword_group: *another_word_group
+
+agroup: *another_word_group
+
+another_word_wsgroup: &another_word_wsgroup
+  description: a pattern to match at least two words.
+  pattern: "\\w*[a-zA-Z0-9]\\w*(\\s+\\w*[a-zA-Z0-9]\\w*)*"
+
+
+
+aword_wsgroup: *another_word_wsgroup
+
+awsgroup: *another_word_wsgroup
+
+graph:
+  description: a pattern to match a printable character.
+  pattern: "[\\x21-\\x7e]"
+
+
+
+graphs:
+  description: a pattern to match at least one printable character.
+  pattern: "[\\x21-\\x7e]+"
+
+
+
+mixed_word:
+  description: a pattern to match a mixed word that might include a punctuation.
+  pattern: "[\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*"
+
+
+
+mixed_word_or_phrase: &mixed_word_or_phrase
+  description: a pattern to match at least one mixed-word.
+  pattern: "[\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*( [\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*)*"
+
+
+
+mixed_word_zphrase: *mixed_word_or_phrase
+
+mixed_zpword: *mixed_word_or_phrase
+
+mixed_words: *mixed_word_or_phrase
+
+mixed_word_or_wsphrase: &mixed_word_or_wsphrase
+  description: a pattern to match at least one mixed-word.
+  pattern: "[\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*(\\s[\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*)*"
+
+
+
+mixed_word_zwsphrase: *mixed_word_or_wsphrase
+
+mixed_zwspword: *mixed_word_or_wsphrase
+
+mixed_wswords: *mixed_word_or_wsphrase
+
+mixed_word_or_group: &mixed_word_or_group
+  description: a pattern to match at least one mixed-word.
+  pattern: "[\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*( +[\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*)*"
+
+
+
+mixed_word_zgroup: *mixed_word_or_group
+
+mixed_zgword: *mixed_word_or_group
+
+mixed_word_or_wsgroup: &mixed_word_or_wsgroup
+  description: a pattern to match at least one mixed-word.
+  pattern: "[\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*(\\s+[\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*)*"
+
+
+
+mixed_word_zwsgroup: *mixed_word_or_wsgroup
+
+mixed_zwsgword: *mixed_word_or_wsgroup
+
+mixed_word_phrase: &mixed_word_phrase
+  description: a pattern to match at least two mixed-word.
+  pattern: "[\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*( [\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*)+"
+
+
+
+mixed_pword: *mixed_word_phrase
+
+mixed_word_wsphrase: &mixed_word_wsphrase
+  description: a pattern to match at least two mixed-word.
+  pattern: "[\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*(\\s[\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*)+"
+
+
+
+mixed_wspword: *mixed_word_wsphrase
+
+mixed_word_group: &mixed_word_group
+  description: a pattern to match at least two mixed-word.
+  pattern: "[\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*( +[\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*)+"
+
+
+
+mixed_gword: *mixed_word_group
+
+mixed_word_wsgroup: &mixed_word_wsgroup
+  description: a pattern to match at least two mixed-word.
+  pattern: "[\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*(\\s+[\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*)+"
+
+
+
+mixed_wsgword: *mixed_word_wsgroup
+
+phrase:
+  description: a pattern to match a phrase, i.e. at least two words.
+  pattern: "[a-zA-Z][a-zA-Z0-9]*( [a-zA-Z][a-zA-Z0-9]*)+"
+
+
+
+wsphrase:
+  description: a pattern to match a phrase, i.e. at least two words.
+  pattern: "[a-zA-Z][a-zA-Z0-9]*(\\s[a-zA-Z][a-zA-Z0-9]*)+"
+
+
+
+another_phrase:
+  description: a pattern to match a phrase, i.e. at least two words.
+  pattern: "\\w*[a-zA-Z0-9]\\w*( \\w*[a-zA-Z0-9]\\w*)+"
+
+
+
+another_wsphrase:
+  description: a pattern to match a phrase, i.e. at least two words.
+  pattern: "\\w*[a-zA-Z0-9]\\w*(\\s\\w*[a-zA-Z0-9]\\w*)+"
+
+
+
+flex_phrase:
+  description: a pattern to match a phrase, i.e. at least two words.
+  pattern: "[a-zA-Z][a-zA-Z0-9]*( +[a-zA-Z][a-zA-Z0-9]*)+"
+
+
+
+flex_wsphrase:
+  description: a pattern to match a phrase, i.e. at least two words.
+  pattern: "[a-zA-Z][a-zA-Z0-9]*(\\s+[a-zA-Z][a-zA-Z0-9]*)+"
+
+
+
+another_flex_phrase:
+  description: a pattern to match a phrase, i.e. at least two words.
+  pattern: "\\w*[a-zA-Z0-9]\\w*( +\\w*[a-zA-Z0-9]\\w*)+"
+
+
+
+another_flex_wsphrase:
+  description: a pattern to match a phrase, i.e. at least two words.
+  pattern: "\\w*[a-zA-Z0-9]\\w*(\\s+\\w*[a-zA-Z0-9]\\w*)+"
+
+
+
+mixed_phrase:
+  description: a pattern to match at least two mixed-word.
+  pattern: "[\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*( [\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*)+"
+
+
+
+mixed_wsphrase:
+  description: a pattern to match at least two mixed-word.
+  pattern: "[\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*(\\s[\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*)+"
+
+
+
+flex_mixed_phrase:
+  description: a pattern to match at least two mixed-word.
+  pattern: "[\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*( +[\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*)+"
+
+
+
+flex_mixed_wsphrase:
+  description: a pattern to match at least two mixed-word.
+  pattern: "[\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*(\\s+[\\x21-\\x7e]*[a-zA-Z0-9][\\x21-\\x7e]*)+"
+
+
+
+hexadecimal:
+  description: a pattern to match a hexadecimal.
+  pattern: "[0-9a-fA-F]"
+
+
+
+hex:
+  description: a pattern to match a hexadecimal.
+  pattern: "[0-9a-fA-F]"
+
+
+
+octal:
+  description: a pattern to match an octal number.
+  pattern: "[0-7]"
+
+
+
+binary:
+  description: a pattern to match a binary number.
+  pattern: "[01]"
+
+
+
+digit:
+  description: a pattern to match a single digit.
+  pattern: "\\d"
+
+
+
+digits:
+  description: a pattern to match multiple digits.
+  pattern: "\\d+"
+
+
+
+number:
+  description: a pattern to match a number.
+  pattern: "\\d*[.]?\\d+"
+
+
+
+signed_number:
+  description: a pattern to match a signed number.
+  pattern: "[+(-]?\\d*[.]?\\d+[)]?"
+
+
+
+mixed_number:
+  description: a pattern to match a mixed number.
+  pattern: "[+\\(\\[\\$-]?(\\d+([,:/-]\\d+)*)?[.]?\\d+[\\]\\)%a-zA-Z]*"
+
+
+datetime:
+  description: a pattern to match datetime string
+  format: "\\d{2}/\\d{2}/\\d{4} \\d{2}:\\d{2}:\\d{2}"
+  format1: "\\d{2}-\\d{2}-\\d{4} \\d{2}:\\d{2}:\\d{2}"
+  format2: "\\d{4} [a-zA-Z]{3} +\\d{1,2} \\d{2}:\\d{2}:\\d{2}"
+  format3: "[a-zA-Z]{6,9}, [a-zA-Z]{3,9} +\\d{1,2}, \\d{4} 1?\\d:\\d{2}:\\d{2} [apAP][mM]"
+  format4: "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}"
+  positive_test:
+    format: 07/10/2021 08:56:45
+    format1: 07-10-2021 08:56:45
+    format2: 2021 Jun 16 14:44:01
+    format3: Friday, April  9, 2021 8:43:15 PM
+    format4: 2021-04-11 03:03
+  negative_test:
+    format: 07-10-2021 08:56:45
+    format1: 07/10/2021 08:56:45
+    format2: 2021 Jun 16, 14:44:01
+    format3: Friday April  9, 2021 8:43:15 PM
+    format4: 2021/04/11 03:03
+
+date:
+  description: a pattern to match date string
+  format: "\\d{2}/\\d{2}/\\d{4}"
+  format1: "\\d{2}-\\d{2}-\\d{4}"
+  format2: "\\d{4}[a-zA-Z]{3}\\d{2}"
+  format3: "[a-zA-Z]{6,9}, [a-zA-Z]{3,9} +\\d{1,2}, \\d{4}"
+  format4: "\\d{4}-\\d{2}-\\d{2}"
+  positive_test:
+    format: 07/10/2021
+    format1: 07-10-2021
+    format2: 2021Jun16
+    format3: Friday, April  9, 2021
+    format4: 2021-04-11
+  negative_test:
+    format: 07-10-2021
+    format1: 07/10/2021
+    format2: 07July2021
+    format3: Friday April  9, 2021
+    format4: 2021/04/11
+
+time:
+  description: a pattern to match date string
+  format: "\\d{2}:\\d{2}:\\d{2}"
+  format1: "\\d{2}:\\d{2}:\\d{2}[.]\\d{1,6}"
+  format2: "\\d{2}:\\d{2}:\\d{2},\\d{1,6}"
+  format3: "1\\d:\\d{2}:\\d{2} [apAP][mM]"
+  format4: "\\d{2}:\\d{2}"
+  positive_test:
+    format: 08:45:30
+    format1: 08:45:30.130
+    format2: 08:45:30,130
+    format3: 8:45:30 PM
+    format4: 08:45
+  negative_test:
+    format: 08-45-30
+    format1: 08-45-40 130
+    format2: 08-45-30,13-
+    format3: 8 45 30 PM
+    format4: 08 45
+
+mac_addr:
+  description: a pattern to match an MAC address.
+  pattern: "[0-9a-fA-F]{2}([: -][0-9a-fA-F]{2}){5}"
+
+
+mac_address:
+  description: a pattern to match an MAC address.
+  pattern: "([0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5})|([0-9a-fA-F]{2}(-[0-9a-fA-F]{2}){5})|([0-9a-fA-F]{2}( [0-9a-fA-F]{2}){5})|([0-9a-fA-F]{4}([.][0-9a-fA-F]{4}){2})"
+
+
+ipv4_addr:
+  description: a pattern to match an ipv4 address.
+  pattern: "\\d{1,3}([.]\\d{1,3}){3}"
+
+
+ipv4_address:
+  description: a pattern to match an ipv4 address.
+  pattern: "((25[0-5])|(2[0-4]\\d)|(1\\d\\d)|([1-9]?\\d))(\\.((25[0-5])|(2[0-4]\\d)|(1\\d\\d)|([1-9]?\\d))){3}"
+
+
+ipv6_addr:
+  description: a pattern to match an ipv6 address.
+  pattern: "[a-fA-F0-9]?[a-fA-F0-9:]{1,25}[a-fA-F0-9]?"
+
+
+ipv6_address:
+  description: a pattern to match an ipv6 address.
+  pattern: "(([a-fA-F0-9]{1,4}(:[a-fA-F0-9]{1,4}){5})|([a-fA-F0-9]{1,4}:(:[a-fA-F0-9]{1,4}){1,4})|(([a-fA-F0-9]{1,4}:){1,2}(:[a-fA-F0-9]{1,4}){1,3})|(([a-fA-F0-9]{1,4}:){1,3}(:[a-fA-F0-9]{1,4}){1,2})|(([a-fA-F0-9]{1,4}:){1,4}:[a-fA-F0-9]{1,4})|(([a-fA-F0-9]{1,4}:){1,4}:)|(:(:[a-fA-F0-9]{1,4}){1,4}))"
+
+
+interface:
+  description: a pattern to match a network interface name.
+  pattern: "[a-zA-Z][a-zA-Z0-9_/.-]*[0-9]"
+
+
+version:
+  description: a pattern to match software version.
+  pattern: "[0-9]\\S*"
+

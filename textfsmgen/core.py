@@ -33,8 +33,8 @@ from io import StringIO
 from textfsmgen.libs import text
 from textfsmgen.libs import file
 
-from textfsmgen.deps import regexapp_LinePattern as LinePattern
-from textfsmgen.deps import regexapp_enclose_string as enclose_string
+from textfsmgen.collection import LinePattern
+from textfsmgen.collection import enclose_string
 
 from textfsmgen.libs.utils import get_data_as_tabular
 from textfsmgen.libs.utils import Printer

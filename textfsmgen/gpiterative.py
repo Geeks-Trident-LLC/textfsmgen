@@ -32,7 +32,7 @@ import re
 
 from typing import List, Tuple, Optional
 
-from textfsmgen.deps import regexapp_TextPattern as TextPattern
+from textfsmgen.collection import TextPattern
 
 from textfsmgen.libs import PATTERN
 

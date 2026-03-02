@@ -19,7 +19,7 @@ import textfsmgen.config as config
 from textfsmgen.libs import shell
 
 
-# Package info for regexapp
+# Package info for textfsmgen
 pkg_info = shell.PackageInfo("textfsmgen")
 
 # Skip marker if textfsmgen is not installed

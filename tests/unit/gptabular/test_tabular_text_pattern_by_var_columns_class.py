@@ -18,7 +18,6 @@ from textwrap import dedent
 
 from textfsmgen.libs import text
 from textfsmgen.libs import datatype
-# from genericlib import get_data_as_tabular
 from textfsmgen.libs.utils import get_data_as_tabular
 
 from textfsmgen.gptabular import TabularTextPatternByVarColumns

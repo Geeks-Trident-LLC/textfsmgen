@@ -18,7 +18,7 @@ Purpose
 import re
 from typing import Optional
 
-from textfsmgen.deps import regexapp_TextPattern as TextPattern
+from textfsmgen.collection import TextPattern
 from textfsmgen.libs import PATTERN
 from textfsmgen.libs import text
 

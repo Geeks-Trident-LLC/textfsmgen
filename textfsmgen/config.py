@@ -10,14 +10,13 @@ from os import path
 from pathlib import Path
 from pathlib import PurePath
 
-import regexapp
 import textfsm
 import yaml
 
 from textfsmgen.libs.common import dedent_and_strip
 
 __version__ = '0.3.1a2'
-version = __version__   # noqa
+version = __version__
 
 __all__ = [
     'version',
