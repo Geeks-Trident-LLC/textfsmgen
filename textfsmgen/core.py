@@ -30,7 +30,7 @@ from textwrap import indent
 from textfsm import TextFSM
 from io import StringIO
 
-from textfsmgen.deps import genericlib_text_module as text
+from textfsmgen.libs import text
 from textfsmgen.deps import genericlib_file_module as file
 
 from textfsmgen.deps import regexapp_LinePattern as LinePattern

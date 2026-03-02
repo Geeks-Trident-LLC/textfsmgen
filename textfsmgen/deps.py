@@ -30,7 +30,6 @@ Notes
 # Module imports
 # Provide file and text utilities for parsing, formatting, and I/O operations.
 import genericlib.file as genericlib_file_module        # noqa
-import genericlib.text as genericlib_text_module        # noqa
 import genericlib.number as genericlib_number_module    # noqa
 import genericlib.decorators as genericlib_decorators_module    # noqa
 import genericlib.shell as genericlib_shell_module      # noqa
@@ -59,10 +58,6 @@ from genericlib.misc import sys_exit as genericlib_sys_exit                     
 from genericlib.text import decorate_list_of_line as genericlib_decorate_list_of_line        # noqa
 from genericlib.constpattern import get_ref_pattern_by_name as genericlib_get_ref_pattern_by_name  # noqa
 
-# Exception handling
-# Unified error raising utilities for runtime and generic exceptions.
-from genericlib.exceptions import raise_runtime_error as genericlib_raise_runtime_error  # noqa
-from genericlib.exceptions import raise_exception as genericlib_raise_exception          # noqa
 
 # Versioning
 # Provides version metadata for GenericLib.

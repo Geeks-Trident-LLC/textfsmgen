@@ -34,7 +34,7 @@ from textfsmgen.deps import genericlib_Text as Text
 from textfsmgen.deps import genericlib_STRING as STRING     # noqa
 from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
 from textfsmgen.deps import genericlib_number_module as number
-from textfsmgen.deps import genericlib_text_module as text
+from textfsmgen.libs import text
 
 from textfsmgen.gp import TranslatedPattern
 

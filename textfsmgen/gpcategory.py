@@ -21,7 +21,7 @@ from textfsmgen.deps import regexapp_TextPattern as TextPattern
 from textfsmgen.deps import genericlib_NUMBER as NUMBER     # noqa
 from textfsmgen.deps import genericlib_STRING as STRING     # noqa
 from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
-from textfsmgen.deps import genericlib_text_module as text
+from textfsmgen.libs import text
 
 from textfsmgen.gp import LData, TranslatedPattern
 from textfsmgen.exceptions import RuntimeException

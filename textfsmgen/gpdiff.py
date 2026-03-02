@@ -36,7 +36,7 @@ from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
 from textfsmgen.deps import genericlib_NUMBER as NUMBER     # noqa
 from textfsmgen.deps import genericlib_INDEX as INDEX       # noqa
 from textfsmgen.deps import genericlib_Text as Text
-from textfsmgen.deps import genericlib_text_module as text
+from textfsmgen.libs import text
 
 from textfsmgen.gp import TranslatedPattern
 from textfsmgen.exceptions import RuntimeException

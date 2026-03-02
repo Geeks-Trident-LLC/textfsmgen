@@ -39,7 +39,7 @@ from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
 from textfsmgen.deps import genericlib_NUMBER as NUMBER     # noqa
 from textfsmgen.deps import genericlib_SYMBOL as SYMBOL     # noqa
 
-from textfsmgen.deps import genericlib_text_module as text
+from textfsmgen.libs import text
 from textfsmgen.deps import genericlib_get_ref_pattern_by_name as get_ref_pattern_by_name
 
 from textfsmgen.gp import TranslatedPattern

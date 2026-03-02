@@ -7,6 +7,24 @@ Custom exception classes for the TextFSM Generator library.
 """
 
 from typing import Type, Optional
+import re
+
+
+class LineError(Exception):
+    """Base exception for errors raised by the `text.Line` class."""
+
+
+class LineArgumentError(LineError):
+    """Exception raised when invalid arguments are provided to `text.Line`."""
+
+
+class InvalidExceptionType(Exception):
+    """Raised when an invalid exception type is encountered."""
+
+
+class EscapePatternError(re.error):
+    """Custom exception raised when regex pattern validation fails."""
+
 
 class TemplateError(Exception):     # noqa
     """

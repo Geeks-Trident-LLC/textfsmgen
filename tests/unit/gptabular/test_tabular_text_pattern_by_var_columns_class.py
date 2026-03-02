@@ -16,7 +16,7 @@ import pytest           # noqa
 
 from textwrap import dedent
 
-from textfsmgen.deps import genericlib_text_module as text
+from textfsmgen.libs import text
 from textfsmgen.libs import datatype
 from textfsmgen.deps import genericlib_get_data_as_tabular as get_data_as_tabular
 
