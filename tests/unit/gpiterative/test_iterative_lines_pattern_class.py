@@ -14,8 +14,8 @@ import re
 import pytest
 from textwrap import dedent
 
-from textfsmgen.verify import verify
-from textfsmgen.core import get_textfsm_template
+from textfsmgen.core.verify import verify
+from textfsmgen.core.template import get_textfsm_template
 
 from textfsmgen.gpiterative import IterativeLinesPattern
 

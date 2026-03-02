@@ -8,20 +8,6 @@ This module provides the foundational logic for building and validating
 TextFSM templates. It defines the primary classes and functions that
 transform user-provided snippets into structured parsing templates,
 support test execution, and integrate with configuration options.
-
-Purpose
--------
-- Parse and process user input into TextFSM templates.
-- Provide template generation and validation utilities.
-- Support integration with test data and configuration settings.
-- Serve as the central engine for CLI and GUI workflows.
-
-Notes
------
-- Acts as the backbone of the TextFSM Generator package.
-- Designed for extensibility: additional parsing strategies or test
-  frameworks can be integrated via `TemplateBuilder`.
-- Errors are surfaced with descriptive messages to aid debugging.
 """
 
 from typing import Optional
@@ -35,8 +21,8 @@ from io import StringIO
 from textfsmgen.libs import text
 from textfsmgen.libs import file
 
-from textfsmgen.collection import LinePattern
-from textfsmgen.collection import enclose_string
+from textfsmgen.core.patterns import LinePattern
+from textfsmgen.libs.text import enclose_string
 
 from textfsmgen.libs.utils import get_data_as_tabular
 from textfsmgen.libs.utils import Printer

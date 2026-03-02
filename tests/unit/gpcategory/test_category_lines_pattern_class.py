@@ -11,8 +11,8 @@ Run pytest in the project root to execute these tests:
 import re
 import pytest
 
-from textfsmgen.core import get_textfsm_template
-from textfsmgen.verify import verify
+from textfsmgen.core.template import get_textfsm_template
+from textfsmgen.core.verify import verify
 
 from textfsmgen.gpcategory import CategoryLinesPattern
 

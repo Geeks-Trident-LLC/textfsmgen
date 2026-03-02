@@ -22,8 +22,8 @@ from textfsmgen.libs.utils import get_data_as_tabular
 
 from textfsmgen.gptabular import TabularTextPatternByVarColumns
 
-from textfsmgen.verify import verify
-from textfsmgen.core import get_textfsm_template
+from textfsmgen.core.verify import verify
+from textfsmgen.core.template import get_textfsm_template
 
 
 def test_to_regex_ex1():

@@ -24,10 +24,11 @@ __all__ = [
 
 # app yaml files
 user_template_filename = str(
-    PurePath(
-        Path.home(),
-        '.textfsmgen',
-        'user_templates.yaml')
+    PurePath(Path.home(), '.textfsmgen', 'user_templates.yaml')
+)
+
+sys_ref_yaml_file = str(
+    PurePath(Path(__file__).parent, 'system_references.yaml')
 )
 
 app_version = version

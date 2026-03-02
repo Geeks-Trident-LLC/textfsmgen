@@ -9,7 +9,7 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/unit/core/test_template_builder_class.py
 """
 
-from textfsmgen.core import TemplateBuilder
+from textfsmgen.core.template import TemplateBuilder
 
 from tests.unit.core import get_user_data
 from tests.unit.core import get_expected_template

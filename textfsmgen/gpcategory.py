@@ -18,7 +18,7 @@ Purpose
 import re
 from typing import Optional
 
-from textfsmgen.collection import TextPattern
+from textfsmgen.core.patterns import TextPattern
 from textfsmgen.libs import PATTERN
 from textfsmgen.libs import text
 

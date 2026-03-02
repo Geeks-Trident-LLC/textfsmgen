@@ -9,6 +9,8 @@ General-purpose Patter class and functions used across TextFSMGen.
 import re
 import string
 
+from textfsmgen.exceptions import raise_exception, EscapePatternError
+
 
 class PATTERN:      # noqa
     """Reusable regex fragments for common character classes."""
@@ -95,3 +97,39 @@ def get_ref_pattern_by_name(name, default=None):
     attr = name.upper()
     pattern = getattr(PATTERN, attr, default)
     return pattern
+
+
+def validate_pattern(
+    pattern: str,
+    flags: int = 0,
+    exception_cls: Optional[Type[Exception]] = None
+) -> Optional[re.error | None]:
+    """Compile a regex pattern or raise a custom exception."""
+    exception_cls = exception_cls or Exception
+    try:
+        return re.compile(pattern, flags=flags)
+    except re.error as ex:
+        raise_exception(ex, cls=exception_cls)
+
+
+def soft_escape(pattern: str, validate: bool = True) -> str:
+    """Escape only required regex metacharacters while preserving normal punctuation."""
+    text = str(pattern)
+
+    punct_or_space = string.punctuation + " "
+    special_regex_chars = "^$.?*+|{}[]()\\"
+
+    result = []
+    for ch in text:
+        esc = re.escape(ch)
+        if ch in punct_or_space:
+            result.append(esc if ch in special_regex_chars else ch)
+        else:
+            result.append(esc)
+
+    escaped = "".join(result)
+
+    if validate:
+        validate_pattern(escaped, exception_cls=EscapePatternError)
+
+    return escaped

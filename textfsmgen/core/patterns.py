@@ -14,61 +14,19 @@ import yaml
 import string
 from copy import copy
 
-from textfsmgen.exceptions import EscapePatternError
-from textfsmgen.exceptions import PatternReferenceError
+from textfsmgen.core.registry import PatternRegistry, SymbolCls
 from textfsmgen.exceptions import TextPatternError
 from textfsmgen.exceptions import ElementPatternError
 from textfsmgen.exceptions import LinePatternError
 from textfsmgen.exceptions import raise_exception
 
-from textfsmgen.libs import file
+from textfsmgen.libs.pat import validate_pattern, soft_escape
 from textfsmgen.libs.text import WHITESPACE_CHARS
 from textfsmgen.libs.text import Line
 
-import logging
-logger = logging.getLogger(__file__)
+PAT_REF = PatternRegistry()
 
-
-def enclose_string(text):
-    """Return the given text enclosed in quotes."""
-    text = str(text)
-    fmt = '"""{}"""' if len(text.splitlines()) > 1 else '"{}"'
-    enclosed_txt = fmt.format(text.replace('"', r'\"'))
-    return enclosed_txt
-
-
-def validate_pattern(
-    pattern: str,
-    flags: int = 0,
-    exception_cls: Optional[Type[Exception]] = None
-) -> Optional[re.error | None]:
-    exception_cls = exception_cls or Exception
-    try:
-        return re.compile(pattern, flags=flags)
-    except re.error as ex:
-        raise_exception(ex, cls=exception_cls)
-
-
-def do_soft_regex_escape(pattern: str, is_validated: bool = True) -> str:
-    pattern = str(pattern)
-
-    all_punct_or_space = string.punctuation + " "
-    special_regex_chars = "^$.?*+|{}[]()\\"
-
-    result = []
-    for char in pattern:
-        escaped = re.escape(char)
-        if char in all_punct_or_space:
-            result.append(escaped if char in special_regex_chars else char)
-        else:
-            result.append(escaped)
-
-    new_pattern = "".join(result)
-
-    if is_validated:
-        validate_pattern(new_pattern, exception_cls=EscapePatternError)
-
-    return new_pattern
+SYMBOL = SymbolCls()
 
 
 class VarCls:
@@ -93,168 +51,6 @@ class VarCls:
     @property
     def var_name(self) -> str:
         return f"${{{self.name}}}"
-
-
-class PatternReference(dict):
-    """
-    Dictionary-like container for managing regular expression patterns.
-    """
-
-    # regexp pattern - from system references
-    sys_ref_loc = str(
-            PurePath(Path(__file__).parent, 'system_references.yaml')
-        )
-
-    def __init__(self):
-        super().__init__()
-        self.load_sys_ref()
-        self.test_result = ''
-        self.violated_format = ''
-
-    def load_sys_ref(self):
-        """Load system reference patterns from the YAML file."""
-        yaml_obj = file.safe_load_yaml(self.sys_ref_loc)
-        self.update(yaml_obj)
-
-    def load_reference(self, filename, is_warning=True):
-        """Load reference patterns from a YAML file."""
-
-        try:
-            yaml_obj = file.safe_load_yaml(filename)
-            if not yaml_obj:
-                return
-
-            if not isinstance(yaml_obj, dict):
-                msg = f"File '{filename}' must have a dictionary structure."
-                raise PatternReferenceError(msg)
-
-            for key, value in yaml_obj.items():
-                if key not in self:
-                    self[key] = value
-                else:
-                    if key == 'datetime':
-                        self[key] = value
-                    else:
-                        fmt = ("%r key already exists. "
-                               "Will not update data for key %r.")
-                        is_warning and logger.warning(fmt, key, value)
-        except Exception as ex:
-            raise_exception(ex, cls=PatternReferenceError)
-
-    def is_violated(self, dict_obj: dict) -> bool:
-        sys_ref = file.safe_load_yaml(self.sys_ref_loc)
-        for name in dict_obj:
-            if 'datetime' not in name:
-                if name in sys_ref:
-                    msg = f"Keyword '{name}' already exists in system_references.yaml."
-                    self.violated_format = msg
-                    return True
-        return False
-
-    def test(self, content: str) -> Optional[bool | None]:
-
-        try:
-            yaml_obj = yaml.safe_load(content)
-            if not yaml_obj:
-                logger.warning("Skipping test: YAML content is empty or missing.")
-                self.test_result = 'not_tested'
-                return True
-
-            if not isinstance(yaml_obj, dict):
-                msg = "YAML content must be a dictionary structure."
-                raise PatternReferenceError(msg)
-
-            if self.is_violated(yaml_obj):
-                raise PatternReferenceError(self.violated_format)
-
-            self.test_result = 'tested'
-            return True
-        except Exception as ex:
-            raise_exception(ex, cls=PatternReferenceError)
-
-
-class SymbolCls(dict):
-    """
-    Dictionary-like container for symbol references loaded from `symbols.yaml`.
-    """
-
-    def __init__(self):
-        self._update_symbols()
-
-    def _update_symbols(self):
-        symbols = {
-            'alphanum': '[0-9a-zA-Z]',
-            'ampersand': '&',
-            'apostrophe': "'",
-            'asterisk': '\\*',
-            'at_sign': '@',
-            'backflash': '\\\\',
-            'backtick': '`',
-            'bar': '\\|',
-            'binary': '[01]',
-            'caret': '\\^',
-            'circumflex_accent': '\\^',
-            'colon': ':',
-            'comma': ',',
-            'digit': '[0-9]',
-            'dollar_sign': '\\$',
-            'dot': '\\.',
-            'double_quote': '\\"',
-            'equal': '=',
-            'equal_sign': '=',
-            'exclamation_mark': '!',
-            'flash': '/',
-            'full_stop': '\\.',
-            'grave_accent': '`',
-            'greater_than': '>',
-            'greater_than_sign': '>',
-            'hashtag': '#',
-            'hex': '[0-9a-fA-F]',
-            'hexadecimal': '[0-9a-fA-F]',
-            'hyphen': '-',
-            'left_angle': '<',
-            'left_angle_sign': '<',
-            'left_curly_bracket': '\\{',
-            'left_parenthesis': '\\(',
-            'left_round_bracket': '\\(',
-            'left_square_bracket': '\\[',
-            'less_than': '<',
-            'less_than_sign': '<',
-            'letter': '[a-zA-Z]',
-            'low_line': '_',
-            'minus': '-',
-            'minus_sign': '-',
-            'non_space': '[^ ]',
-            'non_whitespace': '\\S',
-            'octal': '[0-7]',
-            'percent_sign': '%',
-            'period': '\\.',
-            'plus_sign': '\\+',
-            'pound_sign': '#',
-            'question_mark': '\\?',
-            'quotation_mark': '\\"',
-            'right_angle': '>',
-            'right_angle_sign': '>',
-            'right_curly_bracket': '\\}',
-            'right_parenthesis': '\\)',
-            'right_round_bracket': '\\)',
-            'right_square_bracket': '\\]',
-            'semicolon': ';',
-            'single_quote': "'",
-            'space': ' ',
-            'star': '\\*',
-            'tilde': '~',
-            'underline': '_',
-            'underscore': '_',
-            'vertical_bar': '\\|',
-            'whitespace': '\\s'
-        }
-        self.update(symbols)
-
-
-REF = PatternReference()
-
-SYMBOL = SymbolCls()
 
 
 class TextPattern(str):
@@ -339,7 +135,7 @@ class TextPattern(str):
         result = []
         for item in re.finditer(r'\s+', text):
             before_matched = text[start: item.start()]
-            before_matched and result.append(do_soft_regex_escape(before_matched))
+            before_matched and result.append(soft_escape(before_matched))
             matched = item.group()
             total = len(matched)
             lst = list(matched)
@@ -350,9 +146,9 @@ class TextPattern(str):
         else:
             if result:
                 after_matched = text[start:]
-                after_matched and result.append(do_soft_regex_escape(after_matched))
+                after_matched and result.append(soft_escape(after_matched))
             else:
-                result.append(do_soft_regex_escape(text))
+                result.append(soft_escape(text))
 
         text_pattern = ''.join(result)
 
@@ -452,7 +248,7 @@ class ElementPattern(str):
             params = match.group('params').strip()
             pattern = cls.build_pattern(keyword, params)
         else:
-            pattern = do_soft_regex_escape(text)
+            pattern = soft_escape(text)
 
         validate_pattern(pattern, exception_cls=ElementPatternError)
         return pattern
@@ -496,12 +292,12 @@ class ElementPattern(str):
 
     @classmethod
     def build_custom_pattern(cls, keyword, params):
-        if keyword not in REF:
+        if keyword not in PAT_REF:
             return False, ''
 
         arguments = re.split(r' *, *', params) if params else []
 
-        lst = [REF.get(keyword).get('pattern')]
+        lst = [PAT_REF.get(keyword).get('pattern')]
 
         name, vpat = '', r'var_(?P<name>\w+)$'
         or_pat = r'or_(?P<case>[^,]+)'
@@ -566,17 +362,17 @@ class ElementPattern(str):
                         spaces_occurrence_pat = cls('space(%s)' % o_case)
                         is_or_either = str.lower(case).startswith('either_')
                     else:
-                        if case in REF:
+                        if case in PAT_REF:
                             if re.match('(?i)time|date(time)?', case):
-                                pat = REF.get(case).get('format', f'unsupported-{case}-format')
+                                pat = PAT_REF.get(case).get('format', f'unsupported-{case}-format')
                                 pat not in lst and lst.append(pat)
                             else:
-                                pat = REF.get(case).get('pattern')
+                                pat = PAT_REF.get(case).get('pattern')
                                 pat not in lst and lst.append(pat)
                         else:
                             if re.match('(?i)time|date(time)?', case):
                                 kw, *indices = re.split('_format', case)
-                                node = REF.get(kw, None)
+                                node = PAT_REF.get(kw, None)
                                 if node:
                                     if indices:
                                         for index in indices:
@@ -593,7 +389,7 @@ class ElementPattern(str):
                                 pat = case
                                 pat not in lst and lst.append(pat)
                 else:
-                    pat = do_soft_regex_escape(arg)
+                    pat = soft_escape(arg)
                     pat not in lst and lst.append(pat)
 
         is_empty and lst.append('')
@@ -630,7 +426,7 @@ class ElementPattern(str):
             for item in removed_items:
                 item in arguments and arguments.remove(item)
 
-        val = SYMBOL.get(symbol_name, do_soft_regex_escape(symbol_name))
+        val = SYMBOL.get(symbol_name, soft_escape(symbol_name))
         lst = [val]
 
         name, vpat = '', r'var_(?P<name>\w+)$'
@@ -682,17 +478,17 @@ class ElementPattern(str):
                         is_empty = True
                         cls._or_empty = is_empty
                     else:
-                        if case in REF:
+                        if case in PAT_REF:
                             if re.match('(?i)time|date(time)?', case):
-                                pat = REF.get(case).get('format', f'unsupported-{case}-format')
+                                pat = PAT_REF.get(case).get('format', f'unsupported-{case}-format')
                                 pat not in lst and lst.append(pat)
                             else:
-                                pat = REF.get(case).get('pattern')
+                                pat = PAT_REF.get(case).get('pattern')
                                 pat not in lst and lst.append(pat)
                         else:
                             if re.match('(?i)time|date(time)?', case):
                                 kw, *indices = re.split('_format', case)
-                                node = REF.get(kw, None)
+                                node = PAT_REF.get(kw, None)
                                 if node:
                                     if indices:
                                         for index in indices:
@@ -709,7 +505,7 @@ class ElementPattern(str):
                                 pat = case
                                 pat not in lst and lst.append(pat)
                 else:
-                    pat = do_soft_regex_escape(arg)
+                    pat = soft_escape(arg)
                     pat not in lst and lst.append(pat)
 
         is_empty and lst.append('')
@@ -726,10 +522,10 @@ class ElementPattern(str):
 
     @classmethod
     def build_datetime_pattern(cls, keyword, params):
-        if keyword not in REF:
+        if keyword not in PAT_REF:
             return False, ''
 
-        node = REF.get(keyword)
+        node = PAT_REF.get(keyword)
         fmt_lst = [key for key in node if key.startswith('format')]
         if not fmt_lst:
             return False, ''
@@ -788,17 +584,17 @@ class ElementPattern(str):
                         is_empty = True
                         cls._or_empty = is_empty
                     else:
-                        if case in REF:
+                        if case in PAT_REF:
                             if re.match('(?i)time|date(time)?', case):
-                                pat = REF.get(case).get('format', f'unsupported-{case}-format')
+                                pat = PAT_REF.get(case).get('format', f'unsupported-{case}-format')
                                 pat not in lst and lst.append(pat)
                             else:
-                                pat = REF.get(case).get('pattern')
+                                pat = PAT_REF.get(case).get('pattern')
                                 pat not in lst and lst.append(pat)
                         else:
                             if re.match('(?i)time|date(time)?', case):
                                 kw, *indices = re.split('_format', case)
-                                node = REF.get(kw, None)
+                                node = PAT_REF.get(kw, None)
                                 if node:
                                     if indices:
                                         for index in indices:
@@ -815,7 +611,7 @@ class ElementPattern(str):
                                 pat = case
                                 pat not in lst and lst.append(pat)
                 else:
-                    pat = do_soft_regex_escape(arg)
+                    pat = soft_escape(arg)
                     pat not in lst and lst.append(pat)
 
         is_empty and lst.append('')
@@ -874,17 +670,17 @@ class ElementPattern(str):
                         is_empty = True
                         cls._or_empty = is_empty
                     else:
-                        if case in REF:
+                        if case in PAT_REF:
                             if re.match('(?i)time|date(time)?', case):
-                                pat = REF.get(case).get('format', f'unsupported-{case}-format')
+                                pat = PAT_REF.get(case).get('format', f'unsupported-{case}-format')
                                 pat not in lst and lst.append(pat)
                             else:
-                                pat = REF.get(case).get('pattern')
+                                pat = PAT_REF.get(case).get('pattern')
                                 pat not in lst and lst.append(pat)
                         else:
                             if re.match('(?i)time|date(time)?', case):
                                 kw, *indices = re.split('_format', case)
-                                node = REF.get(kw, None)
+                                node = PAT_REF.get(kw, None)
                                 if node:
                                     if indices:
                                         for index in indices:
@@ -901,7 +697,7 @@ class ElementPattern(str):
                                 pat = case
                                 pat not in lst and lst.append(pat)
                 else:
-                    pat = do_soft_regex_escape(arg)
+                    pat = soft_escape(arg)
                     pat not in lst and lst.append(pat)
 
         is_empty and lst.append('')
@@ -960,17 +756,17 @@ class ElementPattern(str):
                         is_empty = True
                         cls._or_empty = is_empty
                     else:
-                        if case in REF:
+                        if case in PAT_REF:
                             if re.match('(?i)time|date(time)?', case):
-                                pat = REF.get(case).get('format', f'unsupported-{case}-format')
+                                pat = PAT_REF.get(case).get('format', f'unsupported-{case}-format')
                                 pat not in lst and lst.append(pat)
                             else:
-                                pat = REF.get(case).get('pattern')
+                                pat = PAT_REF.get(case).get('pattern')
                                 pat not in lst and lst.append(pat)
                         else:
                             if re.match('(?i)time|date(time)?', case):
                                 kw, *indices = re.split('_format', case)
-                                node = REF.get(kw, None)
+                                node = PAT_REF.get(kw, None)
                                 if node:
                                     if indices:
                                         for index in indices:
@@ -987,7 +783,7 @@ class ElementPattern(str):
                                 pat = case
                                 pat not in lst and lst.append(pat)
                 else:
-                    pat = do_soft_regex_escape(arg)
+                    pat = soft_escape(arg)
                     pat not in lst and lst.append(pat)
 
         is_empty and lst.append('')
@@ -1028,13 +824,13 @@ class ElementPattern(str):
         if not params.startswith('raw>>>'):
             return False, ''
         params = re.sub(r'raw>+', '', params, count=1)
-        new_params = do_soft_regex_escape(params)
+        new_params = soft_escape(params)
         pattern = r'{}\({}\)'.format(keyword, new_params)
         return True, pattern
 
     @classmethod
     def build_default_pattern(cls, keyword, params):
-        pattern = do_soft_regex_escape('{}({})'.format(keyword, params))
+        pattern = soft_escape('{}({})'.format(keyword, params))
         return True, pattern
 
     @classmethod

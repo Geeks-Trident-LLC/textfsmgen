@@ -19,7 +19,7 @@ class EscapePatternError(PatternError):
 
 
 class PatternReferenceError(PatternError):
-    """Raised when a PatternReference instance fails or is invalid."""
+    """Raised when a PatternRegistry instance fails or is invalid."""
 
 
 class TextPatternError(Exception):

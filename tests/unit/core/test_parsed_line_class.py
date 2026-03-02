@@ -10,7 +10,7 @@ Run pytest in the project root to execute these tests:
 """
 
 import pytest
-from textfsmgen.core import ParsedLine
+from textfsmgen.core.template import ParsedLine
 
 
 @pytest.mark.parametrize(
