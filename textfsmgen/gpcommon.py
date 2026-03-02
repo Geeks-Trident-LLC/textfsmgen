@@ -30,7 +30,6 @@ import re
 from typing import Optional
 
 from textfsmgen.deps import regexapp_TextPattern as TextPattern
-from textfsmgen.deps import genericlib_Wildcard as Wildcard
 from textfsmgen.libs import PATTERN
 from textfsmgen.libs import number
 from textfsmgen.libs import text
@@ -77,8 +76,7 @@ def get_line_position_by(
         if re.search(regex_prefix, item):
             pattern = re.sub(regex_prefix, "", item)
         elif re.search(wildcard_prefix, item):
-            txt = re.sub(wildcard_prefix, "", item)
-            pattern = Wildcard(txt, from_start_to_end=False).pattern
+            raise NotImplementedError("Unsupported wildcard directive")
         else:
             pattern = TextPattern(item)
 

@@ -27,10 +27,6 @@ Notes
 # GenericLib dependencies API
 ##############################
 
-# Core classes
-# Fundamental data structures and helpers for object handling, printing, and text manipulation.
-from genericlib import Wildcard as genericlib_Wildcard      # noqa
-
 # Utility functions
 # General-purpose helpers for text normalization, system exit, tabular data, and decorators.
 from genericlib import get_data_as_tabular as genericlib_get_data_as_tabular                 # noqa

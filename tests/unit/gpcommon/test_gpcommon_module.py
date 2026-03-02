@@ -37,10 +37,10 @@ class TestGetLinePositionBy:
             (1, 1),
 
             # Wildcard patterns
-            ("--wildcard line[[:digit:]]", 0),
-            ("--wildcard line[[:digit:]][[:digit:]]", 2),
-            ("--wildcard _* =*", 0),
-            ("--wildcard _{2,} ={2,}", 1),
+            # ("--wildcard line[[:digit:]]", 0),
+            # ("--wildcard line[[:digit:]][[:digit:]]", 2),
+            # ("--wildcard _* =*", 0),
+            # ("--wildcard _{2,} ={2,}", 1),
 
             # Regex patterns
             (r"--regex line[0-9]{2,}", 2),
