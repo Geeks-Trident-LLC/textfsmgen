@@ -30,14 +30,11 @@ Notes
 # Module imports
 # Provide file and text utilities for parsing, formatting, and I/O operations.
 import genericlib.number as genericlib_number_module    # noqa
-import genericlib.decorators as genericlib_decorators_module    # noqa
 import genericlib.shell as genericlib_shell_module      # noqa
 
 # Core classes
 # Fundamental data structures and helpers for object handling, printing, and text manipulation.
 from genericlib import Wildcard as genericlib_Wildcard      # noqa
-from genericlib import Text as genericlib_Text              # noqa
-from genericlib.text import Line as genericlib_Line         # noqa
 
 # Constant classes
 # Common symbolic constants for numbers, strings, regex patterns, and indexing.
@@ -52,8 +49,6 @@ from genericlib import INDEX as genericlib_INDEX        # noqa
 # General-purpose helpers for text normalization, system exit, tabular data, and decorators.
 from genericlib import get_data_as_tabular as genericlib_get_data_as_tabular                 # noqa
 
-from genericlib.misc import sys_exit as genericlib_sys_exit                                  # noqa
-from genericlib.text import decorate_list_of_line as genericlib_decorate_list_of_line        # noqa
 from genericlib.constpattern import get_ref_pattern_by_name as genericlib_get_ref_pattern_by_name  # noqa
 
 

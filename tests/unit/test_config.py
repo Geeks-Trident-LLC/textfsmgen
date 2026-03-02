@@ -16,7 +16,7 @@ from pathlib import PurePath
 
 from textfsmgen import version
 import textfsmgen.config as config
-from textfsmgen.deps import genericlib_shell_module as shell
+from textfsmgen.libs import shell
 
 
 # Package info for regexapp

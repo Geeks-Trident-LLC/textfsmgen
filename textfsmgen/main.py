@@ -28,8 +28,8 @@ import argparse
 import re
 import yaml
 
-from textfsmgen.deps import genericlib_sys_exit as sys_exit
-from textfsmgen.deps import genericlib_decorate_list_of_line as decorate_list_of_line
+from textfsmgen.libs.common import sys_exit
+from textfsmgen.libs.common import decorate_list_of_line
 from textfsmgen.libs import file
 
 from textfsmgen.application import Application

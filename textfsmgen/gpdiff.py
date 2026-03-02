@@ -35,7 +35,6 @@ from textfsmgen.deps import genericlib_STRING as STRING     # noqa
 from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
 from textfsmgen.deps import genericlib_NUMBER as NUMBER     # noqa
 from textfsmgen.deps import genericlib_INDEX as INDEX       # noqa
-from textfsmgen.deps import genericlib_Text as Text
 from textfsmgen.libs import text
 
 from textfsmgen.gp import TranslatedPattern
@@ -1608,7 +1607,7 @@ class CommonDiffLinePattern(RuntimeException):
 
         # Case 2: Lines are structurally identical but differ in whitespace
         lst_of_groups = list(
-            zip(*[Text(line).do_finditer_split(r"\S+") for line in self.lines]))
+            zip(*[text.Text(line).do_finditer_split(r"\S+") for line in self.lines]))
         result: List[str] = []
 
         for grp in lst_of_groups[INDEX.ONE:-INDEX.ONE]:
@@ -1660,7 +1659,7 @@ class CommonDiffLinePattern(RuntimeException):
 
         # Case 2: Lines are structurally identical but differ in whitespace
         lst_of_groups = list(
-            zip(*[Text(line).do_finditer_split(r"\S+") for line in self.lines]))
+            zip(*[text.Text(line).do_finditer_split(r"\S+") for line in self.lines]))
         result: List[str] = []
 
         for grp in lst_of_groups[INDEX.ONE:-INDEX.ONE]:
@@ -1889,7 +1888,7 @@ class DText:
         for line in self.lst:
             line = line.strip()
             if line:
-                sub_lst = Text(line).do_finditer_split(PATTERN.WHITESPACES)
+                sub_lst = text.Text(line).do_finditer_split(PATTERN.WHITESPACES)
                 lst.append(sub_lst)
 
         group = list(zip(*lst))

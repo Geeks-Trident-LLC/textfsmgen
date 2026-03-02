@@ -30,7 +30,6 @@ import re
 
 from textfsmgen.deps import regexapp_TextPattern as TextPattern
 from textfsmgen.deps import genericlib_Wildcard as Wildcard
-from textfsmgen.deps import genericlib_Text as Text
 from textfsmgen.deps import genericlib_STRING as STRING     # noqa
 from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
 from textfsmgen.deps import genericlib_number_module as number
@@ -173,7 +172,7 @@ def get_fixed_line_snippet(lines: list[str], line: str = "", index: int | None =
         return f"start() end({ws_type})"
 
     # Tokenize and normalize numeric tokens
-    tokens = Text(line.strip()).do_finditer_split(PATTERN.NON_WHITESPACES)
+    tokens = text.Text(line.strip()).do_finditer_split(PATTERN.NON_WHITESPACES)
     for i, token in enumerate(tokens):
         if token.strip():
             factory = TranslatedPattern.do_factory_create(token)
