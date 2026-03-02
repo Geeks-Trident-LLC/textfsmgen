@@ -19,7 +19,7 @@ import re
 from typing import Optional
 
 from textfsmgen.deps import regexapp_TextPattern as TextPattern
-from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
+from textfsmgen.libs import PATTERN
 from textfsmgen.libs import text
 
 from textfsmgen.gp import LData, TranslatedPattern

@@ -31,7 +31,7 @@ from textfsmgen.deps import regexapp_TextPattern as TextPattern
 from textfsmgen.deps import regexapp_ElementPattern as ElementPattern
 from textfsmgen.deps import regexapp_LinePattern as LinePattern
 
-from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
+from textfsmgen.libs import PATTERN
 from textfsmgen.libs import text
 
 from textfsmgen.gp import TranslatedPattern

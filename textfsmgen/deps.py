@@ -35,15 +35,9 @@ import genericlib.number as genericlib_number_module    # noqa
 # Fundamental data structures and helpers for object handling, printing, and text manipulation.
 from genericlib import Wildcard as genericlib_Wildcard      # noqa
 
-# Constant classes
-# Common symbolic constants for numbers, strings, regex patterns, and indexing.
-from genericlib import PATTERN as genericlib_PATTERN    # noqa
-
 # Utility functions
 # General-purpose helpers for text normalization, system exit, tabular data, and decorators.
 from genericlib import get_data_as_tabular as genericlib_get_data_as_tabular                 # noqa
-
-from genericlib.constpattern import get_ref_pattern_by_name as genericlib_get_ref_pattern_by_name  # noqa
 
 
 # Versioning

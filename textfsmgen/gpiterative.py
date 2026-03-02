@@ -34,10 +34,10 @@ from typing import List, Tuple, Optional
 
 from textfsmgen.deps import regexapp_TextPattern as TextPattern
 
-from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
+from textfsmgen.libs import PATTERN
 
 from textfsmgen.libs import text
-from textfsmgen.deps import genericlib_get_ref_pattern_by_name as get_ref_pattern_by_name
+from textfsmgen.libs.pat import get_ref_pattern_by_name
 
 from textfsmgen.gp import TranslatedPattern
 from textfsmgen.gp import LData

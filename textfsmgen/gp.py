@@ -41,7 +41,7 @@ Notes
 
 import re
 
-from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
+from textfsmgen.libs import PATTERN
 from textfsmgen.libs import datatype
 from textfsmgen.libs import text
 
