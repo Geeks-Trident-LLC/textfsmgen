@@ -24,6 +24,8 @@ Notes
 - Errors are surfaced with descriptive messages to aid debugging.
 """
 
+from typing import Optional
+
 import re
 from datetime import datetime
 from textwrap import indent
@@ -403,9 +405,18 @@ class TemplateBuilder:
     """
     logger = logger
 
-    def __init__(self, test_data='', user_data='', namespace='',
-                 author='', email='', company='', description='',
-                 filename='', debug=False):
+    def __init__(
+        self,
+        test_data='',
+        user_data='',
+        namespace='',
+        author='',
+        email='',
+        company='',
+        description='',
+        filename='',
+        debug=False
+    ):
         self.test_data = text.list_to_text(test_data)
         self.user_data = text.list_to_text(user_data)
         self.namespace = str(namespace)
@@ -647,8 +658,8 @@ class TemplateBuilder:
 
     def show_debug_info(
             self,
-            test_result: list[dict] | None = None,
-            expected_result: list[dict] | None = None,
+            test_result: Optional[list[dict] | None] = None,
+            expected_result: Optional[list[dict] | None] = None,
             tabular: bool = False,
     ) -> None:
         """

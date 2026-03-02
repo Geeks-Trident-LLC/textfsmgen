@@ -10,6 +10,7 @@ It ensures that generated templates and data structures conform
 to expected formats, improving reliability and maintainability.
 """
 
+from typing import Optional
 
 from textfsmgen import TemplateBuilder
 
@@ -17,8 +18,8 @@ from textfsmgen import TemplateBuilder
 def verify(
     template_snippet: str,
     test_data: str,
-    expected_rows_count: int | None = None,
-    expected_result: list[dict] | None = None,
+    expected_rows_count: Optional[int | None] = None,
+    expected_result: Optional[list[dict] | None] = None,
     ignore_space: bool = True,
 ) -> bool:
     """
