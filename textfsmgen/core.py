@@ -37,7 +37,7 @@ from textfsmgen.deps import regexapp_LinePattern as LinePattern
 from textfsmgen.deps import regexapp_enclose_string as enclose_string
 
 from textfsmgen.deps import genericlib_get_data_as_tabular as get_data_as_tabular
-from textfsmgen.deps import genericlib_Printer as Printer
+from textfsmgen.libs.utils import Printer
 from textfsmgen.libs import datatype
 
 from textfsmgen.exceptions import TemplateParsedLineError

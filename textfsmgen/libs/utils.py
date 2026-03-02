@@ -197,9 +197,7 @@ class Printer:
 
     @classmethod
     def get_message(cls, fmt, *args, style='format', prefix=''):
-        """
-        Construct a formatted message string with optional prefix.
-        """
+        """Construct a formatted message string with optional prefix."""
 
         if args:
             message = fmt.format(*args) if style == 'format' else fmt % args
@@ -211,9 +209,8 @@ class Printer:
 
     @classmethod
     def print_message(cls, fmt, *args, style='format', prefix='', print_func=None):
-        """
-        Format and print a message with optional prefix.
-        """
+        """Format and print a message with optional prefix."""
         message = cls.get_message(fmt, *args, style=style, prefix=prefix)
         print_func = print_func if callable(print_func) else print
         print_func(message)
+

@@ -36,7 +36,6 @@ import genericlib.shell as genericlib_shell_module      # noqa
 
 # Core classes
 # Fundamental data structures and helpers for object handling, printing, and text manipulation.
-from genericlib import Printer as genericlib_Printer        # noqa
 from genericlib import Wildcard as genericlib_Wildcard      # noqa
 from genericlib import Text as genericlib_Text              # noqa
 from genericlib.text import Line as genericlib_Line         # noqa
