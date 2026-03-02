@@ -34,10 +34,7 @@ from typing import List, Tuple, Optional
 
 from textfsmgen.deps import regexapp_TextPattern as TextPattern
 
-from textfsmgen.deps import genericlib_STRING as STRING     # noqa
 from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
-from textfsmgen.deps import genericlib_NUMBER as NUMBER     # noqa
-from textfsmgen.deps import genericlib_SYMBOL as SYMBOL     # noqa
 
 from textfsmgen.libs import text
 from textfsmgen.deps import genericlib_get_ref_pattern_by_name as get_ref_pattern_by_name
@@ -83,12 +80,12 @@ class SnippetElement(RuntimeException):
         Whether the element is marked as empty (`Cvar` or `Kvar`).
     """
 
-    def __init__(self, element_txt: str, trailing: str = "") -> None:
+    def __init__(self, element_txt: str, trailing: str = ""):
         self.element_txt = element_txt
         self.trailing = trailing
-        self.name = STRING.EMPTY
-        self.var_name = STRING.EMPTY
-        self.value = STRING.EMPTY
+        self.name = ""
+        self.var_name = ""
+        self.value = ""
 
         self.is_captured = False
         self.is_kept = False
@@ -115,9 +112,9 @@ class SnippetElement(RuntimeException):
             matched_txt = match.group()
             if matched_txt.isdigit():
                 return int(matched_txt)
-            first, last = matched_txt.split(STRING.UNDERSCORE_CHAR, maxsplit=1)
-            return int(first) * NUMBER.TEN + int(last)
-        return NUMBER.ZERO
+            first, last = matched_txt.split("_", maxsplit=1)
+            return int(first) * 10 + int(last)
+        return 0
 
     def parse(self) -> None:
         """
@@ -183,7 +180,7 @@ class SnippetElement(RuntimeException):
 
         lst: List[str] = []
         for index, item in enumerate(items):
-            if index < len(items) - NUMBER.ONE:
+            if index < len(items) - 1:
                 if item:
                     lst.append(item)
                 lst.append(separators[index])
@@ -196,7 +193,7 @@ class SnippetElement(RuntimeException):
             new_var_name = f"v{ref_index + index + 1}" if ref_index else f"{self.var_name}{index}"
             pat_obj = TranslatedPattern.do_factory_create(item)
             sub_editable_snippet = pat_obj.get_readable_snippet(var=new_var_name)
-            trailing = self.trailing if index == len(lst) - NUMBER.ONE else STRING.EMPTY
+            trailing = self.trailing if index == len(lst) - 1 else ""
             result.append(self(sub_editable_snippet, trailing=trailing))
 
         return result
@@ -338,11 +335,11 @@ class EditingSnippet(LData):
 
     def __init__(self, editing_snippet: str) -> None:   # noqa
         self.data = editing_snippet
-        self.capture = STRING.EMPTY
-        self.keep = STRING.EMPTY
-        self.action = STRING.EMPTY
-        self.raw_data = STRING.EMPTY
-        self.snippet = STRING.EMPTY
+        self.capture = ""
+        self.keep = ""
+        self.action = ""
+        self.raw_data = ""
+        self.snippet = ""
         self.snippet_elements: List[SnippetElement] = []
 
         self.largest_index = 0
@@ -377,12 +374,12 @@ class EditingSnippet(LData):
         self.snippet = self.raw_data.strip()
 
         pat = r"\w+\([cCkK]?var=[^\)]+, value=[^\)]+\)"
-        spacers = re.split(pat, self.snippet)[NUMBER.ONE:-NUMBER.ONE]   # noqa
+        spacers = re.split(pat, self.snippet)[1:-1]   # noqa
         items = re.findall(pat, self.snippet)
         total = len(items)
 
         for i, snippet_txt in enumerate(items):
-            trailing = spacers[i] if i < total - NUMBER.ONE else STRING.EMPTY
+            trailing = spacers[i] if i < total - 1 else ""
             node = SnippetElement(snippet_txt, trailing=trailing)
             self.largest_index = max(self.largest_index, node.var_index)
             self.snippet_elements.append(node)
@@ -409,7 +406,7 @@ class EditingSnippet(LData):
         for index, node in enumerate(self.snippet_elements):
             if node.var_name == var_name:
                 return index, node
-        return -NUMBER.ZERO, None
+        return 0, None
 
     def apply_action_join(self, action_op: str) -> bool:
         """
@@ -434,9 +431,9 @@ class EditingSnippet(LData):
             return False
 
         var_names = []
-        grp = re.split("[-_]join", action_op, re.I)[NUMBER.ZERO]
+        grp = re.split("[-_]join", action_op, re.I)[0]
         if re.match(r"\d+:\d+$", grp):
-            first, last = grp.split(STRING.COLON_CHAR, maxsplit=NUMBER.ONE)
+            first, last = grp.split(":", maxsplit=1)
             var_names = [f"v{i}" for i in range(int(first), int(last) + 1)]
             if not var_names:
                 self.raise_runtime_error(
@@ -444,14 +441,14 @@ class EditingSnippet(LData):
                     msg=f"Invalid range ({action_op})"
                 )
         elif re.match(r"\w+(,\w+)*", grp):
-            var_names = [f"v{i}" if i.isdigit() else i for i in grp.split(STRING.COMMA_CHAR)]
+            var_names = [f"v{i}" if i.isdigit() else i for i in grp.split(",")]
 
-        first_index, first_node = self.find_element(var_names[NUMBER.ZERO])
-        if first_index >= NUMBER.ZERO:
+        first_index, first_node = self.find_element(var_names[0])
+        if first_index >= 0:
             remain_nodes = []   # noqa
-            for var_name in var_names[NUMBER.ONE:]:
+            for var_name in var_names[1:]:
                 index, node = self.find_element(var_name)
-                if index >= NUMBER.ZERO:
+                if index >= 0:
                     remain_nodes.append(node)
 
             joint_node = first_node.join(*remain_nodes)
@@ -469,7 +466,7 @@ class EditingSnippet(LData):
             msg=f"Not found index ({action_op})"
         )
 
-    def apply_action_split(self, action_op: str) -> bool | None:
+    def apply_action_split(self, action_op: str) -> Optional[bool | None]:
         """
         Apply a split action to divide a snippet element.
 
@@ -492,16 +489,16 @@ class EditingSnippet(LData):
             return False
 
         var_name, sep = re.split("[-_]split[-_]?", action_op, maxsplit=1, flags=re.I)
-        sep = re.sub("_left_parenthesis_", SYMBOL.LEFT_PARENTHESIS, sep, flags=re.I)
-        sep = re.sub("_right_parenthesis_", SYMBOL.RIGHT_PARENTHESIS, sep, flags=re.I)
+        sep = re.sub("_left_parenthesis_", "(", sep, flags=re.I)
+        sep = re.sub("_right_parenthesis_", ")", sep, flags=re.I)
         var_name = f"v{var_name}" if var_name.isdigit() else var_name
 
         index, node = self.find_element(var_name)
-        if index >= NUMBER.ZERO:
+        if index >= 0:
             self.refresh_largest_index()
             sub_lst = node.split(splitter=sep, ref_index=self.largest_index)
             self.snippet_elements = (
-                self.snippet_elements[:index] + sub_lst + self.snippet_elements[index + NUMBER.ONE:]
+                self.snippet_elements[:index] + sub_lst + self.snippet_elements[index + 1:]
             )
             self.is_action_applied = True
             self.refresh_largest_index()
@@ -544,10 +541,10 @@ class EditingSnippet(LData):
         for item in items:
             item = item.strip(',')
             is_empty = bool(re.search(r'[_-]?or([_-]empty)?', item, flags=re.I))
-            item = re.sub(r'[_-]?or([_-]empty)?', STRING.EMPTY, item, flags=re.I)
+            item = re.sub(r'[_-]?or([_-]empty)?', "", item, flags=re.I)
 
             if re.match(r'^\d+:\d+$', item):
-                first, last = item.split(STRING.COLON_CHAR, maxsplit=NUMBER.ONE)
+                first, last = item.split(":", maxsplit=1)
                 var_names.extend([f"v{i}" for i in range(int(first), int(last) + 1)])
             elif re.match(r'^\w+(,\w+)*$', item):
                 var_names.extend([f"v{i}" if i.isdigit() else i for i in item.split(',')])
@@ -586,7 +583,7 @@ class EditingSnippet(LData):
 
         for var_name in var_names:
             index, node = self.find_element(var_name)
-            if index >= NUMBER.ZERO:
+            if index >= 0:
                 node.set_kept()
                 if is_empty:
                     node.set_empty()
@@ -629,7 +626,7 @@ class EditingSnippet(LData):
 
         for var_name in var_names:
             index, node = self.find_element(var_name)
-            if index >= NUMBER.ZERO:
+            if index >= 0:
                 node.set_captured()
                 if is_empty:
                     node.set_empty()
@@ -670,9 +667,9 @@ class EditingSnippet(LData):
         new_snippet = "".join(elmt.to_snippet() for elmt in self.snippet_elements)
         new_snippet = f"{self.leading}{new_snippet}{self.trailing}"
 
-        cval = STRING.EMPTY if self.is_capture_applied else self.capture
-        kval = STRING.EMPTY if self.is_keep_applied else self.keep
-        aval = STRING.EMPTY if self.is_action_applied else self.action
+        cval = "" if self.is_capture_applied else self.capture
+        kval = "" if self.is_keep_applied else self.keep
+        aval = "" if self.is_action_applied else self.action
 
         return f"capture({cval}) keep({kval}) action({aval}): {new_snippet}"
 
@@ -730,11 +727,11 @@ class IterativeLinePattern(LData):
         Internal snippet representation of the line.
     """
 
-    def __init__(self, line: str, label: str = "") -> None:
+    def __init__(self, line: str, label: str = ""):
         super().__init__(line)
         pat = r"[\x20-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+"
         self.label: str = re.sub(pat, "_", str(label))
-        self._snippet: str = STRING.EMPTY
+        self._snippet: str = ""
         self.process()
 
     def __len__(self) -> int:
@@ -886,7 +883,7 @@ class IterativeLinesPattern(RuntimeException):
         Normalized list of read-only lines or snippets.
     """
 
-    def __init__(self, *lines_or_snippets: str) -> None:
+    def __init__(self, *lines_or_snippets: str):
         self.lines_or_snippets: List[str] = list(text.get_list_of_readonly_lines(*lines_or_snippets))
 
     def to_snippet(self) -> str:
@@ -901,7 +898,7 @@ class IterativeLinesPattern(RuntimeException):
         snippets: List[str] = []
         for index, line_or_snippet in enumerate(self.lines_or_snippets):
             if text.Line.has_data(line_or_snippet):
-                label = str(index) if index > 0 else STRING.EMPTY
+                label = str(index) if index > 0 else ""
                 node = IterativeLinePattern(line_or_snippet, label=label)
                 snippets.append(node.to_snippet())
             else:
@@ -927,7 +924,7 @@ class IterativeLinesPattern(RuntimeException):
 
         if patterns:
             return rf"({PATTERN.CRNL})".join(patterns)
-        return STRING.EMPTY
+        return ""
 
     def to_template_snippet(self) -> str:
         """
@@ -957,4 +954,4 @@ class IterativeLinesPattern(RuntimeException):
                 msg="Cannot form template snippet because no captured variable is created"
             )
 
-        return STRING.NEWLINE.join(tmpl_snippets)
+        return "\n".join(tmpl_snippets)

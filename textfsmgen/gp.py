@@ -41,11 +41,7 @@ Notes
 
 import re
 
-from textfsmgen.deps import genericlib_NUMBER as NUMBER     # noqa
-from textfsmgen.deps import genericlib_STRING as STRING     # noqa
 from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
-from textfsmgen.deps import genericlib_TEXT as TEXT         # noqa
-from textfsmgen.deps import genericlib_SYMBOL as SYMBOL     # noqa
 from textfsmgen.libs import datatype
 from textfsmgen.libs import text
 
@@ -127,7 +123,7 @@ class LData(RuntimeException):
         bool
             True if leading whitespace exists, False otherwise.
         """
-        chk = self.leading != STRING.EMPTY
+        chk = self.leading != ""
         return chk
 
     @property
@@ -140,7 +136,7 @@ class LData(RuntimeException):
         bool
             True if trailing whitespace exists, False otherwise.
         """
-        chk = self.trailing != STRING.EMPTY
+        chk = self.trailing != ""
         return chk
 
 
@@ -174,7 +170,7 @@ class TranslatedPattern(RuntimeException):
         self.singular_pattern = singular_pattern
         self.root_name = root_name
         self.name = str(name)
-        self._pattern = STRING.EMPTY
+        self._pattern = ""
         self.process()
 
     def __len__(self):
@@ -188,10 +184,9 @@ class TranslatedPattern(RuntimeException):
         Returns
         -------
         bool
-            True if `_pattern` is not empty, False if it equals
-            `STRING.EMPTY`.
+            True if `_pattern` is not empty, False if it equals empty string.
         """
-        chk = self._pattern != STRING.EMPTY
+        chk = self._pattern != ""
         return chk
 
     def __call__(self, *args, **kwargs):
@@ -228,9 +223,9 @@ class TranslatedPattern(RuntimeException):
         -------
         bool
             True if `_pattern` is non-empty (translation exists),
-            False if `_pattern` equals `STRING.EMPTY`.
+            False if `_pattern` equals `""`.
         """
-        chk = self._pattern != STRING.EMPTY
+        chk = self._pattern != ""
         return chk
 
     @property
@@ -386,7 +381,7 @@ class TranslatedPattern(RuntimeException):
         - If `is_plural()` is True, only the last two patterns are checked.
         - Otherwise, all patterns in `defined_patterns` are considered.
         - On the first successful match, `_pattern` is set to that pattern.
-        - If no match is found, `_pattern` is set to `STRING.EMPTY`.
+        - If no match is found, `_pattern` is set to empty string.
 
         If `defined_patterns` is not available, the method falls back to
         checking `defined_pattern` directly.
@@ -400,8 +395,7 @@ class TranslatedPattern(RuntimeException):
         -----
         - Relies on `check_matching(pat)` to determine whether a pattern
           matches the current input.
-        - Ensures `_pattern` always resolves to either a valid pattern or
-          `STRING.EMPTY`.
+        - Ensures `_pattern` always resolves to either a valid pattern or empty string.
         """
         if self.defined_patterns:
             indices = slice(-2, None) if self.is_plural() else slice(None, None)
@@ -411,10 +405,10 @@ class TranslatedPattern(RuntimeException):
                     self._pattern = pat
                     break
             else:
-                self._pattern = STRING.EMPTY
+                self._pattern = ""
         else:
             is_matched = self.check_matching(self.defined_pattern)
-            self._pattern = self.defined_pattern if is_matched else STRING.EMPTY
+            self._pattern = self.defined_pattern if is_matched else ""
 
     def check_matching(self, pattern):
         """
@@ -442,274 +436,241 @@ class TranslatedPattern(RuntimeException):
         return is_matched
 
     def is_digit(self) -> bool:
-        """
-        Check whether the current name corresponds to a digit pattern.
-
-        This method compares the instance's `name` attribute against
-        the constant `TEXT.DIGIT` to determine if it represents a
-        digit-based pattern.
-
-        Returns
-        -------
-        bool
-            True if `name` equals `TEXT.DIGIT`, False otherwise.
-        """
-        return self.name == TEXT.DIGIT
+        """Check whether the current name corresponds to a digit pattern."""
+        return self.name == "digit"
 
     def is_digits(self) -> bool:
-        """
-        Check whether the current name corresponds to a digits pattern.
-
-        This method compares the instance's `name` attribute against
-        the constant `TEXT.DIGITS` to determine if it represents a
-        multi-digit pattern.
-
-        Returns
-        -------
-        bool
-            True if `name` equals `TEXT.DIGITS`, False otherwise.
-        """
-        return self.name == TEXT.DIGITS
+        """Check whether the current name corresponds to a digits pattern."""
+        return self.name == "digits"
 
     def is_number(self) -> bool:
-        """
-        Check whether the current name corresponds to a number pattern.
-
-        This method compares the instance's `name` attribute against
-        the constant `TEXT.NUMBER` to determine if it represents a
-        numeric pattern.
-
-        Returns
-        -------
-        bool
-            True if `name` equals `TEXT.NUMBER`, False otherwise.
-        """
-        return self.name == TEXT.NUMBER
+        """Check whether the current name corresponds to a number pattern."""
+        return self.name == "number"
 
     def is_mixed_number(self) -> bool:
         """
         Check whether the current name corresponds to a mixed number pattern.
 
         This method compares the instance's `name` attribute against
-        the constant `TEXT.MIXED_NUMBER` to determine if it represents
+        the constant `"mixed_number"` to determine if it represents
         a mixed numeric pattern.
 
         Returns
         -------
         bool
-            True if `name` equals `TEXT.MIXED_NUMBER`, False otherwise.
+            True if `name` equals `"mixed_number"`, False otherwise.
         """
-        return self.name == TEXT.MIXED_NUMBER
+        return self.name == "mixed_number"
 
     def is_letter(self) -> bool:
         """
         Check whether the current name corresponds to a letter pattern.
 
         This method compares the instance's `name` attribute against
-        the constant `TEXT.LETTER` to determine if it represents a
+        the constant `"letter"` to determine if it represents a
         single letter pattern.
 
         Returns
         -------
         bool
-            True if `name` equals `TEXT.LETTER`, False otherwise.
+            True if `name` equals `"letter"`, False otherwise.
         """
-        return self.name == TEXT.LETTER
+        return self.name == "letter"
 
     def is_letters(self) -> bool:
         """
         Check whether the current name corresponds to a letters pattern.
 
         This method compares the instance's `name` attribute against
-        the constant `TEXT.LETTERS` to determine if it represents a
+        the constant `"letters"` to determine if it represents a
         multiple-letters pattern.
 
         Returns
         -------
         bool
-            True if `name` equals `TEXT.LETTERS`, False otherwise.
+            True if `name` equals `"letters"`, False otherwise.
         """
-        return self.name == TEXT.LETTERS
+        return self.name == "letters"
 
     def is_alphabet_numeric(self) -> bool:
         """
         Check whether the current name corresponds to an alphanumeric pattern.
 
         This method compares the instance's `name` attribute against
-        the constant `TEXT.ALPHABET_NUMERIC` to determine if it represents
+        the constant `"alphabet_numeric"` to determine if it represents
         a pattern consisting of both alphabetic and numeric characters.
 
         Returns
         -------
         bool
-            True if `name` equals `TEXT.ALPHABET_NUMERIC`, False otherwise.
+            True if `name` equals `"alphabet_numeric"`, False otherwise.
         """
-        return self.name == TEXT.ALPHABET_NUMERIC
+        return self.name == "alphabet_numeric"
 
     def is_symbol(self) -> bool:
         """
         Check whether the current name corresponds to a symbol pattern.
 
         This method compares the instance's `name` attribute against
-        the constant `TEXT.PUNCT` to determine if it represents a
+        the constant `"punct"` to determine if it represents a
         punctuation or symbol pattern.
 
         Returns
         -------
         bool
-            True if `name` equals `TEXT.PUNCT`, False otherwise.
+            True if `name` equals `"punct"`, False otherwise.
         """
-        return self.name == TEXT.PUNCT
+        return self.name == "punct"
 
     def is_symbols(self) -> bool:
         """
         Check whether the current name corresponds to a symbols pattern.
 
         This method compares the instance's `name` attribute against
-        the constant `TEXT.PUNCTS` to determine if it represents a
+        the constant `"puncts"` to determine if it represents a
         multiple-symbols pattern.
 
         Returns
         -------
         bool
-            True if `name` equals `TEXT.PUNCTS`, False otherwise.
+            True if `name` equals `"puncts"`, False otherwise.
         """
-        return self.name == TEXT.PUNCTS
+        return self.name == "puncts"
 
     def is_symbols_group(self) -> bool:
         """
         Check whether the current name corresponds to a symbols group pattern.
 
         This method compares the instance's `name` attribute against
-        the constant `TEXT.PUNCTS_GROUP` to determine if it represents
+        the constant `"puncts_group"` to determine if it represents
         a grouped symbols pattern.
 
         Returns
         -------
         bool
-            True if `name` equals `TEXT.PUNCTS_GROUP`, False otherwise.
+            True if `name` equals `"puncts_group"`, False otherwise.
         """
-        return self.name == TEXT.PUNCTS_GROUP
+        return self.name == "puncts_group"
 
     def is_graph(self) -> bool:
         """
         Check whether the current name corresponds to a graph pattern.
 
         This method compares the instance's `name` attribute against
-        the constant `TEXT.GRAPH` to determine if it represents a
+        the constant `"graph"` to determine if it represents a
         graph-related pattern.
 
         Returns
         -------
         bool
-            True if `name` equals `TEXT.GRAPH`, False otherwise.
+            True if `name` equals `"graph"`, False otherwise.
         """
-        return self.name == TEXT.GRAPH
+        return self.name == "graph"
 
     def is_word(self) -> bool:
         """
         Check whether the current name corresponds to a word pattern.
 
         This method compares the instance's `name` attribute against
-        the constant `TEXT.WORD` to determine if it represents a
+        the constant `"word"` to determine if it represents a
         single word pattern.
 
         Returns
         -------
         bool
-            True if `name` equals `TEXT.WORD`, False otherwise.
+            True if `name` equals `"word"`, False otherwise.
         """
-        return self.name == TEXT.WORD
+        return self.name == "word"
 
     def is_words(self) -> bool:
         """
         Check whether the current name corresponds to a words pattern.
 
         This method compares the instance's `name` attribute against
-        the constant `TEXT.WORDS` to determine if it represents a
+        the constant `"words"` to determine if it represents a
         multiple-words pattern.
 
         Returns
         -------
         bool
-            True if `name` equals `TEXT.WORDS`, False otherwise.
+            True if `name` equals `"words"`, False otherwise.
         """
-        return self.name == TEXT.WORDS
+        return self.name == "words"
 
     def is_mixed_word(self) -> bool:
         """
         Check whether the current name corresponds to a mixed word pattern.
 
         This method compares the instance's `name` attribute against
-        the constant `TEXT.MIXED_WORD` to determine if it represents
+        the constant `"mixed_word"` to determine if it represents
         a mixed word pattern.
 
         Returns
         -------
         bool
-            True if `name` equals `TEXT.MIXED_WORD`, False otherwise.
+            True if `name` equals `"mixed_word"`, False otherwise.
         """
-        return self.name == TEXT.MIXED_WORD
+        return self.name == "mixed_word"
 
     def is_mixed_words(self) -> bool:
         """
         Check whether the current name corresponds to a mixed words pattern.
 
         This method compares the instance's `name` attribute against
-        the constant `TEXT.MIXED_WORDS` to determine if it represents
+        the constant `"mixed_words"` to determine if it represents
         a multiple mixed-words pattern.
 
         Returns
         -------
         bool
-            True if `name` equals `TEXT.MIXED_WORDS`, False otherwise.
+            True if `name` equals `"mixed_words"`, False otherwise.
         """
-        return self.name == TEXT.MIXED_WORDS
+        return self.name == "mixed_words"
 
     def is_non_whitespace(self) -> bool:
         """
         Check whether the current name corresponds to a non-whitespace pattern.
 
         This method compares the instance's `name` attribute against
-        the constant `TEXT.NON_WHITESPACE` to determine if it represents
+        the constant `"non_whitespace"` to determine if it represents
         a pattern that excludes whitespace characters.
 
         Returns
         -------
         bool
-            True if `name` equals `TEXT.NON_WHITESPACE`, False otherwise.
+            True if `name` equals `"non_whitespace"`, False otherwise.
         """
-        return self.name == TEXT.NON_WHITESPACE
+        return self.name == "non_whitespace"
 
     def is_non_whitespaces(self) -> bool:
         """
         Check whether the current name corresponds to a non-whitespaces pattern.
 
         This method compares the instance's `name` attribute against
-        the constant `TEXT.NON_WHITESPACES` to determine if it represents
+        the constant `"non_whitespaces"` to determine if it represents
         a pattern that excludes multiple whitespace characters.
 
         Returns
         -------
         bool
-            True if `name` equals `TEXT.NON_WHITESPACES`, False otherwise.
+            True if `name` equals `"non_whitespaces"`, False otherwise.
         """
-        return self.name == TEXT.NON_WHITESPACES
+        return self.name == "non_whitespaces"
 
     def is_non_whitespaces_group(self) -> bool:
         """
         Check whether the current name corresponds to a non-whitespaces group pattern.
 
         This method compares the instance's `name` attribute against
-        the constant `TEXT.NON_WHITESPACES_GROUP` to determine if it
+        the constant `"non_whitespace_group"` to determine if it
         represents a grouped pattern that excludes whitespace characters.
 
         Returns
         -------
         bool
-            True if `name` equals `TEXT.NON_WHITESPACES_GROUP`, False otherwise.
+            True if `name` equals `"non_whitespace_group"`, False otherwise.
         """
-        return self.name == TEXT.NON_WHITESPACES_GROUP
+        return self.name == "non_whitespace_group"
 
     def is_group(self):
         """
@@ -739,7 +700,7 @@ class TranslatedPattern(RuntimeException):
         This method first verifies that the instance corresponds to a valid group
         using `is_group()`. If so, it iterates through all number entries in
         `lst_of_all_data` and checks whether any entry, after stripping leading
-        and trailing whitespace, contains the constant `STRING.DOUBLE_SPACES`.
+        and trailing whitespace, contains double blank spaces.
 
         Returns
         -------
@@ -750,7 +711,7 @@ class TranslatedPattern(RuntimeException):
         if not self.is_group():
             return False
 
-        return any(STRING.DOUBLE_SPACES in data.strip() for data in
+        return any("  " in data.strip() for data in
                    self.lst_of_all_data)
 
     def is_numeric(self) -> bool:
@@ -938,7 +899,7 @@ class TranslatedPattern(RuntimeException):
             one word, False otherwise.
         """
         return all(
-            len(re.split(PATTERN.WHITESPACES, data.strip())) > NUMBER.ONE
+            len(re.split(PATTERN.WHITESPACES, data.strip())) > 1
             for data in self.lst_of_all_data
         )
 
@@ -958,7 +919,7 @@ class TranslatedPattern(RuntimeException):
             or none, False otherwise.
         """
         return all(
-            len(re.split(PATTERN.WHITESPACES, data.strip())) <= NUMBER.ONE
+            len(re.split(PATTERN.WHITESPACES, data.strip())) <= 1
             for data in self.lst_of_all_data
         )
 
@@ -984,15 +945,14 @@ class TranslatedPattern(RuntimeException):
         Extract the first word from the number string.
 
         This method splits the `number` attribute by the space character
-        defined in `STRING.SPACE_CHAR` and returns the first element
-        of the resulting list.
+        and returns the first element of the resulting list.
 
         Returns
         -------
         str
             The first word from `number`.
         """
-        return self.data.split(STRING.SPACE_CHAR)[NUMBER.ZERO]
+        return self.data.split(" ")[0]
 
     def get_plural_data(self) -> str:
         """
@@ -1000,7 +960,7 @@ class TranslatedPattern(RuntimeException):
 
         This method iterates through each entry in `lst_of_all_data`,
         strips leading and trailing whitespace, and checks for the
-        presence of a space character defined in `STRING.SPACE_CHAR`.
+        presence of a space character.
         If such an entry is found, it is returned. Otherwise, a new
         plural string is constructed by duplicating `self.number`
         separated by a space.
@@ -1012,7 +972,7 @@ class TranslatedPattern(RuntimeException):
             otherwise a constructed plural string from `self.number`.
         """
         for data in self.lst_of_all_data:
-            if STRING.SPACE_CHAR in data.strip():
+            if " " in data.strip():
                 return data
         return f"{self.data} {self.data}"
 
@@ -1125,8 +1085,8 @@ class TranslatedPattern(RuntimeException):
                 msg="Cannot create snippet without a defined name",
             )
 
-        value = self.data.replace(SYMBOL.LEFT_PARENTHESIS, "_SYMBOL_LEFT_PARENTHESIS_")
-        value = value.replace(SYMBOL.RIGHT_PARENTHESIS,"_SYMBOL_RIGHT_PARENTHESIS_")
+        value = self.data.replace("(", "_SYMBOL_LEFT_PARENTHESIS_")
+        value = value.replace(")", "_SYMBOL_RIGHT_PARENTHESIS_")
 
         if var:
             return f"{self.actual_name}(var={var}, value={value})"
@@ -1221,7 +1181,7 @@ class TranslatedPattern(RuntimeException):
                 msg="Cannot create template snippet without a defined name",
             )
 
-        var_txt = f"var_{var}" if var else STRING.EMPTY
+        var_txt = f"var_{var}" if var else ""
         name = self.lessen_name if is_lessen else self.actual_name
         name = self.root_name if is_root else name
 
@@ -1382,7 +1342,7 @@ class TranslatedDigitPattern(TranslatedPattern):
         super().__init__(
             data,
             *other,
-            name=TEXT.DIGIT,
+            name="digit",
             defined_pattern=PATTERN.DIGIT,
             root_name="non_whitespace",
         )
@@ -1535,7 +1495,7 @@ class TranslatedDigitsPattern(TranslatedPattern):
         super().__init__(
             data,
             *other,
-            name=TEXT.DIGITS,
+            name="digits",
             defined_pattern=PATTERN.DIGITS,
             root_name='non_whitespaces'
         )
@@ -1690,7 +1650,7 @@ class TranslatedNumberPattern(TranslatedPattern):
         super().__init__(
             data,
             *other,
-            name=TEXT.NUMBER,
+            name="number",
             defined_pattern=PATTERN.NUMBER,
             root_name='non_whitespaces'
         )
@@ -1836,7 +1796,7 @@ class TranslatedMixedNumberPattern(TranslatedPattern):
         super().__init__(
             data,
             *other,
-            name=TEXT.MIXED_NUMBER,
+            name="mixed_number",
             defined_pattern=PATTERN.MIXED_NUMBER,
             root_name="non_whitespaces",
         )
@@ -1980,11 +1940,11 @@ class TranslatedLetterPattern(TranslatedPattern):
         Root category name for this pattern ("non_whitespace").
     """
 
-    def __init__(self, data: str, *other: object) -> None:
+    def __init__(self, data: str, *other: object):
         super().__init__(
             data,
             *other,
-            name=TEXT.LETTER,
+            name="letter",
             defined_pattern=PATTERN.LETTER,
             root_name="non_whitespace",
         )
@@ -2129,11 +2089,11 @@ class TranslatedLettersPattern(TranslatedPattern):
         Root category name for this pattern ("non_whitespaces").
     """
 
-    def __init__(self, data: str, *other: object) -> None:
+    def __init__(self, data: str, *other: object):
         super().__init__(
             data,
             *other,
-            name=TEXT.LETTERS,
+            name="letters",
             defined_pattern=PATTERN.LETTERS,
             root_name="non_whitespaces",
         )
@@ -2275,11 +2235,11 @@ class TranslatedAlphabetNumericPattern(TranslatedPattern):
         Root category name for this pattern ("non_whitespace").
     """
 
-    def __init__(self, data: str, *other: object) -> None:
+    def __init__(self, data: str, *other: object):
         super().__init__(
             data,
             *other,
-            name=TEXT.ALPHABET_NUMERIC,
+            name="alphabet_numeric",
             defined_pattern=PATTERN.ALPHABET_NUMERIC,
             root_name="non_whitespace",
         )
@@ -2428,11 +2388,11 @@ class TranslatedPunctPattern(TranslatedPattern):
         Root category name for this pattern ("non_whitespace").
     """
 
-    def __init__(self, data: str, *other: object) -> None:
+    def __init__(self, data: str, *other: object):
         super().__init__(
             data,
             *other,
-            name=TEXT.PUNCT,
+            name="punct",
             defined_pattern=PATTERN.PUNCT,
             root_name="non_whitespace",
         )
@@ -2570,11 +2530,11 @@ class TranslatedPunctsPattern(TranslatedPattern):
         Root category name for this pattern ("non_whitespaces").
     """
 
-    def __init__(self, data: str, *other: object) -> None:
+    def __init__(self, data: str, *other: object):
         super().__init__(
             data,
             *other,
-            name=TEXT.PUNCTS,
+            name="puncts",
             defined_pattern=PATTERN.PUNCTS,
             root_name="non_whitespaces",
         )
@@ -2726,7 +2686,7 @@ class TranslatedPunctsGroupPattern(TranslatedPattern):
         Root category name for this pattern ("non_whitespaces_or_group").
     """
 
-    def __init__(self, data: str, *other: object) -> None:
+    def __init__(self, data: str, *other: object):
         defined_patterns = [
             PATTERN.PUNCTS_OR_PHRASE,
             PATTERN.PUNCTS_OR_GROUP,
@@ -2742,7 +2702,7 @@ class TranslatedPunctsGroupPattern(TranslatedPattern):
         super().__init__(
             data,
             *other,
-            name=TEXT.PUNCTS_GROUP,
+            name="puncts_group",
             defined_patterns=defined_patterns,
             ref_names=ref_names,
             singular_name="puncts",
@@ -2891,11 +2851,11 @@ class TranslatedGraphPattern(TranslatedPattern):
         Root category name for this pattern ("non_whitespace").
     """
 
-    def __init__(self, data: str, *other: object) -> None:
+    def __init__(self, data: str, *other: object):
         super().__init__(
             data,
             *other,
-            name=TEXT.GRAPH,
+            name="graph",
             defined_pattern=PATTERN.GRAPH,
             root_name="non_whitespace",
         )
@@ -3035,11 +2995,11 @@ class TranslatedWordPattern(TranslatedPattern):
         Root category name for this pattern ("non_whitespaces").
     """
 
-    def __init__(self, data: str, *other: object) -> None:
+    def __init__(self, data: str, *other: object):
         super().__init__(
             data,
             *other,
-            name=TEXT.WORD,
+            name="word",
             defined_pattern=PATTERN.WORD,
             root_name="non_whitespaces",
         )
@@ -3194,7 +3154,7 @@ class TranslatedWordsPattern(TranslatedPattern):
         Root category name for this pattern ("non_whitespaces_or_group").
     """
 
-    def __init__(self, data: str, *other: object) -> None:
+    def __init__(self, data: str, *other: object):
         defined_patterns = [
             PATTERN.WORDS,
             PATTERN.WORD_OR_GROUP,
@@ -3206,7 +3166,7 @@ class TranslatedWordsPattern(TranslatedPattern):
         super().__init__(
             data,
             *other,
-            name=TEXT.WORDS,
+            name="words",
             defined_patterns=defined_patterns,
             ref_names=ref_names,
             singular_name="word",
@@ -3355,11 +3315,11 @@ class TranslatedMixedWordPattern(TranslatedPattern):
         Root category name for this pattern ("non_whitespaces").
     """
 
-    def __init__(self, data: str, *other: object) -> None:
+    def __init__(self, data: str, *other: object):
         super().__init__(
             data,
             *other,
-            name=TEXT.MIXED_WORD,
+            name="mixed_word",
             defined_pattern=PATTERN.MIXED_WORD,
             root_name="non_whitespaces",
         )
@@ -3514,7 +3474,7 @@ class TranslatedMixedWordsPattern(TranslatedPattern):
         Root category name for this pattern ("non_whitespaces_or_group").
     """
 
-    def __init__(self, data: str, *other: object) -> None:
+    def __init__(self, data: str, *other: object):
         defined_patterns = [
             PATTERN.MIXED_WORDS,
             PATTERN.MIXED_WORD_OR_GROUP,
@@ -3531,7 +3491,7 @@ class TranslatedMixedWordsPattern(TranslatedPattern):
         super().__init__(
             data,
             *other,
-            name=TEXT.MIXED_WORDS,
+            name="mixed_words",
             defined_patterns=defined_patterns,
             ref_names=ref_names,
             singular_name="mixed_word",
@@ -3679,11 +3639,11 @@ class TranslatedNonWhitespacePattern(TranslatedPattern):
         Root category name for this pattern ("non_whitespace").
     """
 
-    def __init__(self, data: str, *other: object) -> None:
+    def __init__(self, data: str, *other: object):
         super().__init__(
             data,
             *other,
-            name=TEXT.NON_WHITESPACE,
+            name="non_whitespace",
             defined_pattern=PATTERN.NON_WHITESPACE,
             root_name="non_whitespace",
         )
@@ -3832,11 +3792,11 @@ class TranslatedNonWhitespacesPattern(TranslatedPattern):
         Root category name for this pattern ("non_whitespaces").
     """
 
-    def __init__(self, data: str, *other: object) -> None:
+    def __init__(self, data: str, *other: object):
         super().__init__(
             data,
             *other,
-            name=TEXT.NON_WHITESPACES,
+            name="non_whitespaces",
             defined_pattern=PATTERN.NON_WHITESPACES,
             root_name="non_whitespaces",
         )
@@ -3988,7 +3948,7 @@ class TranslatedNonWhitespacesGroupPattern(TranslatedPattern):
         Root category name for this pattern ("non_whitespaces_or_group").
     """
 
-    def __init__(self, data: str, *other: object) -> None:
+    def __init__(self, data: str, *other: object):
         defined_patterns = [
             PATTERN.NON_WHITESPACES_OR_PHRASE,
             PATTERN.NON_WHITESPACES_OR_GROUP,
@@ -4005,7 +3965,7 @@ class TranslatedNonWhitespacesGroupPattern(TranslatedPattern):
         super().__init__(
             data,
             *other,
-            name=TEXT.NON_WHITESPACES_GROUP,
+            name="non_whitespace_group",
             defined_patterns=defined_patterns,
             ref_names=ref_names,
             singular_name="non_whitespaces",

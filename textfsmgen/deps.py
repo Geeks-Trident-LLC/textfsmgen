@@ -30,7 +30,6 @@ Notes
 # Module imports
 # Provide file and text utilities for parsing, formatting, and I/O operations.
 import genericlib.number as genericlib_number_module    # noqa
-import genericlib.shell as genericlib_shell_module      # noqa
 
 # Core classes
 # Fundamental data structures and helpers for object handling, printing, and text manipulation.
@@ -38,12 +37,7 @@ from genericlib import Wildcard as genericlib_Wildcard      # noqa
 
 # Constant classes
 # Common symbolic constants for numbers, strings, regex patterns, and indexing.
-from genericlib import NUMBER as genericlib_NUMBER      # noqa
-from genericlib import STRING as genericlib_STRING      # noqa
 from genericlib import PATTERN as genericlib_PATTERN    # noqa
-from genericlib import TEXT as genericlib_TEXT          # noqa
-from genericlib import SYMBOL as genericlib_SYMBOL      # noqa
-from genericlib import INDEX as genericlib_INDEX        # noqa
 
 # Utility functions
 # General-purpose helpers for text normalization, system exit, tabular data, and decorators.

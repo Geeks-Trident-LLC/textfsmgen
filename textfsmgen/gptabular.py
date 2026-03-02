@@ -46,10 +46,7 @@ import operator as op
 import re
 
 from textfsmgen.deps import regexapp_LinePattern as LinePattern
-from textfsmgen.deps import genericlib_NUMBER as NUMBER     # noqa
-from textfsmgen.deps import genericlib_STRING as STRING     # noqa
 from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
-from textfsmgen.deps import genericlib_INDEX as INDEX       # noqa
 from textfsmgen.libs import datatype
 from textfsmgen.libs import text
 from textfsmgen.deps import genericlib_number_module as number
@@ -147,8 +144,8 @@ class TabularTextPattern(RuntimeException):
                 is_number, width = number.try_to_get_number(width_, return_type=int)
                 if is_number:
                     normalized.append(width)
-                elif idx == len(widths) - NUMBER.ONE:
-                    normalized.append(STRING.EMPTY)
+                elif idx == len(widths) - 1:
+                    normalized.append("")
                 else:
                     self.raise_runtime_error(
                         msg=(
@@ -178,12 +175,12 @@ class TabularTextPattern(RuntimeException):
 
     def to_regex(self) -> str:
         """Return a regex pattern generated from the parsed table."""
-        return self.tabular_parser.to_regex() if self else STRING.EMPTY
+        return self.tabular_parser.to_regex() if self else ""
 
     def to_template_snippet(self) -> str:
         """Return a template snippet generated from the parsed table."""
         tmpl_snippet = (
-            self.tabular_parser.to_template_snippet() if self else STRING.EMPTY
+            self.tabular_parser.to_template_snippet() if self else ""
         )
 
         if not tmpl_snippet.strip():
@@ -309,7 +306,7 @@ class TabularTextPatternByVarColumns(RuntimeException):
         if self._is_start_with_divider is None:
             if self.is_divider_a_symbol:
                 count = sum(line.strip().startswith(self.divider) for line in self.lines)
-                self._is_start_with_divider = op.gt(count, op.truediv(len(self.lines), NUMBER.TWO)) if count else False
+                self._is_start_with_divider = op.gt(count, op.truediv(len(self.lines), 2)) if count else False
             else:
                 self._is_start_with_divider = False
         return self._is_start_with_divider
@@ -320,7 +317,7 @@ class TabularTextPatternByVarColumns(RuntimeException):
         if self._is_end_with_divider is None:
             if self.is_divider_a_symbol:
                 count = sum(line.strip().endswith(self.divider) for line in self.lines)
-                self._is_end_with_divider = op.gt(count, op.truediv(len(self.lines), NUMBER.TWO)) if count else False
+                self._is_end_with_divider = op.gt(count, op.truediv(len(self.lines), 2)) if count else False
             else:
                 self._is_end_with_divider = False
         return self._is_end_with_divider
@@ -379,7 +376,7 @@ class TabularTextPatternByVarColumns(RuntimeException):
 
         if datatype.is_list(header_names) and len(header_names) == self.columns_count:
             pat = '[ %s' % PATTERN.PUNCTS[1:]
-            repl = STRING.UNDERSCORE_CHAR
+            repl = "_"
             for i, hdr in enumerate(header_names):
                 new_hdr = re.sub(pat, repl, hdr.strip())
                 new_hdr = new_hdr if new_hdr == repl else new_hdr.rstrip(repl)
@@ -398,9 +395,9 @@ class TabularTextPatternByVarColumns(RuntimeException):
     def find_ref_row_by_symbols_divider(self, custom_line=''):
         """Find reference row using punctuation symbols as dividers."""
         fmt = ' *%(p)s( +%(p)s){%(rep)s} *$'
-        pat = fmt % dict(p=PATTERN.PUNCTS, rep=self.columns_count - NUMBER.ONE)
+        pat = fmt % dict(p=PATTERN.PUNCTS, rep=self.columns_count - 1)
 
-        found_line = custom_line or next((line for line in self.lines if re.match(pat, line)), STRING.EMPTY)
+        found_line = custom_line or next((line for line in self.lines if re.match(pat, line)), "")
         if not found_line:
             return None
 
@@ -410,10 +407,10 @@ class TabularTextPatternByVarColumns(RuntimeException):
     def find_ref_row_by_separator_divider(self, custom_line=''):
         """Find reference row using explicit separator divider."""
         fmt = ' *%(separator)s?(%(p)s%(separator)s){%(rep)s}%(p)s%(separator)s? *$'
-        kwargs = dict(p=r'[^%s]+' % self.divider, rep=self.columns_count - NUMBER.ONE, separator=re.escape(self.divider))
+        kwargs = dict(p=r'[^%s]+' % self.divider, rep=self.columns_count - 1, separator=re.escape(self.divider))
         pat = fmt % kwargs
 
-        found_line = custom_line or next((line for line in self.lines if re.match(pat, line)), STRING.EMPTY)
+        found_line = custom_line or next((line for line in self.lines if re.match(pat, line)), "")
         if not found_line:
             return None
 
@@ -422,8 +419,8 @@ class TabularTextPatternByVarColumns(RuntimeException):
     def find_ref_row_by_space_divider(self, spaces: str = ' ',
                                       custom_line: str = '') -> Optional['TabularRow']:
         """Find reference row using space or multi-space divider."""
-        gap = STRING.EMPTY if spaces == STRING.SPACE_CHAR else STRING.SPACE_CHAR
-        repetition = self.columns_count - NUMBER.ONE
+        gap = "" if spaces == " " else " "
+        repetition = self.columns_count - 1
         kwargs = dict(p=PATTERN.NON_WHITESPACES_OR_PHRASE, rep=repetition, gap=gap)
         pat = r' *%(p)s(%(gap)s +%(p)s){%(rep)s} *$' % kwargs
 
@@ -442,7 +439,7 @@ class TabularTextPatternByVarColumns(RuntimeException):
             kwargs.update(key=key)
             fmt = fmt1 if index else fmt2
             lst.append(fmt % kwargs)
-        lst[-NUMBER.ONE] = fmt3 % kwargs
+        lst[-1] = fmt3 % kwargs
 
         pattern = ''.join(lst)
 
@@ -467,7 +464,7 @@ class TabularTextPatternByVarColumns(RuntimeException):
     def find_ref_row_by_col_widths(self, custom_line: str = '') -> Optional['TabularRow']:
         """Find reference row using fixed column widths."""
         lst = [
-            f'(?P<v{index:03d}>.{{{width}}})' if index < self.columns_count - NUMBER.ONE
+            f'(?P<v{index:03d}>.{{{width}}})' if index < self.columns_count - 1
             else f'(?P<v{index:03d}>.*)'
             for index, width in enumerate(self.col_widths)
         ]
@@ -528,7 +525,7 @@ class TabularTextPatternByVarColumns(RuntimeException):
         RuntimeException
             If parsing fails for the chosen strategy.
         """
-        case, err_msg = STRING.EMPTY, STRING.EMPTY
+        case, err_msg = "", ""
         if self.col_widths:
             case = "col_widths"
             err_msg = (
@@ -550,7 +547,7 @@ class TabularTextPatternByVarColumns(RuntimeException):
                 f"Case: {case}\n"
                 "Reason: Unable to parse tabular text using custom headers data."
             )
-        elif self.divider == STRING.SPACE_CHAR:
+        elif self.divider == " ":
             case = "blank_space"
             err_msg = (
                 f"Parsing failed in {self.__class__.__name__}.\n"
@@ -564,7 +561,7 @@ class TabularTextPatternByVarColumns(RuntimeException):
                 f"Case: {case}\n"
                 "Reason: Unable to parse tabular text using multi-space divider."
             )
-        elif self.divider == STRING.EMPTY:
+        elif self.divider == "":
             case = "symbols"
             err_msg = (
                 f"Parsing failed in {self.__class__.__name__}.\n"
@@ -686,7 +683,7 @@ class TabularTable(RuntimeException):
                  raw_headers_data: Optional[List[str]] = None,
                  is_start_with_divider: bool = False,
                  is_end_with_divider: bool = False,
-                 is_headers_row: bool = True) -> None:
+                 is_headers_row: bool = True):
 
         self.first_column_data_info: Dict[Any, Any] = {}
         self.last_column_data_info: Dict[Any, Any] = {}
@@ -767,12 +764,12 @@ class TabularTable(RuntimeException):
     @property
     def first_column(self) -> 'TabularColumn':
         """Return the first column."""
-        return self.columns[INDEX.ZERO]
+        return self.columns[0]
 
     @property
     def last_column(self) -> 'TabularColumn':
         """Return the last column."""
-        return self.columns[-INDEX.ONE]
+        return self.columns[-1]
 
     # -------------------------------
     # Line preparation
@@ -859,7 +856,7 @@ class TabularTable(RuntimeException):
                 if is_oneline:
                     first_col_data = re.sub(pattern, '', line)
                     next_line = re.sub(pattern, '',
-                                       all_lines[index + NUMBER.ONE])
+                                       all_lines[index + 1])
                     leading = text.Line.get_leading(next_line)
 
                     self.first_column_data_info[len(lst)] = first_col_data
@@ -929,7 +926,7 @@ class TabularTable(RuntimeException):
             col.analyze_and_update_alignment()
 
         if self.columns:
-            last_column = self.columns[-INDEX.ONE]
+            last_column = self.columns[-1]
             last_column.add_extra_data(self.last_column_data_info.get('lst_data'))
 
     # -------------------------------
@@ -983,14 +980,14 @@ class TabularTable(RuntimeException):
             ref_line = self.ref_row.line
             if ref_line in self.lines:
                 row_pos = self.lines.index(ref_line)
-                self.rows = self.rows[row_pos + NUMBER.ONE:]
-                self.header_lines = self.lines[:row_pos + NUMBER.ONE]
+                self.rows = self.rows[row_pos + 1:]
+                self.header_lines = self.lines[:row_pos + 1]
 
                 for col in self.columns:
                     hdr_col = TabularColumn()
-                    hdr_col.cells = col.cells[:row_pos + NUMBER.ONE]
+                    hdr_col.cells = col.cells[:row_pos + 1]
                     self.header_columns.append(hdr_col)
-                    col.cells = col.cells[row_pos + NUMBER.ONE:]
+                    col.cells = col.cells[row_pos + 1:]
 
     def build_and_update_headers(self) -> None:
         """
@@ -1002,7 +999,7 @@ class TabularTable(RuntimeException):
         """
         if self.is_headers_row:
             if not self.header_names:
-                repl_char = STRING.UNDERSCORE_CHAR
+                repl_char = "_"
                 pat = r'[0-9 \x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+'
 
                 for index, hdr_col in enumerate(self.header_columns):
@@ -1054,7 +1051,7 @@ class TabularTable(RuntimeException):
             Regex pattern string.
         """
         if not self:
-            return STRING.EMPTY
+            return ""
 
         lst: List[str] = []
         does_prev_col_has_empty_cell = False
@@ -1076,9 +1073,9 @@ class TabularTable(RuntimeException):
             does_prev_col_has_empty_cell = column.has_empty_cell
 
         if self.is_start_with_divider:
-            lst.insert(NUMBER.ZERO, divider_leading_pat)
+            lst.insert(0, divider_leading_pat)
         if self.is_leading:
-            lst.insert(NUMBER.ZERO, PATTERN.ZOSPACES)
+            lst.insert(0, PATTERN.ZOSPACES)
         if self.is_end_with_divider:
             lst.append(divider_trailing_pat)
         if self._is_trailing:
@@ -1104,7 +1101,7 @@ class TabularTable(RuntimeException):
             if is_header_line:
                 lst.append(line)
 
-        return text.join_string(*lst, separator=STRING.NEWLINE)
+        return text.join_string(*lst, separator="\n")
 
     def to_template_snippet(self) -> str:
         """
@@ -1116,7 +1113,7 @@ class TabularTable(RuntimeException):
             Template snippet string.
         """
         if not self:
-            return STRING.EMPTY
+            return ""
 
         lst_of_snippet: List[str] = []
         headers_snippet = self.get_header_lines_snippet()
@@ -1127,7 +1124,7 @@ class TabularTable(RuntimeException):
         self.build_snippet_for_first_column_case(lst_of_snippet)
         self.build_snippet_for_other_case(lst_of_snippet)
 
-        return text.join_string(*lst_of_snippet, separator=STRING.NEWLINE)
+        return text.join_string(*lst_of_snippet, separator="\n")
 
     def build_snippet_for_first_column_case(self, lst_of_snippet: List[str]) -> None:
         """
@@ -1167,13 +1164,13 @@ class TabularTable(RuntimeException):
                 space_snippet = f'space(repetition_{m}_{n})'
 
                 kwargs = {}
-                if self.last_column_data_info and index == self.columns_count - NUMBER.ONE:
+                if self.last_column_data_info and index == self.columns_count - 1:
                     kwargs.update(added_list_meta_data=True)
 
                 col_snippet = column.to_template_snippet(**kwargs)
                 parts.append(col_snippet if int(bit) else space_snippet)
 
-            sep = self.divider_snippet if self.is_divider else STRING.DOUBLE_SPACES
+            sep = self.divider_snippet if self.is_divider else "  "
             next_snippet = text.join_string(*parts, separator=sep)
 
             if self.is_divider:
@@ -1222,7 +1219,7 @@ class TabularTable(RuntimeException):
                 space_snippet = f'space(repetition_{m}_{n})'
 
                 kwargs = dict()
-                if index == self.columns_count - NUMBER.ONE:
+                if index == self.columns_count - 1:
                     kwargs.update(added_list_meta_data=True)
                 col_snippet = column.to_template_snippet(**kwargs)
 
@@ -1230,7 +1227,7 @@ class TabularTable(RuntimeException):
                     lst.append(col_snippet if int(bit) else space_snippet)
                 else:
                     if lst:
-                        last_item = lst[-INDEX.ONE]
+                        last_item = lst[-1]
                         pat = r'space[(]repetition_(?P<m>\d+)_(?P<n>\d+)[)]$'
                         match = re.match(pat, last_item)
                         if match:
@@ -1248,7 +1245,7 @@ class TabularTable(RuntimeException):
                     else:
                         lst.append(space_snippet)
 
-            sep = self.divider_snippet if self.is_divider else STRING.DOUBLE_SPACES
+            sep = self.divider_snippet if self.is_divider else "  "
             line_snippet = text.join_string(*lst, separator=sep)
             if self.is_divider:
                 line_snippet = f'{self.divider_leading_snippet}{line_snippet}{self.divider_trailing_snippet}'
@@ -1310,7 +1307,7 @@ class TabularTable(RuntimeException):
                 space_snippet = f'space(repetition_{m}_{n})'
 
                 kwargs = dict()
-                if self.last_column_data_info and index == self.columns_count - NUMBER.ONE:
+                if self.last_column_data_info and index == self.columns_count - 1:
                     kwargs.update(added_list_meta_data=True)
                 col_snippet = column.to_template_snippet(**kwargs)
 
@@ -1318,7 +1315,7 @@ class TabularTable(RuntimeException):
                     parts.append(col_snippet if int(bit) else space_snippet)
                 else:
                     if parts:
-                        last_item = parts[-INDEX.ONE]
+                        last_item = parts[-1]
                         pat = r'space[(]repetition_(?P<m>\d+)_(?P<n>\d+)[)]$'
                         match = re.match(pat, last_item)
                         if match:
@@ -1333,7 +1330,7 @@ class TabularTable(RuntimeException):
                     else:
                         parts.append(space_snippet)
 
-            sep = self.divider_snippet if self.is_divider else STRING.DOUBLE_SPACES
+            sep = self.divider_snippet if self.is_divider else "  "
             line_snippet = text.join_string(*parts, separator=sep)
             if self.is_divider:
                 line_snippet = f'{self.divider_leading_snippet}{line_snippet}{self.divider_trailing_snippet}'
@@ -1423,13 +1420,13 @@ class TabularCell(RuntimeException):
         self._leading = None
         self._trailing = None
 
-        self.left = NUMBER.ZERO
-        self.right = NUMBER.ZERO
-        self.inner_left = NUMBER.ZERO
-        self.inner_right = NUMBER.ZERO
+        self.left = 0
+        self.right = 0
+        self.inner_left = 0
+        self.inner_right = 0
 
-        self.line = STRING.EMPTY
-        self.data = STRING.EMPTY
+        self.line = ""
+        self.data = ""
 
         self.ref_cell = None
 
@@ -1437,7 +1434,7 @@ class TabularCell(RuntimeException):
 
     def __len__(self) -> int:
         """Return 1 if the cell has valid boundaries, otherwise 0."""
-        return int(self.left >= NUMBER.ZERO) or (self.right > self.left)
+        return int(self.left >= 0) or (self.right > self.left)
 
     def __repr__(self) -> str:
         """Return a string representation with text, data, and boundaries."""
@@ -1458,28 +1455,28 @@ class TabularCell(RuntimeException):
         """Return leading spaces of the cell content."""
         if self._leading is None:
             self._leading = text.Line.get_leading(self.data)
-        return self._leading or STRING.EMPTY
+        return self._leading or ""
 
     @property
     def trailing(self) -> str:
         """Return trailing spaces of the cell content."""
         if self._trailing is None:
             if self.is_empty:
-                self._trailing = STRING.EMPTY
+                self._trailing = ""
             else:
                 matches = re.findall(PATTERN.SPACESATEOS, self.data)
-                self._trailing = matches[NUMBER.ZERO] if matches else STRING.EMPTY
-        return self._trailing or STRING.EMPTY
+                self._trailing = matches[0] if matches else ""
+        return self._trailing or ""
 
     @property
     def is_empty(self) -> bool:
         """Return True if the cell contains no text."""
-        return self.text == STRING.EMPTY
+        return self.text == ""
 
     @property
     def items_count(self) -> int:
         """Return the number of items (words) in the cell."""
-        return NUMBER.ZERO if self.is_empty else len(re.split(PATTERN.SPACES, self.text))
+        return 0 if self.is_empty else len(re.split(PATTERN.SPACES, self.text))
 
     @property
     def width(self) -> int:
@@ -1493,35 +1490,35 @@ class TabularCell(RuntimeException):
     # -----------------------------
 
     @property
-    def is_leading(self) -> bool: return self.leading != STRING.EMPTY
+    def is_leading(self) -> bool: return self.leading != ""
     @property
-    def is_single_leading(self) -> bool: return self.leading == STRING.SPACE_CHAR
+    def is_single_leading(self) -> bool: return self.leading == " "
     @property
-    def is_multi_leading(self) -> bool: return len(self.leading) > NUMBER.ONE
+    def is_multi_leading(self) -> bool: return len(self.leading) > 1
 
     @property
-    def is_trailing(self) -> bool: return self.trailing != STRING.EMPTY
+    def is_trailing(self) -> bool: return self.trailing != ""
     @property
-    def is_single_trailing(self) -> bool: return self.trailing == STRING.SPACE_CHAR
+    def is_single_trailing(self) -> bool: return self.trailing == " "
     @property
-    def is_multi_trailing(self) -> bool: return len(self.trailing) > NUMBER.ONE
+    def is_multi_trailing(self) -> bool: return len(self.trailing) > 1
 
     @property
     def is_just_chars(self) -> bool:
         """Return True if the cell contains only characters without spaces."""
-        return not self.is_empty and STRING.SPACE_CHAR not in self.text
+        return not self.is_empty and " " not in self.text
 
     @property
     def is_group_of_chars(self) -> bool:
         """Return True if the cell contains multiple characters separated by spaces."""
-        return not self.is_empty and STRING.SPACE_CHAR in self.text
+        return not self.is_empty and " " in self.text
 
     @property
-    def is_containing_space(self) -> bool: return STRING.SPACE_CHAR in self.text
+    def is_containing_space(self) -> bool: return " " in self.text
     @property
-    def is_not_containing_space(self) -> bool: return STRING.SPACE_CHAR not in self.text
+    def is_not_containing_space(self) -> bool: return " " not in self.text
     @property
-    def is_containing_spaces(self) -> bool: return STRING.DOUBLE_SPACES in self.text
+    def is_containing_spaces(self) -> bool: return "  " in self.text
 
     # -----------------------------
     # Position and adjustment
@@ -1536,27 +1533,27 @@ class TabularCell(RuntimeException):
     def get_possible_prefix(self) -> str:
         """Return possible prefix before the last space in the text."""
         if self.is_empty or self.is_trailing:
-            return STRING.EMPTY
-        *chk, prefix = self.text.rsplit(STRING.SPACE_CHAR, maxsplit=NUMBER.ONE)
-        return STRING.EMPTY if chk else prefix
+            return ""
+        *chk, prefix = self.text.rsplit(" ", maxsplit=1)
+        return "" if chk else prefix
 
     def get_postfix_data(self) -> str:
         """Return postfix data after the last space or double space."""
         if self.is_multi_trailing or not self.is_containing_space:
-            return STRING.EMPTY
+            return ""
 
-        repl = STRING.DOUBLE_SPACES if self.is_containing_spaces else STRING.SPACE_CHAR
-        _, remaining_txt = str.rsplit(self.text, repl, maxsplit=NUMBER.ONE)
+        repl = "  " if self.is_containing_spaces else " "
+        _, remaining_txt = str.rsplit(self.text, repl, maxsplit=1)
         ret_val = f"{remaining_txt}{self.trailing}"
 
         if self.ref_cell:
             other_right = self.right - len(ret_val)
             if other_right > self.ref_cell.inner_right:
                 return ret_val
-            elif STRING.SPACE_CHAR in remaining_txt:
-                _, remaining_txt1 = str.rsplit(remaining_txt, STRING.SPACE_CHAR, maxsplit=NUMBER.ONE)
+            elif " " in remaining_txt:
+                _, remaining_txt1 = str.rsplit(remaining_txt, " ", maxsplit=1)
                 return f"{remaining_txt1}{self.trailing}"
-            return STRING.EMPTY
+            return ""
         return ret_val
 
     def do_first_pass_adjustment(self, prev_cell: "TabularCell" = None) -> None:
@@ -1586,7 +1583,7 @@ class TabularCell(RuntimeException):
 
         prefix = prev_cell.get_postfix_data()
         if prefix:
-            width = len(prefix) + NUMBER.ONE
+            width = len(prefix) + 1
             self.update_position("left", val=self.left - width)
             prev_cell.update_position("right", val=self.right - width)
 
@@ -1740,7 +1737,7 @@ class TabularRow(RuntimeException):
         cell = TabularCell(self.line, left_pos, right_pos, ref_cell=ref_cell)
 
         if self.ref_row:
-            prev_cell = self.cells[-NUMBER.ONE] if index else None
+            prev_cell = self.cells[-1] if index else None
             if self.ref_row.aligned:
                 cell.do_first_pass_adjustment(prev_cell=prev_cell)
 
@@ -1817,18 +1814,18 @@ class TabularRow(RuntimeException):
         total = len(tokens)
 
         # Handle edge cases with prefix/postfix separators
-        if total == columns_count + NUMBER.TWO:
-            prefix, first = tokens.pop(NUMBER.ZERO), tokens.pop(NUMBER.ZERO)
-            tokens.insert(NUMBER.ZERO, text.join_string(prefix, first, separator=separator))
+        if total == columns_count + 2:
+            prefix, first = tokens.pop(0), tokens.pop(0)
+            tokens.insert(0, text.join_string(prefix, first, separator=separator))
 
             postfix, last = tokens.pop(), tokens.pop()
             tokens.append(text.join_string(last, postfix, separator=separator))
             total = len(tokens)
 
-        elif total == columns_count + NUMBER.ONE:
+        elif total == columns_count + 1:
             if line.strip().startswith(separator):
-                prefix, first = tokens.pop(NUMBER.ZERO), tokens.pop(NUMBER.ZERO)
-                tokens.insert(NUMBER.ZERO, text.join_string(prefix, first, separator=separator))
+                prefix, first = tokens.pop(0), tokens.pop(0)
+                tokens.insert(0, text.join_string(prefix, first, separator=separator))
             elif line.strip().endswith(separator):
                 postfix, last = tokens.pop(), tokens.pop()
                 tokens.append(text.join_string(last, postfix, separator=separator))
@@ -1952,8 +1949,8 @@ class TabularColumn:
         self.index = index
         self.name = name or f"col{index}"
         self.cells = []
-        self.left_border = NUMBER.ZERO
-        self.right_border = NUMBER.ZERO
+        self.left_border = 0
+        self.right_border = 0
         self._alignment = "left"
 
     def __len__(self) -> int:
@@ -1995,19 +1992,19 @@ class TabularColumn:
         """Compute the effective width of the column based on cell widths."""
         widths = [cell.width for cell in self.cells if cell.width]
         if not widths:
-            return NUMBER.ZERO
+            return 0
 
         max_width = max(widths)
-        if len(set(widths)) == NUMBER.ONE:
+        if len(set(widths)) == 1:
             return max_width
 
         left_positions = {cell.left for cell in self.cells}
         right_positions = {cell.right for cell in self.cells}
 
-        if len(left_positions) == NUMBER.ONE:
+        if len(left_positions) == 1:
             common_width, _ = Counter(widths).most_common().pop(0)
             return max_width if common_width == max_width else math.ceil(statistics.mean(widths))
-        elif len(right_positions) == NUMBER.ONE:
+        elif len(right_positions) == 1:
             return max_width
         return math.ceil(statistics.mean(widths))
 
@@ -2015,7 +2012,7 @@ class TabularColumn:
     def max_edge_trailing_width(self) -> int:
         """Maximum trailing width contributed by the right column."""
         if not self.right_column:
-            return NUMBER.ZERO
+            return 0
 
         trailing_lengths = [
             len(text.Line.get_leading(cell.data))
@@ -2023,16 +2020,16 @@ class TabularColumn:
             if cell.data.strip()
         ]
         if not trailing_lengths:
-            return NUMBER.ZERO
+            return 0
 
         edge_width = max(trailing_lengths)
-        return NUMBER.ZERO if self.right_column.width == edge_width else edge_width
+        return 0 if self.right_column.width == edge_width else edge_width
 
     @property
     def max_edge_leading_width(self) -> int:
         """Maximum leading width contributed by the left column."""
         if not self.left_column:
-            return NUMBER.ZERO
+            return 0
 
         leading_lengths = [
             len(text.Line.get_trailing(cell.data))
@@ -2040,10 +2037,10 @@ class TabularColumn:
             if cell.data.strip()
         ]
         if not leading_lengths:
-            return NUMBER.ZERO
+            return 0
 
         edge_width = max(leading_lengths)
-        return NUMBER.ZERO if self.left_column.width == edge_width else edge_width
+        return 0 if self.left_column.width == edge_width else edge_width
 
     @property
     def max_width(self) -> int:
@@ -2071,14 +2068,14 @@ class TabularColumn:
         left_edges = {cell.left + len(cell.leading) for cell in self.cells}
         right_edges = {cell.right + len(cell.trailing) for cell in self.cells}
 
-        key = f"{int(len(left_edges) == NUMBER.ONE)}{int(len(right_edges) == NUMBER.ONE)}"
+        key = f"{int(len(left_edges) == 1)}{int(len(right_edges) == 1)}"
         alignment_map = {"11": "left", "10": "left", "01": "right", "00": "center"}
         self._alignment = alignment_map.get(key, "left")
 
     def to_regex(self) -> str:
         """Generate a regex pattern for the column based on its cells."""
         if not self:
-            return STRING.EMPTY
+            return ""
 
         texts = [cell.text for cell in self.cells if cell.text]
         if self.extra_data:
@@ -2089,13 +2086,13 @@ class TabularColumn:
 
         if node.is_group() and not self.is_last:
             max_items = max(cell.items_count for cell in self.cells)
-            occurrence = max_items - NUMBER.ONE
-            if occurrence > NUMBER.ZERO:
-                pattern = f"{pattern[:-NUMBER.TWO]}{{,{occurrence}}})"
+            occurrence = max_items - 1
+            if occurrence > 0:
+                pattern = f"{pattern[:-2]}{{,{occurrence}}})"
 
         if self.has_empty_cell:
             first, last = str.split(pattern, ">", maxsplit=1)
-            pattern = f"{first}>( {{{self.width},{self.max_width}}})|( *{last[:-NUMBER.ONE]} *))"
+            pattern = f"{first}>( {{{self.width},{self.max_width}}})|( *{last[:-1]} *))"
 
         return pattern
 
@@ -2107,7 +2104,7 @@ class TabularColumn:
     ) -> str:
         """Generate a template snippet for the column."""
         if not self:
-            return STRING.EMPTY
+            return ""
 
         texts = [cell.text for cell in self.cells if cell.text]
         if self.extra_data:
@@ -2122,16 +2119,16 @@ class TabularColumn:
 
         if node.is_group() and not self.is_last:
             max_items = max(cell.items_count for cell in self.cells)
-            occurrence = max_items - NUMBER.ONE
-            if occurrence > NUMBER.ZERO:
+            occurrence = max_items - 1
+            if occurrence > 0:
                 if "_phrase" in snippet or re.match(r"(mixed_)?words", snippet):
                     fmt = "%s, at_most_%s_phrase_occurrences)"
                 else:
                     fmt = "%s, at_most_%s_group_occurrences)"
                 snippet = node.singular_name + "(" + snippet.split("(", 1)[-1]
-                snippet = fmt % (snippet[:-INDEX.ONE], occurrence)
+                snippet = fmt % (snippet[:-1], occurrence)
 
         if added_list_meta_data:
-            snippet = f"{snippet[:-INDEX.ONE]}, meta_data_list)"
+            snippet = f"{snippet[:-1]}, meta_data_list)"
 
         return snippet

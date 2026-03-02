@@ -21,7 +21,7 @@ Notes
 """
 
 import re
-from typing import Tuple
+from typing import Tuple, Optional
 
 from typing import List
 from difflib import ndiff
@@ -31,10 +31,7 @@ from textfsmgen.deps import regexapp_TextPattern as TextPattern
 from textfsmgen.deps import regexapp_ElementPattern as ElementPattern
 from textfsmgen.deps import regexapp_LinePattern as LinePattern
 
-from textfsmgen.deps import genericlib_STRING as STRING     # noqa
 from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
-from textfsmgen.deps import genericlib_NUMBER as NUMBER     # noqa
-from textfsmgen.deps import genericlib_INDEX as INDEX       # noqa
 from textfsmgen.libs import text
 
 from textfsmgen.gp import TranslatedPattern
@@ -67,22 +64,22 @@ class NDiffBaseText:
 
     Notes
     -----
-    - Common lines are detected by `STRING.DOUBLE_SPACES`.
+    - Common lines are detected by double spaces.
     - Changed lines are detected by prefixes `- ` or `+ `.
     - Subclasses such as `NDiffCommonText` and `NDiffChangedText`
       provide specialized behavior.
     """
-    def __init__(self, txt: str) -> None:
-        self._pattern: str = STRING.EMPTY
-        self._snippet: str = STRING.EMPTY
+    def __init__(self, txt: str):
+        self._pattern: str = ""
+        self._snippet: str = ""
         self._lst: List[str] = []
         self._lst_other: List[str] = []
         self._is_common: bool = False
         self._is_changed: bool = False
 
         # Detect common lines
-        if txt.startswith(STRING.DOUBLE_SPACES):
-            self._lst.append(txt.lstrip(STRING.SPACE_CHAR))
+        if txt.startswith("  "):
+            self._lst.append(txt.lstrip(" "))
             self._is_common = True
 
         # Detect changed lines
@@ -129,7 +126,7 @@ class NDiffBaseText:
     @property
     def name(self) -> str:
         """str: Name identifier for the node type (default empty)."""
-        return STRING.EMPTY
+        return ""
 
     @property
     def lst(self) -> List[str]:
@@ -212,7 +209,7 @@ class NDiffBaseText:
             An instance of `NDiffCommonText` if the line is common,
             otherwise an instance of `NDiffChangedText` or None.
         """
-        if txt.startswith(STRING.DOUBLE_SPACES):
+        if txt.startswith("  "):
             return NDiffCommonText(txt)
         changed_node = NDiffChangedText(txt)
         return changed_node if changed_node else None
@@ -249,7 +246,7 @@ class NDiffCommonText(NDiffBaseText):
             `"ndiff_common_text"` if the node contains fragments,
             otherwise an empty string.
         """
-        return "ndiff_common_text" if bool(self) else STRING.EMPTY
+        return "ndiff_common_text" if bool(self) else ""
 
     def get_pattern(self, whitespace: str = " ") -> str:
         """
@@ -266,9 +263,9 @@ class NDiffCommonText(NDiffBaseText):
         str
             Normalized regex pattern string. Empty if no fragments exist.
         """
-        txt = STRING.DOUBLE_SPACES.join(self.lst)
-        pattern = TextPattern(txt) if txt else STRING.EMPTY
-        self._pattern = pattern.replace(STRING.SPACE_CHAR, whitespace) if pattern else STRING.EMPTY
+        txt = "  ".join(self.lst)
+        pattern = TextPattern(txt) if txt else ""
+        self._pattern = pattern.replace(" ", whitespace) if pattern else ""
         return self._pattern
 
     def get_snippet(self, whitespace: str = " ") -> str:
@@ -288,7 +285,7 @@ class NDiffCommonText(NDiffBaseText):
             Snippet string representation of the line.
         """
         is_ws = whitespace == PATTERN.WHITESPACE
-        spacer = "\t " if is_ws else STRING.DOUBLE_SPACES
+        spacer = "\t " if is_ws else "  "
         snippet = spacer.join(self.lst)
         self._snippet = snippet
         return snippet
@@ -327,7 +324,7 @@ class NDiffChangedText(NDiffBaseText):
             `"ndiff_changed_text"` if the node contains fragments,
             otherwise an empty string.
         """
-        return "ndiff_changed_text" if bool(self) else STRING.EMPTY
+        return "ndiff_changed_text" if bool(self) else ""
 
     @property
     def is_containing_empty_changed(self) -> bool:
@@ -349,7 +346,7 @@ class NDiffChangedText(NDiffBaseText):
     def get_pattern(
         self,
         var: str = "",
-        label: str | None = None,
+        label: Optional[str | None] = None,
         is_lessen: bool = False,
         is_root: bool = False,
     ) -> str:
@@ -373,10 +370,10 @@ class NDiffChangedText(NDiffBaseText):
             Regex pattern string representing the changed line.
         """
         if label:
-            var = var.replace("v", f"v{label}", NUMBER.ONE)
+            var = var.replace("v", f"v{label}", 1)
 
-        txt1 = STRING.DOUBLE_SPACES.join(self.lst)
-        txt2 = STRING.DOUBLE_SPACES.join(self.lst_other)
+        txt1 = "  ".join(self.lst)
+        txt2 = "  ".join(self.lst_other)
 
         if txt1 or txt2:    # noqa
             args = [txt1, txt2] if txt1 and txt2 else [txt1] if txt1 else [txt2]
@@ -384,7 +381,7 @@ class NDiffChangedText(NDiffBaseText):
             pattern = factory.lessen_pattern if is_lessen else factory.pattern
             pattern = factory.root_pattern if is_root else pattern
         else:
-            pattern = STRING.EMPTY
+            pattern = ""
 
         if var:
             fmt = "(?P<%s>(%s)|)" if self.is_containing_empty_changed else "(?P<%s>%s)"
@@ -397,7 +394,7 @@ class NDiffChangedText(NDiffBaseText):
     def get_snippet(
         self,
         var: str = "",
-        label: str | None = None,
+        label: Optional[str | None] = None,
         is_lessen: bool = False,
         is_root: bool = False,
     ) -> str:
@@ -421,10 +418,10 @@ class NDiffChangedText(NDiffBaseText):
             Snippet string representation of the changed line.
         """
         if label:
-            var = var.replace("v", f"v{label}", NUMBER.ONE)
+            var = var.replace("v", f"v{label}", 1)
 
-        txt1 = STRING.DOUBLE_SPACES.join(self.lst)
-        txt2 = STRING.DOUBLE_SPACES.join(self.lst_other)
+        txt1 = "  ".join(self.lst)
+        txt2 = "  ".join(self.lst_other)
 
         if txt1 or txt2:
             args = [txt1, txt2] if txt1 and txt2 else [txt1] if txt1 else [txt2]
@@ -515,7 +512,7 @@ class NDiffLinePattern:
         label: str = None,
         is_lessen: bool = False,
         is_root: bool = False,
-    ) -> None:
+    ):
         self.whitespace = whitespace
         if not self.whitespace:
             is_ws = any(text.Line.has_whitespace_in_line(line) for line in [line_a, line_b])
@@ -535,10 +532,10 @@ class NDiffLinePattern:
 
         multi = '+' if self.are_leading else '*'
         ws = self.whitespace
-        self.leading_whitespace = f'{ws}{multi}' if self.is_leading else STRING.EMPTY
+        self.leading_whitespace = f'{ws}{multi}' if self.is_leading else ""
 
         multi = '+' if self.are_trailing else '*'
-        self.trailing_whitespace = f'{ws}{multi}' if self.is_trailing else STRING.EMPTY
+        self.trailing_whitespace = f'{ws}{multi}' if self.is_trailing else ""
 
         self.line_a = line_a
         self.line_b = line_b
@@ -547,13 +544,13 @@ class NDiffLinePattern:
         self._line_b = self.line_b.strip()
 
         self._is_diff = False
-        self._pattern = STRING.EMPTY
-        self._snippet = STRING.EMPTY
+        self._pattern = ""
+        self._snippet = ""
         self.process()
 
     def __len__(self) -> int:
         """Return nonzero if a pattern has been generated."""
-        return int(self._pattern != STRING.EMPTY)
+        return int(self._pattern != "")
 
     def __call__(self, *args, **kwargs) -> "NDiffLinePattern":
         """Create a new instance of `NDiffLinePattern` with given arguments."""
@@ -629,7 +626,7 @@ class NDiffLinePattern:
         - Sets `_snippet` to the original `line_a`.
         """
         is_equal = self._line_a == self._line_b
-        is_empty = self._line_a == STRING.EMPTY
+        is_empty = self._line_a == ""
 
         if is_empty and is_equal:
             if self.is_leading or self.is_trailing:
@@ -708,9 +705,9 @@ class NDiffLinePattern:
         result: List[NDiffBaseText] = []
         for item in tokens:
             node = NDiffBaseText.do_factory_create(item)
-            if result and result[-NUMBER.ONE].is_same_type(node):
+            if result and result[-1].is_same_type(node):
                 # Merge with previous node if same type
-                result[-NUMBER.ONE].extend(node)
+                result[-1].extend(node)
             else:
                 result.append(node)
 
@@ -747,8 +744,8 @@ class NDiffLinePattern:
         kwargs = dict(label=self.label, is_lessen=self.is_lessen, is_root=self.is_root)
 
         total = len(lst)
-        if total == NUMBER.ONE:
-            item = lst[INDEX.ZERO]
+        if total == 1:
+            item = lst[0]
             if item.is_changed:
                 return item.get_pattern(var='v0', **kwargs)
             return item.get_pattern(whitespace=self.whitespace)
@@ -757,7 +754,7 @@ class NDiffLinePattern:
         count = 0
         spacer = PATTERN.WHITESPACES if self.whitespace == PATTERN.WHITESPACE else PATTERN.SPACES
         for index, item in enumerate(lst):
-            is_last = index == total - NUMBER.ONE
+            is_last = index == total - 1
             if not is_last:
                 if item.is_changed:
                     pat = item.get_pattern(var=f"v{count}", **kwargs)
@@ -780,7 +777,7 @@ class NDiffLinePattern:
                         result.append(pat)
                 else:
                     result.append(item.get_pattern(whitespace=self.whitespace))
-        return STRING.EMPTY.join(result)
+        return "".join(result)
 
     def build_snippet_from_diff_list(self, lst) -> str:  # noqa
         """
@@ -800,11 +797,11 @@ class NDiffLinePattern:
             preserved between fragments.
         """
         result: List[str] = []
-        count = NUMBER.ZERO
+        count = 0
 
         for item in lst:
             if item.is_changed:
-                count += NUMBER.ONE
+                count += 1
                 kwargs = dict(
                     var=f"v{count}",
                     label=self.label,
@@ -816,7 +813,7 @@ class NDiffLinePattern:
                 snippet_ = item.get_snippet(whitespace=self.whitespace) # noqa
             result.append(snippet_)
 
-        snippet = STRING.DOUBLE_SPACES.join(result)
+        snippet = "  ".join(result)
         return snippet
 
     def analyze_and_parse_diff_case(self) -> bool:
@@ -897,13 +894,16 @@ class DiffLinePattern(RuntimeException):
         Generated snippet representation.
     """
 
-    def __init__(self, line1: str, line2: str, *other_lines: str, label: str | None = None) -> None:
+    def __init__(
+        self, line1: str, line2: str, *other_lines: str,
+        label: Optional[str | None] = None
+    ):
         self.label = label
         self.raw_lines: List[str] = []
         self.lines: List[str] = []
         self._is_diff: bool = False
-        self._pattern: str = STRING.EMPTY
-        self._snippet: str = STRING.EMPTY
+        self._pattern: str = ""
+        self._snippet: str = ""
 
         self.prepare(line1, line2, *other_lines)
         self.process()
@@ -1070,7 +1070,7 @@ class DiffLinePattern(RuntimeException):
             Empty string if no leading whitespace is present.
         """
         multi = "+" if self.are_leading else "*"
-        return f"{self.whitespace}{multi}" if self.is_leading else STRING.EMPTY
+        return f"{self.whitespace}{multi}" if self.is_leading else ""
 
     @property
     def trailing_whitespace(self) -> str:
@@ -1085,7 +1085,7 @@ class DiffLinePattern(RuntimeException):
             Empty string if no trailing whitespace is present.
         """
         multi = "+" if self.are_trailing else "*"
-        return f"{self.whitespace}{multi}" if self.is_trailing else STRING.EMPTY
+        return f"{self.whitespace}{multi}" if self.is_trailing else ""
 
     def reset(self) -> None:
         """
@@ -1097,7 +1097,7 @@ class DiffLinePattern(RuntimeException):
         - Resets `_pattern` to empty.
         """
         self.lines.clear()
-        self._pattern = STRING.EMPTY
+        self._pattern = ""
 
     def prepare(self, line1: str, line2: str, *other_lines: str) -> None:
         """
@@ -1140,12 +1140,12 @@ class DiffLinePattern(RuntimeException):
                 if trim_line not in lines:
                     lines.append(trim_line)
 
-        if len(lines) < NUMBER.TWO:
+        if len(lines) < 2:
             fmt = "Cannot form pattern: fewer than two lines provided.\n%s"
             details = [f"Line 1: {line1!r}", f"Line 2: {line2!r}"]
             if other_lines:
                 details.append(f"Other Lines: {other_lines!r}")
-            self.raise_runtime_error(msg=fmt % STRING.NEWLINE.join(details))
+            self.raise_runtime_error(msg=fmt % "\n".join(details))
         else:
             self.reset()
             self.lines.extend(lines)
@@ -1334,7 +1334,7 @@ class DiffLinePattern(RuntimeException):
             If no constructed pattern matches all lines.
         """
         lines_count = len(self.lines)
-        pairs = list(combinations(range(lines_count), NUMBER.TWO))
+        pairs = list(combinations(range(lines_count), 2))
         attempted_patterns: List[str] = []
 
         def try_pass(**kwargs) -> bool:
@@ -1400,13 +1400,13 @@ class CommonDiffLinePattern(RuntimeException):
         Generated snippet representation.
     """
 
-    def __init__(self, *lines: str, label: str | None = None) -> None:
+    def __init__(self, *lines: str, label: Optional[str | None] = None):
         self.raw_lines: Tuple[str, ...] = lines
         self.lines: List[str] = [line.strip() for line in lines if line.strip()]
-        self.label: str | None = label
+        self.label: Optional[str | None] = label
         self._is_diff: bool = False
-        self._pattern: str = STRING.EMPTY
-        self._snippet: str = STRING.EMPTY
+        self._pattern: str = ""
+        self._snippet: str = ""
         self.process()
 
     @property
@@ -1500,7 +1500,7 @@ class CommonDiffLinePattern(RuntimeException):
             Empty string if no leading whitespace is present.
         """
         multi = "+" if self.are_leading else "*"
-        return f"{self.whitespace}{multi}" if self.is_leading else STRING.EMPTY
+        return f"{self.whitespace}{multi}" if self.is_leading else ""
 
     @property
     def trailing_whitespace(self) -> str:
@@ -1515,7 +1515,7 @@ class CommonDiffLinePattern(RuntimeException):
             Empty string if no trailing whitespace is present.
         """
         multi = "+" if self.are_trailing else "*"
-        return f"{self.whitespace}{multi}" if self.is_trailing else STRING.EMPTY
+        return f"{self.whitespace}{multi}" if self.is_trailing else ""
 
     @property
     def has_data(self) -> bool:
@@ -1527,7 +1527,7 @@ class CommonDiffLinePattern(RuntimeException):
         bool
             True if `lines` contains at least one entry, False otherwise.
         """
-        return len(self.lines) > NUMBER.ZERO
+        return len(self.lines) > 0
 
     @property
     def are_identical_lines(self) -> bool:
@@ -1542,8 +1542,8 @@ class CommonDiffLinePattern(RuntimeException):
         """
         if not self.has_data:
             return False
-        normalized = [re.sub(PATTERN.WHITESPACES, STRING.EMPTY, line) for line in self.lines]
-        return len(set(normalized)) == NUMBER.ONE
+        normalized = [re.sub(PATTERN.WHITESPACES, "", line) for line in self.lines]
+        return len(set(normalized)) == 1
 
     @property
     def is_diff(self) -> bool:
@@ -1598,11 +1598,11 @@ class CommonDiffLinePattern(RuntimeException):
             Returns an empty string if lines are not identical.
         """
         if not self.are_identical_lines:
-            return STRING.EMPTY
+            return ""
 
         # Case 1: All lines are exactly identical
-        if len(set(self.lines)) == NUMBER.ONE:
-            pattern = TextPattern(self.lines[INDEX.ZERO])
+        if len(set(self.lines)) == 1:
+            pattern = TextPattern(self.lines[0])
             return f"{self.leading_whitespace}{pattern}{self.trailing_whitespace}"
 
         # Case 2: Lines are structurally identical but differ in whitespace
@@ -1610,9 +1610,9 @@ class CommonDiffLinePattern(RuntimeException):
             zip(*[text.Text(line).do_finditer_split(r"\S+") for line in self.lines]))
         result: List[str] = []
 
-        for grp in lst_of_groups[INDEX.ONE:-INDEX.ONE]:
+        for grp in lst_of_groups[1:-1]:
             if len(set(grp)) == 1:
-                result.append(TextPattern(grp[INDEX.ZERO]))
+                result.append(TextPattern(grp[0]))
             else:
                 is_space_only = re.match(r" +$", "".join(grp))
                 result.append(
@@ -1637,24 +1637,24 @@ class CommonDiffLinePattern(RuntimeException):
             Returns an empty string if lines are not identical.
         """
         if not self.are_identical_lines:
-            return STRING.EMPTY
+            return ""
 
         tbl = {
             " +": "(spaces)",
             " *": "(space)",
             r"\s+": "(whitespaces)",
             r"\s*": "(whitespace)",
-            "": STRING.EMPTY,
+            "": "",
         }
 
         case = tbl.get(self.leading_whitespace)
-        leading_snippet = f"start({case})" if self.is_leading else STRING.EMPTY
+        leading_snippet = f"start({case})" if self.is_leading else ""
         case = tbl.get(self.trailing_whitespace)
-        trailing_snippet = f"end({case})" if self.is_trailing else STRING.EMPTY
+        trailing_snippet = f"end({case})" if self.is_trailing else ""
 
         # Case 1: All lines are exactly identical
-        if len(set(self.lines)) == NUMBER.ONE:
-            snippet = self.lines[INDEX.ZERO]
+        if len(set(self.lines)) == 1:
+            snippet = self.lines[0]
             return f"{leading_snippet} {snippet} {trailing_snippet}".strip()
 
         # Case 2: Lines are structurally identical but differ in whitespace
@@ -1662,11 +1662,11 @@ class CommonDiffLinePattern(RuntimeException):
             zip(*[text.Text(line).do_finditer_split(r"\S+") for line in self.lines]))
         result: List[str] = []
 
-        for grp in lst_of_groups[INDEX.ONE:-INDEX.ONE]:
+        for grp in lst_of_groups[1:-1]:
             if len(set(grp)) == 1:
-                result.append(TextPattern(grp[INDEX.ZERO]))
+                result.append(TextPattern(grp[0]))
             else:
-                result.append(list(set(grp))[-INDEX.ONE])
+                result.append(list(set(grp))[-1])
 
         snippet = "".join(result)
         return f"{self.leading_whitespace}{snippet}{self.trailing_whitespace}"
@@ -1703,12 +1703,12 @@ class CommonDiffLinePattern(RuntimeException):
                     " *": "space",
                     r"\s+": "whitespaces",
                     r"\s*": "whitespace",
-                    "": STRING.EMPTY,
+                    "": "",
                 }
                 case = tbl.get(self.leading_whitespace)
-                leading_snippet = f"start({case})" if self.is_leading else STRING.EMPTY
+                leading_snippet = f"start({case})" if self.is_leading else ""
                 case = tbl.get(self.trailing_whitespace)
-                trailing_snippet = f"end({case})" if self.is_trailing else STRING.EMPTY
+                trailing_snippet = f"end({case})" if self.is_trailing else ""
 
                 # Update pattern and snippet with whitespace context
                 self._pattern = f"{self.leading_whitespace}{self._pattern}{self.trailing_whitespace}"
@@ -1745,7 +1745,7 @@ class DText:
         Original text fragment.
     """
 
-    def __init__(self, txt: str) -> None:
+    def __init__(self, txt: str):
         self.lst: List[str] = [txt]
         self.leading_lst: List[str] = []
         self.trailing_lst: List[str] = []
@@ -1773,17 +1773,17 @@ class DText:
             space if multi-length fragments are present.
         """
         if not self.leading_lst:
-            return STRING.EMPTY
+            return ""
 
-        if len(set(self.leading_lst)) == NUMBER.ONE:
-            return self.leading_lst[INDEX.ZERO]
+        if len(set(self.leading_lst)) == 1:
+            return self.leading_lst[0]
 
-        ws = STRING.SPACE_CHAR
+        ws = " "
         for item in self.leading_lst:
-            if item.strip(STRING.SPACE_CHAR):
-                ws = item.strip(STRING.SPACE_CHAR)
+            if item.strip(" "):
+                ws = item.strip(" ")
                 break
-        is_multi = any(len(item) > NUMBER.ONE for item in self.leading_lst)
+        is_multi = any(len(item) > 1 for item in self.leading_lst)
         return f"{ws} " if is_multi else ws
 
     @property
@@ -1799,17 +1799,17 @@ class DText:
             space if multi-length fragments are present.
         """
         if not self.trailing_lst:
-            return STRING.EMPTY
+            return ""
 
-        if len(set(self.trailing_lst)) == NUMBER.ONE:
-            return self.trailing_lst[INDEX.ZERO]
+        if len(set(self.trailing_lst)) == 1:
+            return self.trailing_lst[0]
 
-        ws = STRING.SPACE_CHAR
+        ws = " "
         for item in self.trailing_lst:
-            if item.strip(STRING.SPACE_CHAR):
-                ws = item.strip(STRING.SPACE_CHAR)
+            if item.strip(" "):
+                ws = item.strip(" ")
                 break
-        is_multi = any(len(item) > NUMBER.ONE for item in self.trailing_lst)
+        is_multi = any(len(item) > 1 for item in self.trailing_lst)
         return f"{ws} " if is_multi else ws
 
     @property
@@ -1822,7 +1822,7 @@ class DText:
         str
             The first text fragment in `lst`, or empty string if none exist.
         """
-        return self.lst[INDEX.ZERO] if self.lst else STRING.EMPTY
+        return self.lst[0] if self.lst else ""
 
     @property
     def is_identical(self) -> bool:
@@ -1834,7 +1834,7 @@ class DText:
         bool
             True if all fragments in `lst` are identical, False otherwise.
         """
-        return len(set(self.lst)) == NUMBER.ONE
+        return len(set(self.lst)) == 1
 
     @property
     def is_closed_to_identical(self) -> bool:
@@ -1848,7 +1848,7 @@ class DText:
             False otherwise.
         """
         clean_lst = [item.strip() for item in self.lst if item.strip()]
-        return len(set(clean_lst)) == NUMBER.ONE
+        return len(set(clean_lst)) == 1
 
     def concatenate(self, txt: str) -> None:
         """
@@ -1860,7 +1860,7 @@ class DText:
             Text to append to the last fragment.
         """
         if self.lst:
-            self.lst[-INDEX.ONE] = self.lst[-INDEX.ONE] + txt
+            self.lst[-1] = self.lst[-1] + txt
         else:
             self.lst.append(txt)
 
@@ -1910,19 +1910,19 @@ class DText:
         group = self.to_group()     # noqa
 
         for sub_grp in group:
-            if len(sub_grp) == NUMBER.ONE:
-                result.append(sub_grp[INDEX.ZERO])
+            if len(sub_grp) == 1:
+                result.append(sub_grp[0])
             else:
-                ws = STRING.SPACE_CHAR
+                ws = " "
                 for item in sub_grp:
-                    if item.strip(STRING.SPACE_CHAR):
-                        ws = item.strip(STRING.SPACE_CHAR)
+                    if item.strip(" "):
+                        ws = item.strip(" ")
                         break
-                is_multi = any(len(item) > NUMBER.ONE for item in sub_grp)
+                is_multi = any(len(item) > 1 for item in sub_grp)
                 spacer = f"{ws} " if is_multi else ws
                 result.append(spacer)
 
-        return self.leading + STRING.EMPTY.join(result) + self.trailing
+        return self.leading + "".join(result) + self.trailing
 
     def get_pattern(self) -> "TextPattern":
         """
@@ -1937,7 +1937,7 @@ class DText:
             return TextPattern(self.first_text)
         elif self.is_closed_to_identical:
             clean_lst = [item.strip() for item in self.lst if item.strip()]
-            txt = clean_lst[INDEX.ZERO]
+            txt = clean_lst[0]
             return TextPattern(self.leading + txt + self.trailing)
         return TextPattern(self.to_general_text())
 
@@ -1954,7 +1954,7 @@ class DText:
             return self.first_text
         elif self.is_closed_to_identical:
             clean_lst = [item.strip() for item in self.lst if item.strip()]
-            txt = clean_lst[INDEX.ZERO]
+            txt = clean_lst[0]
             return self.leading + txt + self.trailing
         return self.to_general_text()
 
@@ -1987,16 +1987,16 @@ class DChange:
         Flag indicating whether the fragment is empty.
     """
 
-    def __init__(self, txt: str, var: str) -> None:
+    def __init__(self, txt: str, var: str):
         self.var: str = var
         self.lst: List[str] = []
         self.text: str = txt
-        self.is_empty: bool = txt.strip() == STRING.EMPTY
+        self.is_empty: bool = txt.strip() == ""
 
         if not self.is_empty:
             self.lst.append(txt)
 
-    def add(self, txt: str) -> None:
+    def add(self, txt: str):
         """
         Add a new text fragment to the change node.
 
@@ -2010,7 +2010,7 @@ class DChange:
         - Updates `is_empty` if the provided text is empty.
         - Appends non-empty text to `lst` if not already present.
         """
-        if txt.strip() == STRING.EMPTY:
+        if txt.strip() == "":
             self.is_empty = True
         elif txt not in self.lst:
             self.lst.append(txt)
@@ -2040,6 +2040,6 @@ class DChange:
         snippet = factory.get_template_snippet(var=self.var)
 
         if self.is_empty:
-            snippet = f"{snippet[:-INDEX.ONE]}, or_empty)"
+            snippet = f"{snippet[:-1]}, or_empty)"
 
         return snippet

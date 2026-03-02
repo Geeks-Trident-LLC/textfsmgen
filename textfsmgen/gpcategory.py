@@ -16,10 +16,9 @@ Purpose
 """
 
 import re
+from typing import Optional
 
 from textfsmgen.deps import regexapp_TextPattern as TextPattern
-from textfsmgen.deps import genericlib_NUMBER as NUMBER     # noqa
-from textfsmgen.deps import genericlib_STRING as STRING     # noqa
 from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
 from textfsmgen.libs import text
 
@@ -109,7 +108,7 @@ class CategorySpacerPattern(BaseCategoryPattern):
 
     def __init__(self, is_empty: bool = False):
         """Initialize a CategorySpacerPattern with optional zero-space allowance."""
-        super().__init__(STRING.EMPTY)
+        super().__init__("")
         self.is_empty = is_empty
 
     def to_regex(self) -> str:
@@ -132,9 +131,9 @@ class CategorySpacerPattern(BaseCategoryPattern):
         -------
         str
             `'zero_or_spaces()'` if `is_empty` is True,
-            otherwise `STRING.DOUBLE_SPACES`.
+            otherwise `"  "`.
         """
-        return "zero_or_spaces()" if self.is_empty else STRING.DOUBLE_SPACES
+        return "zero_or_spaces()" if self.is_empty else "  "
 
 
 class CategoryLeftDataPattern(BaseCategoryPattern):
@@ -198,7 +197,7 @@ class CategoryRightDataPattern(BaseCategoryPattern):
     def __init__(self, data: str, var_txt: str):
         """Initialize a CategoryRightDataPattern with raw data and variable text."""
         super().__init__(data)
-        symbol_n_space_pat = '[ %s' % PATTERN.PUNCTS[NUMBER.ONE:]
+        symbol_n_space_pat = '[ %s' % PATTERN.PUNCTS[1:]
         self.var_name = re.sub(symbol_n_space_pat, '_', var_txt).strip('_')
 
     @property
@@ -209,9 +208,9 @@ class CategoryRightDataPattern(BaseCategoryPattern):
         Returns
         -------
         bool
-            True if the data string equals `STRING.EMPTY`, False otherwise.
+            True if the data string equals empty string, False otherwise.
         """
-        return self.data == STRING.EMPTY
+        return self.data == ""
 
     def to_regex(self) -> str:
         """
@@ -271,8 +270,8 @@ class CategoryLinePattern(BaseCategoryPattern):
         super().__init__(line)
         self.count = count
         self.separator = separator
-        self.left_data = STRING.EMPTY
-        self.right_data = STRING.EMPTY
+        self.left_data = ""
+        self.right_data = ""
         self._lst = []
         self.process()
 
@@ -341,7 +340,7 @@ class CategoryLinePattern(BaseCategoryPattern):
         """
         zero_or_spaces_pat = PATTERN.ZOSPACES
         result: list[str] = [
-            zero_or_spaces_pat if self.is_leading else STRING.EMPTY]
+            zero_or_spaces_pat if self.is_leading else ""]
         prev_item, is_last_item_empty, item = None, False, None
 
         for item in self._lst:
@@ -359,9 +358,9 @@ class CategoryLinePattern(BaseCategoryPattern):
 
         if is_last_item_empty:
             result.append(
-                zero_or_spaces_pat if self.is_trailing else STRING.EMPTY)
+                zero_or_spaces_pat if self.is_trailing else "")
 
-        pattern = STRING.EMPTY.join(result)
+        pattern = "".join(result)
         replaced_pat = r"( +)(something[\(]var_\w+, or_empty[\)])"
         return re.sub(replaced_pat, r"zero_or_spaces()\2", pattern)
 
@@ -407,7 +406,7 @@ class CategoryLinePattern(BaseCategoryPattern):
         if is_last_item_empty:
             result.append(self.trailing)
 
-        tmpl_snippet = STRING.EMPTY.join(result)
+        tmpl_snippet = "".join(result)
         replaced_pat = r"( +)(something[\(]var_\w+, or_empty[\)])"
         return re.sub(replaced_pat, r"zero_or_spaces()\2", tmpl_snippet)
 
@@ -440,7 +439,7 @@ class CategoryLinePattern(BaseCategoryPattern):
           the string are reached.
         - Useful for determining word boundaries in parsing operations.
         """
-        blank_space = STRING.SPACE_CHAR
+        blank_space = " "
 
         if self.data[char_pos] == blank_space:
             return char_pos
@@ -448,11 +447,11 @@ class CategoryLinePattern(BaseCategoryPattern):
         total = len(self.data)
         i = j = char_pos
 
-        while NUMBER.ZERO <= i < total:
+        while 0 <= i < total:
             if self.data[i] == blank_space:
                 return j
             j = i
-            i = i + NUMBER.ONE if direction == "right" else i - NUMBER.ONE
+            i = i + 1 if direction == "right" else i - 1
 
         return j
 
@@ -545,7 +544,7 @@ class CategoryLinePattern(BaseCategoryPattern):
             )
 
         index = self.data.index(self.separator)
-        if index == NUMBER.ZERO:
+        if index == 0:
             self.raise_runtime_error(
                 msg=f"Data string is missing variable text before separator '{self.separator}'."
             )
@@ -634,12 +633,12 @@ class CategoryLinePattern(BaseCategoryPattern):
         """
         at_least_one_spaces_pat = PATTERN.ATLONESPACES
         spaces_pat = PATTERN.SPACES
-        double_spaces = STRING.DOUBLE_SPACES
-        blank_space = STRING.SPACE_CHAR
+        double_spaces = "  "
+        blank_space = " "
 
-        next_count = self.count - NUMBER.ONE
+        next_count = self.count - 1
         if not next_count or not self.right_data.strip():
-            return self.right_data, STRING.EMPTY
+            return self.right_data, ""
 
         try:
             # Attempt recursive parsing
@@ -651,7 +650,7 @@ class CategoryLinePattern(BaseCategoryPattern):
             if blank_space in left_data:
                 val, remaining = re.split(pat, self.right_data, maxsplit=1)
                 return val, remaining
-            return STRING.EMPTY, self.right_data
+            return "", self.right_data
 
         except Exception:     # noqa
             # Fallback parsing logic
@@ -801,12 +800,12 @@ class CategoryLinesPattern(RuntimeException):
     def __init__(
         self,
         *lines: list[str],
-        options: dict | None = None,
+        options: Optional[dict | None] = None,
         count: int = 1,
         separator: str = ":",
-        starting_from: str | int | None = None,
-        ending_to: str | int | None = None,
-    ) -> None:
+        starting_from: Optional[str | int | None] = None,
+        ending_to: Optional[str | int | None] = None,
+    ):
         self.lines = text.get_list_of_lines(*lines)
         self.options = options or dict()
         self.count = count
@@ -814,8 +813,8 @@ class CategoryLinesPattern(RuntimeException):
         self.kwargs = dict(count=self.count, separator=self.separator)
         self.starting_from = starting_from
         self.ending_to = ending_to
-        self.index_a: int | None = None
-        self.index_b: int | None = None
+        self.index_a: Optional[int | None] = None
+        self.index_b: Optional[int | None] = None
         self._lst: list = []
         self.process()
 
@@ -931,7 +930,7 @@ class CategoryLinesPattern(RuntimeException):
             for item in self._lst
         ]
 
-        tmpl_snippet = text.join_string(*result, separator=STRING.NEWLINE)
+        tmpl_snippet = text.join_string(*result, separator="\n")
 
         if self.index_a is not None:
             line_snippet = get_fixed_line_snippet(self.lines, index=self.index_a)

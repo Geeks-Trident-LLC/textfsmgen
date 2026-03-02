@@ -27,10 +27,10 @@ Notes
 """
 
 import re
+from typing import Optional
 
 from textfsmgen.deps import regexapp_TextPattern as TextPattern
 from textfsmgen.deps import genericlib_Wildcard as Wildcard
-from textfsmgen.deps import genericlib_STRING as STRING     # noqa
 from textfsmgen.deps import genericlib_PATTERN as PATTERN   # noqa
 from textfsmgen.deps import genericlib_number_module as number
 from textfsmgen.libs import text
@@ -40,7 +40,10 @@ from textfsmgen.gp import TranslatedPattern
 from textfsmgen.exceptions import RuntimeException
 from textfsmgen.exceptions import raise_exception
 
-def get_line_position_by(lines: list[str], item: str | int | None) -> int | None:
+def get_line_position_by(
+    lines: list[str],
+        item: Optional[str | int | None]
+) -> Optional[int | None]:
     """
     Determine the position of a line in `lines` based on a string
     pattern or numeric index.
@@ -72,9 +75,9 @@ def get_line_position_by(lines: list[str], item: str | int | None) -> int | None
     wildcard_prefix = r'(?i)^\s*--wildcard\s+'
     if text.is_string(item):
         if re.search(regex_prefix, item):
-            pattern = re.sub(regex_prefix, STRING.EMPTY, item)
+            pattern = re.sub(regex_prefix, "", item)
         elif re.search(wildcard_prefix, item):
-            txt = re.sub(wildcard_prefix, STRING.EMPTY, item)
+            txt = re.sub(wildcard_prefix, "", item)
             pattern = Wildcard(txt, from_start_to_end=False).pattern
         else:
             pattern = TextPattern(item)
@@ -90,7 +93,11 @@ def get_line_position_by(lines: list[str], item: str | int | None) -> int | None
     return None
 
 
-def get_fixed_line_snippet(lines: list[str], line: str = "", index: int | None = None) -> str:
+def get_fixed_line_snippet(
+    lines: list[str],
+    line: str = "",
+    index: Optional[int | None] = None
+) -> str:
     """
     Generate a normalized snippet representation of a line.
 
@@ -168,7 +175,7 @@ def get_fixed_line_snippet(lines: list[str], line: str = "", index: int | None =
 
     # Handle empty or whitespace-only lines
     if not line.strip():
-        ws_type = "whitespace" if line.strip(STRING.SPACE_CHAR) else "space"
+        ws_type = "whitespace" if line.strip(" ") else "space"
         return f"start() end({ws_type})"
 
     # Tokenize and normalize numeric tokens
