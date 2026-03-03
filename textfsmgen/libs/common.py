@@ -31,6 +31,21 @@ def decorate_list_of_line(items: list[str]) -> str:
     return "\n".join([border] + rows + [border])
 
 
+def decorate_text(text: str) -> str:
+    """Decorate a block of text by converting it into line fragments."""
+    raw = text.decode("utf-8") if isinstance(text, bytes) else str(text)
+    if not raw.strip():
+        return ""
+
+    lines = raw.splitlines()
+
+    # Preserve trailing newline
+    if lines[-1] and (raw.endswith("\n") or raw.endswith("\r")):
+        lines.append("")
+
+    return decorate_list_of_line(lines)
+
+
 def sys_exit(success: bool = True, msg: str = "") -> None:
     """Terminate the process with a standardized exit code and optional message."""
     exit_code = ECODE.SUCCESS if success else ECODE.BAD
