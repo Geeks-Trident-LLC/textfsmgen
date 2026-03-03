@@ -6,8 +6,12 @@ General-purpose utility functions used across TextFSMGen.
 """
 
 import re
+from textwrap import wrap
+from pprint import pprint
 
 from .pat import PATTERN
+from . import datatype
+from .text import Text
 
 
 def split_by_matches(text, pattern=r"(?u)\s+"):
