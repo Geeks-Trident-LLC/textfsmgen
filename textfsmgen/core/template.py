@@ -36,172 +36,64 @@ import logging
 logger = logging.getLogger(__file__)
 
 
-class ParsedLine:
-    """
-    Represent and parse a single line into template format.
-
-    The `ParsedLine` class encapsulates the logic for interpreting a line
-    of text as part of a template definition. It supports parsing operators,
-    handling comments, preserving raw text, and extracting variables.
-
-    Attributes
-    ----------
-    text : str
-        Raw text content associated with the line.
-    line : str
-        Original line data before parsing.
-    template_op : str
-        Template operator applied to the line.
-    ignore_case : bool
-        Flag indicating whether parsing should be case-insensitive.
-    is_comment : bool
-        True if the line is a comment, otherwise False.
-    comment_text : str
-        The comment text if the line is marked as a comment.
-    is_kept : bool
-        True if the line should be preserved as-is, otherwise False.
-    kept_text : str
-        The preserved text when `is_kept` is True.
-    variables : list
-        List of variables extracted from the line.
-
-    Methods
-    -------
-    is_empty() -> bool
-        Return True if the line contains no data, otherwise False.
-    is_a_word() -> bool
-        Return True if the text represents a single word, otherwise False.
-    is_not_containing_letter() -> bool
-        Return True if the line contains no alphabetic characters, otherwise False.
-    build() -> None
-        Construct the internal representation of the parsed line.
-    get_statement() -> str
-        Return the formatted statement derived from the parsed line.
-
-    Raises
-    ------
-    TemplateParsedLineError
-        Raised if the line cannot be parsed due to invalid format.
-    """
+class LineParser:
     def __init__(self, txt):
         self.text = str(txt)
         self.line = ''
         self.template_op = ''
         self.ignore_case = False
         self.is_comment = False
-        self.comment_text = ''
+        self.comment = ''
         self.is_kept = False
-        self.kept_text = ''
+        self.kept = ''
         self.variables = list()
-        self.build()
+        self._parse()
 
     @property
     def is_empty(self) -> bool:
-        """
-        Check whether the line is empty.
-
-        This property evaluates the current line and determines if it
-        contains only whitespace or no characters at all.
-
-        Returns
-        -------
-        bool
-            True if the line is empty or consists solely of whitespace,
-            False otherwise.
-        """
+        """Check whether the line is empty."""
         return not bool(self.line.strip())
 
     @property
-    def is_a_word(self) -> bool:
-        """
-        Check whether the text represents a single word.
-
-        This property evaluates the `text` attribute and determines if it
-        consists of exactly one word. A valid word is defined as starting
-        with an alphabetic character and followed by zero or more
-        alphanumeric or underscore characters.
-
-        Returns
-        -------
-        bool
-            True if the text is a single word, False otherwise.
-        """
+    def is_word(self) -> bool:
+        """Check whether the text represents a single word."""
         return bool(re.match(r'^[A-Za-z]\w*$', self.text.strip()))
 
     @property
-    def is_not_containing_letter(self) -> bool:
-        """
-        Check whether the line contains no alphabetic characters.
-
-        This property evaluates the current line and determines if it
-        consists entirely of non-alphanumeric characters. Empty lines
-        are explicitly excluded and return False.
-
-        Returns
-        -------
-        bool
-            True if the line contains no alphabetic characters (only
-            digits, symbols, or whitespace), False otherwise.
-        """
+    def no_letters(self) -> bool:
+        """Check whether the line contains no alphabetic characters."""
         if self.is_empty:
             return False
         return bool(re.match(r'[^a-z0-9]+$', self.line, flags=re.I))
 
-    def get_statement(self) -> str:
-        """
-        Construct the template statement for the current line.
-
-        This method interprets the line according to its type (empty,
-        comment, preserved text, single word, or regex pattern) and
-        generates a formatted statement suitable for building a template.
-        It applies validation, whitespace handling, and optional template
-        operators.
-
-        Returns
-        -------
-        str
-            A formatted template statement. Returns an empty string if
-            the line is empty.
-
-        Notes
-        -----
-        - Empty lines return an empty string.
-        - Comment lines return the associated comment text.
-        - Preserved lines return the kept text as-is.
-        - Single words return the raw text.
-        - Regex patterns are validated and adjusted for case-insensitivity,
-          anchors, and optional template operators.
-        - Variables extracted from the line are stored in `self.variables`.
-        """
+    def statement(self) -> str:
+        """Construct the template statement for the current line."""
         if self.is_empty:
             return ""
-
         if self.is_comment:
-            return self.comment_text
-
+            return self.comment
         if self.is_kept:
-            return self.kept_text
-
-        if self.is_a_word:
+            return self.kept
+        if self.is_word:
             return self.text
 
-        pat_obj = LinePattern(self.line, ignore_case=self.ignore_case)
+        line_pattern = LinePattern(self.line, ignore_case=self.ignore_case)
 
-        if pat_obj.variables:
-            self.variables = pat_obj.variables[:]
-            statement = pat_obj.statement
+        if line_pattern.variables:
+            self.variables = line_pattern.variables[:]
+            statement = line_pattern.statement
         else:
             try:
                 re.compile(self.line)
                 if re.search(r'\s', self.line):
-                    statement = pat_obj
+                    statement = line_pattern
                 else:
                     if '(' in self.line and self.line.endswith(')'):
-                        statement = pat_obj if not pat_obj.endswith(')') else self.line
+                        statement = line_pattern if not line_pattern.endswith(')') else self.line
                     else:
                         statement = self.line
             except Exception as ex:     # noqa
-                statement = pat_obj
+                statement = line_pattern
 
         # Normalize case-insensitive flag placement
         statement = statement.replace('(?i)^', '^(?i)')
@@ -220,51 +112,8 @@ class ParsedLine:
 
         return statement
 
-    def build(self) -> None:
-        """
-        Parse the line and reapply formatting for template construction.
-
-        This method interprets the raw `text` attribute, extracts template
-        operators, and applies flags for case-insensitivity, comments, or
-        preserved lines. It normalizes operator names, validates syntax,
-        and prepares internal attributes (`template_op`, `line`, `comment_text`,
-        `kept_text`) for later use in template generation.
-
-        Workflow
-        --------
-        1. Split the text into template content and operator (if present).
-        2. Normalize operator names (e.g., `norecord` → `NoRecord`,
-           `clearall` → `ClearAll`).
-        3. Handle compound operators (e.g., `next.norecord`, `error.clear`).
-        4. Apply flags:
-           - `ignore_case__` → mark line as case-insensitive.
-           - `comment__`     → mark line as a comment.
-           - `keep__`        → preserve line as-is.
-        5. Construct `comment_text` or `kept_text` when applicable.
-        6. Raise `TemplateParsedLineError` if the format is invalid.
-
-        Attributes Set
-        --------------
-        template_op : str
-            Normalized template operator string (if present).
-        line : str
-            Parsed line content without flags.
-        ignore_case : bool
-            True if the line should be case-insensitive.
-        is_comment : bool
-            True if the line is a comment.
-        is_kept : bool
-            True if the line should be preserved as-is.
-        comment_text : str
-            Formatted comment text (if applicable).
-        kept_text : str
-            Formatted preserved text (if applicable).
-
-        Raises
-        ------
-        TemplateParsedLineError
-            If the line format is invalid or cannot be parsed.
-        """
+    def _parse(self) -> None:
+        """Parse the line and reapply formatting for template construction."""
         lst = self.text.rsplit(" -> ", 1)
         if len(lst) == 2:
             tmpl_op = lst[-1].strip()
@@ -297,25 +146,24 @@ class ParsedLine:
         else:
             txt = self.text
 
-        pat = r"^(?P<flag>(ignore_case|comment|keep)__+ )?(?P<line>.*)"
-        match = re.match(pat, txt, flags=re.I)
-        if match:
-            value = match.group("flag") or ""
-            flag = value.lower().strip().rstrip("_")
-            self.ignore_case = flag == "ignore_case"
-            self.is_comment = flag == "comment"
-            self.is_kept = flag == "keep"
-            self.line = match.group("line") or ""
-
-            if self.is_comment:
-                prefix = "  " if value.count("_") == 2 else ""
-                self.comment_text = f"{prefix}# {self.line}"
-
-            if self.is_kept:
-                self.kept_text = '  ^{}'.format(self.line.strip().lstrip('^'))
-
-        else:
+        flag_pat = r"^(?P<flag>(ignore_case|comment|keep)__+ )?(?P<line>.*)"
+        match = re.match(flag_pat, txt, flags=re.I)
+        if not match:
             raise TemplateParsedLineError(f"Invalid format - {self.text!r}")
+
+        value = match.group("flag") or ""
+        flag = value.lower().strip().rstrip("_")
+        self.ignore_case = flag == "ignore_case"
+        self.is_comment = flag == "comment"
+        self.is_kept = flag == "keep"
+        self.line = match.group("line") or ""
+
+        if self.is_comment:
+            prefix = "  " if value.count("_") == 2 else ""
+            self.comment = f"{prefix}# {self.line}"
+
+        if self.is_kept:
+            self.kept = f"  ^{self.line.strip().lstrip('^')}"
 
 
 class TemplateBuilder:
@@ -427,13 +275,13 @@ class TemplateBuilder:
         Parse user data lines and build template statements.
 
         This method processes each line in `self.user_data`, converts it into a
-        `ParsedLine` object, and generates a normalized template statement. It
+        `LineParser` object, and generates a normalized template statement. It
         also collects unique variables encountered during parsing.
 
         Processing steps
         ----------------
         - Strip trailing whitespace from each line.
-        - Convert the line into a `ParsedLine` and extract its statement.
+        - Convert the line into a `LineParser` and extract its statement.
         - Normalize statement formatting:
             * Replace escaped `\\$$` with `$$`.
             * Replace `\\$$ ->` with `$$ ->`.
@@ -450,14 +298,14 @@ class TemplateBuilder:
         Raises
         ------
         TemplateParsedLineError
-            If a line cannot be parsed into a valid `ParsedLine`.
+            If a line cannot be parsed into a valid `LineParser`.
         """
 
         for line in self.user_data.splitlines():
             line = line.rstrip()
 
-            parsed_line = ParsedLine(line)
-            statement = parsed_line.get_statement()
+            parsed_line = LineParser(line)
+            statement = parsed_line.statement()
             if statement.endswith(r'\$$'):
                 statement = '{}$$'.format(statement[:-3])
             elif r'\$$ -> ' in statement:

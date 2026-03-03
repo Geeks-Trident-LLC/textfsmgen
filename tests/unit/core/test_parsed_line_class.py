@@ -1,5 +1,5 @@
 """
-Unit tests for the `textfsmgen.core.ParsedLine` class.
+Unit tests for the `textfsmgen.core.LineParser` class.
 
 Usage
 -----
@@ -10,7 +10,7 @@ Run pytest in the project root to execute these tests:
 """
 
 import pytest
-from textfsmgen.core.template import ParsedLine
+from textfsmgen.core.template import LineParser
 
 
 @pytest.mark.parametrize(
@@ -25,7 +25,7 @@ from textfsmgen.core.template import ParsedLine
 )
 def test_is_empty(line, expected):
     """
-    Unit tests for the `ParsedLine.is_empty` property.
+    Unit tests for the `LineParser.is_empty` property.
     Test Coverage
     -------------
     - Empty string: should be considered empty.
@@ -34,7 +34,7 @@ def test_is_empty(line, expected):
     - Non-empty string: should not be considered empty.
     - String with spaces and text: should not be considered empty.
     """
-    parsed_line = ParsedLine(line)
+    parsed_line = LineParser(line)
     assert parsed_line.is_empty is expected
 
 
@@ -57,7 +57,7 @@ def test_is_empty(line, expected):
 )
 def test_is_a_word(line, expected):
     """
-    Unit tests for the `ParsedLine.is_a_word` property.
+    Unit tests for the `LineParser.is_a_word` property.
 
     Test Coverage
     -------------
@@ -72,8 +72,8 @@ def test_is_a_word(line, expected):
         * Empty string.
         * Whitespace-only string.
     """
-    parsed_line = ParsedLine(line)
-    assert parsed_line.is_a_word is expected
+    parsed_line = LineParser(line)
+    assert parsed_line.is_word is expected
 
 
 @pytest.mark.parametrize(
@@ -91,7 +91,7 @@ def test_is_a_word(line, expected):
 )
 def test_is_not_containing_letter(line, expected):
     """
-    Unit tests for the `ParsedLine.is_not_containing_letter` property.
+    Unit tests for the `LineParser.is_not_containing_letter` property.
 
     Test Coverage
     -------------
@@ -102,8 +102,8 @@ def test_is_not_containing_letter(line, expected):
     - Empty string: should be False (excluded explicitly).
     - Whitespace-only string: should be False.
     """
-    parsed_line = ParsedLine(line)
-    assert parsed_line.is_not_containing_letter is expected
+    parsed_line = LineParser(line)
+    assert parsed_line.no_letters is expected
 
 
 @pytest.mark.parametrize(
@@ -153,14 +153,14 @@ def test_is_not_containing_letter(line, expected):
 )
 def test_get_statement(line, expected):
     """
-    Verify that `ParsedLine.get_statement` generates normalized template statements.
+    Verify that `LineParser.get_statement` generates normalized template statements.
 
     This test ensures that raw user data lines are correctly converted into
     TextFSM template statements, including normalization of special symbols,
     substitution of variables, and handling of template operators.
     """
-    parsed_line = ParsedLine(line)
-    statement = parsed_line.get_statement()
+    parsed_line = LineParser(line)
+    statement = parsed_line.statement()
     assert statement == expected
 
 
@@ -188,7 +188,7 @@ def test_get_statement(line, expected):
 )
 def test_get_statement_with_flag(line, expected):
     """
-    Verify that `ParsedLine.get_statement` correctly interprets flag directives.
+    Verify that `LineParser.get_statement` correctly interprets flag directives.
 
     This test ensures that special flags (`comment__`, `keep__`, `ignore_case__`)
     applied to input lines are properly converted into normalized TextFSM
@@ -203,8 +203,8 @@ def test_get_statement_with_flag(line, expected):
     - `ignore_case__` flag:
         Adds a case-insensitive modifier (`(?i)`) to the regex statement.
     """
-    parsed_line = ParsedLine(line)
-    statement = parsed_line.get_statement()
+    parsed_line = LineParser(line)
+    statement = parsed_line.statement()
     assert statement == expected
 
 
@@ -271,7 +271,7 @@ def test_get_statement_with_flag(line, expected):
 )
 def test_get_statement_with_textfsm_op(line, expected, template_op):
     """
-    Verify that `ParsedLine.get_statement` correctly interprets TextFSM template operators.
+    Verify that `LineParser.get_statement` correctly interprets TextFSM template operators.
 
     This test ensures that user data lines containing template operators
     (e.g., `Record`, `NoRecord`, `Clear`, `Next`, `Continue`, `Error`)
@@ -303,8 +303,8 @@ def test_get_statement_with_textfsm_op(line, expected, template_op):
         * Next.Record
         * Continue.Record
     """
-    parsed_line = ParsedLine(line)
-    statement = parsed_line.get_statement()
+    parsed_line = LineParser(line)
+    statement = parsed_line.statement()
     assert statement == expected
     assert parsed_line.template_op == template_op
 
@@ -341,7 +341,7 @@ def test_get_statement_with_textfsm_op(line, expected, template_op):
 )
 def test_get_statement_that_understand_textfsm_option(line, expected):
     """
-    Verify that `ParsedLine.get_statement` correctly interprets TextFSM metadata options.
+    Verify that `LineParser.get_statement` correctly interprets TextFSM metadata options.
 
     This test ensures that variable definitions containing metadata flags
     (e.g., `Filldown`, `Fillup`, `Key`, `List`, `Required`) are normalized
@@ -362,6 +362,6 @@ def test_get_statement_that_understand_textfsm_option(line, expected):
     - All metadata options are parsed and stored internally but do not
       change the normalized regex in the statement.
     """
-    parsed_line = ParsedLine(line)
-    statement = parsed_line.get_statement()
+    parsed_line = LineParser(line)
+    statement = parsed_line.statement()
     assert statement == expected
