@@ -25,7 +25,7 @@ from textfsmgen.core.patterns import LinePattern
 from textfsmgen.libs.text import enclose_string
 
 from textfsmgen.libs.utils import get_data_as_tabular
-from textfsmgen.libs.utils import Printer
+from textfsmgen.libs.common import decorate_text
 from textfsmgen.libs import datatype
 
 from textfsmgen.exceptions import TemplateParsedLineError
@@ -352,31 +352,28 @@ class TemplateBuilder:
         if not self.verified_message:
             return
 
-        width = 76
-        printer = Printer()
-
         # Template
-        printer.print("Template:".ljust(width))
+        print(decorate_text(f"{'Template:':<16}"))
         print(f"{self.template}\n")
 
         # Test Data
-        printer.print("Test Data:".ljust(width))
+        print(decorate_text(f"{'Test Data:':<16}"))
         print(f"{self.test_data}\n")
 
         # Expected Result
         if expected_result is not None:
-            printer.print("Expected Result:".ljust(width))
+            print(decorate_text(f"{'Expected Result:':<16}"))
             print(f"{expected_result}\n")
 
         # Test Result
         if test_result is not None:
-            printer.print("Test Result:".ljust(width))
+            print(decorate_text(f"{'Test Result:':<16}"))
             formatted_result = get_data_as_tabular(test_result) if tabular else test_result
             print(f"{formatted_result}\n")
 
         # Verified Message
         verified_msg = f"Verified Message: {self.verified_message}"
-        printer.print(verified_msg.ljust(width))
+        print(decorate_text(verified_msg))
 
     def verify(self, expected_rows_count=None, expected_result=None,
                tabular=False, debug=False, ignore_space=False):
