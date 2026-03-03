@@ -714,7 +714,7 @@ class Application:
             - description (str): Short description of the template's purpose.
         """
         result = dict(
-            filename=self.filename_var.get(),
+            test_script_file=self.filename_var.get(),
             author=self.author_var.get(),
             email=self.email_var.get(),
             company=self.company_var.get(),

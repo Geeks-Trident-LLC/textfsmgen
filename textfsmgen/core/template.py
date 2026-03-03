@@ -169,96 +169,35 @@ class LineParser:
 class TemplateBuilder:
     """
     Build TextFSM templates and generate associated test scripts.
-
-    The TemplateBuilder class constructs parsing templates from user-provided
-    data and test data, and can generate unit test scripts in multiple formats
-    (unittest, pytest, or generic Python). It supports metadata such as author,
-    company, and description, and provides verification utilities to ensure
-    template correctness.
-
-    Attributes
-    ----------
-    test_data : str
-        Sample test data used to validate the generated template.
-    user_data : str
-        Raw user input data from which the template is derived.
-    namespace : str
-        Reference name for the template datastore.
-    author : str, optional
-        Author name. Defaults to an empty string.
-    email : str, optional
-        Author email. Defaults to an empty string.
-    company : str, optional
-        Company name. Defaults to an empty string.
-    description : str, optional
-        Description of the template. Defaults to an empty string.
-    filename : str, optional
-        File name to save the generated test script. Defaults to an empty string.
-    variables : list
-        List of variables extracted from the template.
-    statements : list
-        List of template statements.
-    template : str
-        The generated TextFSM template string.
-    template_parser : TextFSM
-        Instance of the TextFSM parser for the generated template.
-    verified_message : str
-        Message returned after successful verification.
-    debug : bool
-        Flag indicating whether to enable debug mode for template validation.
-    bad_template : str
-        Representation of an invalid or failed template.
-
-    Methods
-    -------
-    prepare() -> None
-        Prepare internal structures before building the template.
-    build_template_comment() -> None
-        Generate template comments for documentation.
-    reformat() -> None
-        Reformat the template for readability and consistency.
-    build() -> None
-        Build the final template from user and test data.
-    show_debug_info(test_result=None, expected_result=None) -> None
-        Display debug information comparing test results with expectations.
-    verify(expected_rows_count=None, expected_result=None, debug=False) -> bool
-        Verify the generated template against expected results.
-    create_unittest() -> str
-        Generate a Python unittest script for the template.
-    create_pytest() -> str
-        Generate a Python pytest script for the template.
-    create_python_test() -> str
-        Generate a generic Python test script snippet.
-
-    Raises
-    ------
-    TemplateBuilderError
-        Raised if the generated template is invalid.
-    TemplateBuilderInvalidFormat
-        Raised if `user_data` has an invalid format.
     """
     logger = logger
 
     def __init__(
         self,
         test_data='',
+        test_data_file='',
         user_data='',
+        user_data_file='',
         namespace='',
         author='',
         email='',
         company='',
         description='',
-        filename='',
+        test_script_file='',
         debug=False
     ):
-        self.test_data = text.list_to_text(test_data)
-        self.user_data = text.list_to_text(user_data)
+        test_data_ = file.read(test_data_file) if test_data_file else test_data
+        self.test_data = text.list_to_text(test_data_)
+
+        user_data_ = file.read(user_data_file) if user_data_file else user_data
+        self.user_data = text.list_to_text(user_data_)
+
         self.namespace = str(namespace)
         self.author = str(author)
         self.email = str(email)
         self.company = str(company)
         self.description = text.list_to_text(description)
-        self.filename = str(filename)
+        self.test_script_file = str(test_script_file)
         self.variables = []
         self.statements = []
         self.bare_template = ''
@@ -273,32 +212,6 @@ class TemplateBuilder:
     def prepare(self) -> None:
         """
         Parse user data lines and build template statements.
-
-        This method processes each line in `self.user_data`, converts it into a
-        `LineParser` object, and generates a normalized template statement. It
-        also collects unique variables encountered during parsing.
-
-        Processing steps
-        ----------------
-        - Strip trailing whitespace from each line.
-        - Convert the line into a `LineParser` and extract its statement.
-        - Normalize statement formatting:
-            * Replace escaped `\\$$` with `$$`.
-            * Replace `\\$$ ->` with `$$ ->`.
-            * Replace `\\$` with `\\x24`.
-        - Append the statement to `self.statements` (including empty ones).
-        - Add variables from the parsed line to `self.variables`, ensuring
-          uniqueness by matching both `name` and `pattern`.
-
-        Returns
-        -------
-        None
-            The method updates `self.statements` and `self.variables` in place.
-
-        Raises
-        ------
-        TemplateParsedLineError
-            If a line cannot be parsed into a valid `LineParser`.
         """
 
         for line in self.user_data.splitlines():
@@ -328,25 +241,9 @@ class TemplateBuilder:
                     if not is_identical:
                         self.variables.append(pl_var)
 
-    def build_template_comment(self) -> str:
-        """
-        Build a formatted template comment block.
+    def template_header(self) -> str:
+        """Build a formatted metadata header for a generated template."""
 
-        This method generates a standardized comment section for a TextFSM
-        template, including metadata such as author, email, company, creation
-        date, and description.
-
-        Returns
-        -------
-        str
-            A multi-line string containing the formatted template comment.
-
-        Notes
-        -----
-        - The author defaults to `self.author` if provided, otherwise falls back
-          to `self.company`.
-        - The description is indented for readability.
-        """
         lines = [
             "#" * 80,
             f"# Template is generated by TextFSMGen CE",
@@ -372,26 +269,6 @@ class TemplateBuilder:
     def reformat(self, template: str) -> str | None:    # noqa
         """
         Reformat a TextFSM template for readability.
-
-        This method restructures a template string by ensuring that states
-        (lines beginning with an identifier) are separated by blank lines
-        and that surrounding content is preserved.
-
-        Parameters
-        ----------
-        template : str
-            The raw template string to reformat.
-
-        Returns
-        -------
-        str or None
-            The reformatted template string, or None if the input is empty.
-
-        Notes
-        -----
-        - States are identified using the regex pattern
-          ``[\\r\\n]+[a-zA-Z]\\w*([\\r\\n]+|$)``.
-        - Non-empty lines before and after states are preserved.
         """
         if not template:
             return None
@@ -427,33 +304,6 @@ class TemplateBuilder:
     def build(self) -> None:
         """
         Build a TextFSM template from user data.
-
-        This method prepares user data, constructs template statements and
-        variables, and generates a formatted TextFSM template. It also validates
-        the template by attempting to parse it with `TextFSM`.
-
-        Workflow
-        --------
-        1. Reset `self.template`.
-        2. Call `self.prepare()` to parse user data into statements and variables.
-        3. If variables exist:
-            - Build a template comment block.
-            - Concatenate variables and statements into a bare template.
-            - Ensure the template starts with a `Start` state.
-            - Reformat both bare and full template for readability.
-            - Attempt to parse the template with `TextFSM`.
-        4. If parsing fails:
-            - Raise `TemplateBuilderError` unless debug mode is enabled.
-            - In debug mode, log the error and store the invalid template in
-              `self.bad_template`.
-        5. If no variables are found, raise `TemplateBuilderInvalidFormat`.
-
-        Raises
-        ------
-        TemplateBuilderError
-            Raised if the generated template is invalid and debug mode is disabled.
-        TemplateBuilderInvalidFormat
-            Raised if `user_data` does not contain any variables.
         """
         self.template = ""
         self.prepare()
@@ -464,7 +314,7 @@ class TemplateBuilder:
             )
 
         # Build comment and template sections
-        comment = self.build_template_comment()
+        comment = self.template_header()
         variables = "\n".join(v.value for v in self.variables)
         template_def = "\n".join(self.statements)
 
@@ -490,40 +340,14 @@ class TemplateBuilder:
             self.bad_template = f"# {error_msg}\n{self.template}"
             self.template = ""
 
-    def show_debug_info(
+    def show_debug_report(
             self,
             test_result: Optional[list[dict] | None] = None,
             expected_result: Optional[list[dict] | None] = None,
             tabular: bool = False,
     ) -> None:
         """
-        Display debug information for template verification.
-
-        This method prints the template, test data, expected results, and
-        actual test results in a structured format. It is primarily used
-        for debugging and validation during template development.
-
-        Parameters
-        ----------
-        test_result : list of dict, optional
-            The actual test results to display. If provided, results are
-            shown either as raw dictionaries or in tabular format.
-        expected_result : list of dict, optional
-            The expected results to display. If provided, they are printed
-            alongside the test results.
-        tabular : bool, default=False
-            If True, format `test_result` as a tabular string using
-            `get_data_as_tabular`. Otherwise, display raw dictionaries.
-
-        Returns
-        -------
-        None
-            This method prints debug information to stdout.
-
-        Notes
-        -----
-        - Output is only shown if `self.verified_message` is set.
-        - Uses a fixed width for labels to align output consistently.
+        Display debug report for template verification.
         """
         if not self.verified_message:
             return
@@ -547,8 +371,7 @@ class TemplateBuilder:
         # Test Result
         if test_result is not None:
             printer.print("Test Result:".ljust(width))
-            formatted_result = get_data_as_tabular(
-                test_result) if tabular else test_result
+            formatted_result = get_data_as_tabular(test_result) if tabular else test_result
             print(f"{formatted_result}\n")
 
         # Verified Message
@@ -557,46 +380,12 @@ class TemplateBuilder:
 
     def verify(self, expected_rows_count=None, expected_result=None,
                tabular=False, debug=False, ignore_space=False):
-        """
-        Verify parsed test data against expected results.
-
-        This method parses `self.test_data` using the current template and
-        validates the output against optional expectations such as row count
-        and expected results. It updates `self.verified_message` with details
-        of the verification outcome.
-
-        Parameters
-        ----------
-        expected_rows_count : int, optional
-            Expected number of parsed rows. If provided, the actual row count
-            is compared against this value.
-        expected_result : list of dict, optional
-            Expected parsed result. If provided, the actual parsed rows are
-            compared against this list of dictionaries.
-        tabular : bool, default=False
-            If True, display test results in tabular format when debug output
-            is enabled.
-        debug : bool, default=False
-            If True, print debug information using `show_debug_info`.
-        ignore_space : bool, default=False
-            If True, strip leading and trailing spaces from parsed data before
-            comparison.
-
-        Returns
-        -------
-        bool
-            True if verification succeeds, False otherwise.
-
-        Raises
-        ------
-        TemplateBuilderError
-            Raised if an exception occurs during parsing.
-        """
+        """Verify parsed test data against expected results."""
 
         if not self.test_data:
             self.verified_message = 'test_data is empty.'
             if debug:
-                self.show_debug_info()
+                self.show_debug_report()
             return False
 
         is_verified = True
@@ -605,7 +394,7 @@ class TemplateBuilder:
             if not rows:
                 self.verified_message = 'There is no record after parsed.'
                 if debug:
-                    self.show_debug_info()
+                    self.show_debug_report()
                 return False
 
             # Validate row count
@@ -613,24 +402,22 @@ class TemplateBuilder:
                 actual_count = len(rows)
                 chk = expected_rows_count == actual_count
                 is_verified &= chk
-                index = int(chk)
-                verified_messages = [
-                    f"Parsed-row-count is {actual_count} while expected-row-count is {expected_rows_count}.",
+                self.verified_message = (
                     f"Parsed-row-count and expected-row-count are {expected_rows_count}."
-                ]
-                self.verified_message = verified_messages[index]
+                    if chk
+                    else f"Parsed-row-count is {actual_count} while expected-row-count is {expected_rows_count}."
+                )
 
             # Validate expected result
             if expected_result is not None:
                 rows_to_compare = datatype.clean_list_of_dicts(rows) if ignore_space else rows
                 chk = rows_to_compare == expected_result
                 is_verified &= chk
-                index = int(chk)
-                result_msgs = [
-                    "Parsed result and expected result are different.",
+                result_msg = (
                     "Parsed result and expected result are matched."
-                ]
-                result_msg = result_msgs[index]
+                    if chk
+                    else "Parsed result and expected result are different."
+                )
                 self.verified_message = f"{self.verified_message}\n{result_msg}".strip()
 
             # Default success message
@@ -639,7 +426,7 @@ class TemplateBuilder:
 
             # Debug output
             if debug:
-                self.show_debug_info(
+                self.show_debug_report(
                     test_result=rows,
                     expected_result=expected_result,
                     tabular=tabular
@@ -653,28 +440,6 @@ class TemplateBuilder:
     def create_test_script(self, test_script_fmt: str, error: str) -> str:
         """
         Generate a test script from the current template and test data.
-
-        This method formats a test script using the provided format string
-        and the current template/test data. If no test data is available,
-        a `TemplateBuilderError` is raised. Optionally, the generated script
-        is written to a file if `self.filename` is set.
-
-        Parameters
-        ----------
-        test_script_fmt : str
-            A format string containing placeholders for `template` and `test_data`.
-        error : str
-            Error message to raise if `self.test_data` is missing.
-
-        Returns
-        -------
-        str
-            The generated test script as a string.
-
-        Raises
-        ------
-        TemplateBuilderError
-            If `self.test_data` is empty or missing.
         """
 
         if not self.test_data:
@@ -685,28 +450,13 @@ class TemplateBuilder:
             test_data=enclose_string(self.test_data)
         )
 
-        if self.filename:
-            file.write(self.filename, test_script)
+        if self.test_script_file:
+            file.write(self.test_script_file, test_script)
         return test_script
 
     def create_unittest(self):
         """
         Generate a Python unittest script for the current template and test data.
-
-        This method builds a unittest script that uses `TextFSM` to parse
-        `self.test_data` with the current template. The generated script
-        includes a single test case that verifies parsing produces a
-        non-negative number of rows.
-
-        Returns
-        -------
-        str
-            The generated unittest script as a string.
-
-        Raises
-        ------
-        TemplateBuilderError
-            Raised if `self.test_data` is missing or empty.
         """
         test_script_fmt = text.dedent_and_strip('''
             """Python unittest script is generated by TextFSMGen CE"""
@@ -735,21 +485,6 @@ class TemplateBuilder:
     def create_pytest(self):
         """
         Generate a Python pytest script for the current template and test data.
-
-        This method builds a pytest script that uses `TextFSM` to parse
-        `self.test_data` with the current template. The generated script
-        includes a single test case that verifies parsing produces a
-        non-negative number of rows.
-
-        Returns
-        -------
-        str
-            The generated pytest script as a string.
-
-        Raises
-        ------
-        TemplateBuilderError
-            Raised if `self.test_data` is missing or empty.
         """
         test_script_fmt = text.dedent_and_strip('''
             """Python pytest script is generated by TextFSMGen CE"""
@@ -777,21 +512,6 @@ class TemplateBuilder:
     def create_python_test(self):
         """
         Generate a Python snippet script for the current template and test data.
-
-        This method builds a python snippet script that uses `TextFSM` to parse
-        `self.test_data` with the current template. The generated script
-        includes a single test case that verifies parsing produces a
-        non-negative number of rows.
-
-        Returns
-        -------
-        str
-            The generated python snippet script as a string.
-
-        Raises
-        ------
-        TemplateBuilderError
-            Raised if `self.test_data` is missing or empty.
         """
         test_script_fmt = text.dedent_and_strip(r'''
             """Python snippet script is generated by TextFSMGen CE"""
@@ -847,35 +567,6 @@ def get_textfsm_template(
 ) -> str:
     """
     Generate a TextFSM template from a snippet of user data.
-
-    This function creates a `TemplateBuilder` instance using the provided
-    template snippet and optional metadata (author, email, company, description).
-    It returns the generated TextFSM template as a string.
-
-    Parameters
-    ----------
-    template_snippet : str
-        Raw user data snippet to be converted into a TextFSM template.
-    author : str, optional
-        Name of the template author. Defaults to an empty string.
-    email : str, optional
-        Email address of the template author. Defaults to an empty string.
-    company : str, optional
-        Company name associated with the template. Defaults to an empty string.
-    description : str, optional
-        Description of the template. Defaults to an empty string.
-
-    Returns
-    -------
-    str
-        The generated TextFSM template.
-
-    Raises
-    ------
-    TemplateBuilderError
-        If the template cannot be built due to invalid input or parsing errors.
-    TemplateBuilderInvalidFormat
-        If the provided snippet has an invalid format.
     """
     builder = TemplateBuilder(
         user_data=template_snippet,
