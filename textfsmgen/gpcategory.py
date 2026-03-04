@@ -121,7 +121,7 @@ class CategorySpacerPattern(BaseCategoryPattern):
             Regex pattern string for zero-or-more spaces if `is_empty` is True,
             otherwise for one-or-more spaces.
         """
-        return PATTERN.ZOSPACES if self.is_empty else PATTERN.SPACES
+        return PATTERN.ZERO_OR_MORE_SPACE if self.is_empty else PATTERN.SPACES
 
     def to_template_snippet(self) -> str:
         """
@@ -338,7 +338,7 @@ class CategoryLinePattern(BaseCategoryPattern):
         - Regex substitution ensures that redundant space + placeholder
           patterns are normalized into `zero_or_spaces()`.
         """
-        zero_or_spaces_pat = PATTERN.ZOSPACES
+        zero_or_spaces_pat = PATTERN.ZERO_OR_MORE_SPACE
         result: list[str] = [
             zero_or_spaces_pat if self.is_leading else ""]
         prev_item, is_last_item_empty, item = None, False, None
@@ -631,7 +631,7 @@ class CategoryLinePattern(BaseCategoryPattern):
           regex-based approach.
         - Handles special cases for time, IPv6, and MAC address formats.
         """
-        at_least_one_spaces_pat = PATTERN.ATLONESPACES
+        at_least_one_spaces_pat = PATTERN.MORE_THAN_ONE_SPACE
         spaces_pat = PATTERN.SPACES
         double_spaces = "  "
         blank_space = " "

@@ -177,7 +177,7 @@ def get_fixed_line_snippet(
         return f"start() end({ws_type})"
 
     # Tokenize and normalize numeric tokens
-    tokens = text.Text(line.strip()).do_finditer_split(PATTERN.NON_WHITESPACES)
+    tokens = text.Text(line.strip()).do_finditer_split(PATTERN.MULTI_NON_WS)
     for i, token in enumerate(tokens):
         if token.strip():
             factory = TranslatedPattern.do_factory_create(token)

@@ -298,7 +298,7 @@ class TabularTextPatternByVarColumns(RuntimeException):
     @property
     def is_divider_a_symbol(self):
         """Check if the divider is a punctuation symbol."""
-        return bool(re.match(PATTERN.CHECK_PUNCT, self.divider))
+        return bool(re.match(PATTERN.ENDS_WITH_PUNCT, self.divider))
 
     @property
     def is_start_with_divider(self):
@@ -324,10 +324,10 @@ class TabularTextPatternByVarColumns(RuntimeException):
 
     def raise_exception_if_columns_count_not_provided(self):
         """Infer column count from lines or raise error if zero."""
-        pat = f"{PATTERN.PUNCTS_GROUP}$"
+        pat = f"{PATTERN.PUNCT_PHRASE_MULTI_SPACE}$"
         for line in self.lines:
             if re.match(pat, line.strip()):
-                self.columns_count = len(re.split(PATTERN.WHITESPACES, line.strip()))
+                self.columns_count = len(re.split(PATTERN.WSS, line.strip()))
                 return
         if not self:
             self.raise_runtime_error(msg='columns_count cannot be zero')
@@ -421,7 +421,7 @@ class TabularTextPatternByVarColumns(RuntimeException):
         """Find reference row using space or multi-space divider."""
         gap = "" if spaces == " " else " "
         repetition = self.columns_count - 1
-        kwargs = dict(p=PATTERN.NON_WHITESPACES_OR_PHRASE, rep=repetition, gap=gap)
+        kwargs = dict(p=PATTERN.NON_WS_GROUP, rep=repetition, gap=gap)
         pat = r' *%(p)s(%(gap)s +%(p)s){%(rep)s} *$' % kwargs
 
         found_line = custom_line or next((line for line in self.lines if re.match(pat, line)), None)
@@ -1075,11 +1075,11 @@ class TabularTable(RuntimeException):
         if self.is_start_with_divider:
             lst.insert(0, divider_leading_pat)
         if self.is_leading:
-            lst.insert(0, PATTERN.ZOSPACES)
+            lst.insert(0, PATTERN.ZERO_OR_MORE_SPACE)
         if self.is_end_with_divider:
             lst.append(divider_trailing_pat)
         if self._is_trailing:
-            lst.append(PATTERN.ZOSPACES)
+            lst.append(PATTERN.ZERO_OR_MORE_SPACE)
 
         return text.join_string(*lst)
 
@@ -1096,7 +1096,7 @@ class TabularTable(RuntimeException):
         lst: List[str] = []
 
         for line in text.get_list_of_lines(*headers_lines):
-            is_line_of_symbols = bool(re.match(PATTERN.CHECK_PUNCTS_GROUP, line))
+            is_line_of_symbols = bool(re.match(PATTERN.ENDS_WITH_PUNCT_GROUP, line))
             is_header_line = text.Line.has_data(line) and not is_line_of_symbols
             if is_header_line:
                 lst.append(line)
@@ -1464,7 +1464,7 @@ class TabularCell(RuntimeException):
             if self.is_empty:
                 self._trailing = ""
             else:
-                matches = re.findall(PATTERN.SPACESATEOS, self.data)
+                matches = re.findall(PATTERN.ENDS_WITH_SPACES, self.data)
                 self._trailing = matches[0] if matches else ""
         return self._trailing or ""
 

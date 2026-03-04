@@ -363,11 +363,11 @@ class TranslatedPattern(RuntimeException):
     @property
     def root_pattern(self):
         tbl = dict(
-            non_whitespace=PATTERN.NON_WHITESPACE,
-            non_whitespaces=PATTERN.NON_WHITESPACES,
-            non_whitespaces_or_group=PATTERN.NON_WHITESPACES_OR_GROUP
+            non_whitespace=PATTERN.NON_WS,
+            non_whitespaces=PATTERN.MULTI_NON_WS,
+            non_whitespaces_or_group=PATTERN.NON_WS_GROUP_MULTI_SPACE
         )
-        root_pattern = tbl.get(self.root_name, PATTERN.NON_WHITESPACES_OR_GROUP)
+        root_pattern = tbl.get(self.root_name, PATTERN.NON_WS_GROUP_MULTI_SPACE)
         return root_pattern
 
     def process(self):
@@ -889,7 +889,7 @@ class TranslatedPattern(RuntimeException):
 
         This method iterates through each entry in `lst_of_all_data`,
         strips leading and trailing whitespace, splits the entry by
-        the whitespace pattern defined in `PATTERN.WHITESPACES`, and
+        the whitespace pattern defined in `PATTERN.WSS`, and
         verifies that the resulting list has more than one element.
 
         Returns
@@ -899,7 +899,7 @@ class TranslatedPattern(RuntimeException):
             one word, False otherwise.
         """
         return all(
-            len(re.split(PATTERN.WHITESPACES, data.strip())) > 1
+            len(re.split(PATTERN.WSS, data.strip())) > 1
             for data in self.lst_of_all_data
         )
 
@@ -909,7 +909,7 @@ class TranslatedPattern(RuntimeException):
 
         This method iterates through each entry in `lst_of_all_data`,
         strips leading and trailing whitespace, splits the entry by
-        the whitespace pattern defined in `PATTERN.WHITESPACES`, and
+        the whitespace pattern defined in `PATTERN.WSS`, and
         verifies that the resulting list has at most one element.
 
         Returns
@@ -919,7 +919,7 @@ class TranslatedPattern(RuntimeException):
             or none, False otherwise.
         """
         return all(
-            len(re.split(PATTERN.WHITESPACES, data.strip())) <= 1
+            len(re.split(PATTERN.WSS, data.strip())) <= 1
             for data in self.lst_of_all_data
         )
 
@@ -2688,10 +2688,10 @@ class TranslatedPunctsGroupPattern(TranslatedPattern):
 
     def __init__(self, data: str, *other: object):
         defined_patterns = [
-            PATTERN.PUNCTS_OR_PHRASE,
-            PATTERN.PUNCTS_OR_GROUP,
+            PATTERN.PUNCT_GROUP,
+            PATTERN.PUNCT_GROUP_MULTI_SPACE,
             PATTERN.PUNCTS_PHRASE,
-            PATTERN.PUNCTS_GROUP,
+            PATTERN.PUNCT_PHRASE_MULTI_SPACE,
         ]
         ref_names = [
             "puncts_or_phrase",
@@ -3157,9 +3157,9 @@ class TranslatedWordsPattern(TranslatedPattern):
     def __init__(self, data: str, *other: object):
         defined_patterns = [
             PATTERN.WORDS,
-            PATTERN.WORD_OR_GROUP,
+            PATTERN.WORDS_MULTI_SPACE,
             PATTERN.PHRASE,
-            PATTERN.WORD_GROUP,
+            PATTERN.PHRASE_MULTI_SPACE,
         ]
         ref_names = ["words", "word_or_group", "phrase", "word_group"]
 
@@ -3477,9 +3477,9 @@ class TranslatedMixedWordsPattern(TranslatedPattern):
     def __init__(self, data: str, *other: object):
         defined_patterns = [
             PATTERN.MIXED_WORDS,
-            PATTERN.MIXED_WORD_OR_GROUP,
+            PATTERN.MIXED_WORDS_MULTI_SPACE,
             PATTERN.MIXED_PHRASE,
-            PATTERN.MIXED_WORD_GROUP,
+            PATTERN.MIXED_PHRASE_MULTI_SPACE,
         ]
         ref_names = [
             "mixed_words",
@@ -3644,7 +3644,7 @@ class TranslatedNonWhitespacePattern(TranslatedPattern):
             data,
             *other,
             name="non_whitespace",
-            defined_pattern=PATTERN.NON_WHITESPACE,
+            defined_pattern=PATTERN.NON_WS,
             root_name="non_whitespace",
         )
 
@@ -3797,7 +3797,7 @@ class TranslatedNonWhitespacesPattern(TranslatedPattern):
             data,
             *other,
             name="non_whitespaces",
-            defined_pattern=PATTERN.NON_WHITESPACES,
+            defined_pattern=PATTERN.MULTI_NON_WS,
             root_name="non_whitespaces",
         )
 
@@ -3950,10 +3950,10 @@ class TranslatedNonWhitespacesGroupPattern(TranslatedPattern):
 
     def __init__(self, data: str, *other: object):
         defined_patterns = [
-            PATTERN.NON_WHITESPACES_OR_PHRASE,
-            PATTERN.NON_WHITESPACES_OR_GROUP,
-            PATTERN.NON_WHITESPACES_PHRASE,
-            PATTERN.NON_WHITESPACES_GROUP,
+            PATTERN.NON_WS_GROUP,
+            PATTERN.NON_WS_GROUP_MULTI_SPACE,
+            PATTERN.NON_WS_PHRASE,
+            PATTERN.NON_WS_PHRASE_MULTI_SPACE,
         ]
         ref_names = [
             "non_whitespaces_or_phrase",
@@ -3969,7 +3969,7 @@ class TranslatedNonWhitespacesGroupPattern(TranslatedPattern):
             defined_patterns=defined_patterns,
             ref_names=ref_names,
             singular_name="non_whitespaces",
-            singular_pattern=PATTERN.NON_WHITESPACES,
+            singular_pattern=PATTERN.MULTI_NON_WS,
             root_name="non_whitespaces_or_group",
         )
 

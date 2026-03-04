@@ -15,85 +15,167 @@ from textfsmgen.exceptions import raise_exception, EscapePatternError
 class PATTERN:      # noqa
     """Reusable regex fragments for common character classes."""
 
-    punct=rf"[{re.escape(string.punctuation)}]"
-    puncts = rf"{punct}+"
-
+    # --- Generic wildcard ---
     ANYTHING = '.'
-    ZOANYTHING = '.?'
+    ANY = '.'
+    ZERO_OR_ONE = '.?'
     SOMETHING = '.*'
+    ZERO_OR_MORE = '.*'
     EVERYTHING = '.+'
+    ONE_OR_MORE = '.+'
 
+    # --- Literal spaces ---
     SPACE = ' '
     SPACES = ' +'
-    MTONESPACES = '  +'
-    MORETHANONESPACES = MTONESPACES
-    ATLONESPACES = '  +'
-    ATLEASTONESPACES = ATLONESPACES
-    ZOSPACE = ' ?'
-    ZOSPACES = ' *'
-    SPACEATSOS = '^ '
-    SPACESATSOS = '^ +'
-    SPACEATEOS = ' $'
-    SPACESATEOS = ' +$'
+    ZERO_OR_SPACE = ' ?'
+    ZERO_OR_SPACES = ' *'
+    ZERO_OR_MORE_SPACE = ' *'
+    AT_LEAST_ONE_SPACE = SPACES
+    MORE_THAN_ONE_SPACE = '  +'
+    STARTS_WITH_SPACE = '^ '
+    STARTS_WITH_SPACES = '^ +'
+    ENDS_WITH_SPACE = ' $'
+    ENDS_WITH_SPACES = ' +$'
 
-    WHITESPACE = r'\s'
-    WHITESPACES = r'\s+'
-    ZOWHITESPACES = r'\s*'
+    # --- Whitespace ---
+    WS = r'\s'
+    ZERO_OR_WSS = r'\s*'
+    ZERO_OR_MORE_WS = r'\s*'
+    WSS = r'\s+'
+    ONE_OR_WSS = r'\s+'
+    ONE_OR_MORE_WS = r'\s+'
 
+    # --- Newlines / CRLF ---
     CRNL = r'\r?\n|\r'
     CR_NL = CRNL
-    MULTICRNL = r'[\r\n]+'
-    ZOMULTICRNL = r'[\r\n]*'
+    NEWLINE = CRNL
+    ZERO_OR_MORE_CRLF = r'[\r\n]*'
+    ZERO_OR_MORE_NEWLINE = ZERO_OR_MORE_CRLF
+    NEWLINES = ZERO_OR_MORE_NEWLINE
+    ONE_OR_MORE_CRLF = r'[\r\n]+'
+    ONE_OR_MORE_NEWLINE = ONE_OR_MORE_CRLF
 
+    # --- Digits ---
     DIGIT = r'\d'
-    DIGITS = '%s+' % DIGIT
+    ZERO_OR_DIGIT = r'\d?'
+    ZERO_OR_DIGITS = r'\d*'
+    DIGITS = r'\d+'
+    ONE_OR_MORE_DIGITS = r'\d+'
+    AT_LEAST_ONE_DIGIT = r'\d+'
 
+    # --- Numbers ---
     NUMBER = r'\d*[.]?\d+'
+    ZERO_OR_NUMBER = rf'{NUMBER}?'
     MIXED_NUMBER = r'[+\(\[\$-]?(\d+([,:/-]\d+)*)?[.]?\d+[\]\)%a-zA-Z]*'
+    ZERO_OR_MIXED_NUMBER = rf'{MIXED_NUMBER}?'
 
+    # --- letters ---
     LETTER = '[a-zA-Z]'
-    LETTERS = '%s+' % LETTER
+    ZERO_OR_LETTER = rf'{LETTER}?'
+    ZERO_OR_LETTERS = rf'{LETTER}*'
+    ZERO_OR_MORE_LETTERS = ZERO_OR_LETTERS
+    LETTERS = rf'{LETTER}+'
+    ONE_OR_MORE_LETTERS = LETTERS
+    AT_LEAST_ONE_LETTER = LETTERS
 
+    # --- alphabet numeric ---
     ALPHABET_NUMERIC = '[a-zA-Z0-9]'
+    ZERO_OR_ALPHABET_NUMERIC = rf'{ALPHABET_NUMERIC}?'
+    ZERO_OR_MORE_ALPHABET_NUMERIC = rf'{ALPHABET_NUMERIC}*'
+    ONE_OR_MORE_ALPHABET_NUMERIC = rf'{ALPHABET_NUMERIC}+'
+    AT_LEAST_ONE_ALPHABET_NUMERIC = rf'{ALPHABET_NUMERIC}+'
 
+    # --- punctuations ---
     PUNCT = r'[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]'
-    PUNCTS = '%s+' % PUNCT
-    PUNCTS_OR_PHRASE = '%s( %s)*' % (PUNCTS, PUNCTS)
-    PUNCTS_OR_GROUP = '%s( +%s)*' % (PUNCTS, PUNCTS)
-    PUNCTS_PHRASE = '%s( %s)+' % (PUNCTS, PUNCTS)
-    PUNCTS_GROUP = '%s( +%s)+' % (PUNCTS, PUNCTS)
-    CHECK_PUNCT = '%s$' % PUNCT
-    CHECK_PUNCTS = '%s$' % PUNCTS
-    CHECK_PUNCTS_GROUP = ' *%s *$' % PUNCTS_GROUP
+    PUNCTS = r'%s+' % PUNCT
 
-    SPACE_PUNCT = r'[ \x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]'
-    MULTI_SPACE_PUNCTS = '%s+' % SPACE_PUNCT
+    # --- group of puncts ---
+    PUNCT_GROUP = r'%s( %s)*' % (PUNCTS, PUNCTS)
+    PUNCT_GROUP_MULTI_SPACE = r'%s( +%s)*' % (PUNCTS, PUNCTS)
+    PUNCTS_PHRASE = r'%s( %s)+' % (PUNCTS, PUNCTS)
+    PUNCT_PHRASE_MULTI_SPACE = r'%s( +%s)+' % (PUNCTS, PUNCTS)
 
+    # --- puncts check ---
+
+    ENDS_WITH_PUNCT = r'%s$' % PUNCT
+    ENDS_WITH_PUNCTS = r'%s$' % PUNCTS
+    ENDS_WITH_PUNCT_GROUP = ' *%s *$' % PUNCT_PHRASE_MULTI_SPACE
+
+    SPACE_OR_PUNCT = r'[ \x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]'
+    MULTI_SPACE_OR_PUNCTS = r'%s+' % SPACE_OR_PUNCT
+
+    # --- Visible characters ---
     GRAPH = r'[\x21-\x7e]'
+    ZERO_OR_GRAPH = rf'{GRAPH}?'
+    ZERO_OR_MORE_GRAPH = rf'{GRAPH}*'
+    ONE_OR_MORE_GRAPH = rf'{GRAPH}+'
 
+    # --- word ---
     WORD = r'[a-zA-Z][a-zA-Z0-9]*'
+
+    # --- group of word ---
     WORDS = r'%s( %s)*' % (WORD, WORD)
+    WORD_GROUP = WORDS
     PHRASE = r'%s( %s)+' % (WORD, WORD)
-    WORD_OR_GROUP = r'%s( +%s)*' % (WORD, WORD)
-    WORD_GROUP = r'%s( +%s)+' % (WORD, WORD)
 
+    WORDS_MULTI_SPACE = r'%s( +%s)*' % (WORD, WORD)
+    WORD_GROUP_MULTI_SPACE = WORDS_MULTI_SPACE
+    PHRASE_MULTI_SPACE = r'%s( +%s)+' % (WORD, WORD)
+
+    # --- group of word separated by whitespace---
+    WORDS_SEP_WS = r'%s(\s%s)*' % (WORD, WORD)
+    PHRASE_SEP_WS = r'%s(\s%s)+' % (WORD, WORD)
+
+    WORDS_SEP_MULTI_WS = r'%s(\s+%s)*' % (WORD, WORD)
+    WORD_GROUP_SEP_MULTI_WS = WORDS_SEP_MULTI_WS
+    PHRASE_SEP_MULTI_WS = r'%s(\s+%s)+' % (WORD, WORD)
+
+    # --- mixed-words ----
     MIXED_WORD = r'[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*'
-    MIXED_WORDS = '%s( %s)*' % (MIXED_WORD, MIXED_WORD)
-    MIXED_PHRASE = '%s( %s)+' % (MIXED_WORD, MIXED_WORD)
-    MIXED_WORD_OR_GROUP = '%s( +%s)*' % (MIXED_WORD, MIXED_WORD)
-    MIXED_WORD_GROUP = '%s( +%s)+' % (MIXED_WORD, MIXED_WORD)
 
-    NON_WHITESPACE = r'\S'
-    NON_WHITESPACES = r'%s+' % NON_WHITESPACE
-    NON_WHITESPACES_OR_PHRASE = r'%s( %s)*' % (NON_WHITESPACES, NON_WHITESPACES)
-    NON_WHITESPACES_PHRASE = r'%s( %s)+' % (NON_WHITESPACES, NON_WHITESPACES)
-    NON_WHITESPACES_OR_GROUP = r'%s( +%s)*' % (NON_WHITESPACES, NON_WHITESPACES)
-    NON_WHITESPACES_GROUP = r'%s( +%s)+' % (NON_WHITESPACES, NON_WHITESPACES)
+    # --- group of mixed-word ---
+    MIXED_WORDS = r'%s( %s)*' % (MIXED_WORD, MIXED_WORD)
+    MIXED_WORD_GROUP = MIXED_WORDS
+    MIXED_PHRASE = r'%s( %s)+' % (MIXED_WORD, MIXED_WORD)
+
+    MIXED_WORDS_MULTI_SPACE = r'%s( +%s)*' % (MIXED_WORD, MIXED_WORD)
+    MIXED_WORD_GROUP_MULTI_SPACE = MIXED_WORDS_MULTI_SPACE
+    MIXED_PHRASE_MULTI_SPACE = r'%s( +%s)+' % (MIXED_WORD, MIXED_WORD)
+
+    # --- group of mixed-word separated by whitespace ---
+    MIXED_WORDS_SEP_WS = r'%s(\s%s)*' % (MIXED_WORD, MIXED_WORD)
+    MIXED_WORD_GROUP_SEP_WS = MIXED_WORDS_SEP_WS
+    MIXED_PHRASE_SEP_WS = r'%s(\s%s)+' % (MIXED_WORD, MIXED_WORD)
+
+    MIXED_WORDS_SEP_MULTI_WS = r'%s(\s+%s)*' % (MIXED_WORD, MIXED_WORD)
+    MIXED_WORD_GROUP_SEP_MULTI_WS = MIXED_WORDS_SEP_MULTI_WS
+    MIXED_PHRASE_SEP_MULTI_WS = r'%s(\s+%s)+' % (MIXED_WORD, MIXED_WORD)
+
+    # --- Non-whitespace(s) ---
+    NON_WS = r'\S'
+    ZERO_OR_ONE_NON_WS = rf'{NON_WS}?'
+    ZERO_OR_MORE_NON_WSS = rf'{NON_WS}*'
+    MULTI_NON_WS = rf'{NON_WS}+'
+    NON_WSS = MULTI_NON_WS
+
+    # --- group of non-whitespace(s) ---
+    NON_WS_GROUP = r'%s( %s)*' % (MULTI_NON_WS, MULTI_NON_WS)
+    NON_WS_PHRASE = r'%s( %s)+' % (MULTI_NON_WS, MULTI_NON_WS)
+
+    NON_WS_GROUP_MULTI_SPACE = r'%s( +%s)*' % (MULTI_NON_WS, MULTI_NON_WS)
+    NON_WS_PHRASE_MULTI_SPACE = r'%s( +%s)+' % (MULTI_NON_WS, MULTI_NON_WS)
+
+    # --- group of non-whitespace(s) separated by whitespace ---
+    NON_WS_GROUP_SEP_WS = r'%s(\s%s)*' % (MULTI_NON_WS, MULTI_NON_WS)
+    NON_WS_PHRASE_SEP_WS = r'%s(\s%s)+' % (MULTI_NON_WS, MULTI_NON_WS)
+
+    NON_WS_GROUP_SEP_MULTI_WS = r'%s(\s+%s)*' % (MULTI_NON_WS, MULTI_NON_WS)
+    NON_WS_PHRASE_SEP_MULTI_WS = r'%s(\s+%s)+' % (MULTI_NON_WS, MULTI_NON_WS)
 
 
 def get_ref_pattern_by_name(name, default=None):
     """Retrieve a regex pattern constant by name."""
-    default = default or PATTERN.NON_WHITESPACES_OR_GROUP
+    default = default or PATTERN.NON_WS_GROUP_MULTI_SPACE
     attr = name.upper()
     pattern = getattr(PATTERN, attr, default)
     return pattern

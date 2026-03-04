@@ -684,9 +684,9 @@ class EditingSnippet(LData):
         """
         pattern = "".join(elmt.to_regex() for elmt in self.snippet_elements)
         if self.is_leading:
-            pattern = f"{PATTERN.ZOSPACES}{pattern}"
+            pattern = f"{PATTERN.ZERO_OR_MORE_SPACE}{pattern}"
         if self.is_trailing:
-            pattern = f"{pattern}{PATTERN.ZOSPACES}"
+            pattern = f"{pattern}{PATTERN.ZERO_OR_MORE_SPACE}"
         return pattern
 
     def to_template_snippet(self):
@@ -757,10 +757,10 @@ class IterativeLinePattern(LData):
         str
             Editable snippet string with capture/keep/action directives.
         """
-        spaces = re.findall(PATTERN.WHITESPACES, self.data)
+        spaces = re.findall(PATTERN.WSS, self.data)
         parts: List[str] = []
 
-        for index, item in enumerate(re.split(PATTERN.WHITESPACES, self.data)):
+        for index, item in enumerate(re.split(PATTERN.WSS, self.data)):
             node = TranslatedPattern.do_factory_create(item)
             var_name = f"v{self.label}{index}"
             parts.append(node.get_readable_snippet(var=var_name))

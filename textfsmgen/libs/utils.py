@@ -10,8 +10,6 @@ from textwrap import wrap
 from pprint import pprint
 
 from .pat import PATTERN
-from . import datatype
-from .text import Text
 
 
 def split_by_matches(text, pattern=r"(?u)\s+"):
@@ -54,11 +52,11 @@ def extract_segments(line: str, parts: list[str]):
 
 def text_to_pattern(source: str, *, ignore_case: bool = True) -> str:
     """Convert a text string into a regex-safe generalized pattern."""
-    token_re = rf"(?ix)\s+|[a-z]+|{PATTERN.puncts}|[0-9]+"
+    token_re = rf"(?ix)\s+|[a-z]+|{PATTERN.PUNCTS}|[0-9]+"
     parts = []
 
     for tok in split_by_matches(source, pattern=token_re):
-        if re.fullmatch(PATTERN.puncts, tok):
+        if re.fullmatch(PATTERN.PUNCTS, tok):
             parts.append(re.escape(tok))
         elif tok.isdigit():
             parts.append(r"[0-9]+")

@@ -276,7 +276,7 @@ class NDiffCommonText(NDiffBaseText):
         ----------
         whitespace : str, optional
             Replacement character for spaces in the snippet.
-            If equal to `PATTERN.WHITESPACE`, tabs are used as spacers.
+            If equal to `PATTERN.WS`, tabs are used as spacers.
             Defaults to a single space.
 
         Returns
@@ -284,7 +284,7 @@ class NDiffCommonText(NDiffBaseText):
         str
             Snippet string representation of the line.
         """
-        is_ws = whitespace == PATTERN.WHITESPACE
+        is_ws = whitespace == PATTERN.WS
         spacer = "\t " if is_ws else "  "
         snippet = spacer.join(self.lst)
         self._snippet = snippet
@@ -516,7 +516,7 @@ class NDiffLinePattern:
         self.whitespace = whitespace
         if not self.whitespace:
             is_ws = any(text.Line.has_whitespace_in_line(line) for line in [line_a, line_b])
-            self.whitespace = PATTERN.WHITESPACE if is_ws else PATTERN.SPACE
+            self.whitespace = PATTERN.WS if is_ws else PATTERN.SPACE
 
         self.label = label
         self.is_lessen = is_lessen
@@ -693,8 +693,8 @@ class NDiffLinePattern:
           snippet representations.
         """
         # Tokenize both lines by whitespace
-        lst_a = re.split(PATTERN.WHITESPACES, self._line_a)
-        lst_b = re.split(PATTERN.WHITESPACES, self._line_b)
+        lst_a = re.split(PATTERN.WSS, self._line_a)
+        lst_b = re.split(PATTERN.WSS, self._line_b)
 
         # Compute diff between token lists
         diff = ndiff(lst_a, lst_b)
@@ -738,7 +738,7 @@ class NDiffLinePattern:
         - If only one node exists, its pattern is returned directly.
         - Changed nodes are wrapped with variable placeholders.
         - Empty changes are handled with optional whitespace groups.
-        - Leading/trailing whitespace is preserved using `PATTERN.WHITESPACES`
+        - Leading/trailing whitespace is preserved using `PATTERN.WSS`
           or `PATTERN.SPACES`.
         """
         kwargs = dict(label=self.label, is_lessen=self.is_lessen, is_root=self.is_root)
@@ -752,7 +752,7 @@ class NDiffLinePattern:
 
         result = []
         count = 0
-        spacer = PATTERN.WHITESPACES if self.whitespace == PATTERN.WHITESPACE else PATTERN.SPACES
+        spacer = PATTERN.WSS if self.whitespace == PATTERN.WS else PATTERN.SPACES
         for index, item in enumerate(lst):
             is_last = index == total - 1
             if not is_last:
@@ -1052,10 +1052,10 @@ class DiffLinePattern(RuntimeException):
         Returns
         -------
         str
-            `PATTERN.WHITESPACE` if any line contains whitespace,
+            `PATTERN.WS` if any line contains whitespace,
             otherwise `PATTERN.SPACE`.
         """
-        return PATTERN.WHITESPACE if self.is_whitespace_in_line else PATTERN.SPACE
+        return PATTERN.WS if self.is_whitespace_in_line else PATTERN.SPACE
 
     @property
     def leading_whitespace(self) -> str:
@@ -1482,10 +1482,10 @@ class CommonDiffLinePattern(RuntimeException):
         Returns
         -------
         str
-            `PATTERN.WHITESPACE` if any line contains whitespace,
+            `PATTERN.WS` if any line contains whitespace,
             otherwise `PATTERN.SPACE`.
         """
-        return PATTERN.WHITESPACE if self.is_whitespace_in_line else PATTERN.SPACE
+        return PATTERN.WS if self.is_whitespace_in_line else PATTERN.SPACE
 
     @property
     def leading_whitespace(self) -> str:
@@ -1542,7 +1542,7 @@ class CommonDiffLinePattern(RuntimeException):
         """
         if not self.has_data:
             return False
-        normalized = [re.sub(PATTERN.WHITESPACES, "", line) for line in self.lines]
+        normalized = [re.sub(PATTERN.WSS, "", line) for line in self.lines]
         return len(set(normalized)) == 1
 
     @property
@@ -1616,7 +1616,7 @@ class CommonDiffLinePattern(RuntimeException):
             else:
                 is_space_only = re.match(r" +$", "".join(grp))
                 result.append(
-                    PATTERN.SPACES if is_space_only else PATTERN.WHITESPACES)
+                    PATTERN.SPACES if is_space_only else PATTERN.WSS)
 
         pattern = "".join(result)
         return f"{self.leading_whitespace}{pattern}{self.trailing_whitespace}"
@@ -1888,7 +1888,7 @@ class DText:
         for line in self.lst:
             line = line.strip()
             if line:
-                sub_lst = text.Text(line).do_finditer_split(PATTERN.WHITESPACES)
+                sub_lst = text.Text(line).do_finditer_split(PATTERN.WSS)
                 lst.append(sub_lst)
 
         group = list(zip(*lst))
