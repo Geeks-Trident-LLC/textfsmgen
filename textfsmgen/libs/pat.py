@@ -10,6 +10,7 @@ import re
 import string
 
 from textfsmgen.exceptions import raise_exception, EscapePatternError
+from .generic import StatusString
 
 
 class PATTERN:
@@ -198,6 +199,19 @@ def validate_pattern(
         return re.compile(pattern, flags=flags)
     except re.error as ex:
         raise_exception(ex, cls=exception_cls)
+
+
+def is_valid_pattern(pattern):
+    """Return a StatusString describing whether the input is a valid regex."""
+    if not isinstance(pattern, str):
+        msg = (f"Pattern must be a string, "
+               f"but received <{type(pattern).__name__}:{pattern}> instead.)")
+        return StatusString(msg, False)
+    try:
+        result = re.compile(pattern)
+        return StatusString(str(result), bool(result))
+    except Exception as ex:
+        return StatusString(str(ex), False)
 
 
 def soft_escape(pattern: str, validate: bool = True) -> str:

@@ -293,7 +293,7 @@ class ElementPattern(str):
 
         arguments = re.split(r' *, *', params) if params else []
 
-        lst = [PAT_REF.get(keyword).get('pattern')]
+        lst = [PAT_REF.get(keyword)]
 
         name, vpat = '', r'var_(?P<name>\w+)$'
         or_pat = r'or_(?P<case>[^,]+)'
@@ -358,12 +358,8 @@ class ElementPattern(str):
                         spaces_occurrence_pat = cls('space(%s)' % o_case)
                         is_or_either = str.lower(case).startswith('either_')
                     else:
-                        if case in PAT_REF:
-                            pat = PAT_REF.get(case).get('pattern')
-                            pat not in lst and lst.append(pat)
-                        else:
-                            pat = case
-                            pat not in lst and lst.append(pat)
+                        pat = PAT_REF.get(case, case)
+                        pat not in lst and lst.append(pat)
                 else:
                     pat = soft_escape(arg)
                     pat not in lst and lst.append(pat)
@@ -454,12 +450,8 @@ class ElementPattern(str):
                         is_empty = True
                         cls._or_empty = is_empty
                     else:
-                        if case in PAT_REF:
-                            pat = PAT_REF.get(case).get('pattern')
-                            pat not in lst and lst.append(pat)
-                        else:
-                            pat = case
-                            pat not in lst and lst.append(pat)
+                        pat = PAT_REF.get(case, case)
+                        pat not in lst and lst.append(pat)
                 else:
                     pat = soft_escape(arg)
                     pat not in lst and lst.append(pat)
@@ -523,12 +515,8 @@ class ElementPattern(str):
                         is_empty = True
                         cls._or_empty = is_empty
                     else:
-                        if case in PAT_REF:
-                            pat = PAT_REF.get(case).get('pattern')
-                            pat not in lst and lst.append(pat)
-                        else:
-                            pat = case
-                            pat not in lst and lst.append(pat)
+                        pat = PAT_REF.get(case, case)
+                        pat not in lst and lst.append(pat)
                 else:
                     pat = soft_escape(arg)
                     pat not in lst and lst.append(pat)
@@ -589,12 +577,8 @@ class ElementPattern(str):
                         is_empty = True
                         cls._or_empty = is_empty
                     else:
-                        if case in PAT_REF:
-                            pat = PAT_REF.get(case).get('pattern')
-                            pat not in lst and lst.append(pat)
-                        else:
-                            pat = case
-                            pat not in lst and lst.append(pat)
+                        pat = PAT_REF.get(case, case)
+                        pat not in lst and lst.append(pat)
                 else:
                     pat = soft_escape(arg)
                     pat not in lst and lst.append(pat)

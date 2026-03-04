@@ -1,7 +1,11 @@
+import re
+
 from textfsmgen import config
 
 from textfsmgen.exceptions import PatternReferenceError, raise_exception
 from textfsmgen.libs import file
+
+from textfsmgen.libs import pat
 
 import logging
 logger = logging.getLogger(__file__)
@@ -18,10 +22,13 @@ class PatternRegistry(dict):
 
     def load_system(self):
         """Load system-defined patterns."""
-        yaml_obj = file.safe_load_yaml(config.sys_ref_yaml_file)
-        self.update(yaml_obj)
+        # yaml_obj = file.safe_load_yaml(config.sys_ref_yaml_file)
+        for attr in dir(pat.PATTERN):
+            val = getattr(pat.PATTERN, attr)
+            if re.fullmatch("[A-Z][A-Z_]*[A-Z]", attr) and isinstance(val, str):
+                self[attr.lower()] = val
 
-    def load_user(self, path, warn=True):
+    def load(self, path, warn=True):
         """Load user-defined patterns and merge them into the registry."""
         try:
             yaml_obj = file.safe_load_yaml(path)
@@ -33,43 +40,19 @@ class PatternRegistry(dict):
                 raise PatternReferenceError(msg)
 
             for key, value in yaml_obj.items():
-                if key not in self or key == "datetime":
+                valid_pat = pat.is_valid_pattern(value)
+                if not valid_pat:
+                    if warn:
+                        logger.warning(valid_pat)
+                    continue
+
+                if key not in self:
                     self[key] = value
                 else:
                     if warn:
                         logger.warning(
                             "%r already exists; skipping update for %r.", key, val
                         )
-        except Exception as ex:
-            raise_exception(ex, cls=PatternReferenceError)
-
-    def has_conflict(self, dict_obj: dict) -> bool:
-        sys_ref = file.safe_load_yaml(config.sys_ref_yaml_file)
-        for name in dict_obj:
-            if 'datetime' not in name and name in sys_ref:
-                self.violated_format = (
-                    f"Keyword '{name}' already exists in system_references.yaml."
-                )
-                return True
-        return False
-
-    def validate_yaml(self, content: str) -> Optional[bool | None]:
-        """Validate YAML content against system-defined patterns."""
-        try:
-            yaml_obj = yaml.safe_load(content)
-            if not yaml_obj:
-                logger.warning("Skipping test: YAML content is empty or missing.")
-                self.test_result = 'not_tested'
-                return True
-
-            if not isinstance(yaml_obj, dict):
-                raise PatternReferenceError("YAML content must be a dictionary.")
-
-            if self.has_conflict(yaml_obj):
-                raise PatternReferenceError(self.violated_format)
-
-            self.test_result = 'tested'
-            return True
         except Exception as ex:
             raise_exception(ex, cls=PatternReferenceError)
 

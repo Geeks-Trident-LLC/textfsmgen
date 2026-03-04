@@ -32,3 +32,19 @@ class DotObject(dict):
         if isinstance(value, dict) and not isinstance(value, self.__class__):
             return self.__class__(value)
         return value
+
+
+class StatusString(str):
+    def __init__(self, value, status):
+        """String value that carries a boolean flag controlling truthiness and length."""
+        super().__init__(value)
+        self.status = (
+            status if issubclass(status, bool)
+            else str(status).strip().lower() == "true"
+        )
+
+    def __bool__(self):
+        return self.status
+
+    def __len__(self):
+        return int(self.status)
