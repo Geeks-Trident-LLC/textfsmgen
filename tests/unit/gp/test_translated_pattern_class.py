@@ -35,13 +35,6 @@ class TestGetReadableSnippetMethod:
         ],
     )
     def test_digits(self, digits, var_name, expected_snippet, expected_pattern):
-        """
-        Verify that single-digit and multi-digit inputs generate the correct
-        snippet strings (
-            "digit"
-            or  "digits"
-        ) along with their corresponding translated pattern.
-        """
         args = to_list(digits)
         node = TranslatedPattern.do_factory_create(*args)
         snippet = node.get_readable_snippet(var=var_name)
@@ -87,13 +80,6 @@ class TestGetReadableSnippetMethod:
         ],
     )
     def test_number(self, number, var_name, expected_snippet, expected_pattern):
-        """
-        Verify that number inputs generate the correct snippet
-        strings (
-            "number" or
-            "mixed_number"
-        ) along with their corresponding translated pattern.
-        """
         args = to_list(number)
         node = TranslatedPattern.do_factory_create(*args)
         snippet = node.get_readable_snippet(var=var_name)
@@ -140,30 +126,20 @@ class TestGetReadableSnippetMethod:
             (
                 ["--", "== +++"],
                 "v1",
-                "puncts_or_phrase(var=v1, value=--)",   # expected snippet
+                "puncts_group(var=v1, value=--)",   # expected snippet
                 # expected pattern
-                r"[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+( [\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+)*"
+                r"[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+(\s+[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+)*"
             ),
             (
                 "--  === ++++++",
                 "v1",
-                "puncts_group(var=v1, value=--  === ++++++)",   # expected snippet
+                "puncts_phrase(var=v1, value=--  === ++++++)",   # expected snippet
                 # expected pattern
-                r"[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+( +[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+)+"
+                r"[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+(\s+[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+)+"
             ),
         ],
     )
     def test_punctuations(self, puncts, var_name, expected_snippet, expected_pattern):
-        """
-        Verify that punctuation inputs generate the correct snippet
-        strings (
-            "punct",
-            "puncts",
-            "puncts_or_group",
-            or "puncts_group"
-        )
-        along with their corresponding translated pattern.
-        """
         args = to_list(puncts)
         node = TranslatedPattern.do_factory_create(*args)
         snippet = node.get_readable_snippet(var=var_name)
@@ -190,19 +166,19 @@ class TestGetReadableSnippetMethod:
                 "var1",
                 "v1",
                 "word(var=v1, value=var1)",     # expected snippet
-                "[a-zA-Z][a-zA-Z0-9]*"          # expected pattern
+                r"[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*"          # expected pattern
             ),
             (
                 ["var1", "var1 var2"],
                 "v1",
                 "words(var=v1, value=var1)",                    # expected snippet
-                "[a-zA-Z][a-zA-Z0-9]*( [a-zA-Z][a-zA-Z0-9]*)*"  # expected pattern
+                r"[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)*"  # expected pattern
             ),
             (
                 "ab cd",
                 "v1",
                 "phrase(var=v1, value=ab cd)",                  # expected snippet
-                "[a-zA-Z][a-zA-Z0-9]*( [a-zA-Z][a-zA-Z0-9]*)+"  # expected pattern
+                r"[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)+"  # expected pattern
             ),
             (
                 "1.1.1.1",
@@ -215,32 +191,18 @@ class TestGetReadableSnippetMethod:
                 "v1",
                 "mixed_words(var=v1, value=1.1.1.1)",   # expected snippet
                 # expected pattern
-                r"[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*( [\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)*"
+                r"[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*(\s+[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)*"
             ),
             (
                 "1.1.1.1 2.2.2.2",
                 "v1",
                 "mixed_phrase(var=v1, value=1.1.1.1 2.2.2.2)",  # expected snippet
                 # expected pattern
-                r"[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*( [\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)+"
+                r"[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*(\s+[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)+"
             ),
         ],
     )
     def test_creating_text_snippet(self, text, var_name, expected_snippet, expected_pattern):
-        """
-        Verify that text inputs generate the correct snippet strings
-        (
-            "letter",
-            "letters",
-            "word",
-            "words",
-            "phrase",
-            "mixed_word",
-            "mixed_words",
-            or "mixed_phrases"
-        )
-        along with their corresponding translated pattern.
-        """
         args = to_list(text)
         node = TranslatedPattern.do_factory_create(*args)
         snippet = node.get_readable_snippet(var=var_name)
@@ -259,10 +221,6 @@ class TestGetReadableSnippetMethod:
         ],
     )
     def test_creating_graph_snippet(self, data, var_name, expected_snippet, expected_pattern):
-        """
-        Verify that data inputs generate the correct snippet strings ("graph")
-        along with their corresponding translated pattern.
-        """
         args = to_list(data)
         node = TranslatedPattern.do_factory_create(*args)
         snippet = node.get_readable_snippet(var=var_name)
@@ -275,40 +233,30 @@ class TestGetReadableSnippetMethod:
             (
                 ["a", "1", "\xc8"],
                 "v1",
-                "non_whitespace(var=v1, value=a)",
+                "non_ws(var=v1, value=a)",
                 r"\S"
             ),
             (
                 ["abc", "123", "-+"],
                 "v1",
-                "non_whitespaces(var=v1, value=abc)",
+                "non_wss(var=v1, value=abc)",
                 r"\S+"
             ),
             (
                 ["abc", "123", "---- ++++"],
                 "v1",
-                "non_whitespaces_or_phrase(var=v1, value=abc)",
-                r"\S+( \S+)*"
+                "non_wss_group(var=v1, value=abc)",
+                r"\S+(\s+\S+)*"
             ),
             (
                 ["abc xyz", "123 456", "---- ++++"],
                 "v1",
-                "non_whitespaces_phrase(var=v1, value=abc xyz)",
-                r"\S+( \S+)+"
+                "non_wss_phrase(var=v1, value=abc xyz)",
+                r"\S+(\s+\S+)+"
             ),
         ],
     )
     def test_creating_non_white_space_snippet(self, data, var_name, expected_snippet, expected_pattern):
-        """
-        Verify that data inputs generate the correct snippet strings
-        (
-            "non_whitespace",
-            "non_whitespaces",
-            "non_whitespaces_or_phrase",
-            or "non_whitespaces_phrase"
-        )
-        along with their corresponding translated pattern.
-        """
         args = to_list(data)
         node = TranslatedPattern.do_factory_create(*args)
         snippet = node.get_readable_snippet(var=var_name)

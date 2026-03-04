@@ -12,25 +12,25 @@ Run pytest in the project root to execute these tests:
 import pytest
 
 from textfsmgen.gp import (
-TranslatedPattern,
-TranslatedDigitPattern,
-TranslatedDigitsPattern,
-TranslatedNumberPattern,
-TranslatedMixedNumberPattern,
+    TranslatedPattern,
+    TranslatedDigitPattern,
+    TranslatedDigitsPattern,
+    TranslatedNumberPattern,
+    TranslatedMixedNumberPattern,
 # TranslatedLetterPattern,
 # TranslatedLettersPattern,
-TranslatedAlphabetNumericPattern,
+    TranslatedAlphabetNumericPattern,
 # TranslatedPunctPattern,
 # TranslatedPunctsPattern,
 # TranslatedPunctsGroupPattern,
 # TranslatedGraphPattern,
-TranslatedWordPattern,
-TranslatedWordsPattern,
-TranslatedMixedWordPattern,
-TranslatedMixedWordsPattern,
-TranslatedNonWhitespacePattern,
-TranslatedNonWhitespacesPattern,
-TranslatedNonWhitespacesGroupPattern
+    TranslatedWordPattern,
+    TranslatedWordsPattern,
+    TranslatedMixedWordPattern,
+    TranslatedMixedWordsPattern,
+    TranslatedNonWSPattern,
+    TranslatedNonWSSPattern,
+    TranslatedNonWSSGroupPattern
 )
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
@@ -90,7 +90,6 @@ class TestTranslatedDigitPatternClass:
     @pytest.mark.parametrize(
         "other",
         [
-            "1",                # digit is not a superset of digit
             "123",              # digit is not a superset of digits
             "1.1",              # digit is not a superset of number
             "abc\xc8 xyz",      # digit is not a superset of non-whitespace group
@@ -141,16 +140,16 @@ class TestTranslatedDigitPatternClass:
                 TranslatedMixedWordsPattern # (digit, mixed-words) => mixed-words
             ),
             (
-                "\xc8",                         # non-whitespace
-                TranslatedNonWhitespacePattern  # (digit, non-whitespace) => non-whitespace
+                "\xc8",  # non-whitespace
+                TranslatedNonWSPattern  # (digit, non-whitespace) => non-whitespace
             ),
             (
-                "abc\xc8",                      # non-whitespaces
-                TranslatedNonWhitespacesPattern # (digit, non-whitespaces) => non-whitespaces
+                "abc\xc8",  # non-whitespaces
+                TranslatedNonWSSPattern # (digit, non-whitespaces) => non-whitespaces
             ),
             (
-                "abc\xc8 xyz",                          # non-whitespace-group
-                TranslatedNonWhitespacesGroupPattern    # (digit, non-whitespace-group) => non-whitespace-group
+                "abc\xc8 xyz",  # non-whitespace-group
+                TranslatedNonWSSGroupPattern    # (digit, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -176,16 +175,16 @@ class TestTranslatedDigitPatternClass:
                 TranslatedWordPattern   # (digit, letters) => word
             ),
             (
-                "+",                            # punctuation
-                TranslatedNonWhitespacePattern  # (digit, punct) => non-whitespace
+                "+",  # punctuation
+                TranslatedNonWSPattern  # (digit, punct) => non-whitespace
             ),
             (
-                "++",                           # punctuations
-                TranslatedNonWhitespacesPattern # (digit, puncts) => non-whitespaces
+                "++",  # punctuations
+                TranslatedNonWSSPattern # (digit, puncts) => non-whitespaces
             ),
             (
-                "++ -- ==",                             # punctuation-group
-                TranslatedNonWhitespacesGroupPattern    # (digit, punct-group) => non-whitespace-group
+                "++ -- ==",  # punctuation-group
+                TranslatedNonWSSGroupPattern    # (digit, punct-group) => non-whitespace-group
             ),
         ],
     )

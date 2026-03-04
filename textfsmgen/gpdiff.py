@@ -347,7 +347,6 @@ class NDiffChangedText(NDiffBaseText):
         self,
         var: str = "",
         label: Optional[str | None] = None,
-        is_lessen: bool = False,
         is_root: bool = False,
     ) -> str:
         """
@@ -359,8 +358,6 @@ class NDiffChangedText(NDiffBaseText):
             Variable name to use in the regex group.
         label : str, optional
             Label to append to the variable name.
-        is_lessen : bool, optional
-            Whether to use the lessened pattern from the factory.
         is_root : bool, optional
             Whether to use the root pattern from the factory.
 
@@ -378,8 +375,7 @@ class NDiffChangedText(NDiffBaseText):
         if txt1 or txt2:    # noqa
             args = [txt1, txt2] if txt1 and txt2 else [txt1] if txt1 else [txt2]
             factory = TranslatedPattern.do_factory_create(*args)
-            pattern = factory.lessen_pattern if is_lessen else factory.pattern
-            pattern = factory.root_pattern if is_root else pattern
+            pattern = factory.root_pattern if is_root else factory.pattern
         else:
             pattern = ""
 
@@ -395,7 +391,6 @@ class NDiffChangedText(NDiffBaseText):
         self,
         var: str = "",
         label: Optional[str | None] = None,
-        is_lessen: bool = False,
         is_root: bool = False,
     ) -> str:
         """
@@ -407,8 +402,6 @@ class NDiffChangedText(NDiffBaseText):
             Variable name to use in the snippet.
         label : str, optional
             Label to append to the variable name.
-        is_lessen : bool, optional
-            Whether to use the lessened snippet from the factory.
         is_root : bool, optional
             Whether to use the root snippet from the factory.
 
@@ -426,7 +419,7 @@ class NDiffChangedText(NDiffBaseText):
         if txt1 or txt2:
             args = [txt1, txt2] if txt1 and txt2 else [txt1] if txt1 else [txt2]
             factory = TranslatedPattern.do_factory_create(*args)
-            kwargs = dict(var=var, is_lessen=is_lessen, is_root=is_root)
+            kwargs = dict(var=var, is_root=is_root)
             self._snippet = factory.get_template_snippet(**kwargs)
             if self.is_containing_empty_changed:
                 self._snippet = f"{self._snippet[:-1]}, or_empty)"
@@ -455,8 +448,6 @@ class NDiffLinePattern:
         whether either line contains whitespace.
     label : str, optional
         Label used for variable naming in generated patterns/snippets.
-    is_lessen : bool, optional
-        Whether to use a lessened pattern representation.
     is_root : bool, optional
         Whether to use a root pattern representation.
 
@@ -466,8 +457,6 @@ class NDiffLinePattern:
         Regex pattern used for whitespace handling.
     label : str or None
         Label used for variable naming.
-    is_lessen : bool
-        Flag for lessened pattern usage.
     is_root : bool
         Flag for root pattern usage.
     is_leading : bool
@@ -510,7 +499,6 @@ class NDiffLinePattern:
         line_b: str,
         whitespace: str = None,
         label: str = None,
-        is_lessen: bool = False,
         is_root: bool = False,
     ):
         self.whitespace = whitespace
@@ -519,7 +507,6 @@ class NDiffLinePattern:
             self.whitespace = PATTERN.WS if is_ws else PATTERN.SPACE
 
         self.label = label
-        self.is_lessen = is_lessen
         self.is_root = is_root
 
         # Leading whitespace detection
@@ -741,7 +728,7 @@ class NDiffLinePattern:
         - Leading/trailing whitespace is preserved using `PATTERN.WSS`
           or `PATTERN.SPACES`.
         """
-        kwargs = dict(label=self.label, is_lessen=self.is_lessen, is_root=self.is_root)
+        kwargs = dict(label=self.label, is_root=self.is_root)
 
         total = len(lst)
         if total == 1:
@@ -805,7 +792,6 @@ class NDiffLinePattern:
                 kwargs = dict(
                     var=f"v{count}",
                     label=self.label,
-                    is_lessen=self.is_lessen,
                     is_root=self.is_root,
                 )
                 snippet_ = item.get_snippet(**kwargs)   # noqa
@@ -1153,7 +1139,7 @@ class DiffLinePattern(RuntimeException):
 
     def get_pattern_btw_two_lines(
         self, line_a: str, line_b: str,
-        is_lessen: bool = False, is_root: bool = False
+        is_root: bool = False
     ) -> str:
         """
         Generate a regex pattern between two lines.
@@ -1164,8 +1150,6 @@ class DiffLinePattern(RuntimeException):
             First line to compare.
         line_b : str
             Second line to compare.
-        is_lessen : bool, optional
-            Whether to use a lessened pattern representation.
         is_root : bool, optional
             Whether to use a root pattern representation.
 
@@ -1179,7 +1163,6 @@ class DiffLinePattern(RuntimeException):
             line_b,
             label=self.label,
             whitespace=f"{self.whitespace}",
-            is_lessen=is_lessen,
             is_root=is_root,
         )
         self._is_diff = diff_line_obj.is_diff
@@ -1187,7 +1170,7 @@ class DiffLinePattern(RuntimeException):
 
     def get_snippet_btw_two_lines(
         self, line_a: str, line_b: str,
-        is_lessen: bool = False, is_root: bool = False
+        is_root: bool = False
     ) -> str:
         """
         Generate a snippet representation between two lines.
@@ -1198,8 +1181,6 @@ class DiffLinePattern(RuntimeException):
             First line to compare.
         line_b : str
             Second line to compare.
-        is_lessen : bool, optional
-            Whether to use a lessened snippet representation.
         is_root : bool, optional
             Whether to use a root snippet representation.
 
@@ -1213,7 +1194,6 @@ class DiffLinePattern(RuntimeException):
             line_b,
             label=self.label,
             whitespace=f"{self.whitespace}",
-            is_lessen=is_lessen,
             is_root=is_root,
         )
         return diff_line_obj.snippet
@@ -1320,8 +1300,7 @@ class DiffLinePattern(RuntimeException):
         to generate a valid pattern/snippet using three passes:
 
         1. **First pass**: Standard pattern generation.
-        2. **Second pass**: Pattern generation with `is_lessen=True`.
-        3. **Third pass**: Pattern generation with `is_root=True`.
+        3. **Second pass**: Pattern generation with `is_root=True`.
 
         If a matching pattern is found that validates against all lines,
         the internal `_pattern` and `_snippet` are updated and
@@ -1354,10 +1333,8 @@ class DiffLinePattern(RuntimeException):
                     return True
             return False
 
-        # Try passes in order: default, lessen, root
+        # Try passes in order: default, root
         if try_pass():
-            return
-        if try_pass(is_lessen=True):
             return
         if try_pass(is_root=True):
             return

@@ -1,5 +1,5 @@
 """
-Unit tests for the `textfsmgen.gp.TranslatedNonWhitespacesGroupPattern` class.
+Unit tests for the `textfsmgen.gp.TranslatedNonWSSGroupPattern` class.
 
 Usage
 -----
@@ -12,7 +12,7 @@ Run pytest in the project root to execute these tests:
 import pytest
 
 from textfsmgen.gp import (
-TranslatedPattern,
+    TranslatedPattern,
 # TranslatedDigitPattern,
 # TranslatedDigitsPattern,
 # TranslatedNumberPattern,
@@ -28,20 +28,20 @@ TranslatedPattern,
 # TranslatedWordsPattern,
 # TranslatedMixedWordPattern,
 # TranslatedMixedWordsPattern,
-# TranslatedNonWhitespacePattern,
-# TranslatedNonWhitespacesPattern,
-TranslatedNonWhitespacesGroupPattern
+# TranslatedNonWSPattern,
+# TranslatedNonWSSPattern,
+    TranslatedNonWSSGroupPattern
 )
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
 
 
 class TestTranslatedNonWhitespacesGroupPatternClass:
-    """Test suite for TranslatedNonWhitespacesGroupPattern class."""
+    """Test suite for TranslatedNonWSSGroupPattern class."""
 
     def setup_method(self):
-        """Create a baseline TranslatedNonWhitespacesGroupPattern instance for reuse."""
-        self.non_whitespaces_group_node = TranslatedNonWhitespacesGroupPattern("abc\xc8 xyz")
+        """Create a baseline TranslatedNonWSSGroupPattern instance for reuse."""
+        self.non_whitespaces_group_node = TranslatedNonWSSGroupPattern("abc\xc8 xyz")
 
     @pytest.mark.parametrize(
         "other",
@@ -108,8 +108,8 @@ class TestTranslatedNonWhitespacesGroupPatternClass:
         "data, expected_class",
         [
             (   # (non-whitespaces-group, non-whitespace-group) => non-whitespace-group
-                "abc\xc8 xyz",      # non-whitespace-group
-                TranslatedNonWhitespacesGroupPattern
+                    "abc\xc8 xyz",  # non-whitespace-group
+                    TranslatedNonWSSGroupPattern
             ),
         ],
     )
@@ -127,72 +127,72 @@ class TestTranslatedNonWhitespacesGroupPatternClass:
         "data, expected_class",
         [
             (   # (non-whitespaces-group, letter) => non-whitespaces-group
-                "a",        # letter
-                TranslatedNonWhitespacesGroupPattern
+                    "a",  # letter
+                    TranslatedNonWSSGroupPattern
             ),
             (   # (non-whitespaces, letters) => non-whitespaces-group
-                "abc",      # letters
-                TranslatedNonWhitespacesGroupPattern
+                    "abc",  # letters
+                    TranslatedNonWSSGroupPattern
             ),
             (   ## (non-whitespaces, digit) => non-whitespaces-group
-                "1",        # digit
-                TranslatedNonWhitespacesGroupPattern
+                    "1",  # digit
+                    TranslatedNonWSSGroupPattern
             ),
             (   # (non-whitespaces, digits) => non-whitespaces-group
-                "123",      # digits
-                TranslatedNonWhitespacesGroupPattern
+                    "123",  # digits
+                    TranslatedNonWSSGroupPattern
             ),
             (   # (non-whitespaces, number) => non-whitespaces-group
-                "1.1",      # number
-                TranslatedNonWhitespacesGroupPattern
+                    "1.1",  # number
+                    TranslatedNonWSSGroupPattern
             ),
             (   # (non-whitespaces, mixed-number) => non-whitespaces-group
-                "-1.1",     # mixed-number
-                TranslatedNonWhitespacesGroupPattern
+                    "-1.1",  # mixed-number
+                    TranslatedNonWSSGroupPattern
             ),
             (   # (non-whitespaces, alpha-num) => non-whitespaces-group
-                ["a", "1"],     # alpha-num
-                TranslatedNonWhitespacesGroupPattern
+                    ["a", "1"],  # alpha-num
+                    TranslatedNonWSSGroupPattern
             ),
             (   # (non-whitespaces, graph) => non-whitespaces-group
-                ["a", "1", "#"],    # graph
-                TranslatedNonWhitespacesGroupPattern
+                    ["a", "1", "#"],  # graph
+                    TranslatedNonWSSGroupPattern
             ),
             (   # (non-whitespaces, punct) => non-whitespaces-group
-                "-",        # punct
-                TranslatedNonWhitespacesGroupPattern
+                    "-",  # punct
+                    TranslatedNonWSSGroupPattern
             ),
             (   # (non-whitespaces, puncts) => non-whitespaces-group
-                "--++==",   # puncts
-                TranslatedNonWhitespacesGroupPattern
+                    "--++==",  # puncts
+                    TranslatedNonWSSGroupPattern
             ),
             (   # (non-whitespaces, puncts-group) => non-whitespaces-group
-                "-- ++ ==",  # puncts-group
-                TranslatedNonWhitespacesGroupPattern
+                    "-- ++ ==",  # puncts-group
+                    TranslatedNonWSSGroupPattern
             ),
             (   # (non-whitespaces, word) => non-whitespaces-group
-                "abc123",   # word
-                TranslatedNonWhitespacesGroupPattern
+                    "abc123",  # word
+                    TranslatedNonWSSGroupPattern
             ),
             (   # (non-whitespaces, words) => non-whitespaces-group
-                "a1 b2",    # words
-                TranslatedNonWhitespacesGroupPattern
+                    "a1 b2",  # words
+                    TranslatedNonWSSGroupPattern
             ),
             (   # (non-whitespaces, mixed-word) => non-whitespaces-group
-                "abc.123",  # mixed-word
-                TranslatedNonWhitespacesGroupPattern
+                    "abc.123",  # mixed-word
+                    TranslatedNonWSSGroupPattern
             ),
             (   # (non-whitespaces, mixed-words) => non-whitespaces-group
-                "a.1 b.2",  # mixed-words
-                TranslatedNonWhitespacesGroupPattern
+                    "a.1 b.2",  # mixed-words
+                    TranslatedNonWSSGroupPattern
             ),
             (   # (non-whitespaces, non-whitespace) => non-whitespaces-group
-                "\xc8",     # non-whitespace
-                TranslatedNonWhitespacesGroupPattern
+                    "\xc8",  # non-whitespace
+                    TranslatedNonWSSGroupPattern
             ),
             (  # (non-whitespaces, non-whitespaces) => non-whitespaces-group
-                "abc\xc8",  # non-whitespaces
-                TranslatedNonWhitespacesGroupPattern
+                    "abc\xc8",  # non-whitespaces
+                    TranslatedNonWSSGroupPattern
             ),
         ],
     )

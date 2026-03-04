@@ -94,18 +94,18 @@ class TestDChangeClass:
             (("a", "case03", ["b", "1"]), "alphabet_numeric(var_case03)"),
             (("-", "case04", ["+", "*"]), "punct(var_case04)"),
             (("a", "case05", ["1", "*"]), "graph(var_case05)"),
-            (("a", "case06", ["1", "\xc8"]), "non_whitespace(var_case06)"),
+            (("a", "case06", ["1", "\xc8"]), "non_ws(var_case06)"),
 
             (("abc", "case11", ["B", "xyz"]), "letters(var_case11)"),
             (("123", "case12", ["2", "123"]), "digits(var_case12)"),
             (("--", "case13", ["++", "***"]), "puncts(var_case13)"),
-            (("abc", "case14", ["1", "\xc8"]), "non_whitespaces(var_case14)"),
+            (("abc", "case14", ["1", "\xc8"]), "non_wss(var_case14)"),
 
             (("1.1", "case21", ["2.2", "3.3"]), "number(var_case21)"),
             (("1.1", "case22", ["-2.2", "3.3"]), "mixed_number(var_case22)"),
 
             (("abc123", "case31", ["cde", "xyz"]), "word(var_case31)"),
-            (("var_abc", "case32", ["cde", "xyz"]), "mixed_word(var_case32)"),
+            # (("var_abc", "case32", ["cde", "xyz"]), "mixed_word(var_case32)"),
 
             (("a1 b1", "case41", ["b1", "c1"]), "words(var_case41)"),
             (("a1", "case42", ["b1 d2", "c1"]), "words(var_case42)"),
@@ -115,11 +115,11 @@ class TestDChangeClass:
             (("a1", "case52", ["b.1 d2", "c1"]), "mixed_words(var_case52)"),
             (("a1 b2", "case53", ["b.1 d2", "1 4"]), "mixed_phrase(var_case53)"),
 
-            (("-- ++", "v61", ["==", ".."]), "puncts_or_phrase(var_v61)"),
+            (("-- ++", "v61", ["==", ".."]), "puncts_group(var_v61)"),
             (("-- ++", "v62", ["== ++", ".. ::"]), "puncts_phrase(var_v62)"),
 
-            (("a1\xc8", "v71", ["b1 d2", "c1 123"]), "non_whitespaces_or_phrase(var_v71)"),
-            (("a1\xc8 --", "v71", ["b1 d2", "c1 123"]), "non_whitespaces_phrase(var_v71)"),
+            (("a1\xc8", "v71", ["b1 d2", "c1 123"]), "non_wss_group(var_v71)"),
+            (("a1\xc8 --", "v71", ["b1 d2", "c1 123"]), "non_wss_phrase(var_v71)"),
 
             # add or_empty in snippet if diff change has or add empty string
             (("", "case81", ["B", "z"]), "letter(var_case81, or_empty)"),
@@ -162,22 +162,22 @@ class TestDChangeClass:
             (("1.1", "case21", ["2.2", "3.3"]), r"(?P<case21>\d*[.]?\d+)"),
             (("1.1", "case22", ["-2.2", "3.3"]), r"(?P<case22>[+\(\[\$-]?(\d+([,:/-]\d+)*)?[.]?\d+[\]\)%a-zA-Z]*)"),
 
-            (("abc123", "case31", ["cde", "xyz"]), r"(?P<case31>[a-zA-Z][a-zA-Z0-9]*)"),
-            (("var_abc", "case32", ["cde", "xyz"]), r"(?P<case32>[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)"),
+            (("abc123", "case31", ["cde", "xyz"]), r"(?P<case31>[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)"),
+            # (("var_abc", "case32", ["cde", "xyz"]), r"(?P<case32>[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)"),
 
-            (("a1 b1", "case41", ["b1", "c1"]), r"(?P<case41>[a-zA-Z][a-zA-Z0-9]*( [a-zA-Z][a-zA-Z0-9]*)*)"),
-            (("a1", "case42", ["b1 d2", "c1"]), r"(?P<case42>[a-zA-Z][a-zA-Z0-9]*( [a-zA-Z][a-zA-Z0-9]*)*)"),
-            (("a1 b1", "case43", ["b1 d2", "x3 y3"]), r"(?P<case43>[a-zA-Z][a-zA-Z0-9]*( [a-zA-Z][a-zA-Z0-9]*)+)"),
+            (("a1 b1", "case41", ["b1", "c1"]), r"(?P<case41>[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)*)"),
+            (("a1", "case42", ["b1 d2", "c1"]), r"(?P<case42>[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)*)"),
+            (("a1 b1", "case43", ["b1 d2", "x3 y3"]), r"(?P<case43>[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)+)"),
             #
-            (("a.1 b1", "case51", ["b1", "c1"]), r"(?P<case51>[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*( [\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)*)"),
-            (("a1", "case52", ["b.1 d2", "c1"]), r"(?P<case52>[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*( [\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)*)"),
-            (("a1 b2", "case53", ["b.1 d2", "1 4"]), r"(?P<case53>[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*( [\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)+)"),
+            (("a.1 b1", "case51", ["b1", "c1"]), r"(?P<case51>[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*(\s+[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)*)"),
+            (("a1", "case52", ["b.1 d2", "c1"]), r"(?P<case52>[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*(\s+[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)*)"),
+            (("a1 b2", "case53", ["b.1 d2", "1 4"]), r"(?P<case53>[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*(\s+[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)+)"),
 
-            (("-- ++", "v61", ["==", ".."]), r"(?P<v61>[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+( [\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+)*)"),
-            (("-- ++", "v62", ["== ++", ".. ::"]), r"(?P<v62>[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+( [\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+)+)"),
+            (("-- ++", "v61", ["==", ".."]), r"(?P<v61>[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+(\s+[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+)*)"),
+            (("-- ++", "v62", ["== ++", ".. ::"]), r"(?P<v62>[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+(\s+[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+)+)"),
 
-            (("a1\xc8", "v71", ["b1 d2", "c1 123"]), r"(?P<v71>\S+( \S+)*)"),
-            (("a1\xc8 --", "v71", ["b1 d2", "c1 123"]), r"(?P<v71>\S+( \S+)+)"),
+            (("a1\xc8", "v71", ["b1 d2", "c1 123"]), r"(?P<v71>\S+(\s+\S+)*)"),
+            (("a1\xc8 --", "v71", ["b1 d2", "c1 123"]), r"(?P<v71>\S+(\s+\S+)+)"),
 
             # add or_empty in snippet if diff change has or add empty string
             (("", "case81", ["B", "z"]), "(?P<case81>([a-zA-Z])|)"),

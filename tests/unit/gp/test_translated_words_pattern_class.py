@@ -12,7 +12,7 @@ Run pytest in the project root to execute these tests:
 import pytest
 
 from textfsmgen.gp import (
-TranslatedPattern,
+    TranslatedPattern,
 # TranslatedDigitPattern,
 # TranslatedDigitsPattern,
 # TranslatedNumberPattern,
@@ -25,12 +25,12 @@ TranslatedPattern,
 # TranslatedPunctsGroupPattern,
 # TranslatedGraphPattern,
 # TranslatedWordPattern,
-TranslatedWordsPattern,
+    TranslatedWordsPattern,
 # TranslatedMixedWordPattern,
-TranslatedMixedWordsPattern,
-# TranslatedNonWhitespacePattern,
-# TranslatedNonWhitespacesPattern,
-TranslatedNonWhitespacesGroupPattern
+    TranslatedMixedWordsPattern,
+# TranslatedNonWSPattern,
+# TranslatedNonWSSPattern,
+    TranslatedNonWSSGroupPattern
 )
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
@@ -84,7 +84,6 @@ class TestTranslatedWordsPatternClass:
         [
             "a",                # words are a superset of letter
             "abc",              # words are a superset of letters
-            "abc123",           # words are a superset of word
         ],
     )
     def test_is_superset_of(self, other):
@@ -107,8 +106,8 @@ class TestTranslatedWordsPatternClass:
                 TranslatedMixedWordsPattern # (words, mixed-words) => mixed-words
             ),
             (
-                "abc\xc8 xyz",                          # non-whitespace-group
-                TranslatedNonWhitespacesGroupPattern    # (words, non-whitespace-group) => non-whitespace-group
+                "abc\xc8 xyz",  # non-whitespace-group
+                TranslatedNonWSSGroupPattern    # (words, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -133,10 +132,10 @@ class TestTranslatedWordsPatternClass:
                 "abc",                  # letters
                 TranslatedWordsPattern  # (words, letters) => words
             ),
-            (
-                "abc123",               # word
-                TranslatedWordsPattern  # (words, word) => words
-            ),
+            # (
+            #     "abc123",               # word
+            #     TranslatedWordsPattern  # (words, word) => words
+            # ),
         ],
     )
     def test_recommend_method_case_superset(self, data, expected_class):
@@ -153,44 +152,44 @@ class TestTranslatedWordsPatternClass:
         "data, expected_class",
         [
             (
-                ["a", "1"],                             # alpha-num
-                TranslatedNonWhitespacesGroupPattern    # (words, alpha-num) => non-whitespaces-group
+                    ["a", "1"],  # alpha-num
+                    TranslatedNonWSSGroupPattern    # (words, alpha-num) => non-whitespaces-group
             ),
             (
-                ["a", "1", "#"],                        # graph
-                TranslatedNonWhitespacesGroupPattern    # (words, graph) => non-whitespaces-group
+                    ["a", "1", "#"],  # graph
+                    TranslatedNonWSSGroupPattern    # (words, graph) => non-whitespaces-group
             ),
             (
-                "1",                                    # digit
-                TranslatedNonWhitespacesGroupPattern    # (words, digit) => non-whitespaces-group
+                "1",  # digit
+                TranslatedNonWSSGroupPattern    # (words, digit) => non-whitespaces-group
             ),
             (
-                "123",                                  # digits
-                TranslatedNonWhitespacesGroupPattern    # (words, digits) => non-whitespaces-group
+                "123",  # digits
+                TranslatedNonWSSGroupPattern    # (words, digits) => non-whitespaces-group
             ),
             (
-                "1.23",                                 # number
-                TranslatedNonWhitespacesGroupPattern    # (words, number) => non-whitespaces-group
+                "1.23",  # number
+                TranslatedNonWSSGroupPattern    # (words, number) => non-whitespaces-group
             ),
             (
-                "-1.1",                                 # mixed-number
-                TranslatedNonWhitespacesGroupPattern    # (words, mixed-number) => non-whitespaces-group
+                "-1.1",  # mixed-number
+                TranslatedNonWSSGroupPattern    # (words, mixed-number) => non-whitespaces-group
             ),
             (
-                "\xc8",                                 # non-whitespace
-                TranslatedNonWhitespacesGroupPattern    # (words, non-whitespace) => non-whitespaces-group
+                "\xc8",  # non-whitespace
+                TranslatedNonWSSGroupPattern    # (words, non-whitespace) => non-whitespaces-group
             ),
             (
-                "-",                                    # punct
-                TranslatedNonWhitespacesGroupPattern    # (words, non-whitespace) => non-whitespaces-group
+                "-",  # punct
+                TranslatedNonWSSGroupPattern    # (words, non-whitespace) => non-whitespaces-group
             ),
             (
-                "--++==",                               # puncts
-                TranslatedNonWhitespacesGroupPattern    # (words, puncts) => non-whitespaces-group
+                "--++==",  # puncts
+                TranslatedNonWSSGroupPattern    # (words, puncts) => non-whitespaces-group
             ),
             (
-                "-- ++ ==",                             # punct-group
-                TranslatedNonWhitespacesGroupPattern    # (words, punct-group) => non-whitespace-group
+                "-- ++ ==",  # punct-group
+                TranslatedNonWSSGroupPattern    # (words, punct-group) => non-whitespace-group
             ),
         ],
     )

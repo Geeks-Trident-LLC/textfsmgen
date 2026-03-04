@@ -35,7 +35,7 @@ LastWriteTime          Name
 12/16/2021 12:30:59 PM CONTRIBUTING.md
     """.strip()
 
-    expected_pattern = r'(?P<lastwritetime>[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*( [\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*){,2}) +(?P<name>[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)' # noqa
+    expected_pattern = r'(?P<lastwritetime>[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*(\s+[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*){,2}) +(?P<name>[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)' # noqa
 
     expected_results = [
         {'lastwritetime': 'LastWriteTime', 'name': 'Name'},
@@ -65,7 +65,7 @@ orange    pork      water
 peach               pepsi soda
     """.strip()
 
-    expected_pattern = r'(?P<fruits>[a-zA-Z]+) (?P<meat>( {10,15})|( *[a-zA-Z]+ *)) (?P<drinks>[a-zA-Z][a-zA-Z0-9]*( [a-zA-Z][a-zA-Z0-9]*){,1})'  # noqa
+    expected_pattern = r'(?P<fruits>[a-zA-Z]+) (?P<meat>( {10,15})|( *[a-zA-Z]+ *)) (?P<drinks>[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*){,1})'  # noqa
 
     expected_results = [
         {'fruits': 'fruits', 'meat': 'meat', 'drinks': 'drinks'},
@@ -538,7 +538,7 @@ start() letters(var_fruits) space(repetition_10_15) word(var_drinks, at_most_1_p
 ################################################################################
 Value fruits ([a-zA-Z]+)
 Value meat ([a-zA-Z]+)
-Value drinks ([a-zA-Z][a-zA-Z0-9]*( [a-zA-Z][a-zA-Z0-9]*){,1})
+Value drinks ([a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*( [a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*){,1})
 
 Start
   ^fruits +meat +drinks

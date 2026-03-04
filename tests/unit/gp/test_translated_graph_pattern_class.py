@@ -12,7 +12,7 @@ Run pytest in the project root to execute these tests:
 import pytest
 
 from textfsmgen.gp import (
-TranslatedPattern,
+    TranslatedPattern,
 # TranslatedDigitPattern,
 # TranslatedDigitsPattern,
 # TranslatedNumberPattern,
@@ -23,14 +23,14 @@ TranslatedPattern,
 # TranslatedPunctPattern,
 # TranslatedPunctsPattern,
 # TranslatedPunctsGroupPattern,
-TranslatedGraphPattern,
+    TranslatedGraphPattern,
 # TranslatedWordPattern,
 # TranslatedWordsPattern,
-TranslatedMixedWordPattern,
-TranslatedMixedWordsPattern,
-TranslatedNonWhitespacePattern,
-TranslatedNonWhitespacesPattern,
-TranslatedNonWhitespacesGroupPattern
+    TranslatedMixedWordPattern,
+    TranslatedMixedWordsPattern,
+    TranslatedNonWSPattern,
+    TranslatedNonWSSPattern,
+    TranslatedNonWSSGroupPattern
 )
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
@@ -114,16 +114,16 @@ class TestTranslatedGraphPatternClass:
                 TranslatedMixedWordsPattern # (graph, mixed-words) => mixed-words
             ),
             (
-                "\xc8",                         # non-whitespace
-                TranslatedNonWhitespacePattern # (graph, non-whitespace) => non-whitespace
+                "\xc8",  # non-whitespace
+                TranslatedNonWSPattern # (graph, non-whitespace) => non-whitespace
             ),
             (
-                "abc\xc8",                      # non-whitespaces
-                TranslatedNonWhitespacesPattern # (graph, non-whitespaces) => non-whitespaces
+                "abc\xc8",  # non-whitespaces
+                TranslatedNonWSSPattern # (graph, non-whitespaces) => non-whitespaces
             ),
             (
-                "abc\xc8 xyz",                          # non-whitespace-group
-                TranslatedNonWhitespacesGroupPattern    # (graph, non-whitespace-group) => non-whitespace-group
+                "abc\xc8 xyz",  # non-whitespace-group
+                TranslatedNonWSSGroupPattern    # (graph, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )

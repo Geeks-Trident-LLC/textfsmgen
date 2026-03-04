@@ -12,11 +12,11 @@ Run pytest in the project root to execute these tests:
 import pytest
 
 from textfsmgen.gp import (
-TranslatedPattern,
+    TranslatedPattern,
 # TranslatedDigitPattern,
 # TranslatedDigitsPattern,
-TranslatedNumberPattern,
-TranslatedMixedNumberPattern,
+    TranslatedNumberPattern,
+    TranslatedMixedNumberPattern,
 # TranslatedLetterPattern,
 # TranslatedLettersPattern,
 # TranslatedAlphabetNumericPattern,
@@ -26,11 +26,11 @@ TranslatedMixedNumberPattern,
 # TranslatedGraphPattern,
 # TranslatedWordPattern,
 # TranslatedWordsPattern,
-TranslatedMixedWordPattern,
-TranslatedMixedWordsPattern,
-# TranslatedNonWhitespacePattern,
-TranslatedNonWhitespacesPattern,
-TranslatedNonWhitespacesGroupPattern
+    TranslatedMixedWordPattern,
+    TranslatedMixedWordsPattern,
+# TranslatedNonWSPattern,
+    TranslatedNonWSSPattern,
+    TranslatedNonWSSGroupPattern
 )
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
@@ -110,12 +110,12 @@ class TestTranslatedNumberPatternClass:
                 TranslatedMixedNumberPattern    # (number, mixed-number) => mixed-number
             ),
             (
-                "abc\xc8",                      # non-whitespaces
-                TranslatedNonWhitespacesPattern # (number, non-whitespaces) => non-whitespaces
+                "abc\xc8",  # non-whitespaces
+                TranslatedNonWSSPattern # (number, non-whitespaces) => non-whitespaces
             ),
             (
-                "abc\xc8 xyz",                       # non-whitespace-group
-                TranslatedNonWhitespacesGroupPattern # (number, non-whitespace-group) => non-whitespace-group
+                "abc\xc8 xyz",  # non-whitespace-group
+                TranslatedNonWSSGroupPattern # (number, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -180,24 +180,24 @@ class TestTranslatedNumberPatternClass:
                     TranslatedMixedWordsPattern # (number, words) => mixed-words
             ),
             (
-                "+",                            # punctuation
-                TranslatedNonWhitespacesPattern # (number, punct) => non-whitespaces
+                "+",  # punctuation
+                TranslatedNonWSSPattern # (number, punct) => non-whitespaces
             ),
             (
-                "++--==",                       # punctuations
-                TranslatedNonWhitespacesPattern # (number, puncts) => non-whitespaces
+                "++--==",  # punctuations
+                TranslatedNonWSSPattern # (number, puncts) => non-whitespaces
             ),
             (
-                "\xc8",                         # non-whitespace
-                TranslatedNonWhitespacesPattern # (number, non-whitespace) => non-whitespaces
+                "\xc8",  # non-whitespace
+                TranslatedNonWSSPattern # (number, non-whitespace) => non-whitespaces
             ),
             (
-                "abc\xc8",                      # non-whitespaces
-                TranslatedNonWhitespacesPattern # (number, non-whitespaces) => non-whitespaces
+                "abc\xc8",  # non-whitespaces
+                TranslatedNonWSSPattern # (number, non-whitespaces) => non-whitespaces
             ),
             (
-                    "++ -- ** ==",                       # punctuation-group
-                    TranslatedNonWhitespacesGroupPattern # (number, non-whitespace-group) => non-whitespace-group
+                    "++ -- ** ==",  # punctuation-group
+                    TranslatedNonWSSGroupPattern # (number, non-whitespace-group) => non-whitespace-group
             ),
 
         ],

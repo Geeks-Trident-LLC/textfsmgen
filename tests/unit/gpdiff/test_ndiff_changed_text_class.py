@@ -73,50 +73,19 @@ class TestNDiffChangedText:
                 "- a1",
                 [],
                 dict(var="v1"),
-                "(?P<v1>([a-zA-Z][a-zA-Z0-9]*)|)"
+                "(?P<v1>([a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)|)"
             ),
             (
                 "- a1",
                 ["+ b2"],
                 dict(var="v1"),
-                "(?P<v1>[a-zA-Z][a-zA-Z0-9]*)"
+                "(?P<v1>[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)"
             ),
             (
                 "- a1",
                 ["+ b2"],
                 dict(var="v1", label="c"),
-                "(?P<vc1>[a-zA-Z][a-zA-Z0-9]*)"
-            ),
-
-            (
-                "- a1",
-                ["+ c1 d1"],
-                dict(var="v1", is_lessen=False),
-                "(?P<v1>[a-zA-Z][a-zA-Z0-9]*( [a-zA-Z][a-zA-Z0-9]*)*)"
-            ),
-            (
-                "- a1 b1",
-                ["+ c1 d1"],
-                dict(var="v1", is_lessen=True),
-                "(?P<v1>[a-zA-Z][a-zA-Z0-9]*( +[a-zA-Z][a-zA-Z0-9]*)*)"
-            ),
-            (
-                "- a1 b1",
-                ["+ c1 d1"],
-                dict(var="v1", is_lessen=False),
-                "(?P<v1>[a-zA-Z][a-zA-Z0-9]*( [a-zA-Z][a-zA-Z0-9]*)+)"
-            ),
-            (
-                "- a1 b1",
-                ["+ c1 d1"],
-                dict(var="v1", is_lessen=True, is_root=True),
-                r"(?P<v1>\S+( +\S+)*)"
-            ),
-            (
-                "- a1 b1",
-                ["+ c1 d1"],
-                dict(var="v1", is_lessen=False, is_root=True),
-                r"(?P<v1>\S+( +\S+)*)"
+                "(?P<vc1>[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)"
             ),
         ],
     )
@@ -148,37 +117,6 @@ class TestNDiffChangedText:
                 ["+ b2"],
                 dict(var="v1", label="c"),
                 "word(var_vc1)"
-            ),
-
-            (
-                "- a1",
-                ["+ c1 d1"],
-                dict(var="v1", is_lessen=False),
-                "words(var_v1)"
-            ),
-            (
-                "- a1 b1",
-                ["+ c1 d1"],
-                dict(var="v1", is_lessen=True),
-                "word_or_group(var_v1)"
-            ),
-            (
-                "- a1 b1",
-                ["+ c1 d1"],
-                dict(var="v1", is_lessen=False),
-                "phrase(var_v1)"
-            ),
-            (
-                "- a1 b1",
-                ["+ c1 d1"],
-                dict(var="v1", is_lessen=True, is_root=True),
-                "non_whitespaces_or_group(var_v1)"
-            ),
-            (
-                "- a1 b1",
-                ["+ c1 d1"],
-                dict(var="v1", is_lessen=False, is_root=True),
-                "non_whitespaces_or_group(var_v1)"
             ),
         ],
     )

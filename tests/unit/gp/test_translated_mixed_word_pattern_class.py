@@ -12,7 +12,7 @@ Run pytest in the project root to execute these tests:
 import pytest
 
 from textfsmgen.gp import (
-TranslatedPattern,
+    TranslatedPattern,
 # TranslatedDigitPattern,
 # TranslatedDigitsPattern,
 # TranslatedNumberPattern,
@@ -26,11 +26,11 @@ TranslatedPattern,
 # TranslatedGraphPattern,
 # TranslatedWordPattern,
 # TranslatedWordsPattern,
-TranslatedMixedWordPattern,
-TranslatedMixedWordsPattern,
-# TranslatedNonWhitespacePattern,
-TranslatedNonWhitespacesPattern,
-TranslatedNonWhitespacesGroupPattern
+    TranslatedMixedWordPattern,
+    TranslatedMixedWordsPattern,
+# TranslatedNonWSPattern,
+    TranslatedNonWSSPattern,
+    TranslatedNonWSSGroupPattern
 )
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
@@ -111,12 +111,12 @@ class TestTranslatedMixedWordPatternClass:
                 TranslatedMixedWordsPattern # (mixed-word, mixed-words) => mixed-words
             ),
             (
-                "abc\xc8",                      # non-whitespaces
-                TranslatedNonWhitespacesPattern # (mixed-word, non-whitespaces) => non-whitespaces
+                "abc\xc8",  # non-whitespaces
+                TranslatedNonWSSPattern # (mixed-word, non-whitespaces) => non-whitespaces
             ),
             (
-                "abc\xc8 xyz",                          # non-whitespace-group
-                TranslatedNonWhitespacesGroupPattern    # (mixed-word, non-whitespace-group) => non-whitespace-group
+                "abc\xc8 xyz",  # non-whitespace-group
+                TranslatedNonWSSGroupPattern    # (mixed-word, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -185,24 +185,24 @@ class TestTranslatedMixedWordPatternClass:
                 TranslatedMixedWordsPattern # (mixed-word, words) => mixed-words
             ),
             (
-                ["a", "1", "#"],                # graph
-                TranslatedNonWhitespacesPattern # (mixed-word, graph) => non-whitespaces
+                    ["a", "1", "#"],  # graph
+                    TranslatedNonWSSPattern # (mixed-word, graph) => non-whitespaces
             ),
             (
-                "\xc8",                         # non-whitespace
-                TranslatedNonWhitespacesPattern # (mixed-word, non-whitespace) => non-whitespaces
+                "\xc8",  # non-whitespace
+                TranslatedNonWSSPattern # (mixed-word, non-whitespace) => non-whitespaces
             ),
             (
-                "-",                            # punct
-                TranslatedNonWhitespacesPattern # (mixed-word, non-whitespace) => non-whitespaces
+                "-",  # punct
+                TranslatedNonWSSPattern # (mixed-word, non-whitespace) => non-whitespaces
             ),
             (
-                "--++==",                       # puncts
-                TranslatedNonWhitespacesPattern # (mixed-word, puncts) => non-whitespaces
+                "--++==",  # puncts
+                TranslatedNonWSSPattern # (mixed-word, puncts) => non-whitespaces
             ),
             (
-                "-- ++ ==",                             # punct-group
-                TranslatedNonWhitespacesGroupPattern    # (mixed-word, punct-group) => non-whitespaces-group
+                "-- ++ ==",  # punct-group
+                TranslatedNonWSSGroupPattern    # (mixed-word, punct-group) => non-whitespaces-group
             ),
         ],
     )

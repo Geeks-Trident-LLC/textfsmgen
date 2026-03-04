@@ -12,7 +12,7 @@ Run pytest in the project root to execute these tests:
 import pytest
 
 from textfsmgen.gp import (
-TranslatedPattern,
+    TranslatedPattern,
 # TranslatedDigitPattern,
 # TranslatedDigitsPattern,
 # TranslatedNumberPattern,
@@ -24,13 +24,13 @@ TranslatedPattern,
 # TranslatedPunctsPattern,
 # TranslatedPunctsGroupPattern,
 # TranslatedGraphPattern,
-TranslatedWordPattern,
-TranslatedWordsPattern,
-TranslatedMixedWordPattern,
-TranslatedMixedWordsPattern,
-# TranslatedNonWhitespacePattern,
-TranslatedNonWhitespacesPattern,
-TranslatedNonWhitespacesGroupPattern
+    TranslatedWordPattern,
+    TranslatedWordsPattern,
+    TranslatedMixedWordPattern,
+    TranslatedMixedWordsPattern,
+# TranslatedNonWSPattern,
+    TranslatedNonWSSPattern,
+    TranslatedNonWSSGroupPattern
 )
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
@@ -100,29 +100,29 @@ class TestTranslatedWordPatternClass:
     @pytest.mark.parametrize(
         "data, expected_class",
         [
+            # (
+            #     "abc123",               # word
+            #     TranslatedWordPattern   # (word, word) => word
+            # ),
+            # (
+            #     "a1 b2",                # words
+            #     TranslatedWordsPattern  # (word, words) => words
+            # ),
+            # (
+            #     "abc.123",                  # mixed-word
+            #     TranslatedMixedWordPattern  # (word, mixed-word) => mixed-word
+            # ),
+            # (
+            #     "a.1 b.1",                  # mixed-words
+            #     TranslatedMixedWordsPattern # (word, mixed-words) => mixed-words
+            # ),
             (
-                "abc123",               # word
-                TranslatedWordPattern   # (word, word) => word
+                "abc\xc8",  # non-whitespaces
+                TranslatedNonWSSPattern # (word, non-whitespaces) => non-whitespaces
             ),
             (
-                "a1 b2",                # words
-                TranslatedWordsPattern  # (word, words) => words
-            ),
-            (
-                "abc.123",                  # mixed-word
-                TranslatedMixedWordPattern  # (word, mixed-word) => mixed-word
-            ),
-            (
-                "a.1 b.1",                  # mixed-words
-                TranslatedMixedWordsPattern # (word, mixed-words) => mixed-words
-            ),
-            (
-                "abc\xc8",                      # non-whitespaces
-                TranslatedNonWhitespacesPattern # (word, non-whitespaces) => non-whitespaces
-            ),
-            (
-                "abc\xc8 xyz",                          # non-whitespace-group
-                TranslatedNonWhitespacesGroupPattern    # (word, non-whitespace-group) => non-whitespace-group
+                "abc\xc8 xyz",  # non-whitespace-group
+                TranslatedNonWSSGroupPattern    # (word, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -163,40 +163,40 @@ class TestTranslatedWordPatternClass:
         "data, expected_class",
         [
             (
-                ["a", "1", "#"],                # graph
-                TranslatedNonWhitespacesPattern # (word, graph) => non-whitespaces
+                    ["a", "1", "#"],  # graph
+                    TranslatedNonWSSPattern # (word, graph) => non-whitespaces
             ),
             (
-                "1",                            # digit
-                TranslatedNonWhitespacesPattern # (word, digit) => non-whitespaces
+                "1",  # digit
+                TranslatedNonWSSPattern # (word, digit) => non-whitespaces
             ),
             (
-                "123",                          # digits
-                TranslatedNonWhitespacesPattern # (word, digits) => non-whitespaces
+                "123",  # digits
+                TranslatedNonWSSPattern # (word, digits) => non-whitespaces
             ),
             (
-                "1.1",                          # number
-                TranslatedNonWhitespacesPattern # (word, number) => non-whitespaces
+                "1.1",  # number
+                TranslatedNonWSSPattern # (word, number) => non-whitespaces
             ),
             (
-                "-1.1",                         # mixed-number
-                TranslatedNonWhitespacesPattern # (word, mixed-number) => non-whitespaces
+                "-1.1",  # mixed-number
+                TranslatedNonWSSPattern # (word, mixed-number) => non-whitespaces
             ),
             (
-                "\xc8",                         # non-whitespace
-                TranslatedNonWhitespacesPattern # (word, non-whitespace) => non-whitespaces
+                "\xc8",  # non-whitespace
+                TranslatedNonWSSPattern # (word, non-whitespace) => non-whitespaces
             ),
             (
-                "-",                            # punct
-                TranslatedNonWhitespacesPattern # (word, non-whitespace) => non-whitespaces
+                "-",  # punct
+                TranslatedNonWSSPattern # (word, non-whitespace) => non-whitespaces
             ),
             (
-                "--++==",                       # puncts
-                TranslatedNonWhitespacesPattern # (word, puncts) => non-whitespaces
+                "--++==",  # puncts
+                TranslatedNonWSSPattern # (word, puncts) => non-whitespaces
             ),
             (
-                "-- ++ ==",                             # punct-group
-                TranslatedNonWhitespacesGroupPattern    # (word, punct-group) => non-whitespaces-group
+                "-- ++ ==",  # punct-group
+                TranslatedNonWSSGroupPattern    # (word, punct-group) => non-whitespaces-group
             ),
         ],
     )

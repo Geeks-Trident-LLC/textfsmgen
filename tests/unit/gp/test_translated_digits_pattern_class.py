@@ -12,11 +12,11 @@ Run pytest in the project root to execute these tests:
 import pytest
 
 from textfsmgen.gp import (
-TranslatedPattern,
+    TranslatedPattern,
 # TranslatedDigitPattern,
-TranslatedDigitsPattern,
-TranslatedNumberPattern,
-TranslatedMixedNumberPattern,
+    TranslatedDigitsPattern,
+    TranslatedNumberPattern,
+    TranslatedMixedNumberPattern,
 # TranslatedLetterPattern,
 # TranslatedLettersPattern,
 # TranslatedAlphabetNumericPattern,
@@ -24,13 +24,13 @@ TranslatedMixedNumberPattern,
 # TranslatedPunctsPattern,
 # TranslatedPunctsGroupPattern,
 # TranslatedGraphPattern,
-TranslatedWordPattern,
-TranslatedWordsPattern,
-TranslatedMixedWordPattern,
-TranslatedMixedWordsPattern,
-# TranslatedNonWhitespacePattern,
-TranslatedNonWhitespacesPattern,
-TranslatedNonWhitespacesGroupPattern
+    TranslatedWordPattern,
+    TranslatedWordsPattern,
+    TranslatedMixedWordPattern,
+    TranslatedMixedWordsPattern,
+# TranslatedNonWSPattern,
+    TranslatedNonWSSPattern,
+    TranslatedNonWSSGroupPattern
 )
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
@@ -132,12 +132,12 @@ class TestTranslatedDigitsPatternClass:
                 TranslatedMixedWordsPattern # (digits, mixed-words) => mixed-words
             ),
             (
-                "abc\xc8",                      # non-whitespaces
-                TranslatedNonWhitespacesPattern # (digits, non-whitespaces) => non-whitespaces
+                "abc\xc8",  # non-whitespaces
+                TranslatedNonWSSPattern # (digits, non-whitespaces) => non-whitespaces
             ),
             (
-                "abc\xc8 xyz",                          # non-whitespace-group
-                TranslatedNonWhitespacesGroupPattern    # (digits, non-whitespace-group) => non-whitespace-group
+                "abc\xc8 xyz",  # non-whitespace-group
+                TranslatedNonWSSGroupPattern    # (digits, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -178,16 +178,16 @@ class TestTranslatedDigitsPatternClass:
                 TranslatedWordPattern   # (digits, letters) => word
             ),
             (
-                "+",                            # punctuation
-                TranslatedNonWhitespacesPattern # (digits, punct) => non-whitespaces
+                "+",  # punctuation
+                TranslatedNonWSSPattern # (digits, punct) => non-whitespaces
             ),
             (
-                "++",                           # punctuations
-                TranslatedNonWhitespacesPattern # (digits, puncts) => non-whitespaces
+                "++",  # punctuations
+                TranslatedNonWSSPattern # (digits, puncts) => non-whitespaces
             ),
             (
-                "++ -- ==",                             # punctuation-group
-                TranslatedNonWhitespacesGroupPattern    # (digits, punct-group) => non-whitespace-group
+                "++ -- ==",  # punctuation-group
+                TranslatedNonWSSGroupPattern    # (digits, punct-group) => non-whitespace-group
             ),
         ],
     )

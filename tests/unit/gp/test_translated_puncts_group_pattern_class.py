@@ -12,7 +12,7 @@ Run pytest in the project root to execute these tests:
 import pytest
 
 from textfsmgen.gp import (
-TranslatedPattern,
+    TranslatedPattern,
 # TranslatedDigitPattern,
 # TranslatedDigitsPattern,
 # TranslatedNumberPattern,
@@ -22,15 +22,15 @@ TranslatedPattern,
 # TranslatedAlphabetNumericPattern,
 # TranslatedPunctPattern,
 # TranslatedPunctsPattern,
-TranslatedPunctsGroupPattern,
+    TranslatedPunctsGroupPattern,
 # TranslatedGraphPattern,
 # TranslatedWordPattern,
 # TranslatedWordsPattern,
 # TranslatedMixedWordPattern,
-TranslatedMixedWordsPattern,
-# TranslatedNonWhitespacePattern,
-# TranslatedNonWhitespacesPattern,
-TranslatedNonWhitespacesGroupPattern
+    TranslatedMixedWordsPattern,
+# TranslatedNonWSPattern,
+# TranslatedNonWSSPattern,
+    TranslatedNonWSSGroupPattern
 )
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
@@ -109,8 +109,8 @@ class TestTranslatedPunctsGroupPatternClass:
                 TranslatedMixedWordsPattern # (punct-group, mixed-words) => mixed-words
             ),
             (
-                "abc\xc8 xyz",                          # non-whitespace-group
-                TranslatedNonWhitespacesGroupPattern    # (punct-group, non-whitespace-group) => non-whitespace-group
+                "abc\xc8 xyz",  # non-whitespace-group
+                TranslatedNonWSSGroupPattern    # (punct-group, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -151,52 +151,52 @@ class TestTranslatedPunctsGroupPatternClass:
         "data, expected_class",
         [
             (
-                "a",                                    # letter
-                TranslatedNonWhitespacesGroupPattern    # (punct-group, letter) => non-whitespace-group
+                "a",  # letter
+                TranslatedNonWSSGroupPattern    # (punct-group, letter) => non-whitespace-group
             ),
             (
-                "1",                                    # digit
-                TranslatedNonWhitespacesGroupPattern    # (punct-group, digit) => non-whitespace-group
+                "1",  # digit
+                TranslatedNonWSSGroupPattern    # (punct-group, digit) => non-whitespace-group
             ),
             (
-                ["a", "1"],                             # alpha-num
-                TranslatedNonWhitespacesGroupPattern    # (punct-group, alpha-num) => non-whitespace-group
+                    ["a", "1"],  # alpha-num
+                    TranslatedNonWSSGroupPattern    # (punct-group, alpha-num) => non-whitespace-group
             ),
             (
-                ["a", "1", "#"],                        # graph
-                TranslatedNonWhitespacesGroupPattern    # (punct-group, graph) => non-whitespace-group
+                    ["a", "1", "#"],  # graph
+                    TranslatedNonWSSGroupPattern    # (punct-group, graph) => non-whitespace-group
             ),
             (
-                "abc",                                  # letters
-                TranslatedNonWhitespacesGroupPattern    # (punct-group, letters) => non-whitespace-group
+                "abc",  # letters
+                TranslatedNonWSSGroupPattern    # (punct-group, letters) => non-whitespace-group
             ),
             (
-                "123",                                  # digits
-                TranslatedNonWhitespacesGroupPattern    # (punct-group, digits) => non-whitespace-group
+                "123",  # digits
+                TranslatedNonWSSGroupPattern    # (punct-group, digits) => non-whitespace-group
             ),
             (
-                "1.1",                                  # number
-                TranslatedNonWhitespacesGroupPattern    # (punct-group, number) => non-whitespace-group
+                "1.1",  # number
+                TranslatedNonWSSGroupPattern    # (punct-group, number) => non-whitespace-group
             ),
             (
-                "-1.1",                                 # mixed-number
-                TranslatedNonWhitespacesGroupPattern    # (punct-group, mixed-number) => non-whitespace-group
+                "-1.1",  # mixed-number
+                TranslatedNonWSSGroupPattern    # (punct-group, mixed-number) => non-whitespace-group
             ),
             (
-                "abc123",                               # word
-                TranslatedNonWhitespacesGroupPattern    # (punct-group, word) => non-whitespace-group
+                "abc123",  # word
+                TranslatedNonWSSGroupPattern    # (punct-group, word) => non-whitespace-group
             ),
             (
-                "a1 b1",                                # words
-                TranslatedNonWhitespacesGroupPattern    # (punct-group, words) => non-whitespace-group
+                "a1 b1",  # words
+                TranslatedNonWSSGroupPattern    # (punct-group, words) => non-whitespace-group
             ),
             (
-                "\xc8",                                 # non-whitespace
-                TranslatedNonWhitespacesGroupPattern    # (punct-group, non-whitespace) => non-whitespace-group
+                "\xc8",  # non-whitespace
+                TranslatedNonWSSGroupPattern    # (punct-group, non-whitespace) => non-whitespace-group
             ),
             (
-                "abc\xc8",                              # non-whitespaces
-                TranslatedNonWhitespacesGroupPattern    # (punct-group, non-whitespaces) => non-whitespace-group
+                "abc\xc8",  # non-whitespaces
+                TranslatedNonWSSGroupPattern    # (punct-group, non-whitespaces) => non-whitespace-group
             ),
         ],
     )

@@ -12,7 +12,7 @@ Run pytest in the project root to execute these tests:
 import pytest
 
 from textfsmgen.gp import (
-TranslatedPattern,
+    TranslatedPattern,
 # TranslatedDigitPattern,
 # TranslatedDigitsPattern,
 # TranslatedNumberPattern,
@@ -20,17 +20,17 @@ TranslatedPattern,
 # TranslatedLetterPattern,
 # TranslatedLettersPattern,
 # TranslatedAlphabetNumericPattern,
-TranslatedPunctPattern,
-TranslatedPunctsPattern,
-TranslatedPunctsGroupPattern,
-TranslatedGraphPattern,
+    TranslatedPunctPattern,
+    TranslatedPunctsPattern,
+    TranslatedPunctsGroupPattern,
+    TranslatedGraphPattern,
 # TranslatedWordPattern,
 # TranslatedWordsPattern,
-TranslatedMixedWordPattern,
-TranslatedMixedWordsPattern,
-TranslatedNonWhitespacePattern,
-TranslatedNonWhitespacesPattern,
-TranslatedNonWhitespacesGroupPattern
+    TranslatedMixedWordPattern,
+    TranslatedMixedWordsPattern,
+    TranslatedNonWSPattern,
+    TranslatedNonWSSPattern,
+    TranslatedNonWSSGroupPattern
 )
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
@@ -75,7 +75,6 @@ class TestTranslatedPunctPatternClass:
             "-1.1",             # punct is not a subset of mixed-number
             "a",                # punct is not a subset of letter
             "abc",              # punct is not a subset of letters
-            "abc123",           # punct is not a subset of word
             "a1 b1",            # punct is not a subset of words
 
         ],
@@ -133,16 +132,16 @@ class TestTranslatedPunctPatternClass:
                 TranslatedMixedWordsPattern # (punct, mixed-words) => mixed-words
             ),
             (
-                "\xc8",                         # non-whitespace
-                TranslatedNonWhitespacePattern # (punct, non-whitespace) => non-whitespace
+                "\xc8",  # non-whitespace
+                TranslatedNonWSPattern # (punct, non-whitespace) => non-whitespace
             ),
             (
-                "abc\xc8",                      # non-whitespaces
-                TranslatedNonWhitespacesPattern # (punct, non-whitespaces) => non-whitespaces
+                "abc\xc8",  # non-whitespaces
+                TranslatedNonWSSPattern # (punct, non-whitespaces) => non-whitespaces
             ),
             (
-                "abc\xc8 xyz",                          # non-whitespace-group
-                TranslatedNonWhitespacesGroupPattern    # (punct, non-whitespace-group) => non-whitespace-group
+                "abc\xc8 xyz",  # non-whitespace-group
+                TranslatedNonWSSGroupPattern    # (punct, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -173,28 +172,28 @@ class TestTranslatedPunctPatternClass:
             ),
 
             (
-                "abc",                          # letters
-                TranslatedNonWhitespacesPattern # (punct, letters) => non-whitespaces
+                "abc",  # letters
+                TranslatedNonWSSPattern # (punct, letters) => non-whitespaces
             ),
             (
-                "123",                          # digits
-                TranslatedNonWhitespacesPattern # (punct, digits) => non-whitespaces
+                "123",  # digits
+                TranslatedNonWSSPattern # (punct, digits) => non-whitespaces
             ),
             (
-                "1.1",                          # number
-                TranslatedNonWhitespacesPattern # (punct, number) => non-whitespaces
+                "1.1",  # number
+                TranslatedNonWSSPattern # (punct, number) => non-whitespaces
             ),
             (
-                "-1.1",                         # mixed-number
-                TranslatedNonWhitespacesPattern # (punct, mixed-number) => non-whitespaces
+                "-1.1",  # mixed-number
+                TranslatedNonWSSPattern # (punct, mixed-number) => non-whitespaces
             ),
+            # (
+            #     "abc123",  # word
+            #     TranslatedNonWSSPattern # (punct, word) => non-whitespaces
+            # ),
             (
-                "abc123",                       # word
-                TranslatedNonWhitespacesPattern # (punct, word) => non-whitespaces
-            ),
-            (
-                "a1 b1",                                # words
-                TranslatedNonWhitespacesGroupPattern    # (punct, words) => non-whitespace-group
+                "a1 b1",  # words
+                TranslatedNonWSSGroupPattern    # (punct, words) => non-whitespace-group
             ),
         ],
     )

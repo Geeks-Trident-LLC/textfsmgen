@@ -57,8 +57,8 @@ class TestDiffLinePattern:
         "line_a, line_b, exp_pattern",
         [
             ('a', '@', r'(?P<v0>[\x21-\x7e])'),
-            ('a b', '@', '(?P<v0>\\S+( +\\S+)*)'),
-            ('a b', 'x','(?P<v0>[a-zA-Z][a-zA-Z0-9]*( +[a-zA-Z][a-zA-Z0-9]*)*)'),
+            ('a b', '@', r'(?P<v0>\S+(\s+\S+)*)'),
+            ('a b', 'x', r'(?P<v0>[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)*)'),
             (
                 'line one is a first line',
                 'line ore is a second line',
@@ -82,7 +82,7 @@ class TestDiffLinePattern:
             (
                 'this line one is a first line',
                 'line ore is a second bad line',
-                '(?P<v0>([a-zA-Z]+)|)( +)?line +(?P<v1>[a-zA-Z]+) +is +a +(?P<v2>[a-zA-Z][a-zA-Z0-9]*( +[a-zA-Z][a-zA-Z0-9]*)*) +line'    # noqa
+                r'(?P<v0>([a-zA-Z]+)|)( +)?line +(?P<v1>[a-zA-Z]+) +is +a +(?P<v2>[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)*) +line'    # noqa
             ),
         ]
     )
@@ -101,7 +101,7 @@ class TestDiffLinePattern:
                     'this is a pen',
                     'this is the yellow pen',
                  ),
-                'this is (?P<v0>[a-zA-Z][a-zA-Z0-9]*( [a-zA-Z][a-zA-Z0-9]*)*) pen'
+                r'this is (?P<v0>[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)*) pen'
             ),
             (
                 (
@@ -109,7 +109,7 @@ class TestDiffLinePattern:
                     'this is the yellow pen',
                     'this is the good yellow pen',
                 ),
-                'this is (?P<v0>[a-zA-Z][a-zA-Z0-9]*( [a-zA-Z][a-zA-Z0-9]*)*) pen'
+                r'this is (?P<v0>[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)*) pen'
             ),
             (
                 (
@@ -118,7 +118,7 @@ class TestDiffLinePattern:
                     'this is the good yellow pen',
                     'that is a pencil'
                 ),
-                '(?P<v0>[a-zA-Z]+) is (?P<v1>[a-zA-Z][a-zA-Z0-9]*( [a-zA-Z][a-zA-Z0-9]*)+)'
+                r'(?P<v0>[a-zA-Z]+) is (?P<v1>[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)+)'
             ),
             (
                 (
@@ -127,7 +127,7 @@ class TestDiffLinePattern:
                     'this is the good yellow pen',
                     'that is a pencil'
                 ),
-                ' *(?P<v0>[a-zA-Z]+) is (?P<v1>[a-zA-Z][a-zA-Z0-9]*( [a-zA-Z][a-zA-Z0-9]*)+)'
+                r' *(?P<v0>[a-zA-Z]+) is (?P<v1>[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)+)'
             ),
             (
                 (
@@ -136,7 +136,7 @@ class TestDiffLinePattern:
                     'this is the good yellow pen  ',
                     ' that is a pencil'
                 ),
-                ' *(?P<v0>[a-zA-Z]+) is (?P<v1>[a-zA-Z][a-zA-Z0-9]*( [a-zA-Z][a-zA-Z0-9]*)+) *'
+                r' *(?P<v0>[a-zA-Z]+) is (?P<v1>[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)+) *'
             ),
             (
                 (
@@ -145,7 +145,7 @@ class TestDiffLinePattern:
                     '  this is the good yellow pen ',
                     '    that is a pencil'
                 ),
-                ' +(?P<v0>[a-zA-Z]+) is (?P<v1>[a-zA-Z][a-zA-Z0-9]*( [a-zA-Z][a-zA-Z0-9]*)+) *'
+                r' +(?P<v0>[a-zA-Z]+) is (?P<v1>[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)+) *'
             ),
             (
                 (
@@ -154,7 +154,7 @@ class TestDiffLinePattern:
                     '  this is the good yellow pen ',
                     '    that is a pencil          '
                 ),
-                ' +(?P<v0>[a-zA-Z]+) is (?P<v1>[a-zA-Z][a-zA-Z0-9]*( [a-zA-Z][a-zA-Z0-9]*)+) +'
+                r' +(?P<v0>[a-zA-Z]+) is (?P<v1>[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)+) +'
             ),
         ]
     )
@@ -278,7 +278,7 @@ class TestDiffLinePatternSnippets:
             "ipv6_addr: 1::2 % 32",
             "ipv6_addr: 1::3 / 33",
         ]
-        exp_snip = "start() ipv6_addr: non_whitespaces_phrase(var_v0) end()"
+        exp_snip = "start() ipv6_addr: non_wss_phrase(var_v0) end()"
         node = DiffLinePattern(*lines)
         assert node.snippet == exp_snip
 
@@ -301,7 +301,7 @@ class TestDiffLinePatternSnippets:
             "this is the yellow pen",
         ]
         exp_pat = (
-            "this\\s+is (?P<v0>[a-zA-Z][a-zA-Z0-9]*( [a-zA-Z][a-zA-Z0-9]*)*) pen"
+            r"this\s+is (?P<v0>[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)*) pen"
         )
         node = DiffLinePattern(*lines)
         assert node.pattern == exp_pat

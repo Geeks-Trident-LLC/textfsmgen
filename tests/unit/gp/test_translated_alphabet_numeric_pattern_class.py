@@ -12,25 +12,25 @@ Run pytest in the project root to execute these tests:
 import pytest
 
 from textfsmgen.gp import (
-TranslatedPattern,
+    TranslatedPattern,
 # TranslatedDigitPattern,
 # TranslatedDigitsPattern,
 # TranslatedNumberPattern,
 # TranslatedMixedNumberPattern,
 # TranslatedLetterPattern,
 # TranslatedLettersPattern,
-TranslatedAlphabetNumericPattern,
+    TranslatedAlphabetNumericPattern,
 # TranslatedPunctPattern,
 # TranslatedPunctsPattern,
 # TranslatedPunctsGroupPattern,
 # TranslatedGraphPattern,
-TranslatedWordPattern,
-TranslatedWordsPattern,
-TranslatedMixedWordPattern,
-TranslatedMixedWordsPattern,
-TranslatedNonWhitespacePattern,
-TranslatedNonWhitespacesPattern,
-TranslatedNonWhitespacesGroupPattern
+    TranslatedWordPattern,
+    TranslatedWordsPattern,
+    TranslatedMixedWordPattern,
+    TranslatedMixedWordsPattern,
+    TranslatedNonWSPattern,
+    TranslatedNonWSSPattern,
+    TranslatedNonWSSGroupPattern
 )
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
@@ -124,16 +124,16 @@ class TestTranslatedAlphabetNumericPatternClass:
                 TranslatedMixedWordsPattern # (alpha-num, mixed-words) => mixed-words
             ),
             (
-                "\xc8",                         # non-whitespace
-                TranslatedNonWhitespacePattern # (alpha-num, non-whitespace) => non-whitespace
+                "\xc8",  # non-whitespace
+                TranslatedNonWSPattern # (alpha-num, non-whitespace) => non-whitespace
             ),
             (
-                "abc\xc8",                      # non-whitespaces
-                TranslatedNonWhitespacesPattern # (alpha-num, non-whitespaces) => non-whitespaces
+                "abc\xc8",  # non-whitespaces
+                TranslatedNonWSSPattern # (alpha-num, non-whitespaces) => non-whitespaces
             ),
             (
-                "abc\xc8 xyz",                          # non-whitespace-group
-                TranslatedNonWhitespacesGroupPattern    # (alpha-num, non-whitespace-group) => non-whitespace-group
+                "abc\xc8 xyz",  # non-whitespace-group
+                TranslatedNonWSSGroupPattern    # (alpha-num, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -186,16 +186,16 @@ class TestTranslatedAlphabetNumericPatternClass:
                 TranslatedMixedWordPattern  # (alpha-num, mixed-number) => mixed-word
             ),
             (
-                "+",                            # punctuation
-                TranslatedNonWhitespacePattern # (alpha-num, punct) => non-whitespace
+                "+",  # punctuation
+                TranslatedNonWSPattern # (alpha-num, punct) => non-whitespace
             ),
             (
-                "++",                           # punctuations
-                TranslatedNonWhitespacesPattern # (alpha-num, puncts) => non-whitespaces
+                "++",  # punctuations
+                TranslatedNonWSSPattern # (alpha-num, puncts) => non-whitespaces
             ),
             (
-                "++ -- ==",                             # punctuation-group
-                TranslatedNonWhitespacesGroupPattern    # (alpha-num, punct-group) => non-whitespace-group
+                "++ -- ==",  # punctuation-group
+                TranslatedNonWSSGroupPattern    # (alpha-num, punct-group) => non-whitespace-group
             ),
         ],
     )

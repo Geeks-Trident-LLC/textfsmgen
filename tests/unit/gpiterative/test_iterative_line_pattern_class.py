@@ -74,7 +74,7 @@ class TestIterativeLinePattern:
                     'capture() keep() action(): word(var=v4, value=utun0)punct(var=v5, value=:) letters(var=v6, value=flags)punct(var=v7, value==)digits(var=v8, value=8051)punct(var=v9, value=<)mixed_word(var=v10, value=UP,RUNNING)punct(var=v11, value=>) letters(var=v2, value=mtu) digits(var=v3, value=1380)',  # noqa
                     'capture() keep() action(): word(cvar=v4, value=utun0)punct(var=v5, value=:) letters(var=v6, value=flags)punct(var=v7, value==)digits(cvar=v8, value=8051)punct(var=v9, value=<)mixed_word(cvar=v10, value=UP,RUNNING)punct(var=v11, value=>) letters(var=v2, value=mtu) digits(cvar=v3, value=1380)'   # noqa
                 ),
-                r'(?P<v4>[a-zA-Z][a-zA-Z0-9]*): flags=(?P<v8>\d+)<(?P<v10>[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)> mtu (?P<v3>\d+)'
+                r'(?P<v4>[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*): flags=(?P<v8>\d+)<(?P<v10>[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)> mtu (?P<v3>\d+)'
             )
         ]
     )

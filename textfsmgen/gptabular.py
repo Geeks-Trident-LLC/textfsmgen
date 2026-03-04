@@ -324,7 +324,7 @@ class TabularTextPatternByVarColumns(RuntimeException):
 
     def raise_exception_if_columns_count_not_provided(self):
         """Infer column count from lines or raise error if zero."""
-        pat = f"{PATTERN.PUNCT_PHRASE_SPACES}$"
+        pat = f"{PATTERN.PUNCTS_PHRASE}$"
         for line in self.lines:
             if re.match(pat, line.strip()):
                 self.columns_count = len(re.split(PATTERN.WSS, line.strip()))
@@ -421,7 +421,7 @@ class TabularTextPatternByVarColumns(RuntimeException):
         """Find reference row using space or multi-space divider."""
         gap = "" if spaces == " " else " "
         repetition = self.columns_count - 1
-        kwargs = dict(p=PATTERN.NON_WS_GROUP, rep=repetition, gap=gap)
+        kwargs = dict(p=PATTERN.NON_WSS_GROUP, rep=repetition, gap=gap)
         pat = r' *%(p)s(%(gap)s +%(p)s){%(rep)s} *$' % kwargs
 
         found_line = custom_line or next((line for line in self.lines if re.match(pat, line)), None)
@@ -1096,7 +1096,7 @@ class TabularTable(RuntimeException):
         lst: List[str] = []
 
         for line in text.get_list_of_lines(*headers_lines):
-            is_line_of_symbols = bool(re.match(PATTERN.ENDS_WITH_PUNCT_GROUP, line))
+            is_line_of_symbols = bool(re.match(PATTERN.ENDS_WITH_PUNCTS_GROUP, line))
             is_header_line = text.Line.has_data(line) and not is_line_of_symbols
             if is_header_line:
                 lst.append(line)

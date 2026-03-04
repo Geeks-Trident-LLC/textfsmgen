@@ -12,25 +12,25 @@ Run pytest in the project root to execute these tests:
 import pytest
 
 from textfsmgen.gp import (
-TranslatedPattern,
+    TranslatedPattern,
 # TranslatedDigitPattern,
 # TranslatedDigitsPattern,
 # TranslatedNumberPattern,
 # TranslatedMixedNumberPattern,
 # TranslatedLetterPattern,
-TranslatedLettersPattern,
+    TranslatedLettersPattern,
 # TranslatedAlphabetNumericPattern,
 # TranslatedPunctPattern,
 # TranslatedPunctsPattern,
 # TranslatedPunctsGroupPattern,
 # TranslatedGraphPattern,
-TranslatedWordPattern,
-TranslatedWordsPattern,
-TranslatedMixedWordPattern,
-TranslatedMixedWordsPattern,
-# TranslatedNonWhitespacePattern,
-TranslatedNonWhitespacesPattern,
-TranslatedNonWhitespacesGroupPattern
+    TranslatedWordPattern,
+    TranslatedWordsPattern,
+    TranslatedMixedWordPattern,
+    TranslatedMixedWordsPattern,
+# TranslatedNonWSPattern,
+    TranslatedNonWSSPattern,
+    TranslatedNonWSSGroupPattern
 )
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
@@ -123,16 +123,16 @@ class TestTranslatedLettersPatternClass:
                 TranslatedMixedWordsPattern # (letters, mixed-words) => mixed-words
             ),
             (
-                "\xc8",                         # non-whitespace
-                TranslatedNonWhitespacesPattern # (letters, non-whitespace) => non-whitespaces
+                "\xc8",  # non-whitespace
+                TranslatedNonWSSPattern # (letters, non-whitespace) => non-whitespaces
             ),
             (
-                "abc\xc8",                      # non-whitespaces
-                TranslatedNonWhitespacesPattern # (letters, non-whitespaces) => non-whitespaces
+                "abc\xc8",  # non-whitespaces
+                TranslatedNonWSSPattern # (letters, non-whitespaces) => non-whitespaces
             ),
             (
-                "abc\xc8 xyz",                          # non-whitespace-group
-                TranslatedNonWhitespacesGroupPattern    # (letters, non-whitespace-group) => non-whitespace-group
+                "abc\xc8 xyz",  # non-whitespace-group
+                TranslatedNonWSSGroupPattern    # (letters, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -193,20 +193,20 @@ class TestTranslatedLettersPatternClass:
                 TranslatedMixedWordPattern  # (letters, graph) => mixed-word
             ),
             (
-                "+",                            # punctuation
-                TranslatedNonWhitespacesPattern # (letters, punct) => non-whitespaces
+                "+",  # punctuation
+                TranslatedNonWSSPattern # (letters, punct) => non-whitespaces
             ),
             (
-                "++",                           # punctuations
-                TranslatedNonWhitespacesPattern # (letters, puncts) => non-whitespaces
+                "++",  # punctuations
+                TranslatedNonWSSPattern # (letters, puncts) => non-whitespaces
             ),
             (
-                "\xc8",                         # non-whitespace
-                TranslatedNonWhitespacesPattern # (letters, non-whitespace) => non-whitespaces
+                "\xc8",  # non-whitespace
+                TranslatedNonWSSPattern # (letters, non-whitespace) => non-whitespaces
             ),
             (
-                "++ -- ==",                             # punctuation-group
-                TranslatedNonWhitespacesGroupPattern    # (letters, punct-group) => non-whitespace-group
+                "++ -- ==",  # punctuation-group
+                TranslatedNonWSSGroupPattern    # (letters, punct-group) => non-whitespace-group
             ),
         ],
     )
