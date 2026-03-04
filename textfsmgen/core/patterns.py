@@ -271,10 +271,6 @@ class ElementPattern(str):
         if is_built:
             return symbol_pattern
 
-        is_built, datetime_pattern = cls.build_datetime_pattern(keyword, params)
-        if is_built:
-            return datetime_pattern
-
         is_built, choice_pattern = cls.build_choice_pattern(keyword, params)
         if is_built:
             return choice_pattern
@@ -363,31 +359,11 @@ class ElementPattern(str):
                         is_or_either = str.lower(case).startswith('either_')
                     else:
                         if case in PAT_REF:
-                            if re.match('(?i)time|date(time)?', case):
-                                pat = PAT_REF.get(case).get('format', f'unsupported-{case}-format')
-                                pat not in lst and lst.append(pat)
-                            else:
-                                pat = PAT_REF.get(case).get('pattern')
-                                pat not in lst and lst.append(pat)
+                            pat = PAT_REF.get(case).get('pattern')
+                            pat not in lst and lst.append(pat)
                         else:
-                            if re.match('(?i)time|date(time)?', case):
-                                kw, *indices = re.split('_format', case)
-                                node = PAT_REF.get(kw, None)
-                                if node:
-                                    if indices:
-                                        for index in indices:
-                                            key = f'format{index}'
-                                            pat = node.get(key, f'unsupported-{kw}{key}')
-                                            pat not in lst and lst.append(pat)
-                                    else:
-                                        pat = node.get('format', f'unsupported-{kw}format')
-                                        pat not in lst and lst.append(pat)
-                                else:
-                                    pat = case
-                                    pat not in lst and lst.append(pat)
-                            else:
-                                pat = case
-                                pat not in lst and lst.append(pat)
+                            pat = case
+                            pat not in lst and lst.append(pat)
                 else:
                     pat = soft_escape(arg)
                     pat not in lst and lst.append(pat)
@@ -479,31 +455,11 @@ class ElementPattern(str):
                         cls._or_empty = is_empty
                     else:
                         if case in PAT_REF:
-                            if re.match('(?i)time|date(time)?', case):
-                                pat = PAT_REF.get(case).get('format', f'unsupported-{case}-format')
-                                pat not in lst and lst.append(pat)
-                            else:
-                                pat = PAT_REF.get(case).get('pattern')
-                                pat not in lst and lst.append(pat)
+                            pat = PAT_REF.get(case).get('pattern')
+                            pat not in lst and lst.append(pat)
                         else:
-                            if re.match('(?i)time|date(time)?', case):
-                                kw, *indices = re.split('_format', case)
-                                node = PAT_REF.get(kw, None)
-                                if node:
-                                    if indices:
-                                        for index in indices:
-                                            key = f'format{index}'
-                                            pat = node.get(key, f'unsupported-{kw}{key}')
-                                            pat not in lst and lst.append(pat)
-                                    else:
-                                        pat = node.get('format', f'unsupported-{kw}format')
-                                        pat not in lst and lst.append(pat)
-                                else:
-                                    pat = case
-                                    pat not in lst and lst.append(pat)
-                            else:
-                                pat = case
-                                pat not in lst and lst.append(pat)
+                            pat = case
+                            pat not in lst and lst.append(pat)
                 else:
                     pat = soft_escape(arg)
                     pat not in lst and lst.append(pat)
@@ -514,109 +470,6 @@ class ElementPattern(str):
         pattern = cls.add_word_bound(
             pattern, word_bound=word_bound, added_parentheses=is_multiple
         )
-        pattern = cls.add_var_name(pattern, name=name)
-        pattern = cls.add_head_of_string(pattern, head=head)
-        pattern = cls.add_tail_of_string(pattern, tail=tail)
-        pattern = pattern.replace('__comma__', ',')
-        return True, pattern
-
-    @classmethod
-    def build_datetime_pattern(cls, keyword, params):
-        if keyword not in PAT_REF:
-            return False, ''
-
-        node = PAT_REF.get(keyword)
-        fmt_lst = [key for key in node if key.startswith('format')]
-        if not fmt_lst:
-            return False, ''
-
-        arguments = re.split(r' *, *', params) if params else []
-        lst = []
-        name, vpat = '', r'var_(?P<name>\w+)$'
-        for arg in arguments:
-            match = re.match(vpat, arg, flags=re.I)
-            if match:
-                name = match.group('name') if not name else name
-            elif arg.startswith('format'):
-                pat = node.get(arg)
-                pat not in lst and lst.append(pat)
-            # else:
-            #     pat = arg
-            #     pat not in lst and lst.append(pat)
-        if not lst:
-            lst.append(node.get('format'))
-
-        or_pat = r'or_(?P<case>[^,]+)'
-        is_empty = False
-        word_bound = ''
-        head = ''
-        tail = ''
-
-        for arg in arguments:
-            match = re.match(vpat, arg, flags=re.I)
-            if match or arg.startswith('format'):
-                continue
-            elif re.match(cls.word_bound_pattern, arg):
-                if arg == 'word_bound_raw':
-                    'word_bound' not in lst and lst.append('word_bound')
-                else:
-                    word_bound = arg
-            elif re.match(cls.head_pattern, arg):
-                if arg == 'head_raw':
-                    'head' not in lst and lst.append('head')
-                else:
-                    head = arg
-            elif re.match(cls.tail_pattern, arg):
-                if arg == 'tail_raw':
-                    'tail' not in lst and lst.append('tail')
-                else:
-                    tail = arg
-            elif re.match(cls.meta_data_pattern, arg):
-                if arg == 'meta_data_raw':
-                    'meta_data' not in lst and lst.append('meta_data')
-                else:
-                    cls._variable.option = arg.lstrip('meta_data_')
-            else:
-                match = re.match(or_pat, arg, flags=re.I)
-                if match:
-                    case = match.group('case')
-                    if case == 'empty':
-                        is_empty = True
-                        cls._or_empty = is_empty
-                    else:
-                        if case in PAT_REF:
-                            if re.match('(?i)time|date(time)?', case):
-                                pat = PAT_REF.get(case).get('format', f'unsupported-{case}-format')
-                                pat not in lst and lst.append(pat)
-                            else:
-                                pat = PAT_REF.get(case).get('pattern')
-                                pat not in lst and lst.append(pat)
-                        else:
-                            if re.match('(?i)time|date(time)?', case):
-                                kw, *indices = re.split('_format', case)
-                                node = PAT_REF.get(kw, None)
-                                if node:
-                                    if indices:
-                                        for index in indices:
-                                            key = f'format{index}'
-                                            pat = node.get(key, f'unsupported-{kw}{key}')
-                                            pat not in lst and lst.append(pat)
-                                    else:
-                                        pat = node.get('format', f'unsupported-{kw}format')
-                                        pat not in lst and lst.append(pat)
-                                else:
-                                    pat = case
-                                    pat not in lst and lst.append(pat)
-                            else:
-                                pat = case
-                                pat not in lst and lst.append(pat)
-                else:
-                    pat = soft_escape(arg)
-                    pat not in lst and lst.append(pat)
-
-        is_empty and lst.append('')
-        pattern = cls.join_list(lst)
-        pattern = cls.add_word_bound(pattern, word_bound=word_bound)
         pattern = cls.add_var_name(pattern, name=name)
         pattern = cls.add_head_of_string(pattern, head=head)
         pattern = cls.add_tail_of_string(pattern, tail=tail)
@@ -671,31 +524,11 @@ class ElementPattern(str):
                         cls._or_empty = is_empty
                     else:
                         if case in PAT_REF:
-                            if re.match('(?i)time|date(time)?', case):
-                                pat = PAT_REF.get(case).get('format', f'unsupported-{case}-format')
-                                pat not in lst and lst.append(pat)
-                            else:
-                                pat = PAT_REF.get(case).get('pattern')
-                                pat not in lst and lst.append(pat)
+                            pat = PAT_REF.get(case).get('pattern')
+                            pat not in lst and lst.append(pat)
                         else:
-                            if re.match('(?i)time|date(time)?', case):
-                                kw, *indices = re.split('_format', case)
-                                node = PAT_REF.get(kw, None)
-                                if node:
-                                    if indices:
-                                        for index in indices:
-                                            key = f'format{index}'
-                                            pat = node.get(key, f'unsupported-{kw}{key}')
-                                            pat not in lst and lst.append(pat)
-                                    else:
-                                        pat = node.get('format', f'unsupported-{kw}format')
-                                        pat not in lst and lst.append(pat)
-                                else:
-                                    pat = case
-                                    pat not in lst and lst.append(pat)
-                            else:
-                                pat = case
-                                pat not in lst and lst.append(pat)
+                            pat = case
+                            pat not in lst and lst.append(pat)
                 else:
                     pat = soft_escape(arg)
                     pat not in lst and lst.append(pat)
@@ -757,31 +590,11 @@ class ElementPattern(str):
                         cls._or_empty = is_empty
                     else:
                         if case in PAT_REF:
-                            if re.match('(?i)time|date(time)?', case):
-                                pat = PAT_REF.get(case).get('format', f'unsupported-{case}-format')
-                                pat not in lst and lst.append(pat)
-                            else:
-                                pat = PAT_REF.get(case).get('pattern')
-                                pat not in lst and lst.append(pat)
+                            pat = PAT_REF.get(case).get('pattern')
+                            pat not in lst and lst.append(pat)
                         else:
-                            if re.match('(?i)time|date(time)?', case):
-                                kw, *indices = re.split('_format', case)
-                                node = PAT_REF.get(kw, None)
-                                if node:
-                                    if indices:
-                                        for index in indices:
-                                            key = f'format{index}'
-                                            pat = node.get(key, f'unsupported-{kw}{key}')
-                                            pat not in lst and lst.append(pat)
-                                    else:
-                                        pat = node.get('format', f'unsupported-{kw}format')
-                                        pat not in lst and lst.append(pat)
-                                else:
-                                    pat = case
-                                    pat not in lst and lst.append(pat)
-                            else:
-                                pat = case
-                                pat not in lst and lst.append(pat)
+                            pat = case
+                            pat not in lst and lst.append(pat)
                 else:
                     pat = soft_escape(arg)
                     pat not in lst and lst.append(pat)
