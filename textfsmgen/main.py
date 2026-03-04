@@ -83,17 +83,29 @@ class Cli:
         parser.add_argument(
             '--user-data', type=str, dest='user_data',
             default='',
-            help="Required: user-provided snippet used to generate a TextFSM template"
+            help="User snippet text used to generate a TextFSM template"
+        )
+
+        parser.add_argument(
+            '--user-data-file', type=str, dest='user_data_file',
+            default='',
+            help="Load snippet text from file to generate a TextFSM template"
         )
 
         parser.add_argument(
             '--test-data', type=str, dest='test_data',
             default='',
-            help="Provide user test data for template validation"
+            help="Optional: test data for validating the generated template"
         )
 
         parser.add_argument(
-            '--run-test', action='store_true', dest='test',
+            '--test-data-file', type=str, dest='test_data_file',
+            default='',
+            help="Optional: Load test data from file for template validation"
+        )
+
+        parser.add_argument(
+            '--run-test', action='store_true', dest='tested',
             help="Run validation: compare test data against the generated template"
         )
 
@@ -105,9 +117,20 @@ class Cli:
         )
 
         parser.add_argument(
-            '--config', type=str,
+            '--save-template', type=str, dest='template_file',
             default='',
-            help="Specify configuration settings for the generated test script"
+            help="Optional: Save the generated TextFSM template to a file"
+        )
+
+        parser.add_argument(
+            '--save-test-script', type=str, dest='test_script_file',
+            default='',
+            help="Optional: Save the generated test script to a file"
+        )
+
+        parser.add_argument(
+            '--options-file', type=str, dest='options_file', default='',
+            help="Optional: load a YAML file containing keyword arguments for template building and verification"
         )
 
         parser.add_argument(
@@ -122,176 +145,193 @@ class Cli:
 
         self.parser = parser
         self.options = self.parser.parse_args()
-        self.kwargs = dict()
+        self.builder_kwargs = dict()
+        self.verified_kwargs = dict()
+        self.tested = False
+        self.template_file = ""
+        self.test_script_file = ""
+        self.platform = ""
+
+    def _update_builder_arg(self, key: str, value) -> None:
+        """Update a builder keyword argument if it is supported."""
+        allowed = {
+            "user_data", "user_data_file", "test_data", "test_data_file",
+            "namespace", "author", "email", "company", "description", "debug"
+        }
+        if key not in allowed:
+            return
+
+        if key != "debug":
+            self.builder_kwargs[key] = value or ""
+            return
+
+        # Normalize debug flag
+        if isinstance(value, str):
+            self.builder_kwargs["debug"] = value.strip().lower() == "true"
+        else:
+            self.builder_kwargs["debug"] = bool(value)
+
+    def _update_verify_arg(self, key: str, value) -> None:
+        """Update a verification keyword argument if it is supported."""
+        allowed = {"expected_rows_count", "expected_result", "tabular", "debug",
+                   "ignore_space"}
+        if key not in allowed:
+            return
+
+        # expected_rows_count → integer or None
+        if key == "expected_rows_count":
+            if isinstance(value, int):
+                self.verified_kwargs[key] = value
+            else:
+                text = str(value).strip()
+                self.verified_kwargs[key] = int(text) if text.isdigit() else None
+            return
+
+        # expected_result → list of dicts with uniform dict length
+        if key == "expected_result":
+            if isinstance(value, list) and all(
+                    isinstance(i, dict) for i in value):
+                lengths = {len(d) for d in value}
+                self.verified_kwargs[key] = value if len(lengths) == 1 else None
+            else:
+                self.verified_kwargs[key] = None
+            return
+
+        # Boolean flags: tabular, debug, ignore_space
+        self.verified_kwargs[key] = (
+            value.strip().lower() == "true"
+            if isinstance(value, str) else bool(value)
+        )
+
+    def _update_other_option(self, key, value):
+        """Update miscellaneous template options such as run mode, platform, and file paths."""
+        allowed = {"run_test", "platform", "save_template", "save_test_script"}
+        if key not in allowed:
+            return
+
+        # run_test -> boolean
+        if key == "run_test":
+            self.tested = (
+                value.strip().lower() == "true"
+                if isinstance(value, str) else bool(value)
+            )
+            return
+
+        # platform -> normalized choice
+        if key == "platform":
+            v = str(value).strip().lower()
+            self.platform = v if v in {"unittest", "pytest", "snippet"} else "snippet"
+            return
+
+        setattr(self, key, str(value))
+
+    def apply_kwargs(self, data: dict) -> None:
+        """Apply keyword arguments loaded from a YAML mapping."""
+        for key, value in data.items():
+            key_ = key.lower()
+            self._update_builder_arg(key_, value)
+            self._update_verify_arg(key_, value)
+            self._update_other_option(key_, value)
 
     def validate_cli_flags(self):
-        """
-        Validate and process command-line flags provided via argparse.
-
-        This method ensures that required CLI options are present and properly
-        formatted. It supports inline user data, file references, test data,
-        and configuration settings. If validation fails, the program exits
-        gracefully with an error message.
-
-        Workflow
-        --------
-        1. Ensure `user_data` is provided; otherwise, print help and exit.
-        2. If `user_data` or `test_data` matches the `file::filename` pattern,
-           load content from the referenced file.
-        3. If `config` is provided:
-           - Load content from a file if specified.
-           - Otherwise, normalize inline configuration text into YAML format.
-           - Parse configuration into a dictionary and store in `self.kwargs`.
-
-        Returns
-        -------
-        bool
-            True if validation succeeds. Exits the program with `sys_exit`
-            if validation fails.
-
-        Notes
-        -----
-        - File references must use the format: ``file::path/to/file`` or
-          ``filename::path/to/file``.
-        - Configuration text is normalized before being parsed with
-          `yaml.SafeLoader`.
-        - Errors are reported with descriptive messages and terminate execution.
-        """
-
-        if not self.options.user_data:
-            self.parser.print_help()
-            sys_exit(success=False)
-
-        pattern = r'file( *name)?:: *(?P<filename>\S*)'
-
-        # Handle user_data
-        match = re.match(pattern, self.options.user_data, re.I)
-        if match:
+        yaml_file = self.options.options_file
+        if yaml_file:
             try:
-                filename = match.group('filename')
-                self.options.user_data = file.read(filename)
+                data = file.safe_load_yaml(yaml_file)
+                if not isinstance(data, dict):
+                    sys_exit(
+                        success=False,
+                        msg=f"*** YAML-format of {yaml_file!r} MUST be a dictionary."
+                    )
+                self.apply_kwargs(data)
             except Exception as ex:
                 sys_exit(success=False, msg=f"*** {type(ex).__name__}: {ex}")
 
-        # Handle test_data
-        if self.options.test_data:
-            match = re.match(pattern, self.options.test_data, re.I)
-            if match:
-                try:
-                    self.options.test_data = file.read(match.group('filename'))
-                except Exception as ex:
-                    sys_exit(success=False, msg=f"*** {type(ex).__name__}: {ex}")
-
-        # Handle config
-        if self.options.config:
-            config = self.options.config
-            match = re.match(pattern, config, re.I)
-            content = ""
-            if match:
-                try:
-                    content = file.read(match.group('filename'))
-                except Exception as ex:
-                    sys_exit(success=False, msg=f"*** {type(ex).__name__}: {ex}")
+        pairs = (
+            ("user_data", self.options.user_data),
+            ("user_data_file", self.options.user_data_file),
+            ("test_data", self.options.test_data),
+            ("test_data_file", self.options.test_data_file),
+        )
+        for key, value in pairs:
+            if key not in self.builder_kwargs:
+                self.builder_kwargs[key] = value
             else:
-                # Normalize inline config text
-                other_pat = r'''(?x)(
-                    author|email|company|filename|
-                    description|namespace|tabular): *'''
-                content = re.sub(r' *: *', r': ', config)
-                content = re.sub(other_pat, r'\n\1: ', content)
-                content = '\n'.join(line.strip(', ') for line in content.splitlines())
+                if value:
+                    self._update_builder_arg(key, value)
 
-            if content:
-                try:
-                    kwargs = yaml.load(content, Loader=yaml.SafeLoader)
-                    if isinstance(kwargs, dict):
-                        self.kwargs = kwargs
-                    else:
-                        sys_exit(success=False, msg=f"*** INVALID-CONFIG: {config}")
-                except Exception as ex:
-                    sys_exit(success=False, msg=f"*** LOADING-CONFIG-ERROR - {ex}")
+        if self.builder_kwargs.get("user_data") or self.builder_kwargs.get("user_data_file"):
+            return
 
-        return True
+        self.parser.print_help()
+        sys_exit(success=False)
 
-    def build_template(self):
-        """Generate a TextFSM template from user-provided data."""
+    def create_builder(self):
+        """Instantiate TemplateBuilder and exit with an error message on failure."""
         try:
-            factory = TemplateBuilder(
-                user_data=self.options.user_data,
-                **self.kwargs
-            )
-            sys_exit(success=True, msg=factory.template)
+            return TemplateBuilder(**self.builder_kwargs)
         except Exception as ex:
             sys_exit(
                 success=False,
-                msg=f"*** {type(ex).__name__}: {ex}\n*** Failed to generate "
-                    f"template from\n{self.options.user_data}"
+                msg=(
+                    f"*** {type(ex).__name__}: {ex}\n"
+                    f"*** Failed to generate template from\n{self.options.user_data}"
+                ),
             )
 
-    def build_test_script(self):
-        """Generate a test script based on the selected platform."""
+    def save_outputs(self, tb):
+        """Write generated template and test script files when available."""
+        template_path = self.options.template_file or self.template_file
+        script_path = self.options.test_script_file or self.test_script_file
 
-        platform = self.options.platform.lower()
-        if platform:
-            method_map = dict(
-                unittest='create_unittest',
-                pytest='create_pytest'
-            )
-            method_name = method_map.get(platform, 'create_python_test')
-            try:
-                factory = TemplateBuilder(
-                    user_data=self.options.user_data,
-                    test_data=self.options.test_data,
-                    **self.kwargs
-                )
-                test_script = getattr(factory, method_name)()
-                sys_exit(success=True, msg=f"\n{test_script}\n")
-            except Exception as ex:
-                sys_exit(
-                    success=False,
-                    msg=f"*** {type(ex).__name__}: {ex}\n*** Failed to execute "
-                        f"test script from\n{self.options.user_data} "
-                )
-        else:
-            self.build_template()
+        messages = []
 
-    def run_test(self):
-        """Execute a validation test for the generated TextFSM template."""
+        if template_path:
+            file.write(template_path, tb.template)
+            messages.append(f"+++ TextFSM template saved to {template_path!r}.")
 
-        if self.options.test:
-            try:
-                factory = TemplateBuilder(
-                    user_data=self.options.user_data,
-                    test_data=self.options.test_data,
-                    **self.kwargs
-                )
-                kwargs = dict(
-                    expected_rows_count=self.kwargs.get('expected_rows_count', None),
-                    expected_result=self.kwargs.get('expected_result', None),
-                    tabular=self.kwargs.get('tabular', False),
-                    debug=True
-                )
-                factory.verify(**kwargs)
-                sys_exit(success=True)
-            except Exception as ex:
-                sys_exit(
-                    success=False,
-                    msg=f"*** {type(ex).__name__}: {ex}\n*** Failed to run "
-                        f"template test from\n{self.options.user_data}"
-                )
+        if script_path and tb.test_data:
+            platform = (self.options.platform or self.platform or "snippet").lower()
+            method = f"create_{platform}" if platform in ("unittest",
+                                                          "pytest") else "create_python_test"
+            script = getattr(tb, method)()
+            file.write(script_path, script)
+            messages.append(f"+++ {platform.title()} script saved to {script_path!r}.")
+
+        if messages:
+            sys_exit(success=False, msg="\n".join(messages))
+
+    def execute_test(self, tb):
+        """Run builder verification when enabled and exit on success."""
+        should_run = self.options.tested or self.tested
+        if not should_run:
+            return
+
+        args = {**self.verified_kwargs, "debug": True}
+        tb.verify(**args)
+        sys_exit(success=True)
+
+    def display_test_script(self, tb):
+        """Generate the appropriate test script and print it to stdout."""
+        platform = self.options.platform.lower() or self.platform
+        if not platform:
+            return
+
+        method = f"create_{platform}" if platform in ("unittest", "pytest") else "create_python_test"
+        test_script = getattr(tb, method, "create_python_test")()
+        sys_exit(success=True, msg=test_script)
 
     def run(self):
         """Execute the main CLI workflow for the TextFSM Generator application."""
-
         show_version(self.options)
         show_dependency(self.options)
         run_gui_application(self.options)
         self.validate_cli_flags()
-        if not self.options.test_data:
-            self.build_template()
-        else:
-            self.run_test()
-            self.build_test_script()
+        tb = self.create_builder()
+        self.save_outputs(tb)
+        self.execute_test(tb)
+        self.display_test_script(tb)
+        sys_exit(success=True, msg=tb.template)
 
 
 def execute():
