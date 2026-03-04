@@ -324,7 +324,7 @@ class TabularTextPatternByVarColumns(RuntimeException):
 
     def raise_exception_if_columns_count_not_provided(self):
         """Infer column count from lines or raise error if zero."""
-        pat = f"{PATTERN.PUNCT_PHRASE_MULTI_SPACE}$"
+        pat = f"{PATTERN.PUNCT_PHRASE_SPACES}$"
         for line in self.lines:
             if re.match(pat, line.strip()):
                 self.columns_count = len(re.split(PATTERN.WSS, line.strip()))

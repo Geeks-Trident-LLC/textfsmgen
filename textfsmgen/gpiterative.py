@@ -37,7 +37,7 @@ from textfsmgen.core.patterns import TextPattern
 from textfsmgen.libs import PATTERN
 
 from textfsmgen.libs import text
-from textfsmgen.libs.pat import get_ref_pattern_by_name
+from textfsmgen.libs.pat import lookup_pattern
 
 from textfsmgen.gp import TranslatedPattern
 from textfsmgen.gp import LData
@@ -239,7 +239,7 @@ class SnippetElement(RuntimeException):
         if not self.is_kept and not self.is_captured:
             return TextPattern(f"{self.value}{self.trailing}")
 
-        pat = get_ref_pattern_by_name(self.name)
+        pat = lookup_pattern(self.name)
         if self.is_captured:
             pat = f"(?P<{self.var_name}>({pat})|)" if self.is_empty else f"(?P<{self.var_name}>{pat})"
         elif self.is_empty:

@@ -12,7 +12,7 @@ import string
 from textfsmgen.exceptions import raise_exception, EscapePatternError
 
 
-class PATTERN:      # noqa
+class PATTERN:
     """Reusable regex fragments for common character classes."""
 
     # --- Generic wildcard ---
@@ -91,18 +91,24 @@ class PATTERN:      # noqa
 
     # --- group of puncts ---
     PUNCT_GROUP = r'%s( %s)*' % (PUNCTS, PUNCTS)
-    PUNCT_GROUP_MULTI_SPACE = r'%s( +%s)*' % (PUNCTS, PUNCTS)
+    PUNCT_GROUP_SPACES = r'%s( +%s)*' % (PUNCTS, PUNCTS)
     PUNCTS_PHRASE = r'%s( %s)+' % (PUNCTS, PUNCTS)
-    PUNCT_PHRASE_MULTI_SPACE = r'%s( +%s)+' % (PUNCTS, PUNCTS)
+    PUNCT_PHRASE_SPACES = r'%s( +%s)+' % (PUNCTS, PUNCTS)
+
+    # --- group of puncts separated by whitespace ---
+    PUNCT_GROUP_SEP_WS = r'%s(\s%s)*' % (PUNCTS, PUNCTS)
+    PUNCT_GROUP_SEP_WSS = r'%s(\s+%s)*' % (PUNCTS, PUNCTS)
+    PUNCTS_PHRASE_SEP_WS = r'%s(\s%s)+' % (PUNCTS, PUNCTS)
+    PUNCT_PHRASE_SEP_WSS = r'%s(\s+%s)+' % (PUNCTS, PUNCTS)
 
     # --- puncts check ---
 
     ENDS_WITH_PUNCT = r'%s$' % PUNCT
     ENDS_WITH_PUNCTS = r'%s$' % PUNCTS
-    ENDS_WITH_PUNCT_GROUP = ' *%s *$' % PUNCT_PHRASE_MULTI_SPACE
+    ENDS_WITH_PUNCT_GROUP = ' *%s *$' % PUNCT_PHRASE_SPACES
 
     SPACE_OR_PUNCT = r'[ \x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]'
-    MULTI_SPACE_OR_PUNCTS = r'%s+' % SPACE_OR_PUNCT
+    SPACES_OR_PUNCTS = r'%s+' % SPACE_OR_PUNCT
 
     # --- Visible characters ---
     GRAPH = r'[\x21-\x7e]'
@@ -118,17 +124,17 @@ class PATTERN:      # noqa
     WORD_GROUP = WORDS
     PHRASE = r'%s( %s)+' % (WORD, WORD)
 
-    WORDS_MULTI_SPACE = r'%s( +%s)*' % (WORD, WORD)
-    WORD_GROUP_MULTI_SPACE = WORDS_MULTI_SPACE
-    PHRASE_MULTI_SPACE = r'%s( +%s)+' % (WORD, WORD)
+    WORDS_SEP_SPACES = r'%s( +%s)*' % (WORD, WORD)
+    WORD_GROUP_SEP_SPACES = WORDS_SEP_SPACES
+    PHRASE_SEP_SPACES = r'%s( +%s)+' % (WORD, WORD)
 
     # --- group of word separated by whitespace---
     WORDS_SEP_WS = r'%s(\s%s)*' % (WORD, WORD)
     PHRASE_SEP_WS = r'%s(\s%s)+' % (WORD, WORD)
 
-    WORDS_SEP_MULTI_WS = r'%s(\s+%s)*' % (WORD, WORD)
-    WORD_GROUP_SEP_MULTI_WS = WORDS_SEP_MULTI_WS
-    PHRASE_SEP_MULTI_WS = r'%s(\s+%s)+' % (WORD, WORD)
+    WORDS_SEP_WSS = r'%s(\s+%s)*' % (WORD, WORD)
+    WORD_GROUP_SEP_WSS = WORDS_SEP_WSS
+    PHRASE_SEP_WSS = r'%s(\s+%s)+' % (WORD, WORD)
 
     # --- mixed-words ----
     MIXED_WORD = r'[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*'
@@ -138,44 +144,44 @@ class PATTERN:      # noqa
     MIXED_WORD_GROUP = MIXED_WORDS
     MIXED_PHRASE = r'%s( %s)+' % (MIXED_WORD, MIXED_WORD)
 
-    MIXED_WORDS_MULTI_SPACE = r'%s( +%s)*' % (MIXED_WORD, MIXED_WORD)
-    MIXED_WORD_GROUP_MULTI_SPACE = MIXED_WORDS_MULTI_SPACE
-    MIXED_PHRASE_MULTI_SPACE = r'%s( +%s)+' % (MIXED_WORD, MIXED_WORD)
+    MIXED_WORDS_SEP_SPACES = r'%s( +%s)*' % (MIXED_WORD, MIXED_WORD)
+    MIXED_WORD_GROUP_SEP_SPACES = MIXED_WORDS_SEP_SPACES
+    MIXED_PHRASE_SEP_SPACES = r'%s( +%s)+' % (MIXED_WORD, MIXED_WORD)
 
     # --- group of mixed-word separated by whitespace ---
     MIXED_WORDS_SEP_WS = r'%s(\s%s)*' % (MIXED_WORD, MIXED_WORD)
     MIXED_WORD_GROUP_SEP_WS = MIXED_WORDS_SEP_WS
     MIXED_PHRASE_SEP_WS = r'%s(\s%s)+' % (MIXED_WORD, MIXED_WORD)
 
-    MIXED_WORDS_SEP_MULTI_WS = r'%s(\s+%s)*' % (MIXED_WORD, MIXED_WORD)
-    MIXED_WORD_GROUP_SEP_MULTI_WS = MIXED_WORDS_SEP_MULTI_WS
-    MIXED_PHRASE_SEP_MULTI_WS = r'%s(\s+%s)+' % (MIXED_WORD, MIXED_WORD)
+    MIXED_WORDS_SEP_WSS = r'%s(\s+%s)*' % (MIXED_WORD, MIXED_WORD)
+    MIXED_WORD_GROUP_SEP_WSS = MIXED_WORDS_SEP_WSS
+    MIXED_PHRASE_SEP_WSS = r'%s(\s+%s)+' % (MIXED_WORD, MIXED_WORD)
 
     # --- Non-whitespace(s) ---
     NON_WS = r'\S'
     ZERO_OR_ONE_NON_WS = rf'{NON_WS}?'
     ZERO_OR_MORE_NON_WSS = rf'{NON_WS}*'
-    MULTI_NON_WS = rf'{NON_WS}+'
-    NON_WSS = MULTI_NON_WS
+    NON_WSS = rf'{NON_WS}+'
 
     # --- group of non-whitespace(s) ---
-    NON_WS_GROUP = r'%s( %s)*' % (MULTI_NON_WS, MULTI_NON_WS)
-    NON_WS_PHRASE = r'%s( %s)+' % (MULTI_NON_WS, MULTI_NON_WS)
+    NON_WS_GROUP = r'%s( %s)*' % (NON_WSS, NON_WSS)
+    NON_WS_PHRASE = r'%s( %s)+' % (NON_WSS, NON_WSS)
 
-    NON_WS_GROUP_MULTI_SPACE = r'%s( +%s)*' % (MULTI_NON_WS, MULTI_NON_WS)
-    NON_WS_PHRASE_MULTI_SPACE = r'%s( +%s)+' % (MULTI_NON_WS, MULTI_NON_WS)
+    NON_WS_GROUP_SEP_SPACES = r'%s( +%s)*' % (NON_WSS, NON_WSS)
+    NON_WS_PHRASE_SEP_SPACES = r'%s( +%s)+' % (NON_WSS, NON_WSS)
 
     # --- group of non-whitespace(s) separated by whitespace ---
-    NON_WS_GROUP_SEP_WS = r'%s(\s%s)*' % (MULTI_NON_WS, MULTI_NON_WS)
-    NON_WS_PHRASE_SEP_WS = r'%s(\s%s)+' % (MULTI_NON_WS, MULTI_NON_WS)
+    NON_WS_GROUP_SEP_WS = r'%s(\s%s)*' % (NON_WSS, NON_WSS)
+    NON_WS_PHRASE_SEP_WS = r'%s(\s%s)+' % (NON_WSS, NON_WSS)
 
-    NON_WS_GROUP_SEP_MULTI_WS = r'%s(\s+%s)*' % (MULTI_NON_WS, MULTI_NON_WS)
-    NON_WS_PHRASE_SEP_MULTI_WS = r'%s(\s+%s)+' % (MULTI_NON_WS, MULTI_NON_WS)
+    NON_WS_GROUP_SEP_WSS = r'%s(\s+%s)*' % (NON_WSS, NON_WSS)
+    NON_WS_PHRASE_SEP_WSS = r'%s(\s+%s)+' % (NON_WSS, NON_WSS)
 
 
-def get_ref_pattern_by_name(name, default=None):
+def lookup_pattern(name, default=None):
     """Retrieve a regex pattern constant by name."""
-    default = default or PATTERN.NON_WS_GROUP_MULTI_SPACE
+    fallback = PATTERN.NON_WS_GROUP_SEP_SPACES
+    default = default or fallback
     attr = name.upper()
     pattern = getattr(PATTERN, attr, default)
     return pattern
