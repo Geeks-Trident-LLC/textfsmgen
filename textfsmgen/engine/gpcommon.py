@@ -23,7 +23,7 @@ Notes
 - Empty lines are represented with explicit start/end markers and whitespace
   classification.
 - Numeric tokens (digits, numbers, mixed numbers) are automatically
-  translated into template snippets via `TranslatedPattern`.
+  translated into template snippets via `PatternTranslator`.
 """
 
 import re
@@ -34,7 +34,7 @@ from textfsmgen.libs import PATTERN
 from textfsmgen.libs import number
 from textfsmgen.libs import text
 
-from textfsmgen.engine.gp import TranslatedPattern
+from textfsmgen.engine.translate import PatternTranslator
 
 from textfsmgen.exceptions import RuntimeException
 from textfsmgen.exceptions import raise_exception
@@ -105,7 +105,7 @@ def get_fixed_line_snippet(
 
     - Empty lines are represented as ``start() end(space|whitespace)``.
     - Digits, numbers, and mixed numbers are replaced with template
-      placeholders via `TranslatedPattern`.
+      placeholders via `PatternTranslator`.
     - Leading and trailing whitespace are preserved using `text.Line.get_leading`
       and `text.Line.get_trailing`.
 
@@ -180,7 +180,7 @@ def get_fixed_line_snippet(
     tokens = text.Text(line.strip()).do_finditer_split(PATTERN.NON_WSS)
     for i, token in enumerate(tokens):
         if token.strip():
-            factory = TranslatedPattern.do_factory_create(token)
+            factory = PatternTranslator.do_factory_create(token)
             if factory.name in {"digit", "digits", "number", "mixed_number", "puncts"}:
                 tokens[i] = factory.get_template_snippet()
 

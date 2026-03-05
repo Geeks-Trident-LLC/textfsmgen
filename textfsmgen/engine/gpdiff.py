@@ -13,7 +13,7 @@ This module provides utilities to:
 
 Notes
 -----
-- Differences are normalized using `TranslatedPattern` to ensure consistent
+- Differences are normalized using `PatternTranslator` to ensure consistent
   handling of digits, numbers, and whitespace.
 - Intended primarily for unit testing and debugging TextFSM template generation.
 - Diff results are diagnostic only and do not modify the original inputs.
@@ -34,7 +34,7 @@ from textfsmgen.core.patterns import LinePattern
 from textfsmgen.libs import PATTERN
 from textfsmgen.libs import text
 
-from textfsmgen.engine.gp import TranslatedPattern
+from textfsmgen.engine.translate import PatternTranslator
 from textfsmgen.exceptions import RuntimeException
 
 
@@ -374,7 +374,7 @@ class NDiffChangedText(NDiffBaseText):
 
         if txt1 or txt2:    # noqa
             args = [txt1, txt2] if txt1 and txt2 else [txt1] if txt1 else [txt2]
-            factory = TranslatedPattern.do_factory_create(*args)
+            factory = PatternTranslator.do_factory_create(*args)
             pattern = factory.root_pattern if is_root else factory.pattern
         else:
             pattern = ""
@@ -418,7 +418,7 @@ class NDiffChangedText(NDiffBaseText):
 
         if txt1 or txt2:
             args = [txt1, txt2] if txt1 and txt2 else [txt1] if txt1 else [txt2]
-            factory = TranslatedPattern.do_factory_create(*args)
+            factory = PatternTranslator.do_factory_create(*args)
             kwargs = dict(var=var, is_root=is_root)
             self._snippet = factory.get_template_snippet(**kwargs)
             if self.is_containing_empty_changed:
@@ -2013,7 +2013,7 @@ class DChange:
         str
             Snippet string representation.
         """
-        factory = TranslatedPattern.do_factory_create(*self.lst)
+        factory = PatternTranslator.do_factory_create(*self.lst)
         snippet = factory.get_template_snippet(var=self.var)
 
         if self.is_empty:

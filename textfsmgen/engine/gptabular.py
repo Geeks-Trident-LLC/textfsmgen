@@ -51,7 +51,7 @@ from textfsmgen.libs import datatype
 from textfsmgen.libs import text
 from textfsmgen.libs import number
 
-from textfsmgen.engine.gp import TranslatedPattern
+from textfsmgen.engine.translate import PatternTranslator
 from textfsmgen.exceptions import RuntimeException
 
 from textfsmgen.engine.gpcommon import get_line_position_by
@@ -2081,7 +2081,7 @@ class TabularColumn:
         if self.extra_data:
             texts.extend(self.extra_data)
 
-        node = TranslatedPattern.do_factory_create(*texts)
+        node = PatternTranslator.do_factory_create(*texts)
         pattern = node.get_regex_pattern(var=self.name)
 
         if node.is_group() and not self.is_last:
@@ -2110,7 +2110,7 @@ class TabularColumn:
         if self.extra_data:
             texts.extend(self.extra_data)
 
-        node = TranslatedPattern.do_factory_create(*texts)
+        node = PatternTranslator.do_factory_create(*texts)
         kwargs = {} if to_bared_snippet else {"var": self.name}
         snippet = node.get_template_snippet(**kwargs)
 

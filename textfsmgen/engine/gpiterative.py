@@ -39,7 +39,7 @@ from textfsmgen.libs import PATTERN
 from textfsmgen.libs import text
 from textfsmgen.libs.pat import lookup_pattern
 
-from textfsmgen.engine.gp import TranslatedPattern
+from textfsmgen.engine.translate import PatternTranslator
 from textfsmgen.engine import LineData
 from textfsmgen.exceptions import RuntimeException
 
@@ -191,7 +191,7 @@ class SnippetElement(RuntimeException):
         result: List[SnippetElement] = []
         for index, item in enumerate(lst):
             new_var_name = f"v{ref_index + index + 1}" if ref_index else f"{self.var_name}{index}"
-            pat_obj = TranslatedPattern.do_factory_create(item)
+            pat_obj = PatternTranslator.do_factory_create(item)
             sub_editable_snippet = pat_obj.get_readable_snippet(var=new_var_name)
             trailing = self.trailing if index == len(lst) - 1 else ""
             result.append(self(sub_editable_snippet, trailing=trailing))
@@ -219,7 +219,7 @@ class SnippetElement(RuntimeException):
             txt = txt.strip()
             actual_txt = txt.replace("_SYMBOL_LEFT_PARENTHESIS_", "(")
             actual_txt = actual_txt.replace("_SYMBOL_RIGHT_PARENTHESIS_", ")")
-            new_pat_obj = TranslatedPattern.do_factory_create(actual_txt)
+            new_pat_obj = PatternTranslator.do_factory_create(actual_txt)
             element_txt = new_pat_obj.get_readable_snippet(var=self.var_name)
             trailing = args[-1].trailing
         else:
@@ -750,7 +750,7 @@ class IterativeLineDataPattern(LineData):
         Convert raw line into an editable snippet string.
 
         Splits the line by whitespace, converts each token into a
-        `TranslatedPattern`, and assigns variable names based on the label.
+        `PatternTranslator`, and assigns variable names based on the label.
 
         Returns
         -------
@@ -761,7 +761,7 @@ class IterativeLineDataPattern(LineData):
         parts: List[str] = []
 
         for index, item in enumerate(re.split(PATTERN.WSS, self.data)):
-            node = TranslatedPattern.do_factory_create(item)
+            node = PatternTranslator.do_factory_create(item)
             var_name = f"v{self.label}{index}"
             parts.append(node.get_readable_snippet(var=var_name))
             if index < len(spaces):

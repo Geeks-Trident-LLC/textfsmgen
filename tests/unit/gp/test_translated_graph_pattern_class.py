@@ -1,5 +1,5 @@
 """
-Unit tests for the `textfsmgen.gp.TranslatedGraphPattern` class.
+Unit tests for the `textfsmgen.gp.GraphTranslator` class.
 
 Usage
 -----
@@ -11,37 +11,37 @@ Run pytest in the project root to execute these tests:
 
 import pytest
 
-from textfsmgen.engine.gp import (
-    TranslatedPattern,
-# TranslatedDigitPattern,
-# TranslatedDigitsPattern,
-# TranslatedNumberPattern,
-# TranslatedMixedNumberPattern,
-# TranslatedLetterPattern,
-# TranslatedLettersPattern,
-# TranslatedAlphabetNumericPattern,
-# TranslatedPunctPattern,
-# TranslatedPunctsPattern,
-# TranslatedPunctsGroupPattern,
-    TranslatedGraphPattern,
-# TranslatedWordPattern,
-# TranslatedWordsPattern,
-    TranslatedMixedWordPattern,
-    TranslatedMixedWordsPattern,
-    TranslatedNonWSPattern,
-    TranslatedNonWSSPattern,
-    TranslatedNonWSSGroupPattern
+from textfsmgen.engine.translate import (
+    PatternTranslator,
+# DigitTranslator,
+# DigitsTranslator,
+# NumberTranslator,
+# MixedNumberTranslator,
+# LetterTranslator,
+# LettersTranslator,
+# AlphabetNumericTranslator,
+# PunctTranslator,
+# PunctsTranslator,
+# PunctsGroupTranslator,
+    GraphTranslator,
+# WordTranslator,
+# WordsTranslator,
+    MixedWordTranslator,
+    MixedWordsTranslator,
+    NonWSTranslator,
+    NonWSSTranslator,
+    NonWSSGroupTranslator
 )
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
 
 
 class TestTranslatedGraphPatternClass:
-    """Test suite for TranslatedGraphPattern class."""
+    """Test suite for GraphTranslator class."""
 
     def setup_method(self):
-        """Create a baseline TranslatedGraphPattern instance for reuse."""
-        self.graph_node = TranslatedGraphPattern("a", "1", "#")
+        """Create a baseline GraphTranslator instance for reuse."""
+        self.graph_node = GraphTranslator("a", "1", "#")
 
     @pytest.mark.parametrize(
         "other",
@@ -59,7 +59,7 @@ class TestTranslatedGraphPatternClass:
         Verify that graph data is a subset of (mixed-word(s), non-whitespace(s)(-group))
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.graph_node.is_subset_of(other_instance) is True
 
     @pytest.mark.parametrize(
@@ -78,7 +78,7 @@ class TestTranslatedGraphPatternClass:
         mixed-number, punctuation(s), non-whitespace(s), non-whitespace-group)
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.graph_node.is_subset_of(other_instance) is False
 
     @pytest.mark.parametrize(
@@ -95,35 +95,35 @@ class TestTranslatedGraphPatternClass:
         Verify that graph data is a subset of (letter, digit, alpha-num, punct).
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.graph_node.is_superset_of(other_instance) is True
 
     @pytest.mark.parametrize(
         "data, expected_class",
         [
             (
-                ["a", "1", "#"],            # graph
-                TranslatedGraphPattern      # (graph, graph) => graph
+                    ["a", "1", "#"],  # graph
+                    GraphTranslator      # (graph, graph) => graph
             ),
             (
-                "abc.123",                  # mixed-word
-                TranslatedMixedWordPattern  # (graph, mixed-word) => mixed-word
+                "abc.123",  # mixed-word
+                MixedWordTranslator  # (graph, mixed-word) => mixed-word
             ),
             (
-                "a.1 b.1",                  # mixed-words
-                TranslatedMixedWordsPattern # (graph, mixed-words) => mixed-words
+                "a.1 b.1",  # mixed-words
+                MixedWordsTranslator # (graph, mixed-words) => mixed-words
             ),
             (
                 "\xc8",  # non-whitespace
-                TranslatedNonWSPattern # (graph, non-whitespace) => non-whitespace
+                NonWSTranslator # (graph, non-whitespace) => non-whitespace
             ),
             (
                 "abc\xc8",  # non-whitespaces
-                TranslatedNonWSSPattern # (graph, non-whitespaces) => non-whitespaces
+                NonWSSTranslator # (graph, non-whitespaces) => non-whitespaces
             ),
             (
                 "abc\xc8 xyz",  # non-whitespace-group
-                TranslatedNonWSSGroupPattern    # (graph, non-whitespace-group) => non-whitespace-group
+                NonWSSGroupTranslator    # (graph, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -133,7 +133,7 @@ class TestTranslatedGraphPatternClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = TranslatedPattern.do_factory_create(*args)
+        other = PatternTranslator.do_factory_create(*args)
         recommend_instance = self.graph_node.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
@@ -141,20 +141,20 @@ class TestTranslatedGraphPatternClass:
         "data, expected_class",
         [
             (
-                "a",                    # letter
-                TranslatedGraphPattern  # (graph, letter) => graph
+                "a",  # letter
+                GraphTranslator  # (graph, letter) => graph
             ),
             (
-                "1",                    # letter
-                TranslatedGraphPattern  # (graph, letter) => graph
+                "1",  # letter
+                GraphTranslator  # (graph, letter) => graph
             ),
             (
-                ["a", "1"],             # alpha-num
-                TranslatedGraphPattern  # (graph, alpha-num) => graph
+                    ["a", "1"],  # alpha-num
+                    GraphTranslator  # (graph, alpha-num) => graph
             ),
             (
-                "-",                    # punct
-                TranslatedGraphPattern  # (graph, punct) => graph
+                "-",  # punct
+                GraphTranslator  # (graph, punct) => graph
             ),
         ],
     )
@@ -164,7 +164,7 @@ class TestTranslatedGraphPatternClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = TranslatedPattern.do_factory_create(*args)
+        other = PatternTranslator.do_factory_create(*args)
         recommend_instance = self.graph_node.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
@@ -172,28 +172,28 @@ class TestTranslatedGraphPatternClass:
         "data, expected_class",
         [
             (
-                "abc",                      # letters
-                TranslatedMixedWordPattern  # (graph, letters) => mixed-word
+                "abc",  # letters
+                MixedWordTranslator  # (graph, letters) => mixed-word
             ),
             (
-                "123",                      # digits
-                TranslatedMixedWordPattern  # (graph, digits) => mixed-word
+                "123",  # digits
+                MixedWordTranslator  # (graph, digits) => mixed-word
             ),
             (
-                "1.1",                      # number
-                TranslatedMixedWordPattern  # (graph, number) => mixed-word
+                "1.1",  # number
+                MixedWordTranslator  # (graph, number) => mixed-word
             ),
             (
-                "-1.1",                     # mixed-number
-                TranslatedMixedWordPattern  # (graph, mixed-number) => mixed-word
+                "-1.1",  # mixed-number
+                MixedWordTranslator  # (graph, mixed-number) => mixed-word
             ),
             (
-                "abc123",                   # word
-                TranslatedMixedWordPattern  # (graph, word) => mixed-word
+                "abc123",  # word
+                MixedWordTranslator  # (graph, word) => mixed-word
             ),
             (
-                "a1 b1",                    # words
-                TranslatedMixedWordsPattern # (graph, words) => mixed-words
+                "a1 b1",  # words
+                MixedWordsTranslator # (graph, words) => mixed-words
             ),
         ],
     )
@@ -203,6 +203,6 @@ class TestTranslatedGraphPatternClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = TranslatedPattern.do_factory_create(*args)
+        other = PatternTranslator.do_factory_create(*args)
         recommend_instance = self.graph_node.recommend(other)
         assert isinstance(recommend_instance, expected_class)

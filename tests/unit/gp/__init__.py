@@ -12,5 +12,5 @@ Run pytest in the project root to execute these tests:
 
 class TranslatedDummyPattern:
     """
-    A lightweight dummy implementation of `TranslatedPattern` used for unit testing.
+    A lightweight dummy implementation of `PatternTranslator` used for unit testing.
     """

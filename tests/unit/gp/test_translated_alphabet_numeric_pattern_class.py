@@ -1,5 +1,5 @@
 """
-Unit tests for the `textfsmgen.gp.TranslatedAlphabetNumericPattern` class.
+Unit tests for the `textfsmgen.gp.AlphabetNumericTranslator` class.
 
 Usage
 -----
@@ -11,37 +11,37 @@ Run pytest in the project root to execute these tests:
 
 import pytest
 
-from textfsmgen.engine.gp import (
-    TranslatedPattern,
-# TranslatedDigitPattern,
-# TranslatedDigitsPattern,
-# TranslatedNumberPattern,
-# TranslatedMixedNumberPattern,
-# TranslatedLetterPattern,
-# TranslatedLettersPattern,
-    TranslatedAlphabetNumericPattern,
-# TranslatedPunctPattern,
-# TranslatedPunctsPattern,
-# TranslatedPunctsGroupPattern,
-# TranslatedGraphPattern,
-    TranslatedWordPattern,
-    TranslatedWordsPattern,
-    TranslatedMixedWordPattern,
-    TranslatedMixedWordsPattern,
-    TranslatedNonWSPattern,
-    TranslatedNonWSSPattern,
-    TranslatedNonWSSGroupPattern
+from textfsmgen.engine.translate import (
+    PatternTranslator,
+# DigitTranslator,
+# DigitsTranslator,
+# NumberTranslator,
+# MixedNumberTranslator,
+# LetterTranslator,
+# LettersTranslator,
+    AlphabetNumericTranslator,
+# PunctTranslator,
+# PunctsTranslator,
+# PunctsGroupTranslator,
+# GraphTranslator,
+    WordTranslator,
+    WordsTranslator,
+    MixedWordTranslator,
+    MixedWordsTranslator,
+    NonWSTranslator,
+    NonWSSTranslator,
+    NonWSSGroupTranslator
 )
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
 
 
 class TestTranslatedAlphabetNumericPatternClass:
-    """Test suite for TranslatedAlphabetNumericPattern class."""
+    """Test suite for AlphabetNumericTranslator class."""
 
     def setup_method(self):
-        """Create a baseline TranslatedAlphabetNumericPattern instance for reuse."""
-        self.alphabet_numeric_node = TranslatedAlphabetNumericPattern("a", "1")
+        """Create a baseline AlphabetNumericTranslator instance for reuse."""
+        self.alphabet_numeric_node = AlphabetNumericTranslator("a", "1")
 
     @pytest.mark.parametrize(
         "other",
@@ -63,7 +63,7 @@ class TestTranslatedAlphabetNumericPatternClass:
         mixed-word(s), non-whitespace(s), non-whitespace-group)
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.alphabet_numeric_node.is_subset_of(other_instance) is True
 
     @pytest.mark.parametrize(
@@ -82,7 +82,7 @@ class TestTranslatedAlphabetNumericPatternClass:
         mixed-number, punctuation(s), non-whitespace(s), non-whitespace-group)
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.alphabet_numeric_node.is_subset_of(other_instance) is False
 
     @pytest.mark.parametrize(
@@ -97,43 +97,43 @@ class TestTranslatedAlphabetNumericPatternClass:
         Verify that alpha-num data is a subset of (letter, digit).
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.alphabet_numeric_node.is_superset_of(other_instance) is True
 
     @pytest.mark.parametrize(
         "data, expected_class",
         [
             (
-                ["a", "1"],                         # alpha-num
-                TranslatedAlphabetNumericPattern    # (alpha-num, alpha-num) => alpha-num
+                    ["a", "1"],  # alpha-num
+                    AlphabetNumericTranslator    # (alpha-num, alpha-num) => alpha-num
             ),
             (
-                "abc123",               # a word
-                TranslatedWordPattern   # (alpha-num, word) => word
+                "abc123",  # a word
+                WordTranslator   # (alpha-num, word) => word
             ),
             (
-                "a1 a12",               # words
-                TranslatedWordsPattern  # (alpha-num, words) => words
+                "a1 a12",  # words
+                WordsTranslator  # (alpha-num, words) => words
             ),
             (
-                "abc.123",                  # mixed-word
-                TranslatedMixedWordPattern  # (alpha-num, mixed-word) => mixed-word
+                "abc.123",  # mixed-word
+                MixedWordTranslator  # (alpha-num, mixed-word) => mixed-word
             ),
             (
-                "a.1 b.1",                  # mixed-words
-                TranslatedMixedWordsPattern # (alpha-num, mixed-words) => mixed-words
+                "a.1 b.1",  # mixed-words
+                MixedWordsTranslator # (alpha-num, mixed-words) => mixed-words
             ),
             (
                 "\xc8",  # non-whitespace
-                TranslatedNonWSPattern # (alpha-num, non-whitespace) => non-whitespace
+                NonWSTranslator # (alpha-num, non-whitespace) => non-whitespace
             ),
             (
                 "abc\xc8",  # non-whitespaces
-                TranslatedNonWSSPattern # (alpha-num, non-whitespaces) => non-whitespaces
+                NonWSSTranslator # (alpha-num, non-whitespaces) => non-whitespaces
             ),
             (
                 "abc\xc8 xyz",  # non-whitespace-group
-                TranslatedNonWSSGroupPattern    # (alpha-num, non-whitespace-group) => non-whitespace-group
+                NonWSSGroupTranslator    # (alpha-num, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -143,7 +143,7 @@ class TestTranslatedAlphabetNumericPatternClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = TranslatedPattern.do_factory_create(*args)
+        other = PatternTranslator.do_factory_create(*args)
         recommend_instance = self.alphabet_numeric_node.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
@@ -151,12 +151,12 @@ class TestTranslatedAlphabetNumericPatternClass:
         "data, expected_class",
         [
             (
-                "a",                                # letter
-                TranslatedAlphabetNumericPattern    # (alpha-num, letter) => alpha-num
+                "a",  # letter
+                AlphabetNumericTranslator    # (alpha-num, letter) => alpha-num
             ),
             (
-                "1",                                # letter
-                TranslatedAlphabetNumericPattern    # (alpha-num, letter) => alpha-num
+                "1",  # letter
+                AlphabetNumericTranslator    # (alpha-num, letter) => alpha-num
             ),
         ],
     )
@@ -166,7 +166,7 @@ class TestTranslatedAlphabetNumericPatternClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = TranslatedPattern.do_factory_create(*args)
+        other = PatternTranslator.do_factory_create(*args)
         recommend_instance = self.alphabet_numeric_node.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
@@ -174,28 +174,28 @@ class TestTranslatedAlphabetNumericPatternClass:
         "data, expected_class",
         [
             (
-                "123",                  # digits
-                TranslatedWordPattern   # (alpha-num, digits) => word
+                "123",  # digits
+                WordTranslator   # (alpha-num, digits) => word
             ),
             (
-                "1.1",                      # number
-                TranslatedMixedWordPattern  # (alpha-num, number) => mixed-word
+                "1.1",  # number
+                MixedWordTranslator  # (alpha-num, number) => mixed-word
             ),
             (
-                "-1.1",                     # mixed-number
-                TranslatedMixedWordPattern  # (alpha-num, mixed-number) => mixed-word
+                "-1.1",  # mixed-number
+                MixedWordTranslator  # (alpha-num, mixed-number) => mixed-word
             ),
             (
                 "+",  # punctuation
-                TranslatedNonWSPattern # (alpha-num, punct) => non-whitespace
+                NonWSTranslator # (alpha-num, punct) => non-whitespace
             ),
             (
                 "++",  # punctuations
-                TranslatedNonWSSPattern # (alpha-num, puncts) => non-whitespaces
+                NonWSSTranslator # (alpha-num, puncts) => non-whitespaces
             ),
             (
                 "++ -- ==",  # punctuation-group
-                TranslatedNonWSSGroupPattern    # (alpha-num, punct-group) => non-whitespace-group
+                NonWSSGroupTranslator    # (alpha-num, punct-group) => non-whitespace-group
             ),
         ],
     )
@@ -205,6 +205,6 @@ class TestTranslatedAlphabetNumericPatternClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = TranslatedPattern.do_factory_create(*args)
+        other = PatternTranslator.do_factory_create(*args)
         recommend_instance = self.alphabet_numeric_node.recommend(other)
         assert isinstance(recommend_instance, expected_class)

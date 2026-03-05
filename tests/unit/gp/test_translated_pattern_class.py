@@ -1,5 +1,5 @@
 """
-Unit tests for the `textfsmgen.gp.TranslatedPattern` class.
+Unit tests for the `textfsmgen.gp.PatternTranslator` class.
 
 Usage
 -----
@@ -10,13 +10,13 @@ Run pytest in the project root to execute these tests:
 """
 
 import pytest
-from textfsmgen.engine.gp import TranslatedPattern
+from textfsmgen.engine.translate import PatternTranslator
 
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
 
 class TestGetReadableSnippetMethod:
-    """Test suite for TranslatedPattern.get_readable_snippet."""
+    """Test suite for PatternTranslator.get_readable_snippet."""
     @pytest.mark.parametrize(
         "digits, var_name, expected_snippet, expected_pattern",
         [
@@ -36,7 +36,7 @@ class TestGetReadableSnippetMethod:
     )
     def test_digits(self, digits, var_name, expected_snippet, expected_pattern):
         args = to_list(digits)
-        node = TranslatedPattern.do_factory_create(*args)
+        node = PatternTranslator.do_factory_create(*args)
         snippet = node.get_readable_snippet(var=var_name)
         assert snippet == expected_snippet
         assert node.pattern == expected_pattern
@@ -81,7 +81,7 @@ class TestGetReadableSnippetMethod:
     )
     def test_number(self, number, var_name, expected_snippet, expected_pattern):
         args = to_list(number)
-        node = TranslatedPattern.do_factory_create(*args)
+        node = PatternTranslator.do_factory_create(*args)
         snippet = node.get_readable_snippet(var=var_name)
         assert snippet == expected_snippet
         assert node.pattern == expected_pattern
@@ -141,7 +141,7 @@ class TestGetReadableSnippetMethod:
     )
     def test_punctuations(self, puncts, var_name, expected_snippet, expected_pattern):
         args = to_list(puncts)
-        node = TranslatedPattern.do_factory_create(*args)
+        node = PatternTranslator.do_factory_create(*args)
         snippet = node.get_readable_snippet(var=var_name)
         assert snippet == expected_snippet
         assert node.pattern == expected_pattern
@@ -204,7 +204,7 @@ class TestGetReadableSnippetMethod:
     )
     def test_creating_text_snippet(self, text, var_name, expected_snippet, expected_pattern):
         args = to_list(text)
-        node = TranslatedPattern.do_factory_create(*args)
+        node = PatternTranslator.do_factory_create(*args)
         snippet = node.get_readable_snippet(var=var_name)
         assert snippet == expected_snippet
         assert node.pattern == expected_pattern
@@ -222,7 +222,7 @@ class TestGetReadableSnippetMethod:
     )
     def test_creating_graph_snippet(self, data, var_name, expected_snippet, expected_pattern):
         args = to_list(data)
-        node = TranslatedPattern.do_factory_create(*args)
+        node = PatternTranslator.do_factory_create(*args)
         snippet = node.get_readable_snippet(var=var_name)
         assert snippet == expected_snippet
         assert node.pattern == expected_pattern
@@ -258,7 +258,7 @@ class TestGetReadableSnippetMethod:
     )
     def test_creating_non_white_space_snippet(self, data, var_name, expected_snippet, expected_pattern):
         args = to_list(data)
-        node = TranslatedPattern.do_factory_create(*args)
+        node = PatternTranslator.do_factory_create(*args)
         snippet = node.get_readable_snippet(var=var_name)
         assert snippet == expected_snippet
         assert node.pattern == expected_pattern

@@ -22,7 +22,7 @@ from textfsmgen.core.patterns import TextPattern
 from textfsmgen.libs import PATTERN
 from textfsmgen.libs import text
 
-from textfsmgen.engine.gp import TranslatedPattern
+from textfsmgen.engine.translate import PatternTranslator
 from textfsmgen.engine import LineData
 from textfsmgen.exceptions import RuntimeException
 from textfsmgen.engine.gpiterative import IterativeLineDataPattern
@@ -225,13 +225,13 @@ class CategoryRightDataPattern(CategoryPatternData):
             named group pattern.
         """
         if self.data:
-            pat_obj = TranslatedPattern.do_factory_create(self.data)
+            pat_obj = PatternTranslator.do_factory_create(self.data)
             return pat_obj.get_regex_pattern(var=self.var_name)
         return f"(?P<{self.var_name}>.*|)"
 
     def to_template_snippet(self):
         if self.data:
-            pat_obj = TranslatedPattern.do_factory_create(self.data)
+            pat_obj = PatternTranslator.do_factory_create(self.data)
             return pat_obj.get_template_snippet(var=self.var_name)
         return f"something(var_{self.var_name}, or_empty)"
 

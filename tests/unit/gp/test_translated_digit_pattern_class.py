@@ -1,5 +1,5 @@
 """
-Unit tests for the `textfsmgen.gp.TranslatedDigitPattern` class.
+Unit tests for the `textfsmgen.gp.DigitTranslator` class.
 
 Usage
 -----
@@ -11,37 +11,37 @@ Run pytest in the project root to execute these tests:
 
 import pytest
 
-from textfsmgen.engine.gp import (
-    TranslatedPattern,
-    TranslatedDigitPattern,
-    TranslatedDigitsPattern,
-    TranslatedNumberPattern,
-    TranslatedMixedNumberPattern,
-# TranslatedLetterPattern,
-# TranslatedLettersPattern,
-    TranslatedAlphabetNumericPattern,
-# TranslatedPunctPattern,
-# TranslatedPunctsPattern,
-# TranslatedPunctsGroupPattern,
-# TranslatedGraphPattern,
-    TranslatedWordPattern,
-    TranslatedWordsPattern,
-    TranslatedMixedWordPattern,
-    TranslatedMixedWordsPattern,
-    TranslatedNonWSPattern,
-    TranslatedNonWSSPattern,
-    TranslatedNonWSSGroupPattern
+from textfsmgen.engine.translate import (
+    PatternTranslator,
+    DigitTranslator,
+    DigitsTranslator,
+    NumberTranslator,
+    MixedNumberTranslator,
+# LetterTranslator,
+# LettersTranslator,
+    AlphabetNumericTranslator,
+# PunctTranslator,
+# PunctsTranslator,
+# PunctsGroupTranslator,
+# GraphTranslator,
+    WordTranslator,
+    WordsTranslator,
+    MixedWordTranslator,
+    MixedWordsTranslator,
+    NonWSTranslator,
+    NonWSSTranslator,
+    NonWSSGroupTranslator
 )
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
 
 
 class TestTranslatedDigitPatternClass:
-    """Test suite for TranslatedDigitPattern class."""
+    """Test suite for DigitTranslator class."""
 
     def setup_method(self):
-        """Create a baseline TranslatedDigitPattern instance for reuse."""
-        self.digit_node = TranslatedDigitPattern("1", "2", "3")
+        """Create a baseline DigitTranslator instance for reuse."""
+        self.digit_node = DigitTranslator("1", "2", "3")
 
     @pytest.mark.parametrize(
         "other",
@@ -68,7 +68,7 @@ class TestTranslatedDigitPatternClass:
         words, and non‑whitespace.
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.digit_node.is_subset_of(other_instance) is True
 
     @pytest.mark.parametrize(
@@ -84,7 +84,7 @@ class TestTranslatedDigitPatternClass:
         Verify that a digit data is not a subset of letters or punctuations
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.digit_node.is_subset_of(other_instance) is False
 
     @pytest.mark.parametrize(
@@ -101,55 +101,55 @@ class TestTranslatedDigitPatternClass:
         to any broader translated category.
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.digit_node.is_superset_of(other_instance) is False
 
     @pytest.mark.parametrize(
         "data, expected_class",
         [
             (
-                "1",                    # digit
-                TranslatedDigitPattern  # (digit, digit) => digit
+                "1",  # digit
+                DigitTranslator  # (digit, digit) => digit
             ),
             (
-                "123",                  # digits
-                TranslatedDigitsPattern # (digit, digits) => digits
+                "123",  # digits
+                DigitsTranslator # (digit, digits) => digits
             ),
             (
-                "1.1",                  # number
-                TranslatedNumberPattern # (digit, number) => number
+                "1.1",  # number
+                NumberTranslator # (digit, number) => number
             ),
             (
-                "-1.1",                         # mixed-number
-                TranslatedMixedNumberPattern    # (digit, mixed-number) => mixed-number
+                "-1.1",  # mixed-number
+                MixedNumberTranslator    # (digit, mixed-number) => mixed-number
             ),
             (
-                "abc123",               # word
-                TranslatedWordPattern   # (digit, word) => word
+                "abc123",  # word
+                WordTranslator   # (digit, word) => word
             ),
             (
-                "a1 a12",               # words
-                TranslatedWordsPattern  # (digit, words) => words
+                "a1 a12",  # words
+                WordsTranslator  # (digit, words) => words
             ),
             (
-                "abc.123",                  # mixed-word
-                TranslatedMixedWordPattern  # (digit, mixed-word) => mixed-word
+                "abc.123",  # mixed-word
+                MixedWordTranslator  # (digit, mixed-word) => mixed-word
             ),
             (
-                "a.1 b.1",                  # mixed-words
-                TranslatedMixedWordsPattern # (digit, mixed-words) => mixed-words
+                "a.1 b.1",  # mixed-words
+                MixedWordsTranslator # (digit, mixed-words) => mixed-words
             ),
             (
                 "\xc8",  # non-whitespace
-                TranslatedNonWSPattern  # (digit, non-whitespace) => non-whitespace
+                NonWSTranslator  # (digit, non-whitespace) => non-whitespace
             ),
             (
                 "abc\xc8",  # non-whitespaces
-                TranslatedNonWSSPattern # (digit, non-whitespaces) => non-whitespaces
+                NonWSSTranslator # (digit, non-whitespaces) => non-whitespaces
             ),
             (
                 "abc\xc8 xyz",  # non-whitespace-group
-                TranslatedNonWSSGroupPattern    # (digit, non-whitespace-group) => non-whitespace-group
+                NonWSSGroupTranslator    # (digit, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -159,7 +159,7 @@ class TestTranslatedDigitPatternClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = TranslatedPattern.do_factory_create(*args)
+        other = PatternTranslator.do_factory_create(*args)
         recommend_instance = self.digit_node.recommend(other)
         assert isinstance(recommend_instance, expected_class)
 
@@ -167,24 +167,24 @@ class TestTranslatedDigitPatternClass:
         "data, expected_class",
         [
             (
-                "a",                                # letter
-                TranslatedAlphabetNumericPattern    # (digit, letter) => alphabet-numeric
+                "a",  # letter
+                AlphabetNumericTranslator    # (digit, letter) => alphabet-numeric
             ),
             (
-                "ab",                   # letters
-                TranslatedWordPattern   # (digit, letters) => word
+                "ab",  # letters
+                WordTranslator   # (digit, letters) => word
             ),
             (
                 "+",  # punctuation
-                TranslatedNonWSPattern  # (digit, punct) => non-whitespace
+                NonWSTranslator  # (digit, punct) => non-whitespace
             ),
             (
                 "++",  # punctuations
-                TranslatedNonWSSPattern # (digit, puncts) => non-whitespaces
+                NonWSSTranslator # (digit, puncts) => non-whitespaces
             ),
             (
                 "++ -- ==",  # punctuation-group
-                TranslatedNonWSSGroupPattern    # (digit, punct-group) => non-whitespace-group
+                NonWSSGroupTranslator    # (digit, punct-group) => non-whitespace-group
             ),
         ],
     )
@@ -194,6 +194,6 @@ class TestTranslatedDigitPatternClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = TranslatedPattern.do_factory_create(*args)
+        other = PatternTranslator.do_factory_create(*args)
         recommend_instance = self.digit_node.recommend(other)
         assert isinstance(recommend_instance, expected_class)

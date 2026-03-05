@@ -1,5 +1,5 @@
 """
-Unit tests for the `textfsmgen.gp.TranslatedWordsPattern` class.
+Unit tests for the `textfsmgen.gp.WordsTranslator` class.
 
 Usage
 -----
@@ -11,37 +11,37 @@ Run pytest in the project root to execute these tests:
 
 import pytest
 
-from textfsmgen.engine.gp import (
-    TranslatedPattern,
-# TranslatedDigitPattern,
-# TranslatedDigitsPattern,
-# TranslatedNumberPattern,
-# TranslatedMixedNumberPattern,
-# TranslatedLetterPattern,
-# TranslatedLettersPattern,
-# TranslatedAlphabetNumericPattern,
-# TranslatedPunctPattern,
-# TranslatedPunctsPattern,
-# TranslatedPunctsGroupPattern,
-# TranslatedGraphPattern,
-# TranslatedWordPattern,
-    TranslatedWordsPattern,
-# TranslatedMixedWordPattern,
-    TranslatedMixedWordsPattern,
-# TranslatedNonWSPattern,
-# TranslatedNonWSSPattern,
-    TranslatedNonWSSGroupPattern
+from textfsmgen.engine.translate import (
+    PatternTranslator,
+# DigitTranslator,
+# DigitsTranslator,
+# NumberTranslator,
+# MixedNumberTranslator,
+# LetterTranslator,
+# LettersTranslator,
+# AlphabetNumericTranslator,
+# PunctTranslator,
+# PunctsTranslator,
+# PunctsGroupTranslator,
+# GraphTranslator,
+# WordTranslator,
+    WordsTranslator,
+# MixedWordTranslator,
+    MixedWordsTranslator,
+# NonWSTranslator,
+# NonWSSTranslator,
+    NonWSSGroupTranslator
 )
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
 
 
 class TestTranslatedWordsPatternClass:
-    """Test suite for TranslatedWordsPattern class."""
+    """Test suite for WordsTranslator class."""
 
     def setup_method(self):
-        """Create a baseline TranslatedWordsPattern instance for reuse."""
-        self.words_node = TranslatedWordsPattern("abc123")
+        """Create a baseline WordsTranslator instance for reuse."""
+        self.words_node = WordsTranslator("abc123")
 
     @pytest.mark.parametrize(
         "other",
@@ -56,7 +56,7 @@ class TestTranslatedWordsPatternClass:
         Verify that words data is a subset of (word(s), mixed-word(s), non-whitespaces(-group))
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.words_node.is_subset_of(other_instance) is True
 
     @pytest.mark.parametrize(
@@ -76,7 +76,7 @@ class TestTranslatedWordsPatternClass:
         mixed-number, graph)
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.words_node.is_subset_of(other_instance) is False
 
     @pytest.mark.parametrize(
@@ -91,23 +91,23 @@ class TestTranslatedWordsPatternClass:
         Verify that words data is a superset of (letter(s), word).
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.words_node.is_superset_of(other_instance) is True
 
     @pytest.mark.parametrize(
         "data, expected_class",
         [
             (
-                "a1 b2",                # words
-                TranslatedWordsPattern  # (words, words) => words
+                "a1 b2",  # words
+                WordsTranslator  # (words, words) => words
             ),
             (
-                "a.1 b.1",                  # mixed-words
-                TranslatedMixedWordsPattern # (words, mixed-words) => mixed-words
+                "a.1 b.1",  # mixed-words
+                MixedWordsTranslator # (words, mixed-words) => mixed-words
             ),
             (
                 "abc\xc8 xyz",  # non-whitespace-group
-                TranslatedNonWSSGroupPattern    # (words, non-whitespace-group) => non-whitespace-group
+                NonWSSGroupTranslator    # (words, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -117,7 +117,7 @@ class TestTranslatedWordsPatternClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = TranslatedPattern.do_factory_create(*args)
+        other = PatternTranslator.do_factory_create(*args)
         recommend_instance = self.words_node.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
@@ -125,16 +125,16 @@ class TestTranslatedWordsPatternClass:
         "data, expected_class",
         [
             (
-                "a",                    # letter
-                TranslatedWordsPattern  # (words, letter) => words
+                "a",  # letter
+                WordsTranslator  # (words, letter) => words
             ),
             (
-                "abc",                  # letters
-                TranslatedWordsPattern  # (words, letters) => words
+                "abc",  # letters
+                WordsTranslator  # (words, letters) => words
             ),
             # (
             #     "abc123",               # word
-            #     TranslatedWordsPattern  # (words, word) => words
+            #     WordsTranslator  # (words, word) => words
             # ),
         ],
     )
@@ -144,7 +144,7 @@ class TestTranslatedWordsPatternClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = TranslatedPattern.do_factory_create(*args)
+        other = PatternTranslator.do_factory_create(*args)
         recommend_instance = self.words_node.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
@@ -153,43 +153,43 @@ class TestTranslatedWordsPatternClass:
         [
             (
                     ["a", "1"],  # alpha-num
-                    TranslatedNonWSSGroupPattern    # (words, alpha-num) => non-whitespaces-group
+                    NonWSSGroupTranslator    # (words, alpha-num) => non-whitespaces-group
             ),
             (
                     ["a", "1", "#"],  # graph
-                    TranslatedNonWSSGroupPattern    # (words, graph) => non-whitespaces-group
+                    NonWSSGroupTranslator    # (words, graph) => non-whitespaces-group
             ),
             (
                 "1",  # digit
-                TranslatedNonWSSGroupPattern    # (words, digit) => non-whitespaces-group
+                NonWSSGroupTranslator    # (words, digit) => non-whitespaces-group
             ),
             (
                 "123",  # digits
-                TranslatedNonWSSGroupPattern    # (words, digits) => non-whitespaces-group
+                NonWSSGroupTranslator    # (words, digits) => non-whitespaces-group
             ),
             (
                 "1.23",  # number
-                TranslatedNonWSSGroupPattern    # (words, number) => non-whitespaces-group
+                NonWSSGroupTranslator    # (words, number) => non-whitespaces-group
             ),
             (
                 "-1.1",  # mixed-number
-                TranslatedNonWSSGroupPattern    # (words, mixed-number) => non-whitespaces-group
+                NonWSSGroupTranslator    # (words, mixed-number) => non-whitespaces-group
             ),
             (
                 "\xc8",  # non-whitespace
-                TranslatedNonWSSGroupPattern    # (words, non-whitespace) => non-whitespaces-group
+                NonWSSGroupTranslator    # (words, non-whitespace) => non-whitespaces-group
             ),
             (
                 "-",  # punct
-                TranslatedNonWSSGroupPattern    # (words, non-whitespace) => non-whitespaces-group
+                NonWSSGroupTranslator    # (words, non-whitespace) => non-whitespaces-group
             ),
             (
                 "--++==",  # puncts
-                TranslatedNonWSSGroupPattern    # (words, puncts) => non-whitespaces-group
+                NonWSSGroupTranslator    # (words, puncts) => non-whitespaces-group
             ),
             (
                 "-- ++ ==",  # punct-group
-                TranslatedNonWSSGroupPattern    # (words, punct-group) => non-whitespace-group
+                NonWSSGroupTranslator    # (words, punct-group) => non-whitespace-group
             ),
         ],
     )
@@ -199,6 +199,6 @@ class TestTranslatedWordsPatternClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = TranslatedPattern.do_factory_create(*args)
+        other = PatternTranslator.do_factory_create(*args)
         recommend_instance = self.words_node.recommend(other)
         assert isinstance(recommend_instance, expected_class)

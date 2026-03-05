@@ -1,5 +1,5 @@
 """
-Unit tests for the `textfsmgen.gp.TranslatedMixedWordPattern` class.
+Unit tests for the `textfsmgen.gp.MixedWordTranslator` class.
 
 Usage
 -----
@@ -11,37 +11,37 @@ Run pytest in the project root to execute these tests:
 
 import pytest
 
-from textfsmgen.engine.gp import (
-    TranslatedPattern,
-# TranslatedDigitPattern,
-# TranslatedDigitsPattern,
-# TranslatedNumberPattern,
-# TranslatedMixedNumberPattern,
-# TranslatedLetterPattern,
-# TranslatedLettersPattern,
-# TranslatedAlphabetNumericPattern,
-# TranslatedPunctPattern,
-# TranslatedPunctsPattern,
-# TranslatedPunctsGroupPattern,
-# TranslatedGraphPattern,
-# TranslatedWordPattern,
-# TranslatedWordsPattern,
-    TranslatedMixedWordPattern,
-    TranslatedMixedWordsPattern,
-# TranslatedNonWSPattern,
-    TranslatedNonWSSPattern,
-    TranslatedNonWSSGroupPattern
+from textfsmgen.engine.translate import (
+    PatternTranslator,
+# DigitTranslator,
+# DigitsTranslator,
+# NumberTranslator,
+# MixedNumberTranslator,
+# LetterTranslator,
+# LettersTranslator,
+# AlphabetNumericTranslator,
+# PunctTranslator,
+# PunctsTranslator,
+# PunctsGroupTranslator,
+# GraphTranslator,
+# WordTranslator,
+# WordsTranslator,
+    MixedWordTranslator,
+    MixedWordsTranslator,
+# NonWSTranslator,
+    NonWSSTranslator,
+    NonWSSGroupTranslator
 )
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
 
 
 class TestTranslatedMixedWordPatternClass:
-    """Test suite for TranslatedMixedWordPattern class."""
+    """Test suite for MixedWordTranslator class."""
 
     def setup_method(self):
-        """Create a baseline TranslatedMixedWordPattern instance for reuse."""
-        self.mixed_word_node = TranslatedMixedWordPattern("abc.123")
+        """Create a baseline MixedWordTranslator instance for reuse."""
+        self.mixed_word_node = MixedWordTranslator("abc.123")
 
     @pytest.mark.parametrize(
         "other",
@@ -57,7 +57,7 @@ class TestTranslatedMixedWordPatternClass:
         Verify that mixed-word data is a subset of (word(s), mixed-word(s), non-whitespaces(-group))
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.mixed_word_node.is_subset_of(other_instance) is True
 
     @pytest.mark.parametrize(
@@ -74,7 +74,7 @@ class TestTranslatedMixedWordPatternClass:
         mixed-number, graph)
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.mixed_word_node.is_subset_of(other_instance) is False
 
     @pytest.mark.parametrize(
@@ -96,27 +96,27 @@ class TestTranslatedMixedWordPatternClass:
         number, mixed-number, alpha-num, word).
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.mixed_word_node.is_superset_of(other_instance) is True
 
     @pytest.mark.parametrize(
         "data, expected_class",
         [
             (
-                "abc.123",                  # mixed-word
-                TranslatedMixedWordPattern  # (mixed-word, mixed-word) => mixed-word
+                "abc.123",  # mixed-word
+                MixedWordTranslator  # (mixed-word, mixed-word) => mixed-word
             ),
             (
-                "a.1 b.1",                  # mixed-words
-                TranslatedMixedWordsPattern # (mixed-word, mixed-words) => mixed-words
+                "a.1 b.1",  # mixed-words
+                MixedWordsTranslator # (mixed-word, mixed-words) => mixed-words
             ),
             (
                 "abc\xc8",  # non-whitespaces
-                TranslatedNonWSSPattern # (mixed-word, non-whitespaces) => non-whitespaces
+                NonWSSTranslator # (mixed-word, non-whitespaces) => non-whitespaces
             ),
             (
                 "abc\xc8 xyz",  # non-whitespace-group
-                TranslatedNonWSSGroupPattern    # (mixed-word, non-whitespace-group) => non-whitespace-group
+                NonWSSGroupTranslator    # (mixed-word, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -126,7 +126,7 @@ class TestTranslatedMixedWordPatternClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = TranslatedPattern.do_factory_create(*args)
+        other = PatternTranslator.do_factory_create(*args)
         recommend_instance = self.mixed_word_node.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
@@ -134,36 +134,36 @@ class TestTranslatedMixedWordPatternClass:
         "data, expected_class",
         [
             (
-                "a",                        # letter
-                TranslatedMixedWordPattern  # (mixed-word, letter) => mixed-word
+                "a",  # letter
+                MixedWordTranslator  # (mixed-word, letter) => mixed-word
             ),
             (
-                "abc",                      # letters
-                TranslatedMixedWordPattern  # (mixed-word, letters) => mixed-word
+                "abc",  # letters
+                MixedWordTranslator  # (mixed-word, letters) => mixed-word
             ),
             (
-                "1",                        # digit
-                TranslatedMixedWordPattern  # (mixed-word, digit) => mixed-word
+                "1",  # digit
+                MixedWordTranslator  # (mixed-word, digit) => mixed-word
             ),
             (
-                "123",                      # digits
-                TranslatedMixedWordPattern  # (mixed-word, digits) => mixed-word
+                "123",  # digits
+                MixedWordTranslator  # (mixed-word, digits) => mixed-word
             ),
             (
-                "1.1",                      # number
-                TranslatedMixedWordPattern  # (mixed-word, number) => mixed-word
+                "1.1",  # number
+                MixedWordTranslator  # (mixed-word, number) => mixed-word
             ),
             (
-                "-1.1",                     # mixed-number
-                TranslatedMixedWordPattern  # (mixed-word, mixed-number) => mixed-word
+                "-1.1",  # mixed-number
+                MixedWordTranslator  # (mixed-word, mixed-number) => mixed-word
             ),
             (
-                ["a", "1"],                 # alpha-num
-                TranslatedMixedWordPattern  # (mixed-word, alpha-num) => mixed-word
+                    ["a", "1"],  # alpha-num
+                    MixedWordTranslator  # (mixed-word, alpha-num) => mixed-word
             ),
             (
-                "abc123",                   # word
-                TranslatedMixedWordPattern  # (mixed-word, word) => mixed-word
+                "abc123",  # word
+                MixedWordTranslator  # (mixed-word, word) => mixed-word
             ),
         ],
     )
@@ -173,7 +173,7 @@ class TestTranslatedMixedWordPatternClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = TranslatedPattern.do_factory_create(*args)
+        other = PatternTranslator.do_factory_create(*args)
         recommend_instance = self.mixed_word_node.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
@@ -181,28 +181,28 @@ class TestTranslatedMixedWordPatternClass:
         "data, expected_class",
         [
             (
-                "abc xyz",                  # words
-                TranslatedMixedWordsPattern # (mixed-word, words) => mixed-words
+                "abc xyz",  # words
+                MixedWordsTranslator # (mixed-word, words) => mixed-words
             ),
             (
                     ["a", "1", "#"],  # graph
-                    TranslatedNonWSSPattern # (mixed-word, graph) => non-whitespaces
+                    NonWSSTranslator # (mixed-word, graph) => non-whitespaces
             ),
             (
                 "\xc8",  # non-whitespace
-                TranslatedNonWSSPattern # (mixed-word, non-whitespace) => non-whitespaces
+                NonWSSTranslator # (mixed-word, non-whitespace) => non-whitespaces
             ),
             (
                 "-",  # punct
-                TranslatedNonWSSPattern # (mixed-word, non-whitespace) => non-whitespaces
+                NonWSSTranslator # (mixed-word, non-whitespace) => non-whitespaces
             ),
             (
                 "--++==",  # puncts
-                TranslatedNonWSSPattern # (mixed-word, puncts) => non-whitespaces
+                NonWSSTranslator # (mixed-word, puncts) => non-whitespaces
             ),
             (
                 "-- ++ ==",  # punct-group
-                TranslatedNonWSSGroupPattern    # (mixed-word, punct-group) => non-whitespaces-group
+                NonWSSGroupTranslator    # (mixed-word, punct-group) => non-whitespaces-group
             ),
         ],
     )
@@ -212,6 +212,6 @@ class TestTranslatedMixedWordPatternClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = TranslatedPattern.do_factory_create(*args)
+        other = PatternTranslator.do_factory_create(*args)
         recommend_instance = self.mixed_word_node.recommend(other)
         assert isinstance(recommend_instance, expected_class)

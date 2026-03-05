@@ -1,5 +1,5 @@
 """
-Unit tests for the `textfsmgen.gp.TranslatedNonWSSPattern` class.
+Unit tests for the `textfsmgen.gp.NonWSSTranslator` class.
 
 Usage
 -----
@@ -11,37 +11,37 @@ Run pytest in the project root to execute these tests:
 
 import pytest
 
-from textfsmgen.engine.gp import (
-    TranslatedPattern,
-# TranslatedDigitPattern,
-# TranslatedDigitsPattern,
-# TranslatedNumberPattern,
-# TranslatedMixedNumberPattern,
-# TranslatedLetterPattern,
-# TranslatedLettersPattern,
-# TranslatedAlphabetNumericPattern,
-# TranslatedPunctPattern,
-# TranslatedPunctsPattern,
-# TranslatedPunctsGroupPattern,
-# TranslatedGraphPattern,
-# TranslatedWordPattern,
-# TranslatedWordsPattern,
-# TranslatedMixedWordPattern,
-# TranslatedMixedWordsPattern,
-# TranslatedNonWSPattern,
-    TranslatedNonWSSPattern,
-    TranslatedNonWSSGroupPattern
+from textfsmgen.engine.translate import (
+    PatternTranslator,
+# DigitTranslator,
+# DigitsTranslator,
+# NumberTranslator,
+# MixedNumberTranslator,
+# LetterTranslator,
+# LettersTranslator,
+# AlphabetNumericTranslator,
+# PunctTranslator,
+# PunctsTranslator,
+# PunctsGroupTranslator,
+# GraphTranslator,
+# WordTranslator,
+# WordsTranslator,
+# MixedWordTranslator,
+# MixedWordsTranslator,
+# NonWSTranslator,
+    NonWSSTranslator,
+    NonWSSGroupTranslator
 )
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
 
 
 class TestTranslatedNonWhitespacesPatternClass:
-    """Test suite for TranslatedNonWSSPattern class."""
+    """Test suite for NonWSSTranslator class."""
 
     def setup_method(self):
-        """Create a baseline TranslatedNonWSSPattern instance for reuse."""
-        self.non_whitespaces_node = TranslatedNonWSSPattern("abc\xc8")
+        """Create a baseline NonWSSTranslator instance for reuse."""
+        self.non_whitespaces_node = NonWSSTranslator("abc\xc8")
 
     @pytest.mark.parametrize(
         "other",
@@ -55,7 +55,7 @@ class TestTranslatedNonWhitespacesPatternClass:
         Verify that non-whitespaces data is a subset of (non-whitespaces(-group))
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.non_whitespaces_node.is_subset_of(other_instance) is True
 
     @pytest.mark.parametrize(
@@ -72,7 +72,7 @@ class TestTranslatedNonWhitespacesPatternClass:
         mixed-words, non-whitespaces-group)
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.non_whitespaces_node.is_subset_of(other_instance) is False
 
     @pytest.mark.parametrize(
@@ -98,7 +98,7 @@ class TestTranslatedNonWhitespacesPatternClass:
         Verify that non-whitespaces data is a superset of (letter(s)).
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.non_whitespaces_node.is_superset_of(other_instance) is True
 
     @pytest.mark.parametrize(
@@ -106,11 +106,11 @@ class TestTranslatedNonWhitespacesPatternClass:
         [
             (
                 "abc\xc8",  # non-whitespaces
-                TranslatedNonWSSPattern # (non-whitespaces, non-whitespaces) => non-whitespaces
+                NonWSSTranslator # (non-whitespaces, non-whitespaces) => non-whitespaces
             ),
             (
                 "abc\xc8 xyz",  # non-whitespace-group
-                TranslatedNonWSSGroupPattern    # (non-whitespaces, non-whitespace-group) => non-whitespace-group
+                NonWSSGroupTranslator    # (non-whitespaces, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -120,7 +120,7 @@ class TestTranslatedNonWhitespacesPatternClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = TranslatedPattern.do_factory_create(*args)
+        other = PatternTranslator.do_factory_create(*args)
         recommend_instance = self.non_whitespaces_node.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
@@ -129,55 +129,55 @@ class TestTranslatedNonWhitespacesPatternClass:
         [
             (
                 "a",  # letter
-                TranslatedNonWSSPattern # (non-whitespaces, letter) => non-whitespaces
+                NonWSSTranslator # (non-whitespaces, letter) => non-whitespaces
             ),
             (
                 "abc",  # letters
-                TranslatedNonWSSPattern # (non-whitespaces, letters) => non-whitespaces
+                NonWSSTranslator # (non-whitespaces, letters) => non-whitespaces
             ),
             (
                 "1",  # digit
-                TranslatedNonWSSPattern # (non-whitespaces, digit) => non-whitespaces
+                NonWSSTranslator # (non-whitespaces, digit) => non-whitespaces
             ),
             (
                 "123",  # digits
-                TranslatedNonWSSPattern # (non-whitespaces, digits) => non-whitespaces
+                NonWSSTranslator # (non-whitespaces, digits) => non-whitespaces
             ),
             (
                 "1.1",  # number
-                TranslatedNonWSSPattern # (non-whitespaces, number) => non-whitespaces
+                NonWSSTranslator # (non-whitespaces, number) => non-whitespaces
             ),
             (
                 "-1.1",  # mixed-number
-                TranslatedNonWSSPattern # (non-whitespaces, mixed-number) => non-whitespaces
+                NonWSSTranslator # (non-whitespaces, mixed-number) => non-whitespaces
             ),
             (
                     ["a", "1"],  # alpha-num
-                    TranslatedNonWSSPattern # (non-whitespaces, alpha-num) => non-whitespaces
+                    NonWSSTranslator # (non-whitespaces, alpha-num) => non-whitespaces
             ),
             (
                     ["a", "1", "#"],  # graph
-                    TranslatedNonWSSPattern # (non-whitespaces, graph) => non-whitespaces
+                    NonWSSTranslator # (non-whitespaces, graph) => non-whitespaces
             ),
             (
                 "-",  # punct
-                TranslatedNonWSSPattern # (non-whitespaces, punct) => non-whitespaces
+                NonWSSTranslator # (non-whitespaces, punct) => non-whitespaces
             ),
             (
                 "--++==",  # puncts
-                TranslatedNonWSSPattern # (non-whitespaces, puncts) => non-whitespaces
+                NonWSSTranslator # (non-whitespaces, puncts) => non-whitespaces
             ),
             (
                 "abc123",  # word
-                TranslatedNonWSSPattern # (non-whitespaces, word) => non-whitespaces
+                NonWSSTranslator # (non-whitespaces, word) => non-whitespaces
             ),
             (
                 "abc.123",  # mixed-word
-                TranslatedNonWSSPattern # (non-whitespaces, mixed-word) => non-whitespaces
+                NonWSSTranslator # (non-whitespaces, mixed-word) => non-whitespaces
             ),
             (
                 "\xc8",  # word
-                TranslatedNonWSSPattern # (non-whitespaces, non-whitespace) => non-whitespaces
+                NonWSSTranslator # (non-whitespaces, non-whitespace) => non-whitespaces
             ),
         ],
     )
@@ -187,7 +187,7 @@ class TestTranslatedNonWhitespacesPatternClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = TranslatedPattern.do_factory_create(*args)
+        other = PatternTranslator.do_factory_create(*args)
         recommend_instance = self.non_whitespaces_node.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
@@ -196,15 +196,15 @@ class TestTranslatedNonWhitespacesPatternClass:
         [
             (
                 "a1 b1",  # words
-                TranslatedNonWSSGroupPattern # (non-whitespaces, words) => non-whitespaces-group
+                NonWSSGroupTranslator # (non-whitespaces, words) => non-whitespaces-group
             ),
             (
                 "a.1 b.1",  # mixed-words
-                TranslatedNonWSSGroupPattern # (non-whitespaces, mixed-words) => non-whitespaces-group
+                NonWSSGroupTranslator # (non-whitespaces, mixed-words) => non-whitespaces-group
             ),
             (
                 "-- ++ ==",  # punct-group
-                TranslatedNonWSSGroupPattern    # (non-whitespaces, punct-group) => non-whitespaces-group
+                NonWSSGroupTranslator    # (non-whitespaces, punct-group) => non-whitespaces-group
             ),
         ],
     )
@@ -214,6 +214,6 @@ class TestTranslatedNonWhitespacesPatternClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = TranslatedPattern.do_factory_create(*args)
+        other = PatternTranslator.do_factory_create(*args)
         recommend_instance = self.non_whitespaces_node.recommend(other)
         assert isinstance(recommend_instance, expected_class)

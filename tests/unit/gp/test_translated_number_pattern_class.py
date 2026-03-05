@@ -1,5 +1,5 @@
 """
-Unit tests for the `textfsmgen.gp.TranslatedNumberPattern` class.
+Unit tests for the `textfsmgen.gp.NumberTranslator` class.
 
 Usage
 -----
@@ -11,37 +11,37 @@ Run pytest in the project root to execute these tests:
 
 import pytest
 
-from textfsmgen.engine.gp import (
-    TranslatedPattern,
-# TranslatedDigitPattern,
-# TranslatedDigitsPattern,
-    TranslatedNumberPattern,
-    TranslatedMixedNumberPattern,
-# TranslatedLetterPattern,
-# TranslatedLettersPattern,
-# TranslatedAlphabetNumericPattern,
-# TranslatedPunctPattern,
-# TranslatedPunctsPattern,
-# TranslatedPunctsGroupPattern,
-# TranslatedGraphPattern,
-# TranslatedWordPattern,
-# TranslatedWordsPattern,
-    TranslatedMixedWordPattern,
-    TranslatedMixedWordsPattern,
-# TranslatedNonWSPattern,
-    TranslatedNonWSSPattern,
-    TranslatedNonWSSGroupPattern
+from textfsmgen.engine.translate import (
+    PatternTranslator,
+# DigitTranslator,
+# DigitsTranslator,
+    NumberTranslator,
+    MixedNumberTranslator,
+# LetterTranslator,
+# LettersTranslator,
+# AlphabetNumericTranslator,
+# PunctTranslator,
+# PunctsTranslator,
+# PunctsGroupTranslator,
+# GraphTranslator,
+# WordTranslator,
+# WordsTranslator,
+    MixedWordTranslator,
+    MixedWordsTranslator,
+# NonWSTranslator,
+    NonWSSTranslator,
+    NonWSSGroupTranslator
 )
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
 
 
 class TestTranslatedNumberPatternClass:
-    """Test suite for TranslatedNumberPattern class."""
+    """Test suite for NumberTranslator class."""
 
     def setup_method(self):
-        """Create a baseline TranslatedNumberPattern instance for reuse."""
-        self.number_node = TranslatedNumberPattern("1.1")
+        """Create a baseline NumberTranslator instance for reuse."""
+        self.number_node = NumberTranslator("1.1")
 
     @pytest.mark.parametrize(
         "other",
@@ -58,7 +58,7 @@ class TestTranslatedNumberPatternClass:
         non-whitespaces, non-whitespace-group)
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.number_node.is_subset_of(other_instance) is True
 
     @pytest.mark.parametrize(
@@ -80,7 +80,7 @@ class TestTranslatedNumberPatternClass:
         punctuation(s), punctuation group, non-whitespace)
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.number_node.is_subset_of(other_instance) is False
 
     @pytest.mark.parametrize(
@@ -95,27 +95,27 @@ class TestTranslatedNumberPatternClass:
         Verify that number is a superset of (digit, digits).
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.number_node.is_superset_of(other_instance) is True
 
     @pytest.mark.parametrize(
         "number, expected_class",
         [
             (
-                "1.1",                  # number
-                TranslatedNumberPattern # (number, number) => number
+                "1.1",  # number
+                NumberTranslator # (number, number) => number
             ),
             (
-                "-1.1",                         # mixed-number
-                TranslatedMixedNumberPattern    # (number, mixed-number) => mixed-number
+                "-1.1",  # mixed-number
+                MixedNumberTranslator    # (number, mixed-number) => mixed-number
             ),
             (
                 "abc\xc8",  # non-whitespaces
-                TranslatedNonWSSPattern # (number, non-whitespaces) => non-whitespaces
+                NonWSSTranslator # (number, non-whitespaces) => non-whitespaces
             ),
             (
                 "abc\xc8 xyz",  # non-whitespace-group
-                TranslatedNonWSSGroupPattern # (number, non-whitespace-group) => non-whitespace-group
+                NonWSSGroupTranslator # (number, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -125,7 +125,7 @@ class TestTranslatedNumberPatternClass:
         when combined with compatible number.
         """
         args = to_list(number)
-        other = TranslatedPattern.do_factory_create(*args)
+        other = PatternTranslator.do_factory_create(*args)
         recommend_instance = self.number_node.recommend(other)
         assert isinstance(recommend_instance, expected_class)
 
@@ -133,12 +133,12 @@ class TestTranslatedNumberPatternClass:
         "number, expected_class",
         [
             (
-                "1",                    # digit
-                TranslatedNumberPattern # (number, digit) => number
+                "1",  # digit
+                NumberTranslator # (number, digit) => number
             ),
             (
-                "12",                   # digits
-                TranslatedNumberPattern # (number, digits) => number
+                "12",  # digits
+                NumberTranslator # (number, digits) => number
             ),
         ],
     )
@@ -148,7 +148,7 @@ class TestTranslatedNumberPatternClass:
         when combined with compatible number.
         """
         args = to_list(number)
-        other = TranslatedPattern.do_factory_create(*args)
+        other = PatternTranslator.do_factory_create(*args)
         recommend_instance = self.number_node.recommend(other)
         assert isinstance(recommend_instance, expected_class)
 
@@ -156,48 +156,48 @@ class TestTranslatedNumberPatternClass:
         "number, expected_class",
         [
             (
-                "a",                        # letter
-                TranslatedMixedWordPattern  # (number, letter) => mixed-word
+                "a",  # letter
+                MixedWordTranslator  # (number, letter) => mixed-word
             ),
             (
-                "ab",                       # letters
-                TranslatedMixedWordPattern  # (number, letters) => mixed-word
+                "ab",  # letters
+                MixedWordTranslator  # (number, letters) => mixed-word
             ),
             (
-                ["a", "1"],                 # alphabet-numeric
-                TranslatedMixedWordPattern  # (number, alphabet-numeric) => mixed-word
+                    ["a", "1"],  # alphabet-numeric
+                    MixedWordTranslator  # (number, alphabet-numeric) => mixed-word
             ),
             (
-                ["a", "1", "#"],            # graph
-                TranslatedMixedWordPattern  # (number, graph) => mixed-word
+                    ["a", "1", "#"],  # graph
+                    MixedWordTranslator  # (number, graph) => mixed-word
             ),
             (
-                "abc123",                   # word
-                TranslatedMixedWordPattern  # (number, word) => mixed-word
+                "abc123",  # word
+                MixedWordTranslator  # (number, word) => mixed-word
             ),
             (
-                    "a1 b1",                    # words
-                    TranslatedMixedWordsPattern # (number, words) => mixed-words
+                    "a1 b1",  # words
+                    MixedWordsTranslator # (number, words) => mixed-words
             ),
             (
                 "+",  # punctuation
-                TranslatedNonWSSPattern # (number, punct) => non-whitespaces
+                NonWSSTranslator # (number, punct) => non-whitespaces
             ),
             (
                 "++--==",  # punctuations
-                TranslatedNonWSSPattern # (number, puncts) => non-whitespaces
+                NonWSSTranslator # (number, puncts) => non-whitespaces
             ),
             (
                 "\xc8",  # non-whitespace
-                TranslatedNonWSSPattern # (number, non-whitespace) => non-whitespaces
+                NonWSSTranslator # (number, non-whitespace) => non-whitespaces
             ),
             (
                 "abc\xc8",  # non-whitespaces
-                TranslatedNonWSSPattern # (number, non-whitespaces) => non-whitespaces
+                NonWSSTranslator # (number, non-whitespaces) => non-whitespaces
             ),
             (
                     "++ -- ** ==",  # punctuation-group
-                    TranslatedNonWSSGroupPattern # (number, non-whitespace-group) => non-whitespace-group
+                    NonWSSGroupTranslator # (number, non-whitespace-group) => non-whitespace-group
             ),
 
         ],
@@ -208,6 +208,6 @@ class TestTranslatedNumberPatternClass:
         when combined with compatible number.
         """
         args = to_list(number)
-        other = TranslatedPattern.do_factory_create(*args)
+        other = PatternTranslator.do_factory_create(*args)
         recommend_instance = self.number_node.recommend(other)
         assert isinstance(recommend_instance, expected_class)

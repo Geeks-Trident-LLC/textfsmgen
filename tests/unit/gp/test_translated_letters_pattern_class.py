@@ -1,5 +1,5 @@
 """
-Unit tests for the `textfsmgen.gp.TranslatedLettersPattern` class.
+Unit tests for the `textfsmgen.gp.LettersTranslator` class.
 
 Usage
 -----
@@ -11,37 +11,37 @@ Run pytest in the project root to execute these tests:
 
 import pytest
 
-from textfsmgen.engine.gp import (
-    TranslatedPattern,
-# TranslatedDigitPattern,
-# TranslatedDigitsPattern,
-# TranslatedNumberPattern,
-# TranslatedMixedNumberPattern,
-# TranslatedLetterPattern,
-    TranslatedLettersPattern,
-# TranslatedAlphabetNumericPattern,
-# TranslatedPunctPattern,
-# TranslatedPunctsPattern,
-# TranslatedPunctsGroupPattern,
-# TranslatedGraphPattern,
-    TranslatedWordPattern,
-    TranslatedWordsPattern,
-    TranslatedMixedWordPattern,
-    TranslatedMixedWordsPattern,
-# TranslatedNonWSPattern,
-    TranslatedNonWSSPattern,
-    TranslatedNonWSSGroupPattern
+from textfsmgen.engine.translate import (
+    PatternTranslator,
+# DigitTranslator,
+# DigitsTranslator,
+# NumberTranslator,
+# MixedNumberTranslator,
+# LetterTranslator,
+    LettersTranslator,
+# AlphabetNumericTranslator,
+# PunctTranslator,
+# PunctsTranslator,
+# PunctsGroupTranslator,
+# GraphTranslator,
+    WordTranslator,
+    WordsTranslator,
+    MixedWordTranslator,
+    MixedWordsTranslator,
+# NonWSTranslator,
+    NonWSSTranslator,
+    NonWSSGroupTranslator
 )
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
 
 
 class TestTranslatedLettersPatternClass:
-    """Test suite for TranslatedLettersPattern class."""
+    """Test suite for LettersTranslator class."""
 
     def setup_method(self):
-        """Create a baseline TranslatedLettersPattern instance for reuse."""
-        self.letters_node = TranslatedLettersPattern("abc")
+        """Create a baseline LettersTranslator instance for reuse."""
+        self.letters_node = LettersTranslator("abc")
 
     @pytest.mark.parametrize(
         "other",
@@ -61,7 +61,7 @@ class TestTranslatedLettersPatternClass:
         mixed-word(s), non-whitespace(s), non-whitespace-group)
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.letters_node.is_subset_of(other_instance) is True
 
     @pytest.mark.parametrize(
@@ -82,7 +82,7 @@ class TestTranslatedLettersPatternClass:
         mixed-number, punctuation(s), non-whitespace(s), non-whitespace-group)
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.letters_node.is_subset_of(other_instance) is False
 
     @pytest.mark.parametrize(
@@ -96,43 +96,43 @@ class TestTranslatedLettersPatternClass:
         Verify that letters, data is a subset of (letter).
         """
         args = to_list(other)
-        other_instance = TranslatedPattern.do_factory_create(*args)
+        other_instance = PatternTranslator.do_factory_create(*args)
         assert self.letters_node.is_superset_of(other_instance) is True
 
     @pytest.mark.parametrize(
         "data, expected_class",
         [
             (
-                "abc",                      # letters
-                TranslatedLettersPattern    # (letters, letters) => letters
+                "abc",  # letters
+                LettersTranslator    # (letters, letters) => letters
             ),
             (
-                "abc123",               # a word
-                TranslatedWordPattern   # (letters, word) => word
+                "abc123",  # a word
+                WordTranslator   # (letters, word) => word
             ),
             (
-                "a1 a12",               # words
-                TranslatedWordsPattern  # (letters, words) => words
+                "a1 a12",  # words
+                WordsTranslator  # (letters, words) => words
             ),
             (
-                "abc.123",                  # mixed-word
-                TranslatedMixedWordPattern  # (letters, mixed-word) => mixed-word
+                "abc.123",  # mixed-word
+                MixedWordTranslator  # (letters, mixed-word) => mixed-word
             ),
             (
-                "a.1 b.1",                  # mixed-words
-                TranslatedMixedWordsPattern # (letters, mixed-words) => mixed-words
+                "a.1 b.1",  # mixed-words
+                MixedWordsTranslator # (letters, mixed-words) => mixed-words
             ),
             (
                 "\xc8",  # non-whitespace
-                TranslatedNonWSSPattern # (letters, non-whitespace) => non-whitespaces
+                NonWSSTranslator # (letters, non-whitespace) => non-whitespaces
             ),
             (
                 "abc\xc8",  # non-whitespaces
-                TranslatedNonWSSPattern # (letters, non-whitespaces) => non-whitespaces
+                NonWSSTranslator # (letters, non-whitespaces) => non-whitespaces
             ),
             (
                 "abc\xc8 xyz",  # non-whitespace-group
-                TranslatedNonWSSGroupPattern    # (letters, non-whitespace-group) => non-whitespace-group
+                NonWSSGroupTranslator    # (letters, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -142,7 +142,7 @@ class TestTranslatedLettersPatternClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = TranslatedPattern.do_factory_create(*args)
+        other = PatternTranslator.do_factory_create(*args)
         recommend_instance = self.letters_node.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
@@ -150,8 +150,8 @@ class TestTranslatedLettersPatternClass:
         "data, expected_class",
         [
             (
-                "a",                        # letter
-                TranslatedLettersPattern    # (letters, letter) => letters
+                "a",  # letter
+                LettersTranslator    # (letters, letter) => letters
             ),
         ],
     )
@@ -161,7 +161,7 @@ class TestTranslatedLettersPatternClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = TranslatedPattern.do_factory_create(*args)
+        other = PatternTranslator.do_factory_create(*args)
         recommend_instance = self.letters_node.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
@@ -169,44 +169,44 @@ class TestTranslatedLettersPatternClass:
         "data, expected_class",
         [
             (
-                "1",                    # digit
-                TranslatedWordPattern   # (letters, digit) => word
+                "1",  # digit
+                WordTranslator   # (letters, digit) => word
             ),
             (
-                "123",                  # digits
-                TranslatedWordPattern   # (letters, digits) => word
+                "123",  # digits
+                WordTranslator   # (letters, digits) => word
             ),
             (
-                ["a", "1"],             # alpha-num
-                TranslatedWordPattern   # (letters, alpha-num) => word
+                    ["a", "1"],  # alpha-num
+                    WordTranslator   # (letters, alpha-num) => word
             ),
             (
-                "1.1",                      # number
-                TranslatedMixedWordPattern  # (letters, number) => mixed-word
+                "1.1",  # number
+                MixedWordTranslator  # (letters, number) => mixed-word
             ),
             (
-                "-1.1",                     # mixed-number
-                TranslatedMixedWordPattern  # (letters, mixed-number) => mixed-word
+                "-1.1",  # mixed-number
+                MixedWordTranslator  # (letters, mixed-number) => mixed-word
             ),
             (
-                ["a", "1", "#"],            # graph
-                TranslatedMixedWordPattern  # (letters, graph) => mixed-word
+                    ["a", "1", "#"],  # graph
+                    MixedWordTranslator  # (letters, graph) => mixed-word
             ),
             (
                 "+",  # punctuation
-                TranslatedNonWSSPattern # (letters, punct) => non-whitespaces
+                NonWSSTranslator # (letters, punct) => non-whitespaces
             ),
             (
                 "++",  # punctuations
-                TranslatedNonWSSPattern # (letters, puncts) => non-whitespaces
+                NonWSSTranslator # (letters, puncts) => non-whitespaces
             ),
             (
                 "\xc8",  # non-whitespace
-                TranslatedNonWSSPattern # (letters, non-whitespace) => non-whitespaces
+                NonWSSTranslator # (letters, non-whitespace) => non-whitespaces
             ),
             (
                 "++ -- ==",  # punctuation-group
-                TranslatedNonWSSGroupPattern    # (letters, punct-group) => non-whitespace-group
+                NonWSSGroupTranslator    # (letters, punct-group) => non-whitespace-group
             ),
         ],
     )
@@ -216,6 +216,6 @@ class TestTranslatedLettersPatternClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = TranslatedPattern.do_factory_create(*args)
+        other = PatternTranslator.do_factory_create(*args)
         recommend_instance = self.letters_node.recommend(other)
         assert isinstance(recommend_instance, expected_class)

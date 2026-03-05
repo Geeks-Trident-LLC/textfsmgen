@@ -9,34 +9,6 @@ interpret user-defined template snippets into normalized TextFSM grammar.
 It acts as the parsing backbone of the TextFSM Generator, ensuring that
 raw user input (lines, flags, operators, metadata) is consistently
 translated into valid template statements.
-
-Purpose
--------
-- Define grammar rules and parsing logic for TextFSM templates.
-- Normalize user input into canonical TextFSM syntax.
-- Support advanced options such as flags, operators, and metadata.
-- Provide reusable parsing utilities for other core modules.
-
-Contents
---------
-- Grammar definitions for template statements.
-- Parsing functions for variables, operators, and flags.
-- Utilities for handling metadata options (Filldown, Fillup, Key, List, Required).
-- Error classes for invalid grammar or parsing failures.
-
-Usage
------
-This module is typically used internally by higher-level components
-such as `textfsmgen.core.TemplateBuilder` and `textfsmgen.main`.
-Direct usage is uncommon, but developers may import it when extending
-or debugging grammar rules.
-
-Notes
------
-- All parsing functions return normalized TextFSM statements or raise
-  a `TemplateParsedLineError` if input is invalid.
-- This module is designed for internal use; external callers should
-  prefer the `TemplateBuilder` interface.
 """
 
 import re
@@ -47,7 +19,7 @@ from textfsmgen.libs import datatype
 from textfsmgen.exceptions import RuntimeException
 
 
-class TranslatedPattern(RuntimeException):
+class PatternTranslator(RuntimeException):
     """
     Represents a translated text pattern used in FSM (Finite State Machine)
     generation, providing utilities to normalize, store, and manipulate
@@ -271,7 +243,7 @@ class TranslatedPattern(RuntimeException):
         """
         Retrieve reference number based on the relationship with another object.
         """
-        if isinstance(other, TranslatedPattern):
+        if isinstance(other, PatternTranslator):
             if self.is_subset_of(other) or self.is_superset_of(other):
                 return other.data
             if self.is_plural() and other.is_plural():
@@ -285,7 +257,7 @@ class TranslatedPattern(RuntimeException):
         """
         cls_name = datatype.get_class_name(self)
 
-        if isinstance(other, TranslatedPattern):
+        if isinstance(other, PatternTranslator):
             other_repr = repr(other.data)
         else:
             other_repr = f"<Unknown:instance of {type(other).__name__}>"
@@ -350,33 +322,33 @@ class TranslatedPattern(RuntimeException):
         Factory method to create a translated pattern instance.
         """
         classes = [
-            TranslatedDigitPattern,
-            TranslatedDigitsPattern,
+            DigitTranslator,
+            DigitsTranslator,
 
-            TranslatedNumberPattern,
+            NumberTranslator,
 
-            TranslatedLetterPattern,
-            TranslatedLettersPattern,
+            LetterTranslator,
+            LettersTranslator,
 
-            TranslatedAlphabetNumericPattern,
-            TranslatedWordPattern,
+            AlphabetNumericTranslator,
+            WordTranslator,
 
-            TranslatedPunctPattern,
-            TranslatedPunctsPattern,
-            TranslatedPunctsGroupPattern,
+            PunctTranslator,
+            PunctsTranslator,
+            PunctsGroupTranslator,
 
-            TranslatedGraphPattern,
+            GraphTranslator,
 
-            TranslatedMixedNumberPattern,
-            TranslatedMixedWordPattern,
+            MixedNumberTranslator,
+            MixedWordTranslator,
 
-            TranslatedWordsPattern,
+            WordsTranslator,
 
-            TranslatedMixedWordsPattern,
+            MixedWordsTranslator,
 
-            TranslatedNonWSPattern,
-            TranslatedNonWSSPattern,
-            TranslatedNonWSSGroupPattern,
+            NonWSTranslator,
+            NonWSSTranslator,
+            NonWSSGroupTranslator,
         ]
         for class_ in classes:
             node = class_(data, *other)
@@ -405,7 +377,7 @@ class TranslatedPattern(RuntimeException):
         return translated_pat_obj1.recommend(translated_pat_obj2)
 
 
-class TranslatedDigitPattern(TranslatedPattern):
+class DigitTranslator(PatternTranslator):
     """
     A translated pattern class specialized for single-digit inputs.
     """
@@ -422,7 +394,7 @@ class TranslatedDigitPattern(TranslatedPattern):
         """
         Check if this digit pattern is a subset of another pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -445,7 +417,7 @@ class TranslatedDigitPattern(TranslatedPattern):
         """
         Check if this digit pattern is a superset of another pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return other.is_digit()
@@ -462,20 +434,20 @@ class TranslatedDigitPattern(TranslatedPattern):
             )
 
         if other.is_letter():
-            return TranslatedAlphabetNumericPattern(self.data, other.data)
+            return AlphabetNumericTranslator(self.data, other.data)
         if other.is_letters():
-            return TranslatedWordPattern(self.data, other.data)
+            return WordTranslator(self.data, other.data)
         if other.is_punct():
-            return TranslatedNonWSPattern(self.data, other.data)
+            return NonWSTranslator(self.data, other.data)
         if other.is_puncts():
-            return TranslatedNonWSSPattern(self.data, other.data)
+            return NonWSSTranslator(self.data, other.data)
         if other.is_puncts_group():
-            return TranslatedNonWSSGroupPattern(self.data, other.data)
+            return NonWSSGroupTranslator(self.data, other.data)
 
         return self.raise_recommend_exception(other)
 
 
-class TranslatedDigitsPattern(TranslatedPattern):
+class DigitsTranslator(PatternTranslator):
     """
     A translated pattern class specialized for multiple digit inputs.
     """
@@ -493,7 +465,7 @@ class TranslatedDigitsPattern(TranslatedPattern):
         Determine whether this digit pattern is a subset of another translated pattern.
         """
 
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -512,7 +484,7 @@ class TranslatedDigitsPattern(TranslatedPattern):
         """
         Determine whether this digit pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -531,21 +503,21 @@ class TranslatedDigitsPattern(TranslatedPattern):
 
         if any([other.is_letter(), other.is_letters(),
                 other.is_alphabet_numeric()]):
-            return TranslatedWordPattern(self.data, other.data)
+            return WordTranslator(self.data, other.data)
 
         if any([other.is_punct(), other.is_puncts(), other.is_graph()]):
-            return TranslatedNonWSSPattern(self.data, other.data)
+            return NonWSSTranslator(self.data, other.data)
 
         if other.is_puncts_group():
-            return TranslatedNonWSSGroupPattern(self.data, other.data)
+            return NonWSSGroupTranslator(self.data, other.data)
 
         if other.is_non_ws():
-            return TranslatedNonWSSPattern(self.data, other.data)
+            return NonWSSTranslator(self.data, other.data)
 
         return self.raise_recommend_exception(other)
 
 
-class TranslatedNumberPattern(TranslatedPattern):
+class NumberTranslator(PatternTranslator):
     """
     Specialized translated pattern for numeric inputs.
     """
@@ -562,7 +534,7 @@ class TranslatedNumberPattern(TranslatedPattern):
         """
         Determine whether this number pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -578,7 +550,7 @@ class TranslatedNumberPattern(TranslatedPattern):
         """
         Determine whether this number pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -598,21 +570,21 @@ class TranslatedNumberPattern(TranslatedPattern):
 
         if any([other.is_letter(), other.is_letters(),
                 other.is_alphabet_numeric(), other.is_graph(), other.is_word()]):
-            return TranslatedMixedWordPattern(self.data, other.data)
+            return MixedWordTranslator(self.data, other.data)
 
         if other.is_words():
-            return TranslatedMixedWordsPattern(self.data, other.data)
+            return MixedWordsTranslator(self.data, other.data)
 
         if any([other.is_punct(), other.is_puncts(), other.is_non_ws()]):
-            return TranslatedNonWSSPattern(self.data, other.data)
+            return NonWSSTranslator(self.data, other.data)
 
         if other.is_puncts_group():
-            return TranslatedNonWSSGroupPattern(self.data, other.data)
+            return NonWSSGroupTranslator(self.data, other.data)
 
         return self.raise_recommend_exception(other)
 
 
-class TranslatedMixedNumberPattern(TranslatedPattern):
+class MixedNumberTranslator(PatternTranslator):
     """
     Specialized translated pattern for mixed numeric inputs.
     """
@@ -629,7 +601,7 @@ class TranslatedMixedNumberPattern(TranslatedPattern):
         """
         Determine whether this mixed number pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -644,7 +616,7 @@ class TranslatedMixedNumberPattern(TranslatedPattern):
         """
         Determine whether this mixed number pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -665,21 +637,21 @@ class TranslatedMixedNumberPattern(TranslatedPattern):
 
         if any([other.is_letter(), other.is_letters(),
                 other.is_alphabet_numeric(), other.is_graph(), other.is_word()]):
-            return TranslatedMixedWordPattern(self.data, other.data)
+            return MixedWordTranslator(self.data, other.data)
 
         if other.is_words():
-            return TranslatedMixedWordsPattern(self.data, other.data)
+            return MixedWordsTranslator(self.data, other.data)
 
         if any([other.is_punct(), other.is_puncts(), other.is_non_ws()]):
-            return TranslatedNonWSSPattern(self.data, other.data)
+            return NonWSSTranslator(self.data, other.data)
 
         if other.is_puncts_group():
-            return TranslatedNonWSSGroupPattern(self.data, other.data)
+            return NonWSSGroupTranslator(self.data, other.data)
 
         return self.raise_recommend_exception(other)
 
 
-class TranslatedLetterPattern(TranslatedPattern):
+class LetterTranslator(PatternTranslator):
     """
     Specialized translated pattern for single-letter inputs.
     """
@@ -697,7 +669,7 @@ class TranslatedLetterPattern(TranslatedPattern):
         """
         Determine whether this letter pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -718,7 +690,7 @@ class TranslatedLetterPattern(TranslatedPattern):
         """
         Determine whether this letter pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return other.is_letter()
@@ -733,22 +705,22 @@ class TranslatedLetterPattern(TranslatedPattern):
             return self.get_new_superset(other)
 
         if other.is_digit():
-            return TranslatedAlphabetNumericPattern(self.data, other.data)
+            return AlphabetNumericTranslator(self.data, other.data)
         if other.is_digits():
-            return TranslatedWordPattern(self.data, other.data)
+            return WordTranslator(self.data, other.data)
         if other.is_number() or other.is_mixed_number():
-            return TranslatedMixedWordPattern(self.data, other.data)
+            return MixedWordTranslator(self.data, other.data)
         if other.is_punct():
-            return TranslatedGraphPattern(self.data, other.data)
+            return GraphTranslator(self.data, other.data)
         if other.is_puncts():
-            return TranslatedNonWSSPattern(self.data, other.data)
+            return NonWSSTranslator(self.data, other.data)
         if other.is_puncts_group():
-            return TranslatedNonWSSGroupPattern(self.data, other.data)
+            return NonWSSGroupTranslator(self.data, other.data)
 
         return self.raise_recommend_exception(other)
 
 
-class TranslatedLettersPattern(TranslatedPattern):
+class LettersTranslator(PatternTranslator):
     """
     Specialized translated pattern for multi-letter inputs.
     """
@@ -766,7 +738,7 @@ class TranslatedLettersPattern(TranslatedPattern):
         """
         Determine whether this letters pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -783,7 +755,7 @@ class TranslatedLettersPattern(TranslatedPattern):
         """
         Determine whether this letters pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -801,21 +773,21 @@ class TranslatedLettersPattern(TranslatedPattern):
             return self.get_new_superset(other)
 
         if other.is_digit() or other.is_digits() or other.is_alphabet_numeric():
-            return TranslatedWordPattern(self.data, other.data)
+            return WordTranslator(self.data, other.data)
 
         if any([other.is_number(), other.is_mixed_number(), other.is_graph()]):
-            return TranslatedMixedWordPattern(self.data, other.data)
+            return MixedWordTranslator(self.data, other.data)
 
         if other.is_puncts_group():
-            return TranslatedNonWSSGroupPattern(self.data, other.data)
+            return NonWSSGroupTranslator(self.data, other.data)
 
         if any([other.is_punct(), other.is_puncts(), other.is_non_ws()]):
-            return TranslatedNonWSSPattern(self.data, other.data)
+            return NonWSSTranslator(self.data, other.data)
 
         return self.raise_recommend_exception(other)
 
 
-class TranslatedAlphabetNumericPattern(TranslatedPattern):
+class AlphabetNumericTranslator(PatternTranslator):
     """
     Specialized translated pattern for alphanumeric inputs.
     """
@@ -833,7 +805,7 @@ class TranslatedAlphabetNumericPattern(TranslatedPattern):
         """
         Determine whether this alphanumeric pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -852,7 +824,7 @@ class TranslatedAlphabetNumericPattern(TranslatedPattern):
         """
         Determine whether this alphanumeric pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -871,24 +843,24 @@ class TranslatedAlphabetNumericPattern(TranslatedPattern):
             return self.get_new_superset(other)
 
         if other.is_digits():
-            return TranslatedWordPattern(self.data, other.data)
+            return WordTranslator(self.data, other.data)
 
         if other.is_number() or other.is_mixed_number():
-            return TranslatedMixedWordPattern(self.data, other.data)
+            return MixedWordTranslator(self.data, other.data)
 
         if other.is_punct():
-            return TranslatedNonWSPattern(self.data, other.data)
+            return NonWSTranslator(self.data, other.data)
 
         if other.is_puncts():
-            return TranslatedNonWSSPattern(self.data, other.data)
+            return NonWSSTranslator(self.data, other.data)
 
         if other.is_puncts_group():
-            return TranslatedNonWSSGroupPattern(self.data, other.data)
+            return NonWSSGroupTranslator(self.data, other.data)
 
         return self.raise_recommend_exception(other)
 
 
-class TranslatedPunctPattern(TranslatedPattern):
+class PunctTranslator(PatternTranslator):
     """
     Specialized translated pattern for punctuation characters.
     """
@@ -906,7 +878,7 @@ class TranslatedPunctPattern(TranslatedPattern):
         """
         Determine whether this punctuation pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -925,7 +897,7 @@ class TranslatedPunctPattern(TranslatedPattern):
         """
         Determine whether this punctuation pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
         return other.is_punct()
 
@@ -939,19 +911,19 @@ class TranslatedPunctPattern(TranslatedPattern):
             return self.get_new_superset(other)
 
         if any([other.is_letter(), other.is_digit(), other.is_alphabet_numeric()]):
-            return TranslatedGraphPattern(self.data)
+            return GraphTranslator(self.data)
 
         if any([other.is_letters(), other.is_digits(),
                 other.is_number(), other.is_mixed_number(), other.is_word()]):
-            return TranslatedNonWSSPattern(self.data, other.data)
+            return NonWSSTranslator(self.data, other.data)
 
         if other.is_words():
-            return TranslatedNonWSSGroupPattern(self.data, other.data)
+            return NonWSSGroupTranslator(self.data, other.data)
 
         return self.raise_recommend_exception(other)
 
 
-class TranslatedPunctsPattern(TranslatedPattern):
+class PunctsTranslator(PatternTranslator):
     """
     Specialized translated pattern for multiple punctuation characters.
     """
@@ -969,7 +941,7 @@ class TranslatedPunctsPattern(TranslatedPattern):
         """
         Determine whether this punctuation sequence is a subset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -985,7 +957,7 @@ class TranslatedPunctsPattern(TranslatedPattern):
         """
         Determine whether this punctuation sequence is a superset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -1014,15 +986,15 @@ class TranslatedPunctsPattern(TranslatedPattern):
             other.is_word(),
             other.is_non_ws(),
         ]):
-            return TranslatedNonWSSPattern(self.data, other.data)
+            return NonWSSTranslator(self.data, other.data)
 
         if other.is_words():
-            return TranslatedNonWSSGroupPattern(self.data, other.data)
+            return NonWSSGroupTranslator(self.data, other.data)
 
         return self.raise_recommend_exception(other)
 
 
-class TranslatedPunctsGroupPattern(TranslatedPattern):
+class PunctsGroupTranslator(PatternTranslator):
     """
     Specialized translated pattern for groups of punctuation characters.
     """
@@ -1051,7 +1023,7 @@ class TranslatedPunctsGroupPattern(TranslatedPattern):
         """
         Determine whether this punctuation group is a subset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -1061,10 +1033,9 @@ class TranslatedPunctsGroupPattern(TranslatedPattern):
         ])
 
     def is_superset_of(self, other) -> bool:
-        """
-        Determine whether this punctuation group is a superset of another translated pattern.
-        """
-        if not isinstance(other, TranslatedPattern):
+        """Determine whether this punctuation group is a superset of
+        another translated pattern."""
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -1074,9 +1045,8 @@ class TranslatedPunctsGroupPattern(TranslatedPattern):
         ])
 
     def recommend(self, other):
-        """
-        Recommend a generalized translated pattern when combined with another pattern.
-        """
+        """Recommend a generalized translated pattern when
+        combined with another pattern."""
         if self.is_subset_of(other):
             return self.get_new_subset(other)
         if self.is_superset_of(other):
@@ -1097,12 +1067,12 @@ class TranslatedPunctsGroupPattern(TranslatedPattern):
             other.is_non_ws(),
             other.is_non_wss(),
         ]):
-            return TranslatedNonWSSGroupPattern(self.data, other.data)
+            return NonWSSGroupTranslator(self.data, other.data)
 
         return self.raise_recommend_exception(other)
 
 
-class TranslatedGraphPattern(TranslatedPattern):
+class GraphTranslator(PatternTranslator):
     """
     Specialized translated pattern for graphical characters.
     """
@@ -1120,7 +1090,7 @@ class TranslatedGraphPattern(TranslatedPattern):
         """
         Determine whether this graph pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -1136,7 +1106,7 @@ class TranslatedGraphPattern(TranslatedPattern):
         """
         Determine whether this graph pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -1158,15 +1128,15 @@ class TranslatedGraphPattern(TranslatedPattern):
 
         if any([other.is_letters(), other.is_digits(),
                 other.is_number(), other.is_mixed_number(), other.is_word()]):
-            return TranslatedMixedWordPattern(self.data, other.data)
+            return MixedWordTranslator(self.data, other.data)
 
         if other.is_words():
-            return TranslatedMixedWordsPattern(self.data, other.data)
+            return MixedWordsTranslator(self.data, other.data)
 
         return self.raise_recommend_exception(other)
 
 
-class TranslatedWordPattern(TranslatedPattern):
+class WordTranslator(PatternTranslator):
     """
     Specialized translated pattern for word inputs.
     """
@@ -1184,7 +1154,7 @@ class TranslatedWordPattern(TranslatedPattern):
         """
         Determine whether this word pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -1200,7 +1170,7 @@ class TranslatedWordPattern(TranslatedPattern):
         """
         Determine whether this word pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -1229,15 +1199,15 @@ class TranslatedWordPattern(TranslatedPattern):
             other.is_puncts(),
             other.is_alphabet_numeric()
         ]):
-            return TranslatedNonWSSPattern(self.data, other.data)
+            return NonWSSTranslator(self.data, other.data)
 
         if other.is_puncts_group():
-            return TranslatedNonWSSGroupPattern(self.data, other.data)
+            return NonWSSGroupTranslator(self.data, other.data)
 
         return self.raise_recommend_exception(other)
 
 
-class TranslatedWordsPattern(TranslatedPattern):
+class WordsTranslator(PatternTranslator):
     """
     Specialized translated pattern for multiple word inputs.
     """
@@ -1267,7 +1237,7 @@ class TranslatedWordsPattern(TranslatedPattern):
         """
         Determine whether this words pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -1280,7 +1250,7 @@ class TranslatedWordsPattern(TranslatedPattern):
         """
         Determine whether this words pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -1312,12 +1282,12 @@ class TranslatedWordsPattern(TranslatedPattern):
             other.is_puncts(),
             other.is_puncts_group(),
         ]):
-            return TranslatedNonWSSGroupPattern(self.data, other.data)
+            return NonWSSGroupTranslator(self.data, other.data)
 
         return self.raise_recommend_exception(other)
 
 
-class TranslatedMixedWordPattern(TranslatedPattern):
+class MixedWordTranslator(PatternTranslator):
     """
     Specialized translated pattern for mixed word inputs.
     """
@@ -1335,7 +1305,7 @@ class TranslatedMixedWordPattern(TranslatedPattern):
         """
         Determine whether this mixed word pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -1349,7 +1319,7 @@ class TranslatedMixedWordPattern(TranslatedPattern):
         """
         Determine whether this mixed word pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -1374,7 +1344,7 @@ class TranslatedMixedWordPattern(TranslatedPattern):
             return self.get_new_superset(other)
 
         if other.is_words():
-            return TranslatedMixedWordsPattern(self.data, other.data)
+            return MixedWordsTranslator(self.data, other.data)
 
         if any([
             other.is_graph(),
@@ -1382,15 +1352,15 @@ class TranslatedMixedWordPattern(TranslatedPattern):
             other.is_punct(),
             other.is_puncts()
         ]):
-            return TranslatedNonWSSPattern(self.data, other.data)
+            return NonWSSTranslator(self.data, other.data)
 
         if other.is_puncts_group():
-            return TranslatedNonWSSGroupPattern(self.data, other.data)
+            return NonWSSGroupTranslator(self.data, other.data)
 
         return self.raise_recommend_exception(other)
 
 
-class TranslatedMixedWordsPattern(TranslatedPattern):
+class MixedWordsTranslator(PatternTranslator):
     """
     Specialized translated pattern for multiple mixed word inputs.
     """
@@ -1420,7 +1390,7 @@ class TranslatedMixedWordsPattern(TranslatedPattern):
         """
         Determine whether this mixed words pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -1432,7 +1402,7 @@ class TranslatedMixedWordsPattern(TranslatedPattern):
         """
         Determine whether this mixed words pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -1466,12 +1436,12 @@ class TranslatedMixedWordsPattern(TranslatedPattern):
             other.is_puncts(),
             other.is_puncts_group(),
         ]):
-            return TranslatedNonWSSGroupPattern(self.data, other.data)
+            return NonWSSGroupTranslator(self.data, other.data)
 
         return self.raise_recommend_exception(other)
 
 
-class TranslatedNonWSPattern(TranslatedPattern):
+class NonWSTranslator(PatternTranslator):
     """
     Specialized translated pattern for non-whitespace characters.
     """
@@ -1489,7 +1459,7 @@ class TranslatedNonWSPattern(TranslatedPattern):
         """
         Determine whether this non-whitespace pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -1502,7 +1472,7 @@ class TranslatedNonWSPattern(TranslatedPattern):
         """
         Determine whether this non-whitespace pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -1532,19 +1502,19 @@ class TranslatedNonWSPattern(TranslatedPattern):
             other.is_word(),
             other.is_mixed_word(),
         ]):
-            return TranslatedNonWSSPattern(self.data, other.data)
+            return NonWSSTranslator(self.data, other.data)
 
         if any([
             other.is_words(),
             other.is_mixed_words(),
             other.is_puncts_group(),
         ]):
-            return TranslatedNonWSSGroupPattern(self.data, other.data)
+            return NonWSSGroupTranslator(self.data, other.data)
 
         return self.raise_recommend_exception(other)
 
 
-class TranslatedNonWSSPattern(TranslatedPattern):
+class NonWSSTranslator(PatternTranslator):
     """
     Specialized translated pattern for non-whitespace sequences.
     """
@@ -1562,7 +1532,7 @@ class TranslatedNonWSSPattern(TranslatedPattern):
         """
         Determine whether this non-whitespaces pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -1574,7 +1544,7 @@ class TranslatedNonWSSPattern(TranslatedPattern):
         """
         Determine whether this non-whitespaces pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
@@ -1608,12 +1578,12 @@ class TranslatedNonWSSPattern(TranslatedPattern):
             other.is_words(),
             other.is_mixed_words(),
         ]):
-            return TranslatedNonWSSGroupPattern(self.data, other.data)
+            return NonWSSGroupTranslator(self.data, other.data)
 
         return self.raise_recommend_exception(other)
 
 
-class TranslatedNonWSSGroupPattern(TranslatedPattern):
+class NonWSSGroupTranslator(PatternTranslator):
     """
     Specialized translated pattern for groups of non-whitespace sequences.
     """
@@ -1644,7 +1614,7 @@ class TranslatedNonWSSGroupPattern(TranslatedPattern):
         """
         Determine whether this non-whitespaces group pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return other.is_non_wss_group()
@@ -1654,7 +1624,7 @@ class TranslatedNonWSSGroupPattern(TranslatedPattern):
         Determine whether this non-whitespaces group pattern is a superset of
         another translated pattern.
         """
-        if not isinstance(other, TranslatedPattern):
+        if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([

@@ -24,7 +24,7 @@ Run pytest in the project root to execute these tests:
 
 import pytest
 
-from textfsmgen.engine.gp import TranslatedPattern
+from textfsmgen.engine.translate import PatternTranslator
 
 from tests.unit.gp import TranslatedDummyPattern
 
@@ -62,7 +62,7 @@ def test_raise_exception_in_is_subset_of(data):
     """
     dummy_other = TranslatedDummyPattern()
     args = to_list(data)
-    translated_pattern_node = TranslatedPattern.do_factory_create(*args)
+    translated_pattern_node = PatternTranslator.do_factory_create(*args)
     with pytest.raises(Exception) as ex:
         translated_pattern_node.is_subset_of(dummy_other)
     assert ex.type.__name__ == "NotImplementRecommendedRTPattern"
@@ -98,7 +98,7 @@ def test_raise_exception_in_is_superset_of(data):
     """
     dummy_other = TranslatedDummyPattern()
     args = to_list(data)
-    translated_pattern_node = TranslatedPattern.do_factory_create(*args)
+    translated_pattern_node = PatternTranslator.do_factory_create(*args)
     with pytest.raises(Exception) as ex:
         translated_pattern_node.is_subset_of(dummy_other)
     assert ex.type.__name__ == "NotImplementRecommendedRTPattern"
@@ -133,7 +133,7 @@ def test_raise_exception_in_is_superset_of(data):
     """
     dummy_other = TranslatedDummyPattern()
     args = to_list(data)
-    translated_pattern_node = TranslatedPattern.do_factory_create(*args)
+    translated_pattern_node = PatternTranslator.do_factory_create(*args)
     with pytest.raises(Exception) as ex:
         translated_pattern_node.is_subset_of(dummy_other)
     assert ex.type.__name__ == "NotImplementRecommendedRTPattern"
