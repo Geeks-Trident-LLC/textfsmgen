@@ -24,7 +24,7 @@ from textfsmgen.libs.decorators import normalize_output
 class DataForStartingEndingArgumentsTests:
     """
     Test data provider for verifying `CategoryLinesPattern` behavior
-    with `starting_from` and `ending_to` arguments.
+    with `start_maker` and `end_maker` arguments.
     """
     @normalize_output
     def get_test_data(self):

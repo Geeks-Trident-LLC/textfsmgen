@@ -854,8 +854,8 @@ class CategoryLinesPattern(RuntimeException):
 
         Notes
         -----
-        - If `starting_from` and `ending_to` markers overlap or are invalid,
-          `ending_to` is ignored.
+        - If `start_maker` and `end_maker` markers overlap or are invalid,
+          `end_maker` is ignored.
         - Errors during parsing fall back to storing the raw line.
         """
         self.index_a = get_line_position_by(self.lines, self.starting_from)

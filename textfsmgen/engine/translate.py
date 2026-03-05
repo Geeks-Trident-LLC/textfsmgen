@@ -1,6 +1,6 @@
 """
-textfsmgen.gp
-=============
+textfsmgen.engine.translate
+===========================
 
 Grammar and parsing utilities for the TextFSM Generator.
 

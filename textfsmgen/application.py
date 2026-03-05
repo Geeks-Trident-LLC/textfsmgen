@@ -2718,7 +2718,7 @@ class Application:
             Notes
             -----
             - Templates are stripped of whitespace before comparison.
-            - Output sections are separated by a formatted divider string.
+            - Output sections are separated by a formatted column_divider string.
             - Snapshot attributes `test_data`, `template`, and `result` are updated.
             """
 

@@ -1,5 +1,5 @@
 """
-Unit tests for the `textfsmgen.gptabular.TabularTextPattern` class.
+Unit tests for the `textfsmgen.gptabular.TableTranslator` class.
 
 Usage
 -----
@@ -11,7 +11,7 @@ Run pytest in the project root to execute these tests:
 
 import pytest           # noqa
 from textwrap import dedent
-from textfsmgen.engine.gptabular import TabularTextPattern
+from textfsmgen.engine.tabular import TableTranslator
 
 
 def test_fixed_columns():
@@ -27,7 +27,7 @@ def test_fixed_columns():
         start() digit(var_index)  non_wss(var_col)  mixed_word(var_col2) end() -> record
     """).strip()
 
-    node = TabularTextPattern(text, col_widths="10, 15,")
+    node = TableTranslator(text, column_widths="10, 15,")
     # tmpl_snippet = node.to_template_snippet()
     # assert tmpl_snippet == expected_tmpl_snippet
 
@@ -50,7 +50,7 @@ def test_tabular_calculating_max_width():
         start() space(repetition_7_9) mixed_word(var_b) end(space) -> record
     """).strip()
 
-    node = TabularTextPattern(text)
+    node = TableTranslator(text)
     tmpl_snippet = node.to_template_snippet()
     assert tmpl_snippet == expected_tmpl_snippet
 
@@ -71,7 +71,7 @@ start() letters(var_fruits)  letters(var_meat) end(space) -> record
 start() letters(var_fruits) space(repetition_10_15) word(var_drinks, at_most_1_phrase_occurrences) end() -> record
         """).strip()
 
-    node = TabularTextPattern(text)
+    node = TableTranslator(text)
     tmpl_snippet = node.to_template_snippet()
     assert tmpl_snippet == expected_tmpl_snippet
 
@@ -98,7 +98,7 @@ start() digit(var_index)  non_wss(var_col)  mixed_word(var_col2) end() -> record
 line k: digits() blab blab -> EOF
     """).strip()
 
-    node = TabularTextPattern(text, col_widths="10, 15,", starting_from=2, ending_to=6)
+    node = TableTranslator(text, column_widths="10, 15,", start_maker=2, end_maker=6)
     tmpl_snippet = node.to_template_snippet()
     assert tmpl_snippet == expected_tmpl_snippet
 
@@ -127,7 +127,7 @@ start() space(repetition_8_10) mixed_word(var_two) end(space) -> record
 start() space(repetition_18_20) mixed_word(var_three) end() -> record
     """).strip()    # noqa
 
-    node = TabularTextPattern(text)
+    node = TableTranslator(text)
     tmpl_snippet = node.to_template_snippet()
     assert tmpl_snippet == expected_tmpl_snippet
 
@@ -149,7 +149,7 @@ start() space(repetition_5_9) mixed_word(var_b)  mixed_word(var_c) end() -> reco
 start() mixed_word(var_a)  mixed_word(var_b)  mixed_word(var_c) end() -> record
     """).strip()
 
-    node = TabularTextPattern(text)
+    node = TableTranslator(text)
     tmpl_snippet = node.to_template_snippet()
     assert tmpl_snippet == expected_tmpl_snippet
 
@@ -172,7 +172,7 @@ start() mixed_word(var_a)  mixed_word(var_b)  mixed_word(var_c, meta_data_list) 
 start() space(repetition_13_19) mixed_word(var_c, meta_data_list) end(space) -> continue
     """).strip()
 
-    node = TabularTextPattern(text)
+    node = TableTranslator(text)
     tmpl_snippet = node.to_template_snippet()
     assert tmpl_snippet == expected_tmpl_snippet
 
@@ -201,7 +201,7 @@ start() space(repetition_7_9) mixed_word(var_b) end(space) -> record
 start() space(repetition_15_17) mixed_word(var_c) end() -> record
     """).strip()
 
-    node = TabularTextPattern(text)
+    node = TableTranslator(text)
     tmpl_snippet = node.to_template_snippet()
     assert tmpl_snippet == expected_tmpl_snippet
 
