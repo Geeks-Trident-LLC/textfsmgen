@@ -11,7 +11,7 @@ Run pytest in the project root to execute these tests:
 
 import pytest
 
-from textfsmgen.engine.gpiterative import IterativeLinePattern
+from textfsmgen.engine.gpiterative import IterativeLineDataPattern
 
 
 class TestIterativeLinePattern:
@@ -34,7 +34,7 @@ class TestIterativeLinePattern:
         ]
     )
     def test_get_editable_snippet(self, line, label, expected_snippet):
-        node = IterativeLinePattern(line, label=label)
+        node = IterativeLineDataPattern(line, label=label)
         snippet = node.symbolize()
         assert snippet == expected_snippet
 
@@ -56,7 +56,7 @@ class TestIterativeLinePattern:
         ]
     )
     def test_to_snippet(self, line, expected_snippet):
-        node = IterativeLinePattern(line)
+        node = IterativeLineDataPattern(line)
         snippet = node.to_snippet()
         assert snippet == expected_snippet
 
@@ -81,7 +81,7 @@ class TestIterativeLinePattern:
     def test_to_regex(self, lines_or_snippets, expected_snippets, expected_regex_pattern):
         node = None
         for index, line_or_snippet in enumerate(lines_or_snippets):
-            node = IterativeLinePattern(line_or_snippet)
+            node = IterativeLineDataPattern(line_or_snippet)
             snippet = node.to_snippet()
             assert snippet == expected_snippets[index]
         regex_pattern = node.to_regex()
@@ -108,7 +108,7 @@ class TestIterativeLinePattern:
     def test_to_template_snippet(self, lines_or_snippets, expected_snippets, expected_template_snippet):
         node = None
         for index, line_or_snippet in enumerate(lines_or_snippets):
-            node = IterativeLinePattern(line_or_snippet)
+            node = IterativeLineDataPattern(line_or_snippet)
             snippet = node.to_snippet()
             assert snippet == expected_snippets[index]
         tmpl_snippet = node.to_template_snippet()

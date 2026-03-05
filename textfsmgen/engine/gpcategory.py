@@ -22,20 +22,21 @@ from textfsmgen.core.patterns import TextPattern
 from textfsmgen.libs import PATTERN
 from textfsmgen.libs import text
 
-from textfsmgen.engine.gp import LData, TranslatedPattern
+from textfsmgen.engine.gp import TranslatedPattern
+from textfsmgen.engine import LineData
 from textfsmgen.exceptions import RuntimeException
-from textfsmgen.engine.gpiterative import IterativeLinePattern
+from textfsmgen.engine.gpiterative import IterativeLineDataPattern
 
 from textfsmgen.engine.gpcommon import get_line_position_by
 from textfsmgen.engine.gpcommon import get_fixed_line_snippet
 
 
-class BaseCategoryPattern(LData):
+class CategoryPatternData(LineData):
     """
-    BaseCategoryPattern
+    CategoryPatternData
     -------------------
     Abstract base class for all grammar/text parsing category patterns.
-    Extends `LData` to provide a common interface and shared behavior
+    Extends `LineData` to provide a common interface and shared behavior
     for specialized category pattern classes.
 
     Notes
@@ -48,12 +49,12 @@ class BaseCategoryPattern(LData):
     """
 
 
-class CategorySepPattern(BaseCategoryPattern):
+class CategorySepPattern(CategoryPatternData):
     """
     CategorySepPattern
     ------------------
     Represents a category pattern for separators in grammar/text parsing.
-    This class extends `BaseCategoryPattern` to handle separator tokens,
+    This class extends `CategoryPatternData` to handle separator tokens,
     providing both regex conversion and template snippet generation.
 
     Parameters
@@ -75,7 +76,7 @@ class CategorySepPattern(BaseCategoryPattern):
         str
             A regex pattern string representing the separator.
         """
-        node = IterativeLinePattern(self.raw_data)
+        node = IterativeLineDataPattern(self.raw_data)
         return node.to_regex()
 
     def to_template_snippet(self) -> str:
@@ -91,12 +92,12 @@ class CategorySepPattern(BaseCategoryPattern):
         return f"{self.leading}{TextPattern(self.data)}{self.trailing}"
 
 
-class CategorySpacerPattern(BaseCategoryPattern):
+class CategorySpacerPattern(CategoryPatternData):
     """
     CategorySpacerPattern
     ---------------------
     Represents a category pattern for whitespace or spacer tokens in grammar/text parsing.
-    This class extends `BaseCategoryPattern` to handle cases where a separator may be
+    This class extends `CategoryPatternData` to handle cases where a separator may be
     empty, a single space, or multiple spaces.
 
     Parameters
@@ -136,12 +137,12 @@ class CategorySpacerPattern(BaseCategoryPattern):
         return "zero_or_spaces()" if self.is_empty else "  "
 
 
-class CategoryLeftDataPattern(BaseCategoryPattern):
+class CategoryLeftDataPattern(CategoryPatternData):
     """
     CategoryLeftDataPattern
     -----------------------
     Represents a category pattern for left‑aligned data in grammar/text parsing.
-    This class extends `BaseCategoryPattern` to handle raw data tokens that
+    This class extends `CategoryPatternData` to handle raw data tokens that
     are preserved as-is for regex conversion and template snippet generation.
 
     Parameters
@@ -177,12 +178,12 @@ class CategoryLeftDataPattern(BaseCategoryPattern):
         return self.raw_data
 
 
-class CategoryRightDataPattern(BaseCategoryPattern):
+class CategoryRightDataPattern(CategoryPatternData):
     """
     CategoryRightDataPattern
     ------------------------
     Represents a category pattern for right‑aligned data in grammar/text parsing.
-    This class extends `BaseCategoryPattern` to handle raw data tokens that
+    This class extends `CategoryPatternData` to handle raw data tokens that
     may be associated with a variable name. It supports regex conversion and
     template snippet generation, even when the data is empty.
 
@@ -235,13 +236,13 @@ class CategoryRightDataPattern(BaseCategoryPattern):
         return f"something(var_{self.var_name}, or_empty)"
 
 
-class CategoryLinePattern(BaseCategoryPattern):
+class CategoryLinePattern(CategoryPatternData):
     """
     CategoryLinePattern
     -------------------
     Represents a category pattern for parsing a line of text into
     left data, separator, and right data components. This class
-    extends `BaseCategoryPattern` to support recursive parsing,
+    extends `CategoryPatternData` to support recursive parsing,
     regex conversion, and template snippet generation.
 
     Parameters
@@ -496,7 +497,7 @@ class CategoryLinePattern(BaseCategoryPattern):
         - The separator string (including surrounding whitespace)
         - The right-hand data segment
 
-        It uses `LData` wrappers to normalize whitespace handling
+        It uses `LineData` wrappers to normalize whitespace handling
         around the separator and ensures leading/trailing spaces
         are preserved in the correct segment.
 
@@ -512,7 +513,7 @@ class CategoryLinePattern(BaseCategoryPattern):
                 The right-hand data segment with trailing whitespace.
         """
         v1, v2 = self.data.split(self.separator, maxsplit=1)
-        node1, node2 = LData(v1), LData(v2)
+        node1, node2 = LineData(v1), LineData(v2)
 
         left = f"{node1.leading}{node1.data}"
         separator = f"{node1.trailing}{self.separator}{node2.leading}"

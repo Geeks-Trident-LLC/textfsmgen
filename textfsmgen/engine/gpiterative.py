@@ -40,7 +40,7 @@ from textfsmgen.libs import text
 from textfsmgen.libs.pat import lookup_pattern
 
 from textfsmgen.engine.gp import TranslatedPattern
-from textfsmgen.engine.gp import LData
+from textfsmgen.engine import LineData
 from textfsmgen.exceptions import RuntimeException
 
 
@@ -293,7 +293,7 @@ class SnippetElement(RuntimeException):
         return snippet
 
 
-class EditingSnippet(LData):
+class EditingSnippet(LineData):
     """
     Represents an editable snippet with capture, keep, and action directives.
 
@@ -702,7 +702,7 @@ class EditingSnippet(LData):
         return f"{self.leading}{tmpl_snippet}{self.trailing}"
 
 
-class IterativeLinePattern(LData):
+class IterativeLineDataPattern(LineData):
     """
     Represents a single line pattern in an iterative parsing process.
 
@@ -870,7 +870,7 @@ class IterativeLinesPattern(RuntimeException):
     This class wraps a sequence of lines/snippets and provides methods
     to convert them into snippet strings, regex patterns, or template
     snippets. It delegates parsing of individual data lines to
-    `IterativeLinePattern`.
+    `IterativeLineDataPattern`.
 
     Parameters
     ----------
@@ -899,7 +899,7 @@ class IterativeLinesPattern(RuntimeException):
         for index, line_or_snippet in enumerate(self.lines_or_snippets):
             if text.Line.has_data(line_or_snippet):
                 label = str(index) if index > 0 else ""
-                node = IterativeLinePattern(line_or_snippet, label=label)
+                node = IterativeLineDataPattern(line_or_snippet, label=label)
                 snippets.append(node.to_snippet())
             else:
                 snippets.append(line_or_snippet)
@@ -917,7 +917,7 @@ class IterativeLinesPattern(RuntimeException):
         patterns: List[str] = []
         for snippet in self.lines_or_snippets:
             if text.Line.has_data(snippet):
-                node = IterativeLinePattern(snippet)
+                node = IterativeLineDataPattern(snippet)
                 patterns.append(node.to_regex())
             else:
                 patterns.append(r"[ \t\v]*")
@@ -945,7 +945,7 @@ class IterativeLinesPattern(RuntimeException):
 
         for snippet in self.lines_or_snippets:
             if text.Line.has_data(snippet):
-                node = IterativeLinePattern(snippet)
+                node = IterativeLineDataPattern(snippet)
                 tmpl_snippets.append(node.to_template_snippet())
                 is_captured |= node.is_captured_in_template_snippet()
 

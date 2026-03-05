@@ -43,43 +43,8 @@ import re
 
 from textfsmgen.libs import PATTERN
 from textfsmgen.libs import datatype
-from textfsmgen.libs import text
 
 from textfsmgen.exceptions import RuntimeException
-
-
-class LData(RuntimeException):
-    """
-    Line number wrapper for string input with utilities to
-    inspect leading and trailing whitespace.
-    """
-    def __init__(self, data):
-        self.raw_data = str(data)
-        self.data = self.raw_data.strip()
-
-    def __call__(self, *args, **kwargs):
-        new_instance = self.__class__(*args, **kwargs)
-        return new_instance
-
-    @property
-    def leading(self):
-        leading_spaces = text.Line.get_leading(self.raw_data)
-        return leading_spaces
-
-    @property
-    def trailing(self):
-        trailing_spaces = text.Line.get_trailing(self.raw_data)
-        return trailing_spaces
-
-    @property
-    def is_leading(self):
-        chk = self.leading != ""
-        return chk
-
-    @property
-    def is_trailing(self):
-        chk = self.trailing != ""
-        return chk
 
 
 class TranslatedPattern(RuntimeException):
@@ -426,25 +391,6 @@ class TranslatedPattern(RuntimeException):
     def recommend_pattern(cls, translated_pat_obj1, translated_pat_obj2):
         """
         Recommend a generalized pattern from two translated pattern objects.
-
-        This factory-style method delegates to the `recommend` method of
-        `translated_pat_obj1`, passing `translated_pat_obj2` as the argument.
-        It returns the generalized pattern produced by the recommendation
-        logic defined in the first object.
-
-        Parameters
-        ----------
-        translated_pat_obj1 : Instance of TranslatedPattern or inherited of TranslatedPattern
-            The primary translated pattern object. Must implement a
-            `recommend` method.
-        translated_pat_obj2 : Instance of TranslatedPattern or inherited of TranslatedPattern
-            The secondary translated pattern object to be compared against.
-
-        Returns
-        -------
-        Instance of TranslatedPattern or inherited of TranslatedPattern
-            A generalized translated pattern instance recommended based
-            on the relationship between the two input objects.
         """
         generalized_pat = translated_pat_obj1.recommend(translated_pat_obj2)
         return generalized_pat
@@ -453,26 +399,6 @@ class TranslatedPattern(RuntimeException):
     def recommend_pattern_using_data(cls, data1: str, data2: str):
         """
         Recommend a generalized pattern from two raw number inputs.
-
-        This factory-style method first creates translated pattern
-        objects from the provided input number using `do_factory_create`.
-        It then delegates to the `recommend` method of the first
-        translated pattern object, passing the second as the argument.
-        The result is a generalized pattern instance based on the
-        relationship between the two inputs.
-
-        Parameters
-        ----------
-        data1 : str
-            The first raw number input used to create a translated pattern.
-        data2 : str
-            The second raw number input used to create a translated pattern.
-
-        Returns
-        -------
-        Instance of TranslatedPattern or inherited of TranslatedPattern
-            A generalized translated pattern instance recommended based
-            on the relationship between the two input number values.
         """
         translated_pat_obj1 = cls.do_factory_create(data1)
         translated_pat_obj2 = cls.do_factory_create(data2)
