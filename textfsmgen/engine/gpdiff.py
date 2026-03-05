@@ -34,7 +34,7 @@ from textfsmgen.core.patterns import LinePattern
 from textfsmgen.libs import PATTERN
 from textfsmgen.libs import text
 
-from textfsmgen.gp import TranslatedPattern
+from textfsmgen.engine.gp import TranslatedPattern
 from textfsmgen.exceptions import RuntimeException
 
 

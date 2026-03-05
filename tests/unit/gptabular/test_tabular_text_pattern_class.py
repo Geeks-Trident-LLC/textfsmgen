@@ -11,7 +11,7 @@ Run pytest in the project root to execute these tests:
 
 import pytest           # noqa
 from textwrap import dedent
-from textfsmgen.gptabular import TabularTextPattern
+from textfsmgen.engine.gptabular import TabularTextPattern
 
 
 def test_fixed_columns():

@@ -10,7 +10,7 @@ Run pytest in the project root to execute these tests:
 """
 
 import pytest
-from textfsmgen.gp import TranslatedPattern
+from textfsmgen.engine.gp import TranslatedPattern
 
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]

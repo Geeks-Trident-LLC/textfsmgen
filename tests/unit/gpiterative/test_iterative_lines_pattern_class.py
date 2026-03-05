@@ -17,7 +17,7 @@ from textwrap import dedent
 from textfsmgen.core.verify import verify
 from textfsmgen.core.template import get_textfsm_template
 
-from textfsmgen.gpiterative import IterativeLinesPattern
+from textfsmgen.engine.gpiterative import IterativeLinesPattern
 
 
 class TestIterativeLinesPattern:

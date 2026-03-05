@@ -9,8 +9,8 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/unit/gpcommon/test_gpcommon_module.py
 """
 import pytest
-from textfsmgen.gpcommon import get_line_position_by
-from textfsmgen.gpcommon import get_fixed_line_snippet
+from textfsmgen.engine.gpcommon import get_line_position_by
+from textfsmgen.engine.gpcommon import get_fixed_line_snippet
 
 
 class TestGetLinePositionBy:

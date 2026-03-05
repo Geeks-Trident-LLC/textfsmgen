@@ -39,8 +39,8 @@ from textfsmgen.libs import PATTERN
 from textfsmgen.libs import text
 from textfsmgen.libs.pat import lookup_pattern
 
-from textfsmgen.gp import TranslatedPattern
-from textfsmgen.gp import LData
+from textfsmgen.engine.gp import TranslatedPattern
+from textfsmgen.engine.gp import LData
 from textfsmgen.exceptions import RuntimeException
 
 

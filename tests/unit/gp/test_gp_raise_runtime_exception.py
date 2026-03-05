@@ -24,7 +24,7 @@ Run pytest in the project root to execute these tests:
 
 import pytest
 
-from textfsmgen.gp import TranslatedPattern
+from textfsmgen.engine.gp import TranslatedPattern
 
 from tests.unit.gp import TranslatedDummyPattern
 

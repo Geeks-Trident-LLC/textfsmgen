@@ -14,7 +14,7 @@ import pytest
 from textfsmgen.core.template import get_textfsm_template
 from textfsmgen.core.verify import verify
 
-from textfsmgen.gpcategory import CategoryLinesPattern
+from textfsmgen.engine.gpcategory import CategoryLinesPattern
 
 from tests.unit import replace_dates_with_placeholder
 

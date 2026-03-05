@@ -11,7 +11,7 @@ Run pytest in the project root to execute these tests:
 
 import pytest
 
-from textfsmgen.gpiterative import IterativeLinePattern
+from textfsmgen.engine.gpiterative import IterativeLinePattern
 
 
 class TestIterativeLinePattern:

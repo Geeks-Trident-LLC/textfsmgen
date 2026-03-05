@@ -11,7 +11,7 @@ Run pytest in the project root to execute these tests:
 
 import pytest
 
-from textfsmgen.gpdiff import NDiffChangedText
+from textfsmgen.engine.gpdiff import NDiffChangedText
 
 
 class TestNDiffChangedText:

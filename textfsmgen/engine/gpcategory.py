@@ -22,12 +22,12 @@ from textfsmgen.core.patterns import TextPattern
 from textfsmgen.libs import PATTERN
 from textfsmgen.libs import text
 
-from textfsmgen.gp import LData, TranslatedPattern
+from textfsmgen.engine.gp import LData, TranslatedPattern
 from textfsmgen.exceptions import RuntimeException
-from textfsmgen.gpiterative import IterativeLinePattern
+from textfsmgen.engine.gpiterative import IterativeLinePattern
 
-from textfsmgen.gpcommon import get_line_position_by
-from textfsmgen.gpcommon import get_fixed_line_snippet
+from textfsmgen.engine.gpcommon import get_line_position_by
+from textfsmgen.engine.gpcommon import get_fixed_line_snippet
 
 
 class BaseCategoryPattern(LData):

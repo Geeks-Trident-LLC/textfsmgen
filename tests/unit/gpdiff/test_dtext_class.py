@@ -10,7 +10,7 @@ Run pytest in the project root to execute these tests:
 """
 
 import pytest
-from textfsmgen.gpdiff import DText
+from textfsmgen.engine.gpdiff import DText
 
 
 class TestDText:

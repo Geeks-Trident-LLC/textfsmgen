@@ -51,11 +51,11 @@ from textfsmgen.libs import datatype
 from textfsmgen.libs import text
 from textfsmgen.libs import number
 
-from textfsmgen.gp import TranslatedPattern
+from textfsmgen.engine.gp import TranslatedPattern
 from textfsmgen.exceptions import RuntimeException
 
-from textfsmgen.gpcommon import get_line_position_by
-from textfsmgen.gpcommon import get_fixed_line_snippet
+from textfsmgen.engine.gpcommon import get_line_position_by
+from textfsmgen.engine.gpcommon import get_fixed_line_snippet
 
 
 class TabularTextPattern(RuntimeException):

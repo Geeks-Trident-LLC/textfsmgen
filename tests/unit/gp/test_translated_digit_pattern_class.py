@@ -11,7 +11,7 @@ Run pytest in the project root to execute these tests:
 
 import pytest
 
-from textfsmgen.gp import (
+from textfsmgen.engine.gp import (
     TranslatedPattern,
     TranslatedDigitPattern,
     TranslatedDigitsPattern,
