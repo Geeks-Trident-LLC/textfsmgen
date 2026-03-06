@@ -32,8 +32,6 @@ from pprint import pformat
 
 from textfsmgen.libs.utils import get_data_as_tabular
 from textfsmgen.libs.generic import DotObject
-from textfsmgen.exceptions import raise_exception
-from textfsmgen.libs.common import dedent_and_strip
 from textfsmgen.libs import file
 
 from textfsmgen import TemplateBuilder
@@ -43,164 +41,20 @@ from textfsmgen import config
 from textfsmgen import version
 
 from textfsmgen.ui import about
+from textfsmgen.ui.common import (
+center_window,
+show_message_dialog,
+make_modal
+)
 
 
 __version__ = version
 
 
-def get_relative_center_location(parent, width, height):
-    """
-    Compute the coordinates for centering a child window relative to its parent.
-
-    Parameters
-    ----------
-    parent : tkinter.Tk or tkinter.Toplevel
-        The parent window whose geometry is used as a reference.
-    width : int
-        The width of the child window.
-    height : int
-        The height of the child window.
-
-    Returns
-    -------
-    tuple of int
-        (x, y) coordinates for placing the child window centered
-        within the parent window.
-    """
-    try:
-        # Geometry string format: "WxH+X+Y"
-        geometry = parent.winfo_geometry()
-        pw, ph, px, py = re.split("[x+]", geometry)
-        parent_x_loc, parent_y_loc = int(px), int(py)
-        parent_width, parent_width = int(pw), int(ph)
-        x_loc = int(parent_x_loc + (parent_width - width) / 2)
-        y_loc = int(parent_y_loc + (parent_width - height) / 2)
-        return x_loc, y_loc
-    except Exception as ex:
-        raise_exception(ex)
-
-
-def create_msgbox(title=None, error=None, warning=None, info=None,
-                  question=None, okcancel=None, retrycancel=None,
-                  yesno=None, yesnocancel=None, **options):
-    """
-    Display a tkinter messagebox based on the provided message type.
-
-    Parameters
-    ----------
-    title : str, optional
-        The title of the messagebox window.
-    error : str, optional
-        Error message (uses `showerror`).
-    warning : str, optional
-        Warning message (uses `showwarning`).
-    info : str, optional
-        Informational message (uses `showinfo`).
-    question : str, optional
-        Question message (uses `askquestion`).
-    okcancel : str, optional
-        OK/Cancel prompt (uses `askokcancel`).
-    retrycancel : str, optional
-        Retry/Cancel prompt (uses `askretrycancel`).
-    yesno : str, optional
-        Yes/No prompt (uses `askyesno`).
-    yesnocancel : str, optional
-        Yes/No/Cancel prompt (uses `askyesnocancel`).
-    options : keyword arguments, optional
-        Additional keyword arguments passed to the underlying messagebox function.
-
-    Returns
-    -------
-    Any
-        The result of the messagebox interaction:
-        - "ok", "yes", "no" strings for certain dialogs
-        - Boolean values for confirmation dialogs
-        - None for canceled dialogs
-    """
-    msg_func_pairs = (      # noqa
-        (error, messagebox.showerror),
-        (warning, messagebox.showwarning),
-        (info, messagebox.showinfo),
-        (question, messagebox.askquestion),
-        (okcancel, messagebox.askokcancel),
-        (retrycancel, messagebox.askretrycancel),
-        (yesno, messagebox.askyesno),
-        (yesnocancel, messagebox.askyesnocancel),
-    )
-
-    for msg, func in msg_func_pairs:
-        if msg is not None:
-            return func(title=title, message=dedent_and_strip(msg), **options)
-
-    return messagebox.showinfo(title=title, message=dedent_and_strip(info), **options)
-
-
-def set_modal_dialog(dialog):
-    """
-    Configure a Tkinter window to behave as a modal dialog.
-
-    A modal dialog prevents interaction with other windows in the
-    application until the dialog is closed.
-
-    Parameters
-    ----------
-    dialog : tkinter.Tk
-        The dialog or window instance to configure as modal.
-
-    Notes
-    -----
-    - `transient` ensures the dialog is always on top of its parent.
-    - `wait_visibility` waits until the window is visible before grabbing focus.
-    - `grab_set` directs all events to the dialog, blocking other windows.
-    - `wait_window` blocks execution until the dialog is closed.
-    """
-    if dialog.master is not None:
-        dialog.transient(dialog.master)
-        dialog.wait_visibility()
-        dialog.grab_set()
-        dialog.wait_window()
-
 
 class UserTemplate:
     """
     Manage user-defined TextFSM templates stored in the application.
-
-    This class provides an interface for creating, reading, searching,
-    and writing user templates. It encapsulates the template file path,
-    its content, and status information, ensuring consistent handling
-    of template persistence and retrieval.
-
-    Attributes
-    ----------
-    filename : str
-        Path to the user template file, e.g.,
-        ``/home_dir/.textfsmgen/user_templates.yaml``.
-    status : str
-        Current status message describing the template state
-        (e.g., "created", "updated", "not found").
-    content : str
-        Raw content of the user template file.
-
-    Methods
-    -------
-    is_exist() -> bool
-        Check whether the template file exists at the given path.
-    create(confirmed=True) -> bool
-        Create a new template file. If `confirmed` is True, overwrite
-        existing files when necessary.
-    read() -> str
-        Read and return the content of the template file.
-    search(template_name: str) -> str
-        Search for a template by name and return its content.
-    write(template_name: str, data: str) -> str
-        Write or update a template with the given name and data.
-        Returns a status message indicating the result.
-
-    Notes
-    -----
-    - Templates are stored in YAML format for readability and portability.
-    - This class is intended for internal use within the `textfsmgen`
-      application to manage user-defined templates.
     """
     def __init__(self):
         # config.user_template_filename is
@@ -212,20 +66,6 @@ class UserTemplate:
     def is_exist(self):
         """
         Check whether the user template file exists.
-
-        This method verifies if the file specified by `self.filename`
-        is present in the filesystem.
-
-        Returns
-        -------
-        bool
-            True if the user template file exists, False otherwise.
-
-        Notes
-        -----
-        - Typical default path:
-          ``/home_dir/.textfsmgen/user_templates.yaml``.
-        - Uses `pathlib.Path.exists()` for filesystem validation.
         """
 
         node = Path(self.filename)
@@ -234,40 +74,13 @@ class UserTemplate:
     def create(self, confirmed=True):
         """
         Create the user template file if it does not already exist.
-
-        This method ensures that the user template file defined by
-        `self.filename` is created on disk. If the file already exists,
-        the method returns immediately. When `confirmed` is True, a
-        confirmation dialog is shown before creating the file.
-
-        Parameters
-        ----------
-        confirmed : bool, optional
-            Whether to prompt the user with a confirmation messagebox
-            before creating the file. Defaults to True.
-
-        Returns
-        -------
-        bool
-            True if the file exists or was successfully created.
-            False if creation was declined or failed.
-
-        Notes
-        -----
-        - The default file path is typically:
-          ``/home_dir/.textfsmgen/user_templates.yaml``.
-        - If the parent directory does not exist, it is created.
-        - If the parent path is a file instead of a directory,
-          creation fails and an error messagebox is displayed.
-        - On successful creation, `self.content` is updated with
-          the file’s initial (empty) content.
         """
         if self.is_exist():
             return True
 
         try:
             if confirmed:
-                response = create_msgbox(
+                response = show_message_dialog(
                     title ="Create User Template File",
                     yesno=f"Would you like to create the file {repr(self.filename)}?"
                 )
@@ -281,7 +94,7 @@ class UserTemplate:
                     parent.mkdir(parents=True, exist_ok=True)
                 else:
                     if parent.is_file():
-                        create_msgbox(
+                        show_message_dialog(
                             title="Directory Error",
                             error="Cannot create file '{str(node)}' because "
                                   "its parent path '{str(parent)}' is a file."
@@ -290,7 +103,7 @@ class UserTemplate:
                 node.touch()
                 self.content = node.read_text()
                 if confirmed:
-                    create_msgbox(
+                    show_message_dialog(
                         title="User Template File Created",
                         info=f"{repr(self.filename)}? created successfully."
                     )
@@ -299,7 +112,7 @@ class UserTemplate:
                 return False
         except Exception as ex:
             self.status = f"{type(ex).__name__}: {ex}."
-            create_msgbox(
+            show_message_dialog(
                 title="User Template File Creation Error",
                 error=self.status
             )
@@ -307,34 +120,13 @@ class UserTemplate:
     def read(self):
         """
         Read and return the content of the user template file.
-
-        This method attempts to open and read the file specified by
-        `self.filename`. If the file exists, its content is stored in
-        `self.content` and returned. If the file does not exist, an
-        error messagebox is displayed, `self.status` is updated with
-        the error message, and an empty string is returned.
-
-        Returns
-        -------
-        str
-            The content of the user template file if it exists,
-            otherwise an empty string.
-
-        Notes
-        -----
-        - Default file path is typically:
-          ``/home_dir/.textfsmgen/user_templates.yaml``.
-        - On failure, a messagebox is shown with the title
-          `"User Template File Not Found"`.
-        - The error message is also stored in `self.status` for
-          dia
         """
         if self.is_exist():
             self.content = file.read(self.filename)
             return self.content
         else:
             self.status = f"File '{self.filename}' does not exist."
-            create_msgbox(
+            show_message_dialog(
                 title="Error: User Template File Not Found",
                 error=self.status
             )
@@ -343,53 +135,12 @@ class UserTemplate:
     def search(self, template_name):
         """
         Search for a user-defined template by name.
-
-        This method looks up a template within the user template file
-        (YAML format) using the provided `template_name`. It validates
-        the naming convention, loads the YAML content, and returns the
-        template content if found. Status messages are updated to reflect
-        the outcome of the search.
-
-        Parameters
-        ----------
-        template_name : str
-            The name of the template to search for. Must follow the
-            naming convention: alphanumeric segments separated by
-            `+`, `.`, `_`, or `-`.
-
-        Returns
-        -------
-        str
-            The content of the template if found. Returns an empty string
-            if the template file does not exist, the name is invalid, the
-            template is not found, or the file format is incorrect.
-
-        Raises
-        ------
-        None
-            Errors are handled internally. Message boxes are displayed
-            and `self.status` is updated with diagnostic codes such as:
-            - 'INVALID-TEMPLATE-NAME-FORMAT'
-            - 'INVALID-TEMPLATE-FORMAT'
-            - 'NOT_FOUND'
-            - 'FOUND'
-            - or an error message if the file is missing.
-
-        Notes
-        -----
-        - Templates are stored in a YAML file, typically located at:
-          ``/home_dir/.textfsmgen/user_templates.yaml``.
-        - The method uses `yaml.SafeLoader` to ensure safe parsing.
-        - `self.status` is updated after each operation to indicate
-          success or failure.
-        - Message boxes are shown for invalid names, missing files,
-          or incorrect formats.
         """
         self.status = ''
         if self.is_exist():
             if not re.match(r'[a-z0-9]+([+._-][a-z0-9]+)*$', template_name):
                 self.status = 'INVALID-TEMPLATE-NAME-FORMAT'
-                create_msgbox(
+                show_message_dialog(
                     title="Error: Invalid Template Naming Convention",
                     error="Template names must follow the convention: "
                           "alphanumeric segments separated by '+', '.', '_', or '-'."
@@ -410,7 +161,7 @@ class UserTemplate:
                     return ''
             else:
                 self.status = 'INVALID-TEMPLATE-FORMAT'
-                create_msgbox(
+                show_message_dialog(
                     title="Error: Invalid User Template Format",
                     error=f"File '{self.filename}' is not in the correct format."
                 )
@@ -419,56 +170,12 @@ class UserTemplate:
             title = 'User Template File Not Found'
             error = "{!r} IS NOT existed.".format(self.filename)
             self.status = error
-            create_msgbox(title=title, error=error)
+            show_message_dialog(title=title, error=error)
             return ''
 
     def write(self, template_name, template):
         """
         Write or update a user-defined template in the YAML file.
-
-        This method stores a template under the given `template_name`
-        in the user template file (YAML format), typically located at
-        ``/home_dir/.textfsmgen/user_templates.yaml``.
-        It handles duplicate names and duplicate content by prompting
-        the user for confirmation or rename decisions via message boxes.
-        The YAML file is rewritten with updated content if the operation
-        succeeds.
-
-        Parameters
-        ----------
-        template_name : str
-            The name of the template to store. Must follow the valid
-            naming convention enforced by `search`.
-        template : str
-            The template content to be stored.
-
-        Returns
-        -------
-        bool
-            True if the template was successfully written or updated.
-            False if the file does not exist, the user denies overwrite
-            or rename, a duplicate violation occurs, or an error is
-            encountered while writing.
-
-        Status Codes
-        ------------
-        - 'USER_TEMPLATE_NOT_EXISTED' : File does not exist.
-        - 'FOUND' / 'NOT_FOUND'       : Result of initial search.
-        - 'DENIED-OVERWRITE'          : User declined overwriting a duplicate name.
-        - 'DUPLICATE-NAME-AND-CONTENT-VIOLATION' : Duplicate name and content detected.
-        - 'DENIED-RENAME'             : User declined renaming when duplicate content found.
-        - 'INVALID-TEMPLATE-FORMAT'   : File format invalid.
-        - Error message string         : Exception occurred while writing.
-
-        Notes
-        -----
-        - Templates are stored in YAML with block scalar style (``|``).
-        - Existing templates with identical content may be removed if
-          the user agrees to rename.
-        - The file is fully rewritten after modifications, preserving
-          sorted template names.
-        - Message boxes are used to interact with the user for overwrite
-          or rename decisions.
         """
         self.status = ''
         if not self.is_exist():
@@ -481,7 +188,7 @@ class UserTemplate:
             yaml_obj = yaml.load(content, Loader=yaml.SafeLoader)
             yaml_obj = yaml_obj or dict()
             if template_name in yaml_obj:
-                response = create_msgbox(
+                response = show_message_dialog(
                     title="Error: Duplicate Template Name",
                     question=f"Template name '{template_name}' already "
                              f"exists.\nDo you want to overwrite?"
@@ -490,7 +197,7 @@ class UserTemplate:
                     yaml_obj[template_name] = template
                     for name, tmpl in yaml_obj.items():
                         if tmpl.strip() == template.strip() and name != template_name:
-                            create_msgbox(
+                            show_message_dialog(
                                 title="Error: Duplicate Template Name and Content",
                                 error=(
                                     f"Template name '{template_name}' is a duplicate and "
@@ -506,7 +213,7 @@ class UserTemplate:
                 removed_lst = []
                 for name, tmpl in yaml_obj.items():
                     if tmpl.strip() == template.strip():
-                        response = create_msgbox(
+                        response = show_message_dialog(
                             title="Error: Duplicate Template Content",
                             question=(
                                 f"Template name '{template_name}' (your template) "
@@ -538,7 +245,7 @@ class UserTemplate:
                 return True
             except Exception as ex:
                 self.status = f"{type(ex).__name__}: {ex}"
-                create_msgbox(
+                show_message_dialog(
                     title="Error: Writing User Template File",
                     error=self.status
                 )
@@ -967,9 +674,7 @@ class Application:
 
         width = 520 if self.is_macos else 474 if self.is_linux else 370
         height = 258 if self.is_macos else 242 if self.is_linux else 234
-        x, y = get_relative_center_location(self.root, width, height)
-        settings.geometry(f"{width}x{height}+{x}+{y}")
-        settings.resizable(False, False)
+        center_window(self.root, settings, width, height)
 
         top_frame = self.Frame(settings)
         top_frame.pack(fill=tk.BOTH, expand=True)
@@ -1035,7 +740,7 @@ class Application:
         button.grid(row=0, column=7, padx=1, pady=1, sticky=tk.E)
 
         # Make dialog modal
-        set_modal_dialog(settings)
+        make_modal(settings)
 
     def callback_preferences_user_template(self):
         """
@@ -1166,7 +871,7 @@ class Application:
 
             user_data = Application.get_textarea(self.input_textarea)
             if not user_data:
-                create_msgbox(
+                show_message_dialog(
                     title="Missing Input Data",
                     error="Unable to build TextFSM template: no data provided."
                 )
@@ -1195,12 +900,12 @@ class Application:
                 self.snapshot.update(title=title)
                 self.set_title(title=title)
             except TemplateBuilderInvalidFormat as ex:
-                create_msgbox(
+                show_message_dialog(
                     title="Invalid TextFSM Template Format",
                     error=f"{type(ex).__name__}: {ex}"
                 )
             except Exception as ex:
-                create_msgbox(
+                show_message_dialog(
                     title="Template Generation Error",
                     error=f"{type(ex).__name__}: {ex}"
                 )
@@ -1274,7 +979,7 @@ class Application:
                 name = node.name
                 if not name.startswith('test_'):
                     new_name = 'test_{}'.format(name)
-                    response = create_msgbox(
+                    response = show_message_dialog(
                         title='Unittest/Pytest Naming Convention',
                         yesnocancel=f"""
                             {test_type.title()} - "{name}" does not follow the required naming convention: test_<filename>.
@@ -1291,7 +996,7 @@ class Application:
                             node = node.with_name(new_name)
             filename = str(node)
             if not content.strip():
-                response = create_msgbox(
+                response = show_message_dialog(
                     title=f"{title} - Empty",
                     question=(
                         f'The content of "{filename}" is empty.\n'
@@ -1457,7 +1162,7 @@ class Application:
                 self.set_title(title=title)
 
             except Exception as ex:     # noqa
-                create_msgbox(
+                show_message_dialog(
                     title="Clipboard Empty",
                     info="Cannot paste because the clipboard contains no data."
                 )
@@ -1468,7 +1173,7 @@ class Application:
             """
             # --- Validate prerequisites ---
             if self.snapshot.test_data is None:
-                create_msgbox(
+                show_message_dialog(
                     title="Missing Test Data",
                     error=(
                         "Cannot build a Python test script without test data.\n"
@@ -1479,7 +1184,7 @@ class Application:
 
             user_data = Application.get_textarea(self.input_textarea)
             if not user_data:
-                create_msgbox(
+                show_message_dialog(
                     title="Missing User Data",
                     error=(
                         "Cannot build a Python test script without data.\n"
@@ -1510,7 +1215,7 @@ class Application:
                 self.save_as_btn.config(state=tk.NORMAL)
                 self.copy_text_btn.config(state=tk.NORMAL)
             except Exception as ex:
-                create_msgbox(
+                show_message_dialog(
                     title='TextFSM Generator Error',
                     error=f"{type(ex).__name__}: {ex}"
                 )
@@ -1522,7 +1227,7 @@ class Application:
 
             # --- Validate prerequisites ---
             if self.snapshot.test_data is None:
-                create_msgbox(
+                show_message_dialog(
                     title="Missing Test Data",
                     error=(
                         "Cannot build a Python unittest script without test data.\n"
@@ -1533,7 +1238,7 @@ class Application:
 
             user_data = Application.get_textarea(self.input_textarea)
             if not user_data:
-                create_msgbox(
+                show_message_dialog(
                     title="Missing User Data",
                     error=(
                         "Cannot build a Python unittest script without data.\n"
@@ -1564,7 +1269,7 @@ class Application:
                 self.save_as_btn.config(state=tk.NORMAL)
                 self.copy_text_btn.config(state=tk.NORMAL)
             except Exception as ex:
-                create_msgbox(
+                show_message_dialog(
                     title='TextFSM Generator Error',
                     error=f"{type(ex).__name__}: {ex}"
                 )
@@ -1576,7 +1281,7 @@ class Application:
 
             # --- Validate prerequisites ---
             if self.snapshot.test_data is None:
-                create_msgbox(
+                show_message_dialog(
                     title="Missing Test Data",
                     error=(
                         "Cannot build a Python pytest script without test data.\n"
@@ -1587,7 +1292,7 @@ class Application:
 
             user_data = Application.get_textarea(self.input_textarea)
             if not user_data:
-                create_msgbox(
+                show_message_dialog(
                     title="Missing User Data",
                     error=(
                         "Cannot build a Python pytest script without data.\n"
@@ -1618,7 +1323,7 @@ class Application:
                 self.save_as_btn.config(state=tk.NORMAL)
                 self.copy_text_btn.config(state=tk.NORMAL)
             except Exception as ex:
-                create_msgbox(
+                show_message_dialog(
                     title='TextFSM Generator Error',
                     error=f"{type(ex).__name__}: {ex}"
                 )
@@ -1629,7 +1334,7 @@ class Application:
             """
 
             if self.snapshot.test_data is None:
-                create_msgbox(
+                show_message_dialog(
                     title='No Test Data',
                     error="Please use Open or Paste button to load test data"
                 )
@@ -1662,7 +1367,7 @@ class Application:
 
             # --- Validate prerequisites ---
             if self.snapshot.test_data is None:
-                create_msgbox(
+                show_message_dialog(
                     title='No Test Data',
                     error=("Can NOT parse text without "
                            "test data.\nPlease use Open or Paste button "
@@ -1672,7 +1377,7 @@ class Application:
 
             user_data = Application.get_textarea(self.input_textarea)
             if not user_data:
-                create_msgbox(
+                show_message_dialog(
                     title='Empty Data',
                     error="Can NOT build regex pattern without data."
                 )
@@ -1691,7 +1396,7 @@ class Application:
             except Exception as ex:
                 template = self.snapshot.template.strip()
                 if not template:
-                    create_msgbox(
+                    show_message_dialog(
                         title='TextFSM Generator Error',
                         error=f"{type(ex).__name__}: {ex}"
                     )
@@ -1743,7 +1448,7 @@ class Application:
 
             # Ensure template file exists
             if not user_template.is_exist():
-                response = create_msgbox(
+                response = show_message_dialog(
                     title="User Template File Not Found",
                     question=(
                         f"This feature is only available when the "
@@ -1780,7 +1485,7 @@ class Application:
 
             user_template = UserTemplate()
             if not user_template.is_exist():
-                create_msgbox(
+                show_message_dialog(
                     title="User Template File Not Found",
                     info=(
                         f"This feature is only available "
@@ -1907,7 +1612,7 @@ class Application:
                     self.snapshot.update(result=user_template.status)
                     self.set_textarea(self.input_textarea, user_template.status)
             else:
-                create_msgbox(
+                show_message_dialog(
                     title="Missing Template Name",
                     error=(
                         "Cannot retrieve template because the template name "
@@ -1940,7 +1645,7 @@ class Application:
                     self.snapshot.update(stored_title=title)
                     self.set_title(title=title)
             except Exception as ex:
-                create_msgbox(
+                show_message_dialog(
                     title='TextFSM Generator Error',
                     error=f"{type(ex).__name__}: {ex}"
                 )
@@ -1959,7 +1664,7 @@ class Application:
                 return
 
             elif status == 'FOUND':
-                create_msgbox(
+                show_message_dialog(
                     title="Duplicate Template Name",
                     info=(
                         f"The template name {repr(tmpl_name)} already exists.\n"
@@ -1979,7 +1684,7 @@ class Application:
                 self.set_title(title=title)
 
         # def callback_rf_btn():
-        #     create_msgbox(
+        #     show_message_dialog(
         #         title='Robotframework feature',
         #         info="Robotframework button is in release 1.x and later"
         #     )
