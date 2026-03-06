@@ -1,5 +1,5 @@
 """
-Unit tests for the `textfsmgen.gpdiff.DiffLinePattern` class.
+Unit tests for the `textfsmgen.gpdiff.DiffLineTranslator` class.
 
 Usage
 -----
@@ -11,12 +11,12 @@ Run pytest in the project root to execute these tests:
 
 import pytest
 
-from textfsmgen.engine.gpdiff import DiffLinePattern
+from textfsmgen.engine.diff import DiffLineTranslator
 
 
 class TestDiffLinePattern:
     """
-    Test suite for DiffLinePattern.
+    Test suite for DiffLineTranslator.
 
     Covers line preparation, exception handling,
     pattern generation, and snippet generation.
@@ -33,7 +33,7 @@ class TestDiffLinePattern:
     )
     def test_prepare(self, lines, exp_count):
         """Test line preparation and count of non-empty trimmed lines."""
-        node = DiffLinePattern("a", "b")
+        node = DiffLineTranslator("a", "b")
         node.reset()
         node.prepare(*lines)
         assert len(node.lines) == exp_count
@@ -49,7 +49,7 @@ class TestDiffLinePattern:
     )
     def test_prepare_raises(self, lines):
         """Test that prepare raises an exception when insufficient valid lines are provided."""
-        node = DiffLinePattern("a", "b")
+        node = DiffLineTranslator("a", "b")
         with pytest.raises(Exception):
             node.prepare(*lines)
 
@@ -88,7 +88,7 @@ class TestDiffLinePattern:
     )
     def test_get_pattern_between_lines(self, line_a, line_b, exp_pattern):
         """Test pattern generation between two lines."""
-        node = DiffLinePattern("a", "b")
+        node = DiffLineTranslator("a", "b")
         node.reset()
         pattern = node.get_pattern_btw_two_lines(line_a, line_b)
         assert pattern == exp_pattern
@@ -160,7 +160,7 @@ class TestDiffLinePattern:
     )
     def test_generated_pattern(self, lines, exp_pattern):
         """Test auto-generated pattern from multiple lines."""
-        node = DiffLinePattern(*lines)
+        node = DiffLineTranslator(*lines)
         assert node.pattern == exp_pattern
 
     @pytest.mark.parametrize(
@@ -230,13 +230,13 @@ class TestDiffLinePattern:
     )
     def test_generated_snippet(self, lines, exp_snippet):
         """Test auto-generated snippet from multiple lines."""
-        node = DiffLinePattern(*lines)
+        node = DiffLineTranslator(*lines)
         assert node.snippet == exp_snippet
 
 
 class TestDiffLinePatternSnippets:
     """
-    Test suite for DiffLinePattern snippet and pattern generation.
+    Test suite for DiffLineTranslator snippet and pattern generation.
     """
 
     def test_snippet_process_table_line(self):
@@ -249,7 +249,7 @@ class TestDiffLinePatternSnippets:
             "start(space) digits(var_v0) | word(var_v1)  |  mixed_number(var_v2) "
             "| mixed_words(var_v3) end()"
         )
-        node = DiffLinePattern(*lines)
+        node = DiffLineTranslator(*lines)
         assert node.snippet == exp_snip
 
     def test_snippet_with_tab_space(self):
@@ -259,7 +259,7 @@ class TestDiffLinePatternSnippets:
             "this is the yellow pen",
         ]
         exp_snip = "start() this\t is words(var_v0) pen end()"
-        node = DiffLinePattern(*lines)
+        node = DiffLineTranslator(*lines)
         assert node.snippet == exp_snip
 
     def test_snippet_ipv6_with_word_and_digits(self):
@@ -269,7 +269,7 @@ class TestDiffLinePatternSnippets:
             "ipv6_addr: a::c % 32",
         ]
         exp_snip = "start() ipv6_addr: mixed_word(var_v0) % digits(var_v1) end()"
-        node = DiffLinePattern(*lines)
+        node = DiffLineTranslator(*lines)
         assert node.snippet == exp_snip
 
     def test_snippet_ipv6_with_phrase(self):
@@ -279,7 +279,7 @@ class TestDiffLinePatternSnippets:
             "ipv6_addr: 1::3 / 33",
         ]
         exp_snip = "start() ipv6_addr: non_wss_phrase(var_v0) end()"
-        node = DiffLinePattern(*lines)
+        node = DiffLineTranslator(*lines)
         assert node.snippet == exp_snip
 
     def test_snippet_with_optional_letters(self):
@@ -291,7 +291,7 @@ class TestDiffLinePatternSnippets:
             "this is half pencil",
         ]
         exp_snip = "start() this is letters(var_v0, or_empty) half\t pencil end()"
-        node = DiffLinePattern(*lines)
+        node = DiffLineTranslator(*lines)
         assert node.snippet == exp_snip
 
     def test_pattern_with_tab_space(self):
@@ -303,5 +303,5 @@ class TestDiffLinePatternSnippets:
         exp_pat = (
             r"this\s+is (?P<v0>[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)*) pen"
         )
-        node = DiffLinePattern(*lines)
+        node = DiffLineTranslator(*lines)
         assert node.pattern == exp_pat

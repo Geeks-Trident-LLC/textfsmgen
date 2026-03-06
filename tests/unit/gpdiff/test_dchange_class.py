@@ -10,7 +10,7 @@ Run pytest in the project root to execute these tests:
 """
 
 import pytest
-from textfsmgen.engine.gpdiff import DChange
+from textfsmgen.engine.diff import DChange
 
 
 class TestDChangeClass:
