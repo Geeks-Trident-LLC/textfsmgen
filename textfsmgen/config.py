@@ -59,7 +59,7 @@ years = '2022'
 license_name = f'TextFSM Generator License'
 copyright_text = f'Copyright \xa9 {years}'
 
-license = dedent_and_strip(
+license_text = dedent_and_strip(
     """
     BSD 3-Clause License
 

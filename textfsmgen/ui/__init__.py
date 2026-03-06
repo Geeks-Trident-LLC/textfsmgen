@@ -20,6 +20,7 @@ from os import path
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
+from tkinter.font import Font
 
 is_macos = platform.system() == 'Darwin'
 is_linux = platform.system() == 'Linux'
@@ -46,8 +47,6 @@ RadioButton = tk.Radiobutton if is_linux else ttk.Radiobutton
 CheckBox = tk.Checkbutton if is_linux else ttk.Checkbutton
 
 Menu = tk.Menu
-
-Font = ttk.Font
 
 
 def apply_layout(func: Callable) -> Callable:

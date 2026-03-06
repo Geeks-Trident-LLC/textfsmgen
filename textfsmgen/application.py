@@ -9,14 +9,6 @@ for building, customizing, and testing TextFSM templates. It serves as
 the entry point for launching the application with GUI support, offering
 tools for regex construction, template validation, and interactive
 pattern testing.
-
-
-Notes
------
-- If `tkinter` is not installed, the module prints a descriptive error
-  message and terminates gracefully.
-- This module is intended primarily for interactive use; programmatic
-  access to template generation is available via `textfsmgen.__init__`.
 """
 
 from textfsmgen.libs.common import ensure_tkinter_available
@@ -49,6 +41,8 @@ from textfsmgen.exceptions import TemplateBuilderInvalidFormat
 from textfsmgen import config
 
 from textfsmgen import version
+
+from textfsmgen.ui import about
 
 
 __version__ = version
@@ -556,34 +550,6 @@ class UserTemplate:
 class Application:
     """
     Main GUI application for TextFSM template management.
-
-    The `Application` class integrates with Tkinter to provide a
-    graphical interface for creating, editing, validating, and testing
-    TextFSM templates. It manages the lifecycle of the GUI, including
-    initialization of frames, widgets, and event handlers, while
-    coordinating file operations and user interactions.
-
-    Responsibilities
-    ----------------
-    - Launch and manage the Tkinter event loop.
-    - Provide input/output frames for template editing and testing.
-    - Handle user actions such as opening, saving, searching, and
-      validating templates.
-    - Display error, warning, and confirmation dialogs using
-      `create_msgbox`.
-    - Integrate with `UserTemplate` for reading, writing, and searching
-      YAML‑based template files.
-    - Support switching between regex builder and pattern builder modes.
-
-    Notes
-    -----
-    - Templates are stored in YAML format under the user's home
-      directory, typically at:
-      ``~/.textfsmgen/user_templates.yaml``.
-    - Error handling is performed via message boxes rather than
-      exceptions, making this class suitable for interactive use.
-    - For programmatic access to template generation without GUI,
-      use `textfsmgen.__init__` instead.
     """
 
     browser = webbrowser
@@ -696,22 +662,6 @@ class Application:
         """
         Collect and return configuration arguments for initializing
         a `TemplateBuilder` instance.
-
-        This method gathers values from the application's GUI variables and
-        returns them as a dictionary. The resulting dictionary can be passed
-        directly to the `TemplateBuilder` class to configure template metadata
-        such as author, company, and description.
-
-        Returns
-        -------
-        dict
-            A dictionary of template arguments with the following keys:
-
-            - filename (str): Path to the template file.
-            - author (str): Author name associated with the template.
-            - email (str): Author email address.
-            - company (str): Company name associated with the template.
-            - description (str): Short description of the template's purpose.
         """
         result = dict(
             test_script_file=self.filename_var.get(),
@@ -725,30 +675,6 @@ class Application:
     def set_default_setting(self):
         """
         Reset application configuration variables to their default values.
-
-        This method restores all template‑related metadata and checkbox
-        options to a consistent baseline state. It ensures that the
-        application starts with a clean configuration when creating or
-        editing templates.
-
-        Notes
-        -----
-        - Metadata fields are reset to empty strings:
-            * `filename_var`
-            * `author_var`
-            * `email_var`
-            * `company_var`
-            * `description_var`
-        - Checkbox options are reset as follows:
-            * `test_data_checkbox_var` → False
-            * `template_checkbox_var` → False
-            * `tabular_checkbox_var` → True
-
-        Returns
-        -------
-        None
-            This method performs side effects (variable resets) but does
-            not return a value.
         """
 
         self.filename_var.set('')
@@ -765,29 +691,6 @@ class Application:
     def get_textarea(cls, widget):
         """
         Retrieve and normalize text content from a Tkinter `Text` widget.
-
-        This method extracts the full text from the given `tk.Text` widget,
-        starting at position `'1.0'` through `'end'`. It trims any trailing
-        newline (`\\n`), carriage return (`\\r`), or Windows-style line ending
-        (`\\r\\n`) that Tkinter may append automatically, ensuring the returned
-        string is clean and consistent across platforms.
-
-        Parameters
-        ----------
-        widget : tk.Text
-            A Tkinter `Text` widget from which to retrieve content.
-
-        Returns
-        -------
-        str
-            The normalized text string from the widget, with trailing line
-            endings removed if present.
-
-        Notes
-        -----
-        - Tkinter often appends a trailing newline when retrieving text with
-          `'end'`. This method ensures that such artifacts are stripped.
-        - All other content entered by the user is preserved exactly.
         """
         text = widget.get('1.0', 'end')
         return text.rstrip("\r\n")
@@ -796,21 +699,6 @@ class Application:
     def clear_textarea(cls, widget):
         """
         Clear all text content from a Tkinter `Text` widget.
-
-        Temporarily sets the widget state to `NORMAL` to allow deletion,
-        removes all text from the widget, and then restores its original
-        state.
-
-        Parameters
-        ----------
-        widget : tk.Text
-            A Tkinter `Text` widget whose content will be cleared.
-
-        Returns
-        -------
-        None
-            This method performs a side effect (clearing text) but does
-            not return a value.
         """
         curr_state = widget['state']
         widget.configure(state=tk.NORMAL)
@@ -820,34 +708,6 @@ class Application:
     def set_textarea(self, widget, data, title=''):
         """
         Set text content in a Tkinter `Text` widget and optionally update the window title.
-
-        This method replaces the existing content of the given `tk.Text` widget
-        with the provided data. If a non-empty title is supplied, the application
-        window title is updated accordingly. The widget's state is temporarily
-        set to `NORMAL` to allow modifications and restored to its original
-        state afterward.
-
-        Parameters
-        ----------
-        widget : tk.Text
-            A Tkinter `Text` widget where the content will be inserted.
-        data : any
-            The data to insert into the widget. Converted to a string before insertion.
-        title : str, optional
-            The title to set for the application window. Defaults to an empty string.
-            If empty, the window title is not modified.
-
-        Returns
-        -------
-        None
-            This method performs side effects (widget updates and optional title change)
-            but does not return a value.
-
-        Notes
-        -----
-        - Existing content in the `Text` widget is cleared before inserting new data.
-        - Both `data` and `title` are coerced to strings to ensure consistent behavior.
-        - The widget's original state is preserved after modification.
         """
         data, title = str(data), str(title).strip()
 
@@ -862,11 +722,6 @@ class Application:
 
     def set_title(self, widget=None, title=''):
         """Set a new title for tkinter widget.
-
-        Parameters
-        ----------
-        widget (tkinter): a tkinter widget.
-        title (str): a title.  Default is empty.
         """
         widget = widget or self.root
         base_title = self._base_title
@@ -876,29 +731,6 @@ class Application:
     def shift_to_main_app(self):
         """
         Switch the application context from the backup app to the main app.
-
-        This method updates the snapshot state to indicate the main app is
-        active, restores user and result data from the backup context into
-        the main input/output text areas, and reconfigures the GUI layout
-        by replacing the backup frame with the entry frame. It also updates
-        the stored window title in the snapshot and applies the current title
-        to the root window.
-
-        Notes
-        -----
-        - `snapshot.curr_app` is set to `'main_app'`.
-        - `switch_app_user_data` and `switch_app_result_data` are cleared
-          after being restored.
-        - The backup frame is removed from the paned window and the entry
-          frame is inserted.
-        - The window title is normalized by removing the base title suffix
-          and stored in the snapshot for later use.
-
-        Returns
-        -------
-        None
-            This method performs side effects (state updates and GUI changes)
-            but does not return a value.
         """
 
         # Update snapshot to reflect active app
@@ -928,29 +760,6 @@ class Application:
     def shift_to_backup_app(self):
         """
         Switch the application context from the main app to the backup app.
-
-        This method updates the snapshot state to indicate that the backup
-        app is active, reconfigures the GUI layout by replacing the entry
-        frame with the backup frame, and updates the window title. The
-        current title is normalized by removing the base title suffix and
-        stored in the snapshot. The backup app title is then applied to
-        the root window.
-
-        Notes
-        -----
-        - `snapshot.curr_app` is set to `'backup_app'`.
-        - The entry frame is removed from the paned window and the backup
-          frame is inserted.
-        - The current window title is stripped of the base title suffix
-          and stored in `snapshot.title`.
-        - The displayed title is set to `snapshot.stored_title` if present,
-          otherwise defaults to `'Storing Template'`.
-
-        Returns
-        -------
-        None
-            This method performs side effects (state updates and GUI changes)
-            but does not return a value.
         """
         # Update snapshot to reflect active app
         self.snapshot.update(curr_app='backup_app')
@@ -972,59 +781,11 @@ class Application:
                             italic=False):
         """
         Create a customized Tkinter `Label` widget with optional styling and hyperlink behavior.
-
-        This method generates a `Label` widget with configurable text, font
-        styling, and optional hyperlink functionality. If a `link` is provided,
-        the label is styled in blue and bound to mouse events for hover and
-        click interactions.
-
-        Parameters
-        ----------
-        parent : tkinter.Widget
-            The parent widget that will contain the label.
-        text : str, optional
-            The text to display in the label. Defaults to an empty string.
-        link : str, optional
-            A hyperlink associated with the label. Defaults to an empty string.
-            If provided, the label is styled and bound to open the link in a
-            browser when clicked.
-        increased_size : int, optional
-            Amount to increase the base font size. Defaults to 0 (no change).
-        bold : bool, optional
-            If True, the label text is rendered in bold. Defaults to False.
-        underline : bool, optional
-            If True, the label text is underlined. Defaults to False.
-        italic : bool, optional
-            If True, the label text is italicized. Defaults to False.
-
-        Returns
-        -------
-        tkinter.Label
-            A fully configured `Label` widget ready to be packed or gridded
-            into the parent container.
-
-        Notes
-        -----
-        - Font styling is applied by combining the provided options
-          (`bold`, `underline`, `italic`, `increased_size`).
-        - If `link` is provided, the label is styled in blue and bound to
-          mouse events for hover and click interactions.
         """
 
         def mouse_over(event):
             """
             Handle mouse hover event for a label with a hyperlink.
-            This is an inner function defined within Application.create_custom_label.
-
-            Parameters
-            ----------
-            event : tkinter.Event
-                The event object containing metadata about the hover action.
-
-            Notes
-            -----
-            - Adds an underline to the label font if not already present.
-            - Changes the cursor to a hand pointer to indicate interactivity.
             """
 
             if 'underline' not in event.widget.font:
@@ -1036,17 +797,6 @@ class Application:
         def mouse_out(event):
             """
             Handle mouse leave event for a label with a hyperlink.
-            This is an inner function defined within Application.create_custom_label.
-
-            Parameters
-            ----------
-            event : tkinter.Event
-                The event object containing metadata about the mouse leave action.
-
-            Notes
-            -----
-            - Restores the label font to its original state.
-            - Resets the cursor to the default arrow.
             """
             event.widget.config(
                 font=event.widget.font,
@@ -1056,16 +806,6 @@ class Application:
         def mouse_press(event):
             """
             Handle mouse click event for a label with a hyperlink.
-            This is an inner function defined within Application.create_custom_label.
-
-            Parameters
-            ----------
-            event : tkinter.Event
-                The event object containing metadata about the mouse click action.
-
-            Notes
-            -----
-            - Opens the associated hyperlink in a new browser tab.
             """
             self.browser.open_new_tab(event.widget.link)
 
@@ -1091,29 +831,6 @@ class Application:
     def callback_focus(self, event):
         """
         Handle focus change when a new widget is selected.
-
-        This callback updates the application's current and previous widget
-        references whenever the user selects a different widget. If an error
-        occurs during processing, the event is skipped gracefully.
-
-        Parameters
-        ----------
-        event : tkinter.Event
-            The event object triggered when a widget gains focus. Contains
-            metadata including the widget reference.
-
-        Returns
-        -------
-        None
-            This method performs side effects (updating widget references)
-            but does not return a value.
-
-        Notes
-        -----
-        - `self.curr_widget` is updated to the newly focused widget.
-        - `self.prev_widget` stores the previously focused widget.
-        - Any exceptions are caught, and a skip message is printed for
-          debugging purposes.
         """
 
         try:
@@ -1127,60 +844,12 @@ class Application:
     def callback_file_exit(self):
         """
         Handle the "File > Exit" menu action.
-
-        This callback terminates the application's main event loop by
-        invoking `root.quit()`. It is typically bound to the "Exit" option
-        in the File menu, allowing users to close the application gracefully.
-
-        Returns
-        -------
-        None
-            This method performs a side effect (terminating the Tkinter
-            event loop) but does not return a value.
-
-        Notes
-        -----
-        - `quit()` stops the Tkinter main loop but does not immediately
-          destroy the root window. If full cleanup is required, consider
-          using `root.destroy()` instead.
-        - This method is intended for GUI menu integration rather than
-          direct programmatic use.
         """
         self.root.quit()
 
     def callback_open_file(self):
         """
         Handle the "File > Open" menu action.
-
-        This callback opens a file selection dialog, reads the chosen file,
-        and loads its content into the application. It also updates the
-        snapshot state, resets relevant widgets, and ensures the GUI is
-        ready for further user interaction.
-
-        Workflow
-        --------
-        1. Display a file dialog restricted to text files (`.txt`) or all files.
-        2. If a file is selected:
-           - Read its content.
-           - Invoke search checkbox if enabled.
-           - Close backup app if currently active.
-           - Reset and enable relevant buttons and text areas.
-           - Update snapshot with loaded test data.
-           - Update window title to reflect the opened file.
-           - Insert file content into the input text area.
-           - Enable copy/save actions and set focus to the input area.
-
-        Returns
-        -------
-        None
-            This method performs side effects (file I/O, widget updates,
-            and snapshot state changes) but does not return a value.
-
-        Notes
-        -----
-        - The file dialog uses `tkinter.filedialog.askopenfilename`.
-        - Only `.txt` files are explicitly listed, but all files can be opened.
-        - The loaded content is stored in `snapshot.test_data`.
         """
 
         filetypes = [
@@ -1218,44 +887,6 @@ class Application:
     def callback_load_test_data_file(self):
         """
         Handle the "File > Load Test Data" menu action.
-
-        This callback opens a file selection dialog, loads the chosen test
-        data file, and updates the application state accordingly. It manages
-        synchronization between the input and result text areas, updates
-        snapshot metadata, and ensures the GUI reflects the newly loaded
-        test data.
-
-        Workflow
-        --------
-        1. Display a file dialog restricted to text files (`.txt`) or all files.
-        2. If a file is selected:
-           - Read its content.
-           - Invoke search checkbox if enabled.
-           - Close backup app if currently active.
-           - Enable and reset relevant buttons and text areas.
-           - Compare loaded content with current input:
-             * If identical or input is empty:
-               - Load into input area.
-               - If input is empty, reset result area unless it matches
-                 a generated template pattern.
-               - Focus input area.
-             * Otherwise, load into result area.
-           - Enable copy/save actions.
-           - Update snapshot with loaded test data and title.
-           - Update window title to reflect the loaded file.
-
-        Returns
-        -------
-        None
-            This method performs side effects (file I/O, widget updates,
-            and snapshot state changes) but does not return a value.
-
-        Notes
-        -----
-        - The file dialog uses `tkinter.filedialog.askopenfilename`.
-        - Loaded content is stored in `snapshot.test_data`.
-        - A regex pattern is used to detect generated template markers
-          in the result area.
         """
 
         filetypes = [
@@ -1310,215 +941,25 @@ class Application:
     def callback_help_documentation(self):
         """
         Handle the "Help > Getting Started" menu action.
-
-        This callback opens the application's official documentation in a
-        new browser tab. It provides users with quick access to the
-        "Getting Started" guide or reference materials hosted at the URL
-        defined in `config.documentation_url`.
-
-        Workflow
-        --------
-        1. Retrieve the documentation URL from `config.documentation_url`.
-        2. Open the URL in a new browser tab using the application's
-           `self.browser` instance.
-
-        Returns
-        -------
-        None
-            This method performs a side effect (launching documentation in
-            a browser) but does not return a value.
-
-        Notes
-        -----
-        - Relies on `self.browser.open_new_tab` for launching the documentation.
-        - The documentation URL is centralized in the `Data` class for
-          maintainability and consistency.
         """
         self.browser.open_new_tab(config.documentation_url)
 
     def callback_help_view_licenses(self):
         """
         Handle the "Help > View Licenses" menu action.
-
-        This callback opens the application's license information in a new
-        browser tab. It provides users with direct access to the license text
-        and related legal details hosted at the URL defined in
-        `config.license_url`.
-
-        Workflow
-        --------
-        1. Retrieve the license URL from `config.license_url`.
-        2. Open the URL in a new browser tab using the application's
-           `self.browser` instance.
-
-        Returns
-        -------
-        None
-            This method performs a side effect (launching the license page in
-            a browser) but does not return a value.
-
-        Notes
-        -----
-        - Relies on `self.browser.open_new_tab` for launching the license page.
-        - The license URL is centralized in the `Data` class for maintainability
-          and consistency.
         """
         self.browser.open_new_tab(config.license_url)
 
     def callback_help_about(self):
         """
         Handle the "Help > About" menu action.
-
-        This callback creates and displays a modal "About" dialog window
-        containing application metadata, repository information, dependency
-        links, license text, and copyright.
-
-        Workflow
-        --------
-        1. Create a modal `Toplevel` window centered relative to the root.
-        2. Display application name and repository URL.
-        3. List PyPI dependencies with clickable links.
-        4. Show license text in a scrollable, read‑only text area.
-        5. Display footer with copyright and company.
-        6. Make the dialog modal to prevent interaction with the main window
-           until closed.
-
-        Returns
-        -------
-        None
-            This method performs side effects (GUI creation and display)
-            but does not return a value.
-
-        Notes
-        -----
-        - Uses `create_custom_label` for styled labels and hyperlinks.
-        - License text is inserted into a disabled `TextArea` with a vertical
-          scrollbar.
-        - The dialog is non‑resizable and centered relative to the root window.
         """
 
-        # Create modal "About" window
-        about = tk.Toplevel(self.root)
-        self.set_title(widget=about, title='About')
-
-        width, height = 460, 460
-        x, y = get_relative_center_location(self.root, width, height)
-        about.geometry(f'{width}x{height}+{x}+{y}')
-        about.resizable(False, False)
-
-        # Top frame and paned window
-        top_frame = self.Frame(about)
-        top_frame.pack(fill=tk.BOTH, expand=True)
-
-        paned_window = self.PanedWindow(top_frame, orient=tk.VERTICAL)
-        paned_window.pack(fill=tk.BOTH, expand=True, padx=8, pady=12)
-
-        # Company and repository info
-        frame = self.Frame(paned_window, width=450, height=20)
-        paned_window.add(frame, weight=4)
-
-        label = self.create_custom_label(
-            frame, text=config.main_app_text,
-            increased_size=2, bold=True
-        )
-        label.grid(row=0, column=0, columnspan=2, sticky=tk.W)
-
-        # URL
-        cell_frame = self.Frame(frame, width=450, height=5)
-        cell_frame.grid(row=1, column=0, sticky=tk.W, columnspan=2)
-
-        url = config.repo_url
-        label = self.Label(cell_frame, text='URL:')
-        label.pack(side=tk.LEFT)
-
-        label = self.create_custom_label(cell_frame, text=url, link=url)
-        label.pack(side=tk.LEFT)
-
-        # Dependencies section
-        label = self.create_custom_label(frame, text='Pypi.com Dependencies:', bold=True)
-        label.grid(row=2, column=0, sticky=tk.W)
-
-        # TextFSM package
-        label = self.create_custom_label(
-            frame, text=config.textfsm_text,
-            link=config.textfsm_link
-        )
-        label.grid(row=3, column=0, padx=(20, 0), sticky=tk.W)
-
-        # PyYAML package
-        label = self.create_custom_label(
-            frame, text=config.pyyaml_text,
-            link=config.pyyaml_link
-        )
-        label.grid(row=3, column=1, padx=(20, 0), pady=(0, 10), sticky=tk.W)
-
-        # license textbox
-        label_frame = self.LabelFrame(
-            paned_window, height=200, width=450,
-            text=config.license_name
-        )
-        paned_window.add(label_frame, weight=7)
-
-        width = 58 if self.is_macos else 51
-        height = 18 if self.is_macos else 14 if self.is_linux else 15
-        textbox = self.TextArea(label_frame, width=width, height=height, wrap='word')
-        textbox.grid(row=0, column=0, padx=5, pady=5)
-
-        scrollbar = ttk.Scrollbar(label_frame, orient=tk.VERTICAL, command=textbox.yview)
-        scrollbar.grid(row=0, column=1, sticky='nsew')
-        textbox.config(yscrollcommand=scrollbar.set)
-
-        textbox.insert(tk.INSERT, config.license)
-        textbox.config(state=tk.DISABLED)
-
-        # Footer - copyright
-        frame = self.Frame(paned_window, width=450, height=20)
-        paned_window.add(frame, weight=1)
-
-        label = self.Label(frame, text=config.copyright_text)
-        label.pack(side=tk.LEFT, pady=(10, 10))
-
-        label = self.create_custom_label(
-            frame, text=config.company, link=config.company_url
-        )
-        label.pack(side=tk.LEFT, pady=(10, 10))
-
-        label = self.Label(frame, text='.  All right reserved.')
-        label.pack(side=tk.LEFT, pady=(10, 10))
-
-        # Make dialog modal
-        set_modal_dialog(about)
+        about.show_dialog(self.root)
 
     def callback_preferences_settings(self):
         """
         Handle the "Preferences > Settings" menu action.
-
-        This callback opens a modal "Settings" dialog window where users can
-        configure application metadata (author, email, company, filename,
-        description) and toggle application options (test data, template,
-        tabular). It provides a centralized interface for customizing
-        preferences.
-
-        Workflow
-        --------
-        1. Create a modal `Toplevel` window centered relative to the root.
-        2. Display input fields for metadata (author, email, company, filename, description).
-        3. Provide checkboxes for application options (test data, template, tabular).
-        4. Include "Default" and "OK" buttons for resetting or closing the dialog.
-        5. Make the dialog modal to prevent interaction with the main window
-           until closed.
-
-        Returns
-        -------
-        None
-            This method performs side effects (GUI creation and preference
-            updates) but does not return a value.
-
-        Notes
-        -----
-        - Uses `set_default_setting()` to restore default values.
-        - Dialog size and padding are adjusted based on platform (macOS, Linux, Windows).
-        - The dialog is non‑resizable and centered relative to the root window.
         """
         # Create modal "Settings" window
         settings = tk.Toplevel(self.root)
@@ -1599,24 +1040,6 @@ class Application:
     def callback_preferences_user_template(self):
         """
         Handle the "Preferences > User Template" menu action.
-
-        This callback disables the search option by resetting the
-        `search_checkbox_var` to `False` and programmatically invoking
-        the associated checkbox action. It ensures that when the
-        "User Template" preference is selected, the search mode is
-        turned off and the application state is updated accordingly.
-
-        Returns
-        -------
-        None
-            This method performs side effects (updating widget state
-            and invoking checkbox behavior) but does not return a value.
-
-        Notes
-        -----
-        - `search_checkbox_var` is explicitly set to `False`.
-        - `search_checkbox.invoke()` triggers the checkbox's bound
-          command to apply the change in the UI and application logic.
         """
         self.search_checkbox_var.set(False)
         self.search_checkbox.invoke()
@@ -1624,41 +1047,6 @@ class Application:
     def build_menu(self):
         """
         Construct the main menubar for the TextFSM Generator GUI application.
-
-        This method initializes and attaches a menubar to the root window,
-        organizing commands under **File**, **Preferences**, and **Help**
-        categories. Each menu provides access to core functionality such as
-        file operations, application preferences, and help resources.
-
-        Workflow
-        --------
-        1. Create a `tk.Menu` instance and attach it to the root window.
-        2. Define submenus:
-           - **File**
-             * Open: Launches a file dialog to load text data.
-             * Load Test Data: Loads predefined test data from a file.
-             * Quit: Exits the application.
-           - **Preferences**
-             * Settings: Opens the settings dialog.
-             * User Template: Switches to user template mode.
-           - **Help**
-             * Documentation: Opens the "Getting Started" guide in a browser.
-             * View Licenses: Opens the license information page.
-             * About: Displays application metadata.
-        3. Add separators between logical groups of commands for clarity.
-
-        Returns
-        -------
-        None
-            This method performs side effects (constructing and attaching the
-            menubar) but does not return a value.
-
-        Notes
-        -----
-        - The menubar is attached to `self.root` via `self.root.config(menu=...)`.
-        - Each command delegates to a corresponding callback method for handling
-          user actions.
-        - Separators are used to visually group related commands.
         """
 
         menu_bar = tk.Menu(self.root)
@@ -1706,35 +1094,6 @@ class Application:
     def build_frame(self):
         """
         Construct the main layout frames for the TextFSM generator GUI.
-
-        This method initializes a vertical `PanedWindow` and organizes
-        the primary sections of the interface: text input, entry controls,
-        backup view, and result display. Each frame is created with fixed
-        dimensions and ridge borders, then added to the paned window with
-        relative weights to control resizing behavior.
-
-        Workflow
-        --------
-        1. Create a vertical `PanedWindow` and attach it to the root window.
-        2. Define four frames:
-           - **Text Frame**: Input area for test data.
-           - **Entry Frame**: Controls and action buttons.
-           - **Backup Frame**: Alternate view for backup app state.
-           - **Result Frame**: Output area for TextFSM template results.
-        3. Add frames to the `PanedWindow` with weights to manage resizing.
-
-        Returns
-        -------
-        None
-            This method performs side effects (constructing and attaching
-            frames) but does not return a value.
-
-        Notes
-        -----
-        - The `PanedWindow` is packed to expand and fill both dimensions
-          with padding for spacing.
-        - Frame weights determine how much space each section receives
-          when resizing the window.
         """
 
         # Create main paned window
@@ -1763,36 +1122,6 @@ class Application:
     def build_textarea(self):
         """
         Construct the main input text area for the TextFSM generator GUI.
-
-        This method creates a scrollable `TextArea` widget inside the
-        `text_frame`. The widget serves as the primary input field for
-        entering or editing text data used in TextFSM testing. Both vertical
-        and horizontal scrollbars are attached to support navigation of
-        large or unwrapped text content.
-
-        Workflow
-        --------
-        1. Configure the `text_frame` grid to allow resizing.
-        2. Create a `TextArea` widget with fixed dimensions and no wrapping.
-        3. Place the `TextArea` in the grid at row 0, column 0, expanding
-           in all directions (`nswe`).
-        4. Add a vertical scrollbar linked to the `yview` of the text area.
-        5. Add a horizontal scrollbar linked to the `xview` of the text area.
-        6. Configure the text area to update scrollbar positions during
-           scrolling.
-
-        Returns
-        -------
-        None
-            This method performs side effects (constructing and attaching
-            widgets) but does not return a value.
-
-        Notes
-        -----
-        - The `wrap='none'` option ensures text does not automatically wrap,
-          making horizontal scrolling necessary for long lines.
-        - Scrollbars are synchronized with the text area via `yscrollcommand`
-          and `xscrollcommand`.
         """
         # Configure grid for resizing
         self.text_frame.rowconfigure(0, weight=1)
@@ -1828,81 +1157,11 @@ class Application:
     def build_entry(self):
         """
         Construct the entry controls section for the TextFSM Generator GUI.
-
-        This method builds the `entry_frame` portion of the interface, which
-        contains interactive widgets such as buttons, text fields, and other
-        controls used to trigger actions (e.g., opening files, running regex
-        tests, saving results, or switching modes). It provides the user with
-        the primary means of interacting with the application beyond text input.
-
-        Workflow
-        --------
-        1. Initialize the `entry_frame` container.
-        2. Populate the frame with action-oriented widgets (buttons, textboxes,
-           comboboxes, etc.).
-        3. Configure layout and grid options to ensure controls are aligned
-           and responsive to resizing.
-
-        Returns
-        -------
-        None
-            This method performs side effects (constructing and attaching
-            widgets) but does not return a value.
-
-        Notes
-        -----
-        - The `entry_frame` is positioned between the text input area and
-          the result display frame.
-        - Widgets added here typically connect to callback methods such as
-          `callback_file_open`, `callback_preferences_*`, or template execution
-          functions.
-        - Acts as the control hub for user actions in the GUI.
         """
 
         def callback_build_btn():
             """
             Handle the 'Build' button action to generate a TextFSM template.
-
-            This callback validates the presence of user input before attempting
-            to build a TextFSM template using `TemplateBuilder`. On success, the
-            generated template is displayed in the result text area and relevant
-            snapshot attributes are updated. If template generation fails due to
-            invalid format or other errors, appropriate error messages are shown
-            and fallback content is provided.
-
-            Workflow
-            --------
-            1. Validate prerequisites:
-               - If no user input is provided, show an error message and abort.
-            2. Attempt to build a template using `TemplateBuilder`.
-               - On success:
-                 * Update snapshot with user data, template, and result.
-                 * Mark template as built.
-                 * Enable "Save As" and "Copy" buttons.
-                 * Display template in result text area.
-                 * Update snapshot and window title.
-            3. On `TemplateBuilderInvalidFormat`:
-               - Show error message indicating invalid template format.
-            4. On other exceptions:
-               - Show generic error message.
-               - Attempt to build a debug template with `bad_template`.
-               - Display fallback content in result text area.
-               - Update snapshot and window title.
-            5. If template exists, enable "Store" button.
-            6. If template is built, enable "Result" button.
-
-            Returns
-            -------
-            None
-                This method performs side effects (UI updates, snapshot changes,
-                template generation, error reporting) but does not return a value.
-
-            Notes
-            -----
-            - Snapshot attributes `user_data`, `template`, `result`, and `is_built`
-              are updated on success.
-            - Fallback content includes a comment instructing the user to fix input
-              data when template generation fails.
             """
 
             user_data = Application.get_textarea(self.input_textarea)
@@ -1965,46 +1224,6 @@ class Application:
         def callback_save_as_btn():
             """
             Handle the 'Save As' button action for input or output text areas.
-
-            This is an inner function defined within Application.build_entry.
-
-            This callback determines the appropriate file type and extension based
-            on the content of the active widget (input or result text area). It then
-            prompts the user to choose a filename and saves the content accordingly.
-            Special handling is applied for Python unittest/pytest scripts to enforce
-            naming conventions, and for empty content to confirm whether saving should
-            proceed.
-
-            Workflow
-            --------
-            1. Identify the active widget:
-               - Input text area → save as plain text (.txt).
-               - Result text area → inspect content:
-                 * If Python unittest/pytest script → save as `.py` file.
-                 * If TextFSM template → save as `.textfsm` file.
-                 * Otherwise → save as plain text (.txt).
-            2. Prompt user with a save dialog (`asksaveasfilename`) using appropriate
-               title and file type filters.
-            3. If filename is chosen:
-               - Ensure correct file extension is applied.
-               - For unittest/pytest scripts:
-                 * Enforce naming convention `test_<filename>.py`.
-                 * Prompt user to confirm renaming if convention is not followed.
-               - If content is empty:
-                 * Prompt user to confirm saving an empty file.
-            4. Save the file if user confirms.
-
-            Returns
-            -------
-            None
-                This method performs side effects (file save, UI updates, message boxes)
-                but does not return a value.
-
-            Notes
-            -----
-            - Snapshot state is not updated here; only file saving is performed.
-            - Naming convention enforcement ensures compatibility with pytest/unittest.
-            - Mixed results containing multiple sections are saved as plain text.
             """
 
             prev_widget_name = str(self.prev_widget)
@@ -2088,43 +1307,6 @@ class Application:
         def callback_clear_text_btn():
             """
             Handle the 'Clear' button action for text widgets.
-
-            This is an inner function defined within Application.build_entry.
-
-            This callback clears text content depending on the active widget:
-
-            - If the active widget is the template name textbox:
-              * Clear the selected text if a selection exists.
-              * Otherwise, clear the entire template name field.
-            - If the active widget is the input text area:
-              * Clear the selected text if a selection exists.
-              * Otherwise, clear both input and result text areas, reset related
-                buttons, and update snapshot state to reflect cleared data.
-
-            Workflow
-            --------
-            1. Identify the active widget by its name.
-            2. If template name textbox:
-               - Clear selection or reset template name variable.
-               - Update snapshot and window title.
-            3. If input text area:
-               - Clear selection if present.
-               - Otherwise, clear input/result areas, disable related buttons,
-                 reset snapshot attributes, and restore defaults.
-            4. Update snapshot title and window title.
-            5. Return focus to the appropriate widget.
-
-            Returns
-            -------
-            None
-                This method performs side effects (UI updates, snapshot changes,
-                text clearing) but does not return a value.
-
-            Notes
-            -----
-            - Snapshot attributes `user_data`, `test_data`, `result`, `template`,
-              and `is_built` are reset when clearing input and test data.
-            - Clipboard clearing is commented out but can be enabled if desired.
             """
 
             prev_widget_name = str(self.prev_widget)
@@ -2188,41 +1370,6 @@ class Application:
         def callback_copy_text_btn():
             """
             Handle the 'Copy' button action for text widgets.
-
-            This is an inner function defined within Application.build_entry.
-
-            This callback determines the active widget and copies its content
-            (or selected text) to the system clipboard. The window title is updated
-            to reflect the copy action.
-
-            Behavior
-            --------
-            - If the active widget is the template name textbox:
-              * Copy the selected text if available.
-              * Otherwise, copy the entire template name.
-            - If the active widget is the input text area:
-              * Copy the selected text if available.
-              * Otherwise, copy the entire input text.
-            - Otherwise (default case):
-              * Copy the entire output text area content.
-
-            Workflow
-            --------
-            1. Identify the active widget by its name.
-            2. Retrieve the appropriate content (selection or full text).
-            3. Update the window title to reflect the copy action.
-            4. Clear the clipboard, append the copied content, and update the root.
-
-            Returns
-            -------
-            None
-                This method performs side effects (clipboard operations, UI updates)
-                but does not return a value.
-
-            Notes
-            -----
-            - Clipboard content replaces any existing clipboard data.
-            - Snapshot title is not updated here; only the window title is set.
             """
 
             prev_widget_name = str(self.prev_widget)
@@ -2255,47 +1402,6 @@ class Application:
         def callback_paste_text_btn():
             """
             Handle the 'Paste' button action for text input areas.
-
-            This is an inner function defined within Application.build_entry.
-
-            This callback retrieves text from the system clipboard and pastes it
-            into the appropriate widget depending on context:
-
-            - If the active widget is the template name textbox, the clipboard
-              content is inserted into the template name field.
-            - If the active widget is the input text area and it already contains
-              data, the clipboard content is inserted at the cursor position.
-            - Otherwise, the clipboard content is treated as new test data:
-              * The input text area is cleared and populated with the clipboard data.
-              * The result text area is reset.
-              * Snapshot attributes are updated with the new test data.
-
-            Workflow
-            --------
-            1. Retrieve current data from the input text area and determine the
-               active widget type (template name textbox or input area).
-            2. Attempt to fetch clipboard content.
-               - If clipboard is empty, abort.
-            3. Depending on the active widget:
-               - Template name textbox → insert clipboard text into the field.
-               - Input area with existing content → insert clipboard text at cursor.
-               - Otherwise → treat clipboard text as new test data and reset state.
-            4. Enable "Copy" and "Save As" buttons.
-            5. Update snapshot title and window title accordingly.
-            6. On error, display a message box indicating clipboard is empty.
-
-            Returns
-            -------
-            None
-                This method performs side effects (UI updates, snapshot changes,
-                error reporting) but does not return a value.
-
-            Notes
-            -----
-            - Clipboard content is inserted at the current cursor position or
-              replaces the current selection if one exists.
-            - Snapshot attributes `test_data`, `result`, and `title` are updated
-              based on the paste action.
             """
 
             curr_data = Application.get_textarea(self.input_textarea)
@@ -2359,38 +1465,6 @@ class Application:
         def callback_snippet_btn():
             """
             Handle the 'Snippet' button action to generate a lightweight Python test script.
-
-            This is an inner function defined within Application.build_entry.
-
-            This callback validates the presence of test data and user input before
-            attempting to build a Python snippet script using `TemplateBuilder`.
-            If either prerequisite is missing, an error message is displayed. On success,
-            the generated script is displayed in the result text area, the snapshot is
-            updated, and relevant buttons are enabled for saving and copying.
-
-            Workflow
-            --------
-            1. Validate prerequisites:
-               - If no test data is loaded, show an error message and abort.
-               - If no user input is provided, show an error message and abort.
-            2. Attempt to build a Python snippet script using `TemplateBuilder`.
-               - Pass both user data and test data along with template arguments.
-               - On success, update snapshot and UI with the generated script.
-               - Enable "Save As" and "Copy" buttons for further actions.
-            3. On error, display a message box with the exception details.
-
-            Returns
-            -------
-            None
-                This method performs side effects (UI updates, snapshot changes,
-                script generation, error reporting) but does not return a value.
-
-            Notes
-            -----
-            - Snapshot attributes `title` and `result` are updated with the script.
-            - The result text area is populated with the generated snippet script.
-            - Exceptions are caught broadly to ensure user feedback, but more
-              granular handling may be added for specific error types.
             """
             # --- Validate prerequisites ---
             if self.snapshot.test_data is None:
@@ -2444,38 +1518,6 @@ class Application:
         def callback_unittest_btn():
             """
             Handle the 'Unittest' button action to generate a Python unittest script.
-
-            This is an inner function defined within Application.build_entry.
-
-            This callback validates the presence of test data and user input before
-            attempting to build a unittest script using `TemplateBuilder`. If either
-            prerequisite is missing, an error message is displayed. On success, the
-            generated unittest script is displayed in the result text area, the snapshot
-            is updated, and relevant buttons are enabled for saving and copying.
-
-            Workflow
-            --------
-            1. Validate prerequisites:
-               - If no test data is loaded, show an error message and abort.
-               - If no user input is provided, show an error message and abort.
-            2. Attempt to build a unittest script using `TemplateBuilder`.
-               - Pass both user data and test data along with template arguments.
-               - On success, update snapshot and UI with the generated script.
-               - Enable "Save As" and "Copy" buttons for further actions.
-            3. On error, display a message box with the exception details.
-
-            Returns
-            -------
-            None
-                This method performs side effects (UI updates, snapshot changes,
-                script generation, error reporting) but does not return a value.
-
-            Notes
-            -----
-            - Snapshot attributes `title` and `result` are updated with the script.
-            - The result text area is populated with the generated unittest script.
-            - Exceptions are caught broadly to ensure user feedback, but more
-              granular handling may be added for specific error types.
             """
 
             # --- Validate prerequisites ---
@@ -2530,38 +1572,6 @@ class Application:
         def callback_pytest_btn():
             """
             Handle the 'Pytest' button action to generate a Python pytest script.
-
-            This is an inner function defined within Application.build_entry.
-
-            This callback validates the presence of test data and user input before
-            attempting to build a pytest script using `TemplateBuilder`. If either
-            prerequisite is missing, an error message is displayed. On success, the
-            generated pytest script is displayed in the result text area, the snapshot
-            is updated, and relevant buttons are enabled for saving and copying.
-
-            Workflow
-            --------
-            1. Validate prerequisites:
-               - If no test data is loaded, show an error message and abort.
-               - If no user input is provided, show an error message and abort.
-            2. Attempt to build a pytest script using `TemplateBuilder`.
-               - Pass both user data and test data along with template arguments.
-               - On success, update snapshot and UI with the generated script.
-               - Enable "Save As" and "Copy" buttons for further actions.
-            3. On error, display a message box with the exception details.
-
-            Returns
-            -------
-            None
-                This method performs side effects (UI updates, snapshot changes,
-                script generation, error reporting) but does not return a value.
-
-            Notes
-            -----
-            - Snapshot attributes `title` and `result` are updated with the script.
-            - The result text area is populated with the generated pytest script.
-            - Exceptions are caught broadly to ensure user feedback, but more
-              granular handling may be added for specific error types.
             """
 
             # --- Validate prerequisites ---
@@ -2616,39 +1626,6 @@ class Application:
         def callback_test_data_btn():
             """
             Handle the 'Test Data' button toggle.
-
-            This is an inner function defined within Application.build_entry.
-
-            This callback toggles the display of test data in the result text area.
-            When the button label is "Test Data", the test data is shown and the
-            button label changes to "Hide". When the label is "Hide", the result
-            text area is restored to the previously stored result and the button
-            label changes back to "Test Data".
-
-            Workflow
-            --------
-            1. Validate that test data exists in the snapshot.
-               - If not, show an error message and abort.
-            2. If the button label is "Test Data":
-               - Change the label to "Hide".
-               - Update the snapshot title and window title to "Showing Test Data".
-               - Display the test data in the result text area.
-            3. If the button label is "Hide":
-               - Change the label back to "Test Data".
-               - Restore the window title from the snapshot.
-               - Display the snapshot result in the result text area.
-
-            Returns
-            -------
-            None
-                This method performs side effects (UI updates, snapshot changes,
-                error reporting) but does not return a value.
-
-            Notes
-            -----
-            - The snapshot attributes `test_data` and `result` are used to toggle
-              between views.
-            - The button label (`test_data_btn_var`) acts as the toggle state.
             """
 
             if self.snapshot.test_data is None:
@@ -2681,45 +1658,6 @@ class Application:
         def callback_result_btn():
             """
             Handle the 'Result' button action to parse test data with a TextFSM template.
-
-            This is an inner function defined within Application.build_entry.
-
-            This callback validates the presence of test data and user input before
-            attempting to build or reuse a regex template. It then parses the test
-            data using TextFSM and displays the results in the result text area.
-            Depending on user-selected options, the output may include the template,
-            the test data, and the parsed results (formatted either as tabular or
-            pretty-printed data).
-
-            Workflow
-            --------
-            1. Validate prerequisites:
-               - If no test data is loaded, show an error message.
-               - If no user input is provided, show an error message.
-            2. Attempt to build a template using `TemplateBuilder`.
-               - On success, update snapshot with template and mark as built.
-               - On failure, fall back to existing snapshot template.
-               - If no template is available, show an error message.
-            3. Parse the test data using TextFSM.
-            4. Construct the result string:
-               - Include template if `template_checkbox_var` is selected.
-               - Include test data if `test_data_checkbox_var` is selected.
-               - Always include parsed results:
-                 * Tabular format if `tabular_checkbox_var` is selected.
-                 * Otherwise, pretty-printed dictionary format.
-            5. Update snapshot, window title, and result text area with the output.
-
-            Returns
-            -------
-            None
-                This method performs side effects (UI updates, snapshot changes,
-                parsing results) but does not return a value.
-
-            Notes
-            -----
-            - Templates are stripped of whitespace before comparison.
-            - Output sections are separated by a formatted column_divider string.
-            - Snapshot attributes `test_data`, `template`, and `result` are updated.
             """
 
             # --- Validate prerequisites ---
@@ -2799,40 +1737,6 @@ class Application:
         def callback_store_btn():
             """
             Handle the 'Store' button action for user templates.
-
-            This is an inner function defined within Application.build_entry.
-
-            This callback ensures that the user template file exists before
-            storing the current application state. If the file does not exist,
-            the user is prompted to create it. Once the file is available, the
-            current input and result text areas are saved into the snapshot,
-            and the application is shifted into backup mode.
-
-            Workflow
-            --------
-            1. Check if the user template file exists.
-               - If not, prompt the user to create it.
-               - If the user declines, abort the operation.
-               - If accepted, create the file without confirmation.
-            2. If the file exists:
-               - Retrieve input and result text from the text areas.
-               - Update the snapshot with user and result data.
-               - Restore the input text area with the current template.
-               - Restore the result text area with the file content.
-               - Shift the application into backup mode.
-
-            Returns
-            -------
-            None
-                This method performs side effects (UI updates, snapshot changes,
-                file creation, backup mode transition) but does not return a value.
-
-            Notes
-            -----
-            - The snapshot attributes `switch_app_user_data`, `switch_app_result_data`,
-              and `switch_app_template` are updated to preserve state.
-            - If `switch_app_template` is not available, the fallback is `snapshot.template`.
-            - The backup mode transition is handled by `shift_to_backup_app`.
             """
 
             user_template = UserTemplate()
@@ -2872,46 +1776,6 @@ class Application:
         def callback_search_checkbox():
             """
             Handle the 'Search' checkbox toggle for user templates.
-
-            This is an inner function defined within Application.build_entry.
-
-            This callback enables or disables the template search mode depending
-            on the state of `search_checkbox_var`. When enabled, it disables other
-            editing buttons, shows lookup controls, and attempts to load the
-            requested template. When disabled, it restores the normal editing
-            state, re-enables buttons, and restores the snapshot content.
-
-            Workflow
-            --------
-            1. Verify that the user template file exists.
-               - If not, show an info message and reset the checkbox.
-            2. If search mode is enabled:
-               - Disable editing buttons and input area.
-               - Show lookup and close-lookup buttons.
-               - Save current input/result text to snapshot.
-               - If a template name is provided, attempt to search and load it.
-               - Update result area with the user template file content.
-               - Update snapshot and window title to "Searching Template".
-            3. If search mode is disabled:
-               - Re-enable editing buttons based on snapshot state.
-               - Hide lookup controls.
-               - Restore input/result text areas from snapshot.
-               - Re-enable copy/save buttons if content exists.
-               - Restore snapshot title and update window title.
-
-            Returns
-            -------
-            None
-                This method performs side effects (UI updates, snapshot changes,
-                error reporting) but does not return a value.
-
-            Notes
-            -----
-            - Template names are stripped of whitespace before lookup.
-            - Snapshot attributes such as `main_input_textarea`, `main_result_textarea`,
-              `test_data`, and `is_built` are used to restore state.
-            - Regex is used to detect auto-generated templates and adjust the
-              "Test Data" button label accordingly.
             """
 
             user_template = UserTemplate()
@@ -3026,43 +1890,6 @@ class Application:
         def callback_lookup_btn():
             """
             Handle the 'Lookup' button action for user templates.
-
-            This is an inner function defined within Application.build_entry.
-
-            This callback retrieves a template by name from the `UserTemplate`
-            store and updates the application state accordingly. If the template
-            name is missing, an error message is displayed. If the template is
-            found, the snapshot and input text area are updated with its content.
-            If not found, the snapshot and input text area are updated with the
-            current status message.
-
-            Workflow
-            --------
-            1. Retrieve the template name from `template_name_var`.
-            2. If the name is empty:
-               - Show a message box indicating the missing template name.
-            3. If the name is provided:
-               - Instantiate `UserTemplate`.
-               - Search for the template by name.
-               - If found:
-                 * Update snapshot with template and result.
-                 * Update input text area with template content.
-               - If not found:
-                 * Update snapshot with status.
-                 * Update input text area with status message.
-
-            Returns
-            -------
-            None
-                This method performs side effects (UI updates, snapshot changes,
-                error reporting) but does not return a value.
-
-            Notes
-            -----
-            - Template names are stripped of leading/trailing whitespace before
-              lookup.
-            - The `UserTemplate.status` provides diagnostic codes such as
-              'FOUND', 'NOT_FOUND', or error states.
             """
             template_name = self.template_name_var.get().strip()
             if template_name:
@@ -3091,39 +1918,6 @@ class Application:
         def callback_app_backup_refresh_btn():
             """
             Handle the 'Backup Refresh' button action for user templates.
-
-            This is an inner function defined within Application.build_entry.
-
-            This callback rebuilds the template using the current snapshot data
-            and updates the input text area accordingly. If the refreshed template
-            differs from the existing one, the application title and snapshot are
-            updated to reflect the change. Any exceptions encountered during the
-            refresh process are reported to the user via a message box.
-
-            Workflow
-            --------
-            1. Retrieve user data from the snapshot (`switch_app_user_data`).
-            2. Get the current template text from the input text area.
-            3. Collect template arguments via `get_template_args`.
-            4. Build a new template using `TemplateBuilder`.
-            5. Update the snapshot and input text area with the new template.
-            6. If the refreshed template differs from the current one:
-               - Update the snapshot stored title.
-               - Update the application window title.
-            7. On error, display a message box with the exception details.
-
-            Returns
-            -------
-            None
-                This method performs side effects (UI updates, snapshot changes,
-                error reporting) but does not return a value.
-
-            Notes
-            -----
-            - The refreshed template is stripped of leading/trailing whitespace
-              before comparison.
-            - Exceptions are caught broadly to ensure user feedback, but more
-              granular handling may be added for specific error types.
             """
 
             user_data = self.snapshot.switch_app_user_data
@@ -3154,40 +1948,6 @@ class Application:
         def callback_app_backup_save_btn():
             """
             Handle the 'Backup Save' button action for user templates.
-
-            This is an inner function defined within Application.build_entry.
-
-            This callback validates the current template name and content before
-            attempting to save it. It prevents saving when the template name or
-            format is invalid, and warns the user if a duplicate template name
-            already exists. If saving succeeds, the result area and application
-            snapshot are updated accordingly.
-
-            Workflow
-            --------
-            1. Retrieve the current template name from `template_name_var`.
-            2. Check the `UserTemplate.status` for validation errors:
-               - INVALID-TEMPLATE-FORMAT → abort save.
-               - INVALID-TEMPLATE-NAME-FORMAT → abort save.
-               - FOUND → show duplicate name warning.
-            3. If valid, retrieve user input from the input text area.
-            4. Attempt to save the template via `UserTemplate.write`.
-            5. On success:
-               - Update the result text area with the saved template.
-               - Update the snapshot title.
-               - Update the application window title.
-
-            Returns
-            -------
-            None
-                This method performs side effects (UI updates, file writes) but
-                does not return a value.
-
-            Notes
-            -----
-            - Duplicate template names trigger a message box with guidance.
-            - Saved templates are stripped of leading/trailing whitespace before
-              being written.
             """
 
             user_template = UserTemplate()
@@ -3473,36 +2233,6 @@ class Application:
     def build_result(self):
         """
         Construct the result display area for the application.
-
-        This method creates a disabled, scrollable `TextArea` widget inside
-        `result_frame`. The widget is intended for displaying output such as
-        test results, logs, or generated scripts. Both vertical and horizontal
-        scrollbars are attached to support navigation of large or unwrapped
-        content.
-
-        Workflow
-        --------
-        1. Configure the `result_frame` grid to allow expansion:
-           - Row 0 and column 0 are weighted for resizing.
-        2. Create a disabled `TextArea` widget with fixed dimensions and no wrapping.
-        3. Place the `TextArea` in the grid at row 0, column 0, expanding in all
-           directions (`nswe`).
-        4. Add a vertical scrollbar linked to the `yview` of the text area.
-        5. Add a horizontal scrollbar linked to the `xview` of the text area.
-        6. Configure the text area to update scrollbar positions during scrolling.
-
-        Returns
-        -------
-        None
-            This method performs side effects (constructing and attaching widgets)
-            but does not return a value.
-
-        Notes
-        -----
-        - The `wrap='none'` option ensures text does not automatically wrap,
-          making horizontal scrolling necessary for long lines.
-        - The `state=tk.DISABLED` option prevents direct editing of the result
-          content by the user.
         """
 
         # Create result text area
@@ -3538,23 +2268,6 @@ class Application:
     def run(self):
         """
         Start the TextFSM Generator GUI application.
-
-        This method launches the Tkinter main event loop, which keeps the
-        TextFSM Generator graphical user interface responsive. Once invoked,
-        the application window remains active until the user closes it.
-
-        Notes
-        -----
-        - This is a blocking call: execution will pause here until the GUI
-          window is terminated.
-        - Use this method as the final step after initializing and configuring
-          the application.
-
-        Returns
-        -------
-        None
-            This method performs side effects (running the GUI loop) and does
-            not return a value.
         """
         self.root.mainloop()
 
@@ -3562,25 +2275,6 @@ class Application:
 def execute():
     """
     Entry point for launching the TextFSM Generator GUI.
-
-    This function instantiates the `Application` class and starts the
-    Tkinter main event loop by invoking its `run` method. It provides
-    a convenient way to initialize and display the TextFSM Generator
-    graphical user interface without requiring direct interaction with
-    the `Application` class.
-
-    Notes
-    -----
-    - This is a blocking call: execution will pause here until the GUI
-      window is closed by the user.
-    - Intended to be used as the main entry point when running the
-      application as a script.
-
-    Returns
-    -------
-    None
-        This function performs side effects (launching the GUI) and does
-        not return a value.
     """
     app = Application()
     app.run()
