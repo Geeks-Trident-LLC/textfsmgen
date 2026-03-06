@@ -1,5 +1,5 @@
 """
-Unit tests for the `textfsmgen.gpcategory.CategoryLinePattern` class.
+Unit tests for the `textfsmgen.gpcategory.CategoryLineTranslator` class.
 
 Usage
 -----
@@ -14,7 +14,7 @@ import pytest
 from textfsmgen.core.template import get_textfsm_template
 from textfsmgen.core.verify import verify
 
-from textfsmgen.engine.gpcategory import CategoryLinesPattern
+from textfsmgen.engine.category import CategoryLinesTranslator
 
 from tests.unit import replace_dates_with_placeholder
 
@@ -23,7 +23,7 @@ from textfsmgen.libs.decorators import normalize_output
 
 class DataForStartingEndingArgumentsTests:
     """
-    Test data provider for verifying `CategoryLinesPattern` behavior
+    Test data provider for verifying `CategoryLinesTranslator` behavior
     with `start_maker` and `end_maker` arguments.
     """
     @normalize_output
@@ -220,7 +220,7 @@ class DataForToTemplateSnippetTests:
 
 
 class TestCategoryLinesPattern:
-    """Test class for CategoryLinesPattern"""
+    """Test class for CategoryLinesTranslator"""
 
     testcase_for_starting_ending_args = DataForStartingEndingArgumentsTests()
     testcase_for_to_regex = DataForToRegexTests()
@@ -243,7 +243,7 @@ class TestCategoryLinesPattern:
     ):
         # --- Action ---
 
-        node = CategoryLinesPattern(test_data, starting_from=1, ending_to=5)
+        node = CategoryLinesTranslator(test_data, starting_from=1, ending_to=5)
         generated_snippet = node.to_template_snippet()
 
         # --- Assertions ---
@@ -285,7 +285,7 @@ class TestCategoryLinesPattern:
     )
     def test_to_regex(self, test_data,expected_pattern,expected_result) -> None:
         # --- Action ---
-        node = CategoryLinesPattern(test_data)
+        node = CategoryLinesTranslator(test_data)
         pattern = node.to_regex()
 
         # --- Assertions ---
@@ -324,7 +324,7 @@ class TestCategoryLinesPattern:
             expected_textfsm_template, expected_result
     ) -> None:
         # --- Action ---
-        node = CategoryLinesPattern(test_data)
+        node = CategoryLinesTranslator(test_data)
         tmpl_snippet = node.to_template_snippet()
 
         # --- Assertions ---
