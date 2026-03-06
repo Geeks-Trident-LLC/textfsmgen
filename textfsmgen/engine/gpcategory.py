@@ -25,7 +25,7 @@ from textfsmgen.libs import text
 from textfsmgen.engine.translate import PatternTranslator
 from textfsmgen.engine import LineData
 from textfsmgen.exceptions import RuntimeException
-from textfsmgen.engine.gpiterative import IterativeLineDataPattern
+from textfsmgen.engine.iterative import IterativeLineTranslator
 
 from textfsmgen.engine.common import get_line_position_by
 from textfsmgen.engine.common import get_fixed_line_snippet
@@ -76,7 +76,7 @@ class CategorySepPattern(CategoryPatternData):
         str
             A regex pattern string representing the separator.
         """
-        node = IterativeLineDataPattern(self.raw_data)
+        node = IterativeLineTranslator(self.raw_data)
         return node.to_regex()
 
     def to_template_snippet(self) -> str:

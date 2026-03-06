@@ -17,7 +17,7 @@ from textwrap import dedent
 from textfsmgen.core.verify import verify
 from textfsmgen.core.template import get_textfsm_template
 
-from textfsmgen.engine.gpiterative import IterativeLinesPattern
+from textfsmgen.engine.iterative import IterativeLinesTranslator
 
 
 class TestIterativeLinesPattern:
@@ -61,7 +61,7 @@ class TestIterativeLinesPattern:
     def test_to_snippet(self, lst_of_text, expected_snippet):
         node = None
         for txt in lst_of_text:
-            node = IterativeLinesPattern(txt)
+            node = IterativeLinesTranslator(txt)
         snippet = node.to_snippet()
         assert snippet == expected_snippet
 
@@ -98,7 +98,7 @@ class TestIterativeLinesPattern:
     def test_to_regex(self, lst_of_text, expected_regex_pattern):
         node = None
         for txt in lst_of_text:
-            node = IterativeLinesPattern(txt)
+            node = IterativeLinesTranslator(txt)
         pattern = node.to_regex()
         assert pattern == expected_regex_pattern
 
@@ -163,7 +163,7 @@ class TestIterativeLinesPattern:
     ):
         node = None
         for txt in lst_of_text:
-            node = IterativeLinesPattern(txt)
+            node = IterativeLinesTranslator(txt)
         tmpl_snippet = node.to_template_snippet()
         assert tmpl_snippet == expected_template_snippet
         template = get_textfsm_template(tmpl_snippet)

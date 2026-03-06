@@ -1,31 +1,8 @@
 """
-textfsmgen.gpiterative
-======================
+textfsmgen.engine.iterative
+===========================
 
 Iterative grammar pattern utilities for TextFSM template generation.
-
-This module provides classes and functions to iteratively construct,
-refine, and validate grammar patterns used in parsing tabular or
-structured text. It is designed to support incremental template
-building, where grammar rules evolve step by step based on input
-lines, column layouts, and parsing feedback.
-
-The iterative approach allows developers to:
-- Start with baseline grammar fragments.
-- Expand or adjust rules as new parsing cases are encountered.
-- Validate intermediate grammars against sample text.
-- Produce robust TextFSM templates that handle variations in spacing,
-  dividers, and column alignment.
-
-
-Notes
------
-- This module complements `textfsmgen.gp` and `textfsmgen.gpcommon`,
-  focusing specifically on iterative refinement strategies.
-- It is intended for advanced template authors who need fine-grained
-  control over grammar evolution.
-- Error handling is designed to provide diagnostic feedback for each
-  refinement step, aiding debugging and template tuning.
 """
 
 import re
@@ -99,14 +76,7 @@ class SnippetElement(RuntimeException):
 
     @property
     def var_index(self) -> int:
-        """
-        Extract numeric index from the variable name.
-
-        Returns
-        -------
-        int
-            Parsed index value. Returns 0 if no numeric suffix is found.
-        """
+        """Extract numeric index from the variable name."""
         match = re.search(r"[0-9]+(_[0-9]+)?$", self.var_name)
         if match:
             matched_txt = match.group()
@@ -119,11 +89,6 @@ class SnippetElement(RuntimeException):
     def parse(self) -> None:
         """
         Parse the element text into name, variable, and value components.
-
-        Raises
-        ------
-        RuntimeException
-            If the element text does not match the expected pattern.
         """
         pat = (r"(?P<name>[a-zA-Z]+(_[a-zA-Z]+)*)[(] *"
                r"(?P<check>[cCkK]?var)=(?P<var_name>.+), +"
@@ -161,18 +126,6 @@ class SnippetElement(RuntimeException):
     def split(self, splitter: str = "", ref_index: int = 0) -> List["SnippetElement"]:
         """
         Split the element value into sub-snippets.
-
-        Parameters
-        ----------
-        splitter : str, optional
-            Custom splitter character(s). Defaults to punctuation pattern.
-        ref_index : int, optional
-            Reference index for variable naming.
-
-        Returns
-        -------
-        list[SnippetElement]
-            List of new snippet elements created from the split value.
         """
         pat = f"[{re.escape(splitter)}]+" if splitter else PATTERN.PUNCTS
         separators = re.findall(pat, self.value)
@@ -201,16 +154,6 @@ class SnippetElement(RuntimeException):
     def join(self, *args: "SnippetElement") -> "SnippetElement":
         """
         Join this element with other snippet elements.
-
-        Parameters
-        ----------
-        *args : SnippetElement
-            Other snippet elements to join.
-
-        Returns
-        -------
-        SnippetElement
-            New combined snippet element.
         """
         if args:
             txt = f"{self.value}{self.trailing}"
@@ -230,11 +173,6 @@ class SnippetElement(RuntimeException):
     def to_regex(self) -> str:
         """
         Convert element to a regex pattern.
-
-        Returns
-        -------
-        str
-            Regex string representation of the element.
         """
         if not self.is_kept and not self.is_captured:
             return TextPattern(f"{self.value}{self.trailing}")
@@ -255,11 +193,6 @@ class SnippetElement(RuntimeException):
     def to_template_snippet(self) -> str:
         """
         Convert element to a template snippet string.
-
-        Returns
-        -------
-        str
-            Template snippet representation.
         """
         if not self.is_kept and not self.is_captured:
             return f"{self.value}{self.trailing}"
@@ -277,14 +210,7 @@ class SnippetElement(RuntimeException):
         return tmpl_snippet
 
     def to_snippet(self) -> str:
-        """
-        Convert element back to its snippet string form.
-
-        Returns
-        -------
-        str
-            Snippet string representation.
-        """
+        """Convert element back to its snippet string form."""
         v = "var"
         if self.is_captured or self.is_kept:
             v = "cvar" if self.is_captured else "kvar"
@@ -296,41 +222,6 @@ class SnippetElement(RuntimeException):
 class EditingSnippet(LineData):
     """
     Represents an editable snippet with capture, keep, and action directives.
-
-    This class parses an editing snippet string into structured elements,
-    applies actions (join/split), and manages capture/keep directives.
-    It provides utilities to convert the snippet into regex or template
-    representations.
-
-    Parameters
-    ----------
-    editing_snippet : str
-        Raw editing snippet string containing capture, keep, action, and snippet data.
-
-    Attributes
-    ----------
-    data : str
-        Original editing snippet string.
-    capture : str
-        Capture directive.
-    keep : str
-        Keep directive.
-    action : str
-        Action directive (e.g., join, split).
-    raw_data : str
-        Raw snippet data extracted from the input.
-    snippet : str
-        Normalized snippet string.
-    snippet_elements : list[SnippetElement]
-        Parsed snippet elements.
-    largest_index : int
-        Largest variable index found among snippet elements.
-    is_action_applied : bool
-        Whether an action directive has been applied.
-    is_keep_applied : bool
-        Whether a keep directive has been applied.
-    is_capture_applied : bool
-        Whether a capture directive has been applied.
     """
 
     def __init__(self, editing_snippet: str) -> None:   # noqa
@@ -353,11 +244,6 @@ class EditingSnippet(LineData):
     def prepare(self) -> None:
         """
         Parse the editing snippet into directives and snippet elements.
-
-        Raises
-        ------
-        RuntimeException
-            If the input snippet does not match the expected format.
         """
         pat = (r'capture[(](?P<capture>[^\)]*)[)] '
                r'keep[(](?P<keep>[^\)]*)[)] '
@@ -392,16 +278,6 @@ class EditingSnippet(LineData):
     def find_element(self, var_name: str) -> Tuple[int, Optional[SnippetElement]]:
         """
         Find a snippet element by variable name.
-
-        Parameters
-        ----------
-        var_name : str
-            Variable name to search for.
-
-        Returns
-        -------
-        tuple[int, SnippetElement or None]
-            Index and element if found, else (-0, None).
         """
         for index, node in enumerate(self.snippet_elements):
             if node.var_name == var_name:
@@ -554,21 +430,6 @@ class EditingSnippet(LineData):
     def apply_keep(self):
         """
         Apply keep rules to variables defined in the keep string.
-
-        This method parses the `self.keep` directive into variable names,
-        expands ranges, and marks the corresponding elements as kept.
-        If the `orEmpty` marker is present, elements are also marked empty.
-
-        Raises
-        ------
-        EditingSnippetActionKeepRTError
-            If a variable range is invalid or a variable cannot be found.
-
-        Side Effects
-        ------------
-        - Sets `self.is_keep_applied` to True if any keep is applied.
-        - Calls `node.set_kept()` and optionally `node.set_empty()` on
-          matched elements.
         """
         if not self.keep:
             return
@@ -597,21 +458,6 @@ class EditingSnippet(LineData):
     def apply_capture(self):
         """
         Apply capture rules to variables defined in the capture string.
-
-        This method parses the `self.capture` directive into variable names,
-        expands ranges, and marks the corresponding elements as captured.
-        If the `orEmpty` marker is present, elements are also marked empty.
-
-        Raises
-        ------
-        EditingSnippetActionCaptureRTError
-            If a variable range is invalid or a variable cannot be found.
-
-        Side Effects
-        ------------
-        - Sets `self.is_capture_applied` to True if any capture is applied.
-        - Calls `node.set_captured()` and optionally `node.set_empty()` on
-          matched elements.
         """
         if not self.capture:
             return
@@ -657,12 +503,6 @@ class EditingSnippet(LineData):
     def to_snippet(self) -> str:
         """
         Convert snippet elements into a textual snippet.
-
-        Returns
-        -------
-        str
-            A formatted snippet string including capture, keep, and action
-            directives.
         """
         new_snippet = "".join(elmt.to_snippet() for elmt in self.snippet_elements)
         new_snippet = f"{self.leading}{new_snippet}{self.trailing}"
@@ -676,11 +516,6 @@ class EditingSnippet(LineData):
     def to_regex(self) -> str:
         """
         Convert snippet elements into a regex pattern.
-
-        Returns
-        -------
-        str
-            A regex string representation of the snippet.
         """
         pattern = "".join(elmt.to_regex() for elmt in self.snippet_elements)
         if self.is_leading:
@@ -692,39 +527,14 @@ class EditingSnippet(LineData):
     def to_template_snippet(self):
         """
         Convert snippet elements into a template snippet.
-
-        Returns
-        -------
-        str
-            A template snippet string representation.
         """
         tmpl_snippet = "".join(elmt.to_template_snippet() for elmt in self.snippet_elements)
         return f"{self.leading}{tmpl_snippet}{self.trailing}"
 
 
-class IterativeLineDataPattern(LineData):
+class IterativeLineTranslator(LineData):
     """
     Represents a single line pattern in an iterative parsing process.
-
-    This class wraps a line of text and provides methods to convert it
-    into snippet, regex, or template representations. It can either
-    symbolize raw text into editable snippet form or process existing
-    editable snippets.
-
-    Parameters
-    ----------
-    line : str
-        Input line of text.
-    label : str, optional
-        Label used to generate variable names. Non-alphanumeric characters
-        are replaced with underscores.
-
-    Attributes
-    ----------
-    label : str
-        Normalized label string.
-    _snippet : str
-        Internal snippet representation of the line.
     """
 
     def __init__(self, line: str, label: str = ""):
@@ -734,28 +544,13 @@ class IterativeLineDataPattern(LineData):
         self._snippet: str = ""
         self.process()
 
-    def __len__(self) -> int:
-        """
-        Return 1 if the snippet is non-empty, else 0.
+    def __bool__(self) -> bool: return True if self._snippet else False
 
-        Returns
-        -------
-        int
-            1 if snippet exists, 0 otherwise.
-        """
-        return int(bool(self._snippet))
+    def __len__(self) -> int: return int(bool(self._snippet))
 
     def symbolize(self) -> str:
         """
         Convert raw line into an editable snippet string.
-
-        Splits the line by whitespace, converts each token into a
-        `PatternTranslator`, and assigns variable names based on the label.
-
-        Returns
-        -------
-        str
-            Editable snippet string with capture/keep/action directives.
         """
         spaces = re.findall(PATTERN.WSS, self.data)
         parts: List[str] = []
@@ -774,11 +569,6 @@ class IterativeLineDataPattern(LineData):
     def is_line_editable_snippet(self):
         """
         Check if the line is already in editable snippet format.
-
-        Returns
-        -------
-        bool
-            True if line matches editable snippet pattern, False otherwise.
         """
         pat = r'capture[(][^\)]*[)] keep[(][^\)]*[)] action[(][^\)]*[)]:.+'
         return bool(re.match(pat, self.data))
@@ -799,11 +589,6 @@ class IterativeLineDataPattern(LineData):
     def to_snippet(self):
         """
         Convert the line into a snippet string.
-
-        Returns
-        -------
-        str
-            Snippet representation of the line.
         """
         node = EditingSnippet(self._snippet)
         snippet = node.to_snippet()
@@ -827,11 +612,6 @@ class IterativeLineDataPattern(LineData):
     def to_template_snippet(self):
         """
         Convert the line into a template snippet string.
-
-        Returns
-        -------
-        str
-            Template snippet representation.
         """
         node = EditingSnippet(self._snippet)
         tmpl_snippet = node.to_template_snippet()
@@ -842,45 +622,20 @@ class IterativeLineDataPattern(LineData):
     def is_captured_in_regex(self) -> bool:
         """
         Check if the regex representation contains a captured variable.
-
-        Returns
-        -------
-        bool
-            True if regex contains a named capture group, False otherwise.
         """
         return bool(re.search(r"[(][?]P<\w+>", self.to_regex()))
 
     def is_captured_in_template_snippet(self):
         """
         Check if the template snippet contains a captured variable.
-
-        Returns
-        -------
-        bool
-            True if template snippet contains a var_ reference, False otherwise.
         """
         pat = r'\b\w+[(][^\)]* *var_\w+'
         return bool(re.search(pat, self.to_template_snippet()))
 
 
-class IterativeLinesPattern(RuntimeException):
+class IterativeLinesTranslator(RuntimeException):
     """
     Represents an iterative pattern composed of multiple lines or snippets.
-
-    This class wraps a sequence of lines/snippets and provides methods
-    to convert them into snippet strings, regex patterns, or template
-    snippets. It delegates parsing of individual data lines to
-    `IterativeLineDataPattern`.
-
-    Parameters
-    ----------
-    *lines_or_snippets : str
-        Input lines or snippet strings.
-
-    Attributes
-    ----------
-    lines_or_snippets : list[str]
-        Normalized list of read-only lines or snippets.
     """
 
     def __init__(self, *lines_or_snippets: str):
@@ -889,17 +644,12 @@ class IterativeLinesPattern(RuntimeException):
     def to_snippet(self) -> str:
         """
         Convert lines/snippets into a combined snippet string.
-
-        Returns
-        -------
-        str
-            Snippet representation of all lines, joined by newlines.
         """
         snippets: List[str] = []
         for index, line_or_snippet in enumerate(self.lines_or_snippets):
             if text.Line.has_data(line_or_snippet):
                 label = str(index) if index > 0 else ""
-                node = IterativeLineDataPattern(line_or_snippet, label=label)
+                node = IterativeLineTranslator(line_or_snippet, label=label)
                 snippets.append(node.to_snippet())
             else:
                 snippets.append(line_or_snippet)
@@ -908,16 +658,11 @@ class IterativeLinesPattern(RuntimeException):
     def to_regex(self) -> str:
         """
         Convert lines/snippets into a combined regex pattern.
-
-        Returns
-        -------
-        str
-            Regex pattern string. Returns an empty string if no lines exist.
         """
         patterns: List[str] = []
         for snippet in self.lines_or_snippets:
             if text.Line.has_data(snippet):
-                node = IterativeLineDataPattern(snippet)
+                node = IterativeLineTranslator(snippet)
                 patterns.append(node.to_regex())
             else:
                 patterns.append(r"[ \t\v]*")
@@ -929,23 +674,13 @@ class IterativeLinesPattern(RuntimeException):
     def to_template_snippet(self) -> str:
         """
         Convert lines/snippets into a combined template snippet.
-
-        Returns
-        -------
-        str
-            Template snippet string.
-
-        Raises
-        ------
-        RuntimeException
-            If no captured variable is found in any line.
         """
         tmpl_snippets: List[str] = []
         is_captured = False
 
         for snippet in self.lines_or_snippets:
             if text.Line.has_data(snippet):
-                node = IterativeLineDataPattern(snippet)
+                node = IterativeLineTranslator(snippet)
                 tmpl_snippets.append(node.to_template_snippet())
                 is_captured |= node.is_captured_in_template_snippet()
 
