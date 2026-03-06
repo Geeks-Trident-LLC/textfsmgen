@@ -98,7 +98,7 @@ start() digit(var_index)  non_wss(var_col)  mixed_word(var_col2) end() -> record
 line k: digits() blab blab -> EOF
     """).strip()
 
-    node = TableTranslator(text, column_widths="10, 15,", start_maker=2, end_maker=6)
+    node = TableTranslator(text, column_widths="10, 15,", starting_from=2, ending_to=6)
     tmpl_snippet = node.to_template_snippet()
     assert tmpl_snippet == expected_tmpl_snippet
 
