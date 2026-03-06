@@ -22,8 +22,8 @@ from textfsmgen.libs import number
 from textfsmgen.engine.translate import PatternTranslator
 from textfsmgen.exceptions import RuntimeException
 
-from textfsmgen.engine.gpcommon import get_line_position_by
-from textfsmgen.engine.gpcommon import get_fixed_line_snippet
+from textfsmgen.engine.common import get_line_position_by
+from textfsmgen.engine.common import get_fixed_line_snippet
 
 
 class TableTranslator(RuntimeException):

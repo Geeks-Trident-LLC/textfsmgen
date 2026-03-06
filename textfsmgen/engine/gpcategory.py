@@ -27,8 +27,8 @@ from textfsmgen.engine import LineData
 from textfsmgen.exceptions import RuntimeException
 from textfsmgen.engine.gpiterative import IterativeLineDataPattern
 
-from textfsmgen.engine.gpcommon import get_line_position_by
-from textfsmgen.engine.gpcommon import get_fixed_line_snippet
+from textfsmgen.engine.common import get_line_position_by
+from textfsmgen.engine.common import get_fixed_line_snippet
 
 
 class CategoryPatternData(LineData):

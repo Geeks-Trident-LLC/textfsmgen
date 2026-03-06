@@ -1,29 +1,8 @@
 """
-textfsmgen.gpcommon
-===================
+textfsmgen.engine.common
+========================
 
 Common grammar pattern utilities for the TextFSM Generator framework.
-
-This module provides shared helper functions and abstractions used across
-grammar pattern (GP) modules. It centralizes logic for locating line
-positions, normalizing line snippets, and handling common transformations
-such as whitespace detection and numeric token substitution.
-
-Purpose
--------
-- Provide reusable utilities for grammar pattern processing.
-- Simplify line position detection using regex, wildcard, or numeric criteria.
-- Normalize line snippets into template‑friendly representations.
-- Support consistent handling of whitespace, digits, and mixed numbers.
-
-Notes
------
-- This module is typically used internally by `textfsmgen.gp` and related
-  modules, but can be imported directly for advanced customization.
-- Empty lines are represented with explicit start/end markers and whitespace
-  classification.
-- Numeric tokens (digits, numbers, mixed numbers) are automatically
-  translated into template snippets via `PatternTranslator`.
 """
 
 import re
@@ -46,26 +25,6 @@ def get_line_position_by(
     """
     Determine the position of a line in `lines` based on a string
     pattern or numeric index.
-
-    Parameters
-    ----------
-    lines : list of str
-        The list of lines to search.
-    item : str or int
-        Search criteria. Can be:
-        - A string containing regex or wildcard directives.
-        - A numeric index (int or string convertible to int).
-
-    Returns
-    -------
-    int or None
-        The index of the matching line, or None if not found.
-
-    Notes
-    -----
-    - Strings prefixed with ``--regex`` or ``--wildcard`` are
-      interpreted accordingly.
-    - Numeric values beyond the length of `lines` return None.
     """
     if item is None:
         return None
@@ -98,40 +57,6 @@ def get_fixed_line_snippet(
 ) -> str:
     """
     Generate a normalized snippet representation of a line.
-
-    This function extracts a line either directly (via the `line` argument)
-    or by index from the provided list of lines. It then normalizes the line
-    into a template snippet representation:
-
-    - Empty lines are represented as ``start() end(space|whitespace)``.
-    - Digits, numbers, and mixed numbers are replaced with template
-      placeholders via `PatternTranslator`.
-    - Leading and trailing whitespace are preserved using `text.Line.get_leading`
-      and `text.Line.get_trailing`.
-
-    Parameters
-    ----------
-    lines : list of str
-        The list of lines to extract from.
-    line : str, optional
-        The line to process. Ignored if `index` is provided.
-    index : int, optional
-        Index of the line in `lines` to process. Must be a valid integer.
-
-    Returns
-    -------
-    str
-        A snippet representation of the line, with numeric tokens replaced
-        by template placeholders.
-
-    Raises
-    ------
-    UnknownParamIndexTypeError
-        If `index` is not an integer.
-    UnknownParamLineTypeError
-        If `line` is not a string or bytes.
-    RuntimeError
-        If `index` is out of range or another unexpected error occurs.
     """
     # Resolve line by index if provided
     if index is not None:
