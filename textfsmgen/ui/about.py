@@ -21,7 +21,8 @@ create_styled_label,
 import textfsmgen.config as config
 
 
-def show_dialog(parent):
+def show_dialog(app):
+    parent = app.root
     about = create_window(parent)
 
     # load icon logo

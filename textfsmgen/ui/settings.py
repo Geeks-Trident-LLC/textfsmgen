@@ -1,3 +1,10 @@
+"""
+textfsmgen.ui.settings
+======================
+
+UI components for the Settings dialog in TextFSMGen.
+"""
+
 from typing import Optional
 
 from textfsmgen import ui
@@ -77,10 +84,10 @@ def add_app_setting_checkboxes(app, parent: ui.Frame) -> None:
     group.grid(row=1, column=0, padx=10, pady=1, sticky="wn")
 
     settings = [
-        ("Test Data",   app.settings.test_data, 0, 0, 2),
+        ("Test Data",   app.settings.test_data, 0, 0, 6),
         ("Template",    app.settings.template,  0, 1, 10),
-        ("Tabular",     app.settings.tabular,   0, 2, 6),
-        ("Confirm",     app.settings.confirm,   0, 3, 6),
+        ("Tabular",     app.settings.tabular,   0, 2, 10),
+        ("Confirm",     app.settings.confirm,   0, 3, 10),
     ]
 
     for label, var, row, col, pad in settings:
@@ -118,7 +125,7 @@ def reset_default_setting(app):
     """Reset all application metadata and checkbox settings to defaults."""
 
     for key, value in (
-        ("author", "T"), ("email", ""), ("company", ""), ("description", ""),
+        ("author", ""), ("email", ""), ("company", ""), ("description", ""),
         ("test_data", False), ("template", False), ("tabular", True),
         ("confirm", True)
     ):

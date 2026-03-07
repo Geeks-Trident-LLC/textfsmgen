@@ -41,15 +41,13 @@ from textfsmgen import config
 from textfsmgen import version
 
 from textfsmgen import ui
-from textfsmgen.ui import settings
-from textfsmgen.ui import about
+from textfsmgen.ui import menu
 from textfsmgen.ui.common import (
 show_message_dialog,
 )
 
 
 __version__ = version
-
 
 
 class UserTemplate:
@@ -354,7 +352,8 @@ class Application:
 
         # method call
         self.set_title()
-        self.build_menu()
+        menu.create(self)
+        # self.build_menu()
         self.build_frame()
         self.build_textarea()
         self.build_entry()
@@ -428,58 +427,6 @@ class Application:
         stored_title = self.snapshot.stored_title or 'Storing Template'
         self.set_title(title=stored_title)
 
-    def create_custom_label(self, parent, text='', link='',
-                            increased_size=0, bold=False, underline=False,
-                            italic=False):
-        """
-        Create a customized Tkinter `Label` widget with optional styling and hyperlink behavior.
-        """
-
-        def mouse_over(event):
-            """
-            Handle mouse hover event for a label with a hyperlink.
-            """
-
-            if 'underline' not in event.widget.font:
-                event.widget.configure(
-                    font=event.widget.font + ['underline'],
-                    cursor='hand2'
-                )
-
-        def mouse_out(event):
-            """
-            Handle mouse leave event for a label with a hyperlink.
-            """
-            event.widget.config(
-                font=event.widget.font,
-                cursor='arrow'
-            )
-
-        def mouse_press(event):
-            """
-            Handle mouse click event for a label with a hyperlink.
-            """
-            self.browser.open_new_tab(event.widget.link)
-
-        style = ttk.Style()
-        style.configure("Blue.TLabel", foreground="blue")
-        if link:
-            label = self.Label(parent, text=text, style='Blue.TLabel')
-            label.bind('<Enter>', mouse_over)
-            label.bind('<Leave>', mouse_out)
-            label.bind('<Button-1>', mouse_press)
-        else:
-            label = self.Label(parent, text=text)
-        font = Font(name='TkDefaultFont', exists=True, root=label)
-        font = [font.cget('family'), font.cget('size') + increased_size]
-        bold and font.append('bold')
-        underline and font.append('underline')
-        italic and font.append('italic')
-        label.configure(font=font)
-        label.font = font
-        label.link = link
-        return label
-
     def callback_focus(self, event):
         """
         Handle focus change when a new widget is selected.
@@ -493,11 +440,6 @@ class Application:
         except Exception as ex:     # noqa
             print(f"... skip {getattr(event, 'widget', event)}")
 
-    def callback_file_exit(self):
-        """
-        Handle the "File > Exit" menu action.
-        """
-        self.root.quit()
 
     def callback_open_file(self):
         """
@@ -574,75 +516,6 @@ class Application:
                 test_data=content
             )
             self.set_title(title=title)
-
-    def callback_help_documentation(self):
-        """
-        Handle the "Help > Getting Started" menu action.
-        """
-        self.browser.open_new_tab(config.documentation_url)
-
-    def callback_help_view_licenses(self):
-        """
-        Handle the "Help > View Licenses" menu action.
-        """
-        self.browser.open_new_tab(config.license_url)
-
-    def callback_help_about(self):
-        """
-        Handle the "Help > About" menu action.
-        """
-        about.show_dialog(self.root)
-
-    def callback_preferences_settings(self):
-        """
-        Handle the "Preferences > Settings" menu action.
-        """
-        settings.show_dialog(self)
-
-    def build_menu(self):
-        """
-        Construct the main menubar for the TextFSM Generator GUI application.
-        """
-
-        menu_bar = tk.Menu(self.root)
-        self.root.config(menu=menu_bar)
-
-        file_menu = tk.Menu(menu_bar, tearoff=False)
-        help_menu = tk.Menu(menu_bar, tearoff=False)
-        pref_menu = tk.Menu(menu_bar, tearoff=False)
-
-        menu_bar.add_cascade(menu=file_menu, label='File')
-        menu_bar.add_cascade(menu=pref_menu, label='Preferences')
-        menu_bar.add_cascade(menu=help_menu, label='Help')
-
-        menu_structure = (
-            # File menu
-            (file_menu, dict(label='Open',command=self.callback_open_file)),
-            (file_menu, dict(label='Load Test Data',
-                             command=self.callback_load_test_data_file)),
-            (file_menu, None),
-            (file_menu, dict(label='Quit',command=self.callback_file_exit)),
-
-            # Preferences menu
-            (pref_menu, dict(label='Settings',
-                             command=self.callback_preferences_settings)),
-            (pref_menu, None),
-
-            # Help menu
-            (help_menu, dict(label='Documentation',
-                             command=self.callback_help_documentation)),
-            (help_menu, dict(label='View Licenses',
-                             command=self.callback_help_view_licenses)),
-            (help_menu, None),
-            (help_menu, dict(label='About',
-                             command=self.callback_help_about)),
-        )
-
-        for menu, config_ in menu_structure:
-            if config_:
-                menu.add_command(**config_)
-            else:
-                menu.add_separator()
 
     def build_frame(self):
         """
@@ -1250,36 +1123,6 @@ class Application:
             self.set_title(title=title)
             self.set_textarea(self.result_textarea, result)
 
-        def callback_app_backup_refresh_btn():
-            """
-            Handle the 'Backup Refresh' button action for user templates.
-            """
-
-            user_data = self.snapshot.switch_app_user_data
-            try:
-                # Retrieve current template text
-                curr_template = Application.get_textarea(self.input_textarea).strip()
-
-                # Build new template
-                kwargs = self.get_template_args()
-                factory = TemplateBuilder(user_data=user_data, **kwargs)
-
-                # Update snapshot and input area
-                new_template = factory.template
-                self.snapshot.update(switch_app_template=new_template)
-                self.set_textarea(self.input_textarea, new_template)
-
-                # Update title if template changed
-                if curr_template != new_template.strip():
-                    title = "Template Has Been Refreshed"
-                    self.snapshot.update(stored_title=title)
-                    self.set_title(title=title)
-            except Exception as ex:
-                show_message_dialog(
-                    title='TextFSM Generator Error',
-                    error=f"{type(ex).__name__}: {ex}"
-                )
-
         # def callback_rf_btn():
         #     show_message_dialog(
         #         title='Robotframework feature',
@@ -1492,9 +1335,7 @@ class Application:
         )
 
     def run(self):
-        """
-        Start the TextFSM Generator GUI application.
-        """
+        """Start the TextFSM Generator GUI application."""
         self.root.mainloop()
 
 
