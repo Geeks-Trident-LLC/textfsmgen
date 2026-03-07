@@ -40,11 +40,11 @@ from textfsmgen import config
 
 from textfsmgen import version
 
+from textfsmgen import ui
+from textfsmgen.ui import settings
 from textfsmgen.ui import about
 from textfsmgen.ui.common import (
-center_window,
 show_message_dialog,
-make_modal
 )
 
 
@@ -284,6 +284,8 @@ class Application:
         self.root.minsize(200, 200)
         self.root.option_add('*tearOff', False)
 
+        ui.set_window_icon(self.root)
+
         # tkinter widgets for main layout
         self.paned_window = None
         self.text_frame = None
@@ -306,12 +308,6 @@ class Application:
         self.pytest_btn = None
         self.test_data_btn = None
         self.result_btn = None
-        self.store_btn = None
-        self.search_checkbox = None
-        self.template_name_textbox = None
-        self.lookup_btn = None
-        self.close_lookup_btn = None
-        self.close_backup_btn = None
 
         self.curr_widget = None
         self.prev_widget = None
@@ -342,20 +338,19 @@ class Application:
         self.test_data_btn_var = tk.StringVar()
         self.test_data_btn_var.set('Test Data')
 
-        # variables: arguments
-        self.filename_var = tk.StringVar()
-        self.author_var = tk.StringVar()
-        self.email_var = tk.StringVar()
-        self.company_var = tk.StringVar()
-        self.template_name_var = tk.StringVar()
-        self.description_var = tk.StringVar()
-        self.search_checkbox_var = tk.BooleanVar()
-
-        # variables: app
-        self.test_data_checkbox_var = tk.BooleanVar()
-        self.template_checkbox_var = tk.BooleanVar()
-        self.tabular_checkbox_var = tk.BooleanVar()
-        self.tabular_checkbox_var.set(True)
+        # settings var
+        self.settings = DotObject(
+            author=tk.StringVar(),
+            email=tk.StringVar(),
+            company=tk.StringVar(),
+            description=tk.StringVar(),
+            test_data=tk.BooleanVar(),
+            template=tk.BooleanVar(),
+            tabular=tk.BooleanVar(),
+            confirm=tk.BooleanVar(),
+        )
+        self.settings.tabular.set(True)
+        self.settings.confirm.set(True)
 
         # method call
         self.set_title()
@@ -366,33 +361,12 @@ class Application:
         self.build_result()
 
     def get_template_args(self):
-        """
-        Collect and return configuration arguments for initializing
-        a `TemplateBuilder` instance.
-        """
-        result = dict(
-            test_script_file=self.filename_var.get(),
-            author=self.author_var.get(),
-            email=self.email_var.get(),
-            company=self.company_var.get(),
-            description=self.description_var.get()
+        return dict(
+            author=self.settings.author.get(),
+            email=self.settings.email.get(),
+            company=self.settings.company.get(),
+            description=self.settings.description.get()
         )
-        return result
-
-    def set_default_setting(self):
-        """
-        Reset application configuration variables to their default values.
-        """
-
-        self.filename_var.set('')
-        self.author_var.set('')
-        self.email_var.set('')
-        self.company_var.set('')
-        self.description_var.set('')
-
-        self.test_data_checkbox_var.set(False)
-        self.template_checkbox_var.set(False)
-        self.tabular_checkbox_var.set(True)
 
     @classmethod
     def get_textarea(cls, widget):
@@ -434,35 +408,6 @@ class Application:
         base_title = self._base_title
         title = '{} - {}'.format(title, base_title) if title else base_title
         widget.title(title)
-
-    def shift_to_main_app(self):
-        """
-        Switch the application context from the backup app to the main app.
-        """
-
-        # Update snapshot to reflect active app
-        self.snapshot.update(curr_app='main_app')
-
-        # Restore user and result data from backup
-        user_data = self.snapshot.switch_app_user_data
-        result_data = self.snapshot.switch_app_result_data
-        self.snapshot.update(
-            switch_app_user_data='',
-            switch_app_result_data=''
-        )
-
-        # Update text areas with restored data
-        self.set_textarea(self.input_textarea, user_data)
-        self.set_textarea(self.result_textarea, result_data)
-
-        # Reconfigure GUI layout
-        self.paned_window.remove(self.backup_frame)
-        self.paned_window.insert(1, self.entry_frame)
-
-        # Update and apply window title
-        stored_title = self.root.title().replace(f" - {self._base_title}", "")
-        self.snapshot.update(stored_title=stored_title)
-        self.set_title(title=self.snapshot.title)
 
     def shift_to_backup_app(self):
         """
@@ -568,14 +513,6 @@ class Application:
             # Read file content
             content = file.read(filename)
 
-            # Trigger search checkbox if active
-            if self.search_checkbox_var.get():
-                self.search_checkbox.invoke()
-
-            # Close backup app if active
-            if self.snapshot.curr_app == 'backup_app':
-                self.close_backup_btn.invoke()
-
             # Reset and update widgets
             self.test_data_btn.config(state=tk.NORMAL)
             self.test_data_btn_var.set('Test Data')
@@ -605,13 +542,6 @@ class Application:
             # Read file content
             content = file.read(filename)
 
-            # Trigger search checkbox if active
-            if self.search_checkbox_var.get():
-                self.search_checkbox.invoke()
-
-            # Close backup app if active
-            if self.snapshot.curr_app == 'backup_app':
-                self.close_backup_btn.invoke()
 
             # Reset and enable test data button
             self.test_data_btn.config(state=tk.NORMAL)
@@ -661,93 +591,13 @@ class Application:
         """
         Handle the "Help > About" menu action.
         """
-
         about.show_dialog(self.root)
 
     def callback_preferences_settings(self):
         """
         Handle the "Preferences > Settings" menu action.
         """
-        # Create modal "Settings" window
-        settings = tk.Toplevel(self.root)
-        self.set_title(widget=settings, title='Settings')
-
-        width = 520 if self.is_macos else 474 if self.is_linux else 370
-        height = 258 if self.is_macos else 242 if self.is_linux else 234
-        center_window(self.root, settings, width, height)
-
-        top_frame = self.Frame(settings)
-        top_frame.pack(fill=tk.BOTH, expand=True)
-
-        # Arguments section
-        label_frame_args = self.LabelFrame(
-            top_frame, height=100, width=380,
-            text='Arguments'
-        )
-        label_frame_args.grid(row=0, column=0, padx=10, pady=(5, 0), sticky=tk.W)
-
-        pady = 0 if self.is_macos else 1
-
-        # Metadata fields
-        fields = [
-            ("Author", self.author_var, 0),
-            ("Email", self.email_var, 1),
-            ("Company", self.company_var, 2),
-            ("Filename", self.filename_var, 4),
-            ("Description", self.description_var, 5),
-        ]
-        for label_text, var, row in fields:
-            label = self.Label(label_frame_args, text=label_text)
-            label.grid(
-                row=row, column=0, columnspan=2, padx=2, pady=pady,
-                sticky=tk.W + tk.N
-            )
-            textbox = self.TextBox(label_frame_args, width=45, textvariable=var)
-            textbox.grid(
-                row=row, column=2, columnspan=4, padx=2,
-                pady=(pady, 10) if label_text == "Description" else pady,
-                sticky=tk.W
-            )
-
-        # Settings - Arguments
-        label_frame_app = self.LabelFrame(top_frame, height=120, width=380, text='App')
-        label_frame_app.grid(row=1, column=0, padx=10, pady=1, sticky=tk.W+tk.N)
-
-        options = [
-            ("Test Data", self.test_data_checkbox_var, 0, 0, 2),
-            ("Template", self.template_checkbox_var, 0, 1, 20),
-            ("Tabular", self.tabular_checkbox_var, 0, 2, 2),
-        ]
-        for text, var, row, col, padx in options:
-            kwargs = dict(text=text, onvalue=True, offvalue=False, variable=var)
-            checkbox = self.CheckBox(label_frame_app, **kwargs)
-            checkbox.grid(row=row, column=col, padx=padx)
-
-        # OK and Default buttons
-        frame = self.Frame(top_frame, height=14, width=380)
-        frame.grid(row=2, column=0, padx=10, pady=(10, 5), sticky=tk.E+tk.S)
-
-        button = self.Button(
-            frame, text='Default',
-            command=lambda: self.set_default_setting(),
-        )
-        button.grid(row=0, column=6, padx=1, pady=1, sticky=tk.E)
-
-        button = self.Button(
-            frame, text='OK',
-            command=lambda: settings.destroy(),
-        )
-        button.grid(row=0, column=7, padx=1, pady=1, sticky=tk.E)
-
-        # Make dialog modal
-        make_modal(settings)
-
-    def callback_preferences_user_template(self):
-        """
-        Handle the "Preferences > User Template" menu action.
-        """
-        self.search_checkbox_var.set(False)
-        self.search_checkbox.invoke()
+        settings.show_dialog(self)
 
     def build_menu(self):
         """
@@ -777,8 +627,6 @@ class Application:
             (pref_menu, dict(label='Settings',
                              command=self.callback_preferences_settings)),
             (pref_menu, None),
-            (pref_menu, dict(label='User Template',
-                             command=self.callback_preferences_user_template)),
 
             # Help menu
             (help_menu, dict(label='Documentation',
@@ -919,9 +767,6 @@ class Application:
                 self.snapshot.update(title=title)
                 self.set_title(title=title)
 
-            # Enable additional buttons if template exists/built
-            if self.snapshot.template:
-                self.store_btn.config(state=tk.NORMAL)
 
             if self.snapshot.is_built:
                 self.result_btn.config(state=tk.NORMAL)
@@ -1015,62 +860,46 @@ class Application:
             """
 
             prev_widget_name = str(self.prev_widget)
-            is_tmpl_name = prev_widget_name.endswith('.main_template_name_textbox')
             is_input_area = prev_widget_name.endswith('.main_input_textarea')
-            if is_tmpl_name:
-                # --- Template name textbox ---
-                if self.prev_widget.selection_present():
-                    self.prev_widget.delete(tk.SEL_FIRST, tk.SEL_LAST)
-                    title = 'Clear Selected Text'
-                else:
-                    self.template_name_var.set('')
-                    title = 'Clear Template Name'
-
-                self.snapshot.update(title=title)
-                self.set_title(title=title)
-                self.prev_widget.focus()
+            # --- Input text area or other ---
+            if is_input_area and self.prev_widget.tag_ranges(tk.SEL):
+                self.prev_widget.delete(tk.SEL_FIRST, tk.SEL_LAST)
+                title = 'Clear Selected Text'
             else:
-                # --- Input text area or other ---
-                if is_input_area and self.prev_widget.tag_ranges(tk.SEL):
-                    self.prev_widget.delete(tk.SEL_FIRST, tk.SEL_LAST)
-                    title = 'Clear Selected Text'
-                else:
-                    # Clear input and result areas
-                    Application.clear_textarea(self.input_textarea)
-                    Application.clear_textarea(self.result_textarea)
+                # Clear input and result areas
+                Application.clear_textarea(self.input_textarea)
+                Application.clear_textarea(self.result_textarea)
 
-                    # Disable related buttons
-                    disabled_buttons = [
-                        self.save_as_btn, self.copy_text_btn,
-                        self.test_data_btn, self.result_btn, self.store_btn
-                    ]
+                # Disable related buttons
+                disabled_buttons = [
+                    self.save_as_btn, self.copy_text_btn,
+                    self.test_data_btn, self.result_btn
+                ]
 
-                    for button in disabled_buttons:
-                        button.config(state=tk.DISABLED)
+                for button in disabled_buttons:
+                    button.config(state=tk.DISABLED)
 
-                    # Reset input area state
-                    self.input_textarea.config(state=tk.NORMAL)
+                # Reset input area state
+                self.input_textarea.config(state=tk.NORMAL)
 
-                    # Reset snapshot attributes
-                    self.snapshot.update(
-                        user_data="",
-                        test_data=None,
-                        result="",
-                        template="",
-                        is_built=False,
-                    )
+                # Reset snapshot attributes
+                self.snapshot.update(
+                    user_data="",
+                    test_data=None,
+                    result="",
+                    template="",
+                    is_built=False,
+                )
 
-                    # Reset UI variables
-                    self.test_data_btn_var.set('Test Data')
-                    self.build_btn_var.set('Build')
-                    self.template_name_var.set('')
-                    self.search_checkbox_var.set(False)
-                    # self.root.clipboard_clear()
-                    title = 'Clear Input Text and Test Data'
+                # Reset UI variables
+                self.test_data_btn_var.set('Test Data')
+                self.build_btn_var.set('Build')
+                # self.root.clipboard_clear()
+                title = 'Clear Input Text and Test Data'
 
-                self.snapshot.update(title=title)
-                self.set_title(title=title)
-                self.input_textarea.focus()
+            self.snapshot.update(title=title)
+            self.set_title(title=title)
+            self.input_textarea.focus()
 
         def callback_copy_text_btn():
             """
@@ -1078,16 +907,8 @@ class Application:
             """
 
             prev_widget_name = str(self.prev_widget)
-            is_tmpl_name = prev_widget_name.endswith('.main_template_name_textbox')
             is_input_area = prev_widget_name.endswith('.main_input_textarea')
-            if is_tmpl_name:
-                if self.prev_widget.selection_present():
-                    content = self.prev_widget.selection_get()
-                    title = 'Copy Selected Text'
-                else:
-                    content = self.template_name_var.get()
-                    title = 'Copy Template Name'
-            elif is_input_area:
+            if is_input_area:
                 if self.prev_widget.tag_ranges(tk.SEL):
                     content = self.prev_widget.selection_get()
                     title = 'Copy Selected Text'
@@ -1113,23 +934,13 @@ class Application:
             prev_widget_name = str(self.prev_widget)
 
             is_not_empty = len(curr_data.strip()) > 0
-            is_tmpl_name = prev_widget_name.endswith('.main_template_name_textbox')
             is_input_area = prev_widget_name.endswith('.main_input_textarea')
             try:
                 data = self.root.clipboard_get()
                 if not data:
                     return
 
-                if is_tmpl_name:
-                    # Paste into template name textbox
-                    if self.prev_widget.selection_present():
-                        self.prev_widget.delete(tk.SEL_FIRST, tk.SEL_LAST)
-                    index = self.prev_widget.index(tk.INSERT)
-                    self.prev_widget.insert(tk.INSERT, data)
-                    self.prev_widget.selection_range(index, index + len(data))
-                    self.prev_widget.focus()
-                    title = "Paste into Template Name"
-                elif is_input_area and is_not_empty:
+                if is_input_area and is_not_empty:
                     # Paste into input area with existing content
                     if self.prev_widget.tag_ranges(tk.SEL):
                         self.prev_widget.delete(tk.SEL_FIRST, tk.SEL_LAST)
@@ -1414,16 +1225,16 @@ class Application:
 
             result_sections = []
 
-            if self.template_checkbox_var.get() and template:
+            if self.settings.template.get() and template:
                 result_sections.append('Template')
                 result += divider_fmt.format(template) if result else template
 
-            if self.test_data_checkbox_var.get() and test_data:
+            if self.settings.test_data.get() and test_data:
                 result_sections.append('Test Data')
                 result += divider_fmt.format(test_data) if result else test_data
 
             result_sections.append('Test Result')
-            if rows and self.tabular_checkbox_var.get():
+            if rows and self.settings.tabular.get():
                 tabular_data = get_data_as_tabular(rows)
                 result += divider_fmt.format(tabular_data) if result else tabular_data
             else:
@@ -1438,187 +1249,6 @@ class Application:
             self.snapshot.update(title=title)
             self.set_title(title=title)
             self.set_textarea(self.result_textarea, result)
-
-        def callback_store_btn():
-            """
-            Handle the 'Store' button action for user templates.
-            """
-
-            user_template = UserTemplate()
-
-            # Ensure template file exists
-            if not user_template.is_exist():
-                response = show_message_dialog(
-                    title="User Template File Not Found",
-                    question=(
-                        f"This feature is only available when the "
-                        f"file {repr(user_template.filename)} exists.\n"
-                        "Would you like to create this file now?"
-                    )
-                )
-                if response == 'no':
-                    return
-                else:
-                    user_template.create(confirmed=False)
-
-            if user_template.is_exist():
-                # Save current input and result data into snapshot
-                user_data = self.get_textarea(self.input_textarea)
-                result_data = self.get_textarea(self.result_textarea)
-                self.snapshot.update(
-                    switch_app_user_data=user_data,
-                    switch_app_result_data=result_data
-                )
-
-                # Restore text areas with template and file content
-                data = self.snapshot.switch_app_template or self.snapshot.template
-                self.set_textarea(self.input_textarea, data)
-                self.set_textarea(self.result_textarea, user_template.read())
-
-                # Transition to back up mode
-                self.shift_to_backup_app()
-
-        def callback_search_checkbox():
-            """
-            Handle the 'Search' checkbox toggle for user templates.
-            """
-
-            user_template = UserTemplate()
-            if not user_template.is_exist():
-                show_message_dialog(
-                    title="User Template File Not Found",
-                    info=(
-                        f"This feature is only available "
-                        f"when the file {repr(user_template.filename)} exists."
-                    )
-                )
-                self.search_checkbox_var.set(False)
-                return
-
-            if self.search_checkbox_var.get():
-                # --- Enable search mode ---
-                disabled_buttons = [
-                    self.open_file_btn, self.copy_text_btn, self.save_as_btn,
-                    self.paste_text_btn, self.clear_text_btn, self.build_btn,
-                    self.snippet_btn, self.unittest_btn, self.pytest_btn,
-                    self.result_btn, self.test_data_btn, self.store_btn,
-                ]
-                for btn in disabled_buttons:
-                    btn.configure(state=tk.DISABLED)
-
-                self.input_textarea.configure(state=tk.DISABLED)
-                self.lookup_btn.grid(row=0, column=2, sticky=tk.W)
-                self.close_lookup_btn.grid(row=0, column=3, sticky=tk.W)
-                self.template_name_textbox.focus()
-
-                # Save current state
-                input_txt = Application.get_textarea(self.input_textarea)
-                result_txt = Application.get_textarea(self.result_textarea)
-                self.snapshot.update(
-                    main_input_textarea=input_txt,
-                    main_result_textarea=result_txt
-                )
-
-                # Search template if name provided
-                template_name = self.template_name_var.get().strip()
-                if template_name:
-                    template = user_template.search(template_name)
-                    if template:
-                        self.snapshot.update(
-                            template=template,
-                            result=template
-                        )
-                        self.set_textarea(self.input_textarea, template)
-                else:
-                    self.set_textarea(self.input_textarea, '')
-
-                # Update result area with file content
-                self.set_textarea(self.result_textarea, user_template.read())
-
-                # Update title
-                title = self.root.title().replace(' - ' + self._base_title, '')
-                self.snapshot.update(title=title)
-                self.set_title(title='Searching Template')
-            else:
-                # --- Disable search mode ---
-                enabled_buttons = [
-                    self.open_file_btn, self.paste_text_btn,
-                    self.clear_text_btn,
-                    self.build_btn, self.snippet_btn, self.unittest_btn,
-                    self.pytest_btn,
-                ]
-                for btn in enabled_buttons:
-                    btn.configure(state=tk.NORMAL)
-
-                if self.snapshot.test_data:
-                    self.result_btn.config(state=tk.NORMAL)
-                    self.test_data_btn.config(state=tk.NORMAL)
-
-                if self.snapshot.is_built:
-                    self.store_btn.configure(state=tk.NORMAL)
-
-                self.input_textarea.configure(state=tk.NORMAL)
-                self.lookup_btn.grid_forget()
-                self.close_lookup_btn.grid_forget()
-
-                # Restore text areas
-                input_txt = Application.get_textarea(self.input_textarea)
-                pattern = r'#+\s+# *Template +is +generated '
-                if re.match(pattern, input_txt):
-                    self.test_data_btn_var.set('Test Data')
-                    self.set_textarea(self.result_textarea, input_txt)
-                else:
-                    self.set_textarea(
-                        self.result_textarea,
-                        self.snapshot.main_result_textarea,
-                    )
-
-                self.set_textarea(
-                    self.input_textarea,
-                    self.snapshot.main_input_textarea,
-                )
-
-                # Re-enable copy/save if content exists
-                input_txt = Application.get_textarea(self.input_textarea)
-                result_txt = Application.get_textarea(self.result_textarea)
-
-                if input_txt or result_txt:
-                    self.copy_text_btn.configure(state=tk.NORMAL)
-                    self.save_as_btn.configure(state=tk.NORMAL)
-
-                # Restore title
-                title_ = self.snapshot.title
-                title = '' if title_ == self._base_title else title_
-                self.snapshot.update(title=title)
-                self.set_title(title=title) if title else self.set_title()
-
-        def callback_lookup_btn():
-            """
-            Handle the 'Lookup' button action for user templates.
-            """
-            template_name = self.template_name_var.get().strip()
-            if template_name:
-                user_template = UserTemplate()
-                template = user_template.search(template_name)
-                if template:
-                    # Template found
-                    self.snapshot.update(
-                        template=template,
-                        result=template
-                    )
-                    self.set_textarea(self.input_textarea, template)
-                else:
-                    # Template not found
-                    self.snapshot.update(result=user_template.status)
-                    self.set_textarea(self.input_textarea, user_template.status)
-            else:
-                show_message_dialog(
-                    title="Missing Template Name",
-                    error=(
-                        "Cannot retrieve template because the template name "
-                        "is empty.\nPlease provide a valid template name."
-                    )
-                )
 
         def callback_app_backup_refresh_btn():
             """
@@ -1649,39 +1279,6 @@ class Application:
                     title='TextFSM Generator Error',
                     error=f"{type(ex).__name__}: {ex}"
                 )
-
-        def callback_app_backup_save_btn():
-            """
-            Handle the 'Backup Save' button action for user templates.
-            """
-
-            user_template = UserTemplate()
-            tmpl_name = self.template_name_var.get()
-            status = user_template.status
-
-            # Validation checks
-            if status in ("INVALID-TEMPLATE-FORMAT", "INVALID-TEMPLATE-NAME-FORMAT"):
-                return
-
-            elif status == 'FOUND':
-                show_message_dialog(
-                    title="Duplicate Template Name",
-                    info=(
-                        f"The template name {repr(tmpl_name)} already exists.\n"
-                        "Please choose a different name."
-                    )
-                )
-                return
-
-            # Attempt to save template
-            user_data = self.get_textarea(self.input_textarea)
-            is_saved = user_template.write(tmpl_name, user_data.strip())
-
-            if is_saved:
-                self.set_textarea(self.result_textarea, user_template.read())
-                title = f"{tmpl_name} successfully saved"
-                self.snapshot.update(stored_title=title)
-                self.set_title(title=title)
 
         # def callback_rf_btn():
         #     show_message_dialog(
@@ -1796,54 +1393,6 @@ class Application:
         )
         self.result_btn.grid(row=1, column=0, padx=(2, 0), pady=(0, 2))
 
-        # store button
-        self.store_btn = self.Button(
-            self.entry_frame, text='Store',
-            name='main_store_btn',
-            state=tk.DISABLED,
-            command=callback_store_btn,
-            width=btn_width
-        )
-        self.store_btn.grid(row=1, column=1, pady=(0, 2))
-
-        # frame container for checkbox and textbox
-        frame = self.Frame(self.entry_frame)
-        frame.grid(row=1, column=2, pady=(0, 2), columnspan=8, sticky=tk.W)
-
-        # customize x padding for search checkbox
-        x = 0 if self.is_macos else 6 if self.is_linux else 2
-        # search checkbox
-        self.search_checkbox = self.CheckBox(
-            frame, text='search',
-            name='main_search_checkbox',
-            variable=self.search_checkbox_var,
-            onvalue=True, offvalue=False,
-            command=callback_search_checkbox
-        )
-        self.search_checkbox.grid(row=0, column=0, padx=(0, x), sticky=tk.W)
-
-        # template name textbox
-        self.template_name_textbox = self.TextBox(
-            frame, width=46,
-            name='main_template_name_textbox',
-            textvariable=self.template_name_var
-        )
-        self.template_name_textbox.grid(row=0, column=1, sticky=tk.W)
-
-        self.lookup_btn = self.Button(
-            frame, text='Lookup',
-            name='main_lookup_btn',
-            command=callback_lookup_btn,
-            width=btn_width
-        )
-
-        self.close_lookup_btn = self.Button(
-            frame, text='Close',
-            name='main_close_lookup_btn',
-            command=self.search_checkbox.invoke,
-            width=btn_width
-        )
-
         # Robotframework button
         # rf_btn = self.Button(self.entry_frame, text='RF',
         #                     command=callback_rf_btn, width=4)
@@ -1861,7 +1410,7 @@ class Application:
         width = 18 if self.is_macos else 20 if self.is_linux else 28
         self.TextBox(
             frame, width=width,
-            textvariable=self.author_var
+            textvariable=self.settings.author
         ).grid(row=0, column=0, sticky=tk.W)
 
         # customize x-padding for email label
@@ -1874,7 +1423,7 @@ class Application:
         width = 27 if self.is_macos else 32 if self.is_linux else 43
         self.TextBox(
             frame, width=width,
-            textvariable=self.email_var
+            textvariable=self.settings.email
         ).grid(row=0, column=2, sticky=tk.W)
 
         # customize x-padding for company label
@@ -1887,7 +1436,7 @@ class Application:
         width = 18 if self.is_macos else 20 if self.is_linux else 28
         self.TextBox(
             frame, width=width,
-            textvariable=self.company_var
+            textvariable=self.settings.company
         ).grid(row=0, column=4, sticky=tk.W)
 
         # custom pady for description
@@ -1900,40 +1449,12 @@ class Application:
         width = 78 if self.is_macos else 88 if self.is_linux else 118
         self.TextBox(
             self.backup_frame, width=width,
-            textvariable=self.description_var
+            textvariable=self.settings.description
         ).grid(row=1, column=1, padx=(1, 2), pady=pady, sticky=tk.W)
 
         self.Label(
             self.backup_frame, text='Name'
         ).grid(row=2, column=0, padx=(4, 1), pady=(0, 2), sticky=tk.W)
-
-        frame = self.Frame(
-            self.backup_frame
-        )
-        frame.grid(row=2, column=1, padx=(1, 2), pady=(0, 2), sticky=tk.W)
-
-        # customize width for template name textbox
-        width = 48 if self.is_macos else 50 if self.is_linux else 70
-        self.TextBox(
-            frame, width=width,
-            textvariable=self.template_name_var
-        ).pack(side=tk.LEFT)
-        self.Button(
-            frame, text='Refresh',
-            command=callback_app_backup_refresh_btn,
-            width=btn_width
-        ).pack(side=tk.LEFT)
-        self.Button(
-            frame, text='Save',
-            command=callback_app_backup_save_btn,
-            width=btn_width
-        ).pack(side=tk.LEFT)
-        self.close_backup_btn = self.Button(
-            frame, text='Close',
-            command=self.shift_to_main_app,
-            width=btn_width
-        )
-        self.close_backup_btn.pack(side=tk.LEFT)
 
     def build_result(self):
         """
