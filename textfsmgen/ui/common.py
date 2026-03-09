@@ -234,8 +234,34 @@ def open_app_resource(resource: str) -> None:
         webbrowser.open_new_tab(url)
 
 
-def extract_text(textarea) -> str:
+def extract_text(widget) -> str:
     """Return textarea content without the trailing newline added by Tkinter."""
-    text = textarea.get("1.0", "end")
+    if not isinstance(widget, ui.TextArea):
+        return ""
+    text = widget.get("1.0", "end")
     last_two = text[-2:]
     return text[:-2] if last_two == "\r\n" else text[:-1]
+
+
+def clear_text(widget) -> None:
+    """Clear all text from a Tkinter Text widget while preserving its state."""
+    if not isinstance(widget, ui.TextArea):
+        return
+    original_state = widget["state"]
+    widget.configure(state=tk.NORMAL)
+    widget.delete("1.0", "end")
+    widget.configure(state=original_state)
+
+
+def set_text(widget, text: str) -> None:
+    """Replace all text in a Tkinter Text widget while preserving its state."""
+    if not isinstance(widget, ui.TextArea):
+        return
+
+    original_state = widget["state"]
+    widget.configure(state=tk.NORMAL)
+
+    widget.delete("1.0", "end")
+    widget.insert("1.0", text)
+
+    widget.configure(state=original_state)

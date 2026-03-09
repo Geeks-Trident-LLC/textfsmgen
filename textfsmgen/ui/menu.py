@@ -7,8 +7,9 @@ UI helpers for building the TextFSMGen menu bar.
 
 from textfsmgen import ui
 from textfsmgen.ui.common import open_app_resource
-from textfsmgen.ui import about
+from textfsmgen.ui import about, callback
 from textfsmgen.ui import settings
+
 
 def create(app) -> None:
     """Create the main application menu bar."""
@@ -26,8 +27,8 @@ def create(app) -> None:
 
     items = (
         # File
-        (file_menu, {"label": "Open",           "command": app.callback_open_file}),
-        (file_menu, {"label": "Load Test Data", "command": app.callback_load_test_data_file}),
+        (file_menu, {"label": "Open",           "command": lambda: callback.open_file(app)}),
+        (file_menu, {"label": "Load Test Data", "command": lambda: callback.load_test_data_file(app)}),
         (file_menu, None),
         (file_menu, {"label": "Quit",           "command": app.root.destroy}),
 
