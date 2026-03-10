@@ -34,11 +34,42 @@ def build(app):
     Handle the 'Build' button action to generate a TextFSM template.
     """
 
+    btn_name = app.settings.test_data_btn_name.get()
+    if btn_name == 'Hide':
+        in_text = extract_text(app.textarea.input)
+        if in_text != app.snapshot.test_data:
+            response = show_message_dialog(
+                title="Incorrect Input Data Mode",
+                yesno=(
+                    "You are currently in 'Test Data' mode.\n"
+                    "Instruction: Click the 'Hide' button to return to 'User Data' mode.\n\n"
+                    "If you have made changes, do you want to save this content "
+                    "and switch back to 'User Data' mode?"
+                )
+            )
+            if response:
+                app.snapshot.update(test_data=in_text)
+                app.settings.test_data_btn_name.set('Test Data')
+                set_text(app.textarea.input, app.snapshot.user_data)
+            return
+        response = show_message_dialog(
+            title="Incorrect Input Data Mode",
+            yesno=(
+                "You are currently in 'Test Data' mode.\n"
+                "Instruction: Click the 'Hide' button to return to 'User Data' mode.\n\n"
+                "Do you want to switch back to 'User Data' mode?"
+            )
+        )
+        if response:
+            app.settings.test_data_btn_name.set('Test Data')
+            set_text(app.textarea.input, app.snapshot.user_data)
+        return
+
     user_data = extract_text(app.textarea.input)
     if not user_data:
         show_message_dialog(
             title="Missing Input Data",
-            error="Unable to build TextFSM template: no data provided."
+            error="Cannot build a TextFSM template because no input data was provided."
         )
         return
 
@@ -51,34 +82,50 @@ def build(app):
             user_data=user_data,
             result=factory.template,
             template=factory.template,
-            swich_app_template="",  # typo preserved from original
-            is_built=True,
+            is_built=True
         )
 
-        # Enable buttons and update UI
         app.settings.test_data_btn_name.set('Test Data')
-        app.buttons.save.config(state=ui.tk.NORMAL)
-        app.buttons.copy.config(state=ui.tk.NORMAL)
+        set_text(app.textarea.input, app.snapshot.user_data)
+
+        # Enable buttons and update UI
+        enable_buttons(app, save=True, copy=True, result=True)
+        if app.snapshot.test_data:
+            enable_buttons(app, test_data=True, python=True,
+                           unittest=True, pytest=True, execute=True)
         set_text(app.textarea.output, factory.template)
+        app.textarea.output.focus()
 
     except TemplateBuilderInvalidFormat as ex:
         show_message_dialog(
             title="Invalid TextFSM Template Format",
-            error=f"{type(ex).__name__}: {ex}"
+            error=f"Your snippet needs correction to produce a valid template.\n\n"
+                  f"{type(ex).__name__}: {ex}"
         )
+        return
     except Exception as ex:
         show_message_dialog(
             title="Template Generation Error",
-            error=f"{type(ex).__name__}: {ex}"
+            error=f"Your snippet needs correction to produce a valid template.\n\n"
+                  f"{type(ex).__name__}: {ex}"
         )
-        kwargs = app.get_template_args()
-        factory = TemplateBuilder(user_data=user_data, debug=True, **kwargs)
-        content = (f"# Please fix user_data to produce "
-                   f"a good template\n{factory.bad_template}")
-        set_text(app.textarea.output, content)
+        return
 
-    if app.snapshot.is_built:
-        app.buttons.result.config(state=ui.tk.NORMAL)
+
+def show_test_data(app):
+    """Handle the 'Test Data' button toggle."""
+
+    btn_name = app.settings.test_data_btn_name.get()
+    if btn_name == 'Hide':
+        # Show user snippet
+        app.settings.test_data_btn_name.set('Test Data')
+        app.snapshot.test_data = extract_text(app.textarea.input)
+        set_text(app.textarea.input, app.snapshot.user_data)
+    else:
+        # Show test data
+        app.settings.test_data_btn_name.set('Hide')
+        app.snapshot.user_data = extract_text(app.textarea.input)
+        set_text(app.textarea.input, app.snapshot.test_data)
 
 
 def open_file(app):
@@ -96,147 +143,117 @@ def open_file(app):
         content = file.read(filename)
 
         # Reset and update widgets
-        app.test_data_btn.config(state=ui.tk.NORMAL)
+        # enable_buttons(app, test_data=True)
         app.settings.test_data_btn_name.set('Test Data')
         set_text(app.textarea.output, '')
+        app.snapshot.update(user_data=content)
         app.snapshot.update(test_data=content)
 
         # Update title and input area
         set_text(app.textarea.input, content)
 
-        # Enable actions and set focus
-        app.buttons.copy.configure(state=ui.tk.NORMAL)
-        app.buttons.save.configure(state=ui.tk.NORMAL)
+        # Enable actions
+        enable_buttons(app, test_data=True, copy=True, save=True)
+
+        # Disable actions
+        disable_buttons(app, python=True, unittest=True, pytest=True, execute=True)
+
+        # set focus
         app.textarea.input.focus()
 
 
 def load_test_data_file(app):
-    """
-    Handle the "File > Load Test Data" menu action.
-    """
+    """Handle the "File > Load Test Data" menu action."""
 
     filetypes = [
         ('Text Files', '.txt', 'TEXT'),
         ('All Files', '*'),
     ]
     filename = filedialog.askopenfilename(filetypes=filetypes)
-    if filename:
-        # Read file content
-        content = file.read(filename)
-
-
-        # Reset and enable test data button
-        app.test_data_btn.config(state=ui.tk.NORMAL)
-        app.settings.test_data_btn_name.set('Test Data')
-
-        # Compare loaded content with current input
-        input_data = extract_text(app.textarea.input)
-        result_data = extract_text(app.textarea.output)
-
-        if content.strip() == input_data.strip() or input_data.strip() == '':
-            set_text(app.textarea.input, content)
-            if input_data.strip() == '':
-                pattern = r'#+\s+# *Template +is +generated '
-                if not re.match(pattern, result_data):
-                    set_text(app.textarea.output, '')
-                else:
-                    app.buttons.result.configure(state=ui.tk.NORMAL)
-            app.textarea.input.focus()
-        else:
-            set_text(app.textarea.output, content)
-
-        # Enable actions
-        app.buttons.copy.configure(state=ui.tk.NORMAL)
-        app.buttons.save.configure(state=ui.tk.NORMAL)
-
-        # Update snapshot and title
-        app.snapshot.update(
-            test_data=content
-        )
-
-
-def save(app):
-    """
-    Handle the 'Save As' button action for input or output text areas.
-    """
-
-    prev_widget_name = str(app.prev_widget)
-    is_input_area = prev_widget_name.endswith('.input_textarea')
-    widget = app.textarea.input if is_input_area else app.textarea.output
-    content = extract_text(widget)
-
-    # Default settings
-    is_mixed_result = '<<====================>>' in content
-    test_type = ''
-    is_unittest_or_pytest = False
-    extension = '.txt'
-
-    if is_input_area:
-        title = 'Save Input Text'
-        filetypes = [('Text Files', '*.txt'), ('All Files', '*')]
-    else:
-        # Detect script or template type
-        pattern_script = r'"+ *(?P<text>Python +(?P<test_type>\w+) +script) '
-        pattern_template = r'#+\s+# *Template +is +generated '
-        match = re.match(pattern_script, content, re.I)
-        if match:
-            title = 'Saving {}'.format(match.group('text')).title()
-            test_type = match.group('test_type')
-            is_unittest_or_pytest |= 'unittest' == test_type
-            is_unittest_or_pytest |= 'pytest' == test_type
-            filetypes = [('Python Files', '*.py'), ('All Files', '*')]
-            extension = '.py'
-        elif re.match(pattern_template, content, re.I) and not is_mixed_result:
-            title = 'Save TextFSM Template'
-            filetypes = [('TextFSM Files', '*.textfsm'), ('All Files', '*')]
-            extension = '.textfsm'
-        else:
-            title = 'Save Output Text'
-            filetypes = [('Text Files', '*.txt'), ('All Files', '*')]
-
-    # Prompt user for filename
-    filename = filedialog.asksaveasfilename(title=title, filetypes=filetypes)
     if not filename:
         return
 
-    node = PurePath(filename)
-    if not node.suffix:
-        node = node.with_suffix(extension)
+    content = file.read(filename)
+    app.snapshot.update(test_data=content)
 
-    # Enforce naming convention for unittest/pytest
-    if is_unittest_or_pytest:
-        name = node.name
-        if not name.startswith('test_'):
-            new_name = 'test_{}'.format(name)
-            response = show_message_dialog(
-                title='Unittest/Pytest Naming Convention',
-                yesnocancel=f"""
-                    {test_type.title()} - "{name}" does not follow the required naming convention: test_<filename>.
-                    Yes: Save using "{new_name}".
-                    No: Save using "{name}".
-                    Cancel: Do not save.
-                    Would you like to proceed?
-                """
-            )
-            if response is None:    # Cancel
-                return
-            else:   # Yes → rename
-                if response:
-                    node = node.with_name(new_name)
-    filename = str(node)
-    if not content.strip():
-        response = show_message_dialog(
-            title=f"{title} - Empty",
-            question=(
-                f'The content of "{filename}" is empty.\n'
-                'Do you want to save the empty file?'
-            )
+    # Reset and enable test data button
+    enable_buttons(app, test_data=True, save=True, copy=True)
+    if app.snapshot.is_built:
+        enable_buttons(app, result=True, python=True, unittest=True, pytest=True, execute=True)
+
+    btn_name = app.settings.test_data_btn_name.get()
+    if btn_name == "Hide":
+        set_text(app.textarea.input, content)
+        return
+
+    app.settings.test_data_btn_name.set('Hide')
+    input_data = extract_text(app.textarea.input)
+    if input_data.strip():
+        app.snapshot.update(user_data=input_data)
+    set_text(app.textarea.input, content)
+
+
+def save(app):
+    """Save content from the active input or output textarea based on its type."""
+    activate_user_data_mode(app)
+
+    widget_name = str(app.prev_widget)
+    saving_input  = widget_name.endswith(".input_textarea")
+    saving_output = widget_name.endswith(".output_textarea")
+
+    input_text  = extract_text(app.textarea.input)
+    output_text = extract_text(app.textarea.output)
+
+    # --- Save user snippet (input area) ---
+    if saving_input:
+        filename = filedialog.asksaveasfilename(
+            title="Save User Snippet",
+            filetypes=[("Text Files", "*.txt"), ("All Files", "*")]
         )
-    else:
-        response = 'yes'
+        if filename:
+            file.write(filename, input_text)
+        return
 
-    if response == 'yes':
-        file.write(filename, content)
+    # --- Save generated Python test script (output area) ---
+    if saving_output:
+        script_header = r'"""Python (?P<kind>\w+) script is generated by TextFSMGen CE"""'
+        match = re.match(script_header, output_text)
+
+        if match:
+            kind = match.group("kind")
+            kind = kind if kind in {"pytest", "unittest"} else "test"
+
+            filename = filedialog.asksaveasfilename(
+                title=f"Save Python {kind.title()} Script",
+                filetypes=[("Python File", "*.py"), ("All Files", "*")]
+            )
+            if filename:
+                file.write(filename, output_text)
+            return
+
+        # --- Save TextFSM template ---
+        template_header = r"#+\n# Template is generated by TextFSMGen CE"
+        if re.match(template_header, output_text):
+            filename = filedialog.asksaveasfilename(
+                title="Save TextFSM Template",
+                filetypes=[("TextFSM Files", "*.textfsm"), ("All Files", "*")]
+            )
+            if filename:
+                file.write(filename, output_text)
+            return
+
+    # --- Fallback: show instructions ---
+    show_message_dialog(
+        title="Save File Instructions",
+        info=(
+            "How to save a TextFSM template or test script:\n"
+            "  • Click 'Build' to generate the template\n"
+            "  • Or click 'Python' / 'Unittest' / 'Pytest' to generate a test script\n"
+            "  • Click the input or output window containing the text you want to save\n"
+            "  • Click 'Save' to write the file to disk"
+        )
+    )
+
 
 
 def clear(app):
@@ -254,14 +271,12 @@ def clear(app):
         clear_text(app.textarea.input)
         clear_text(app.textarea.output)
 
-        # Disable related buttons
-        disabled_buttons = [
-            app.buttons.save, app.buttons.copy,
-            app.test_data_btn, app.buttons.result
-        ]
+        # enable buttons
+        enable_buttons(app, open=True, paste=True, clear=True, build=True)
 
-        for button in disabled_buttons:
-            button.config(state=ui.tk.DISABLED)
+        # Disable related buttons
+        disable_buttons(app, test_data=True, save=True, copy=True,
+                        result=True, python=True, unittest=True, pytest=True, execute=True)
 
         # Reset input area state
         app.textarea.input.config(state=ui.tk.NORMAL)
@@ -303,53 +318,81 @@ def copy(app):
     app.root.update()
 
 
-def paste(app):
-    """
-    Handle the 'Paste' button action for text input areas.
-    """
+def paste(app) -> None:
+    """Paste clipboard text into the input area and update snapshot state."""
+    current_text = extract_text(app.textarea.input)
+    widget_name = str(app.prev_widget)
 
-    curr_data = extract_text(app.textarea.input)
-    prev_widget_name = str(app.prev_widget)
+    has_content = bool(current_text.strip())
+    is_input_area = widget_name.endswith(".input_textarea")
 
-    is_not_empty = len(curr_data.strip()) > 0
-    is_input_area = prev_widget_name.endswith('.input_textarea')
     try:
         data = app.root.clipboard_get()
-        if not data:
-            return
-
-        if is_input_area and is_not_empty:
-            # Paste into input area with existing content
-            if app.prev_widget.tag_ranges(ui.tk.SEL):
-                app.prev_widget.delete(ui.tk.SEL_FIRST, ui.tk.SEL_LAST)
-            index = app.prev_widget.index(ui.tk.INSERT)
-            app.prev_widget.insert(ui.tk.INSERT, data)
-            app.prev_widget.tag_add(ui.tk.SEL, index, f"{index}+{len(data)}c")
-            app.prev_widget.focus()
-        else:
-            # Paste as new test data
-            app.buttons.clear.invoke()
-            app.test_data_btn.config(state=ui.tk.NORMAL)
-            app.settings.test_data_btn_name.set('Test Data')
-            set_text(app.textarea.output, '')
-            app.snapshot.update(
-                test_data=data,
-                result=''
-            )
-
-            set_text(app.textarea.input, data)
-            app.textarea.input.focus()
-
-        # Enable actions
-        app.buttons.copy.configure(state=ui.tk.NORMAL)
-        app.buttons.save.configure(state=ui.tk.NORMAL)
-
-
-    except Exception as ex:     # noqa
+    except Exception:
         show_message_dialog(
             title="Clipboard Empty",
-            info="Cannot paste because the clipboard contains no data."
+            info="There is no text available to paste from the clipboard."
         )
+        return
+
+    if not data:
+        return
+
+    if not is_input_area:
+        enable_buttons(app, test_data=True, save=True, copy=True)
+        response = show_message_dialog(
+            title="Paste Options",
+            yesnocancel=(
+                "Choose how you want to paste the text:\n"
+                "  Y - Clear existing content and paste clipboard text.\n"
+                "  N - Paste clipboard text without clearing.\n"
+                "  C - Do not paste."
+            ),
+        )
+        if response is None:
+            return
+
+        app.snapshot.update(user_data=data, test_data=data)
+        if response:
+            app.buttons.get("clear").invoke()
+
+        set_text(app.textarea.input, data)
+        enable_buttons(app, test_data=True, save=True, copy=True)
+        app.settings.test_data_btn_name.set('Test Data')
+        app.textarea.input.focus()
+        return
+
+    btn_name = app.settings.test_data_btn_name.get()
+
+    if has_content:
+        # Paste into existing input area content
+        if app.textarea.input.tag_ranges(ui.tk.SEL):
+            app.textarea.input.delete(ui.tk.SEL_FIRST, ui.tk.SEL_LAST)
+
+        insert_pos = app.textarea.input.index(ui.tk.INSERT)
+        app.textarea.input.insert(ui.tk.INSERT, data)
+        app.textarea.input.tag_add(ui.tk.SEL, insert_pos, f"{insert_pos}+{len(data)}c")
+        app.textarea.input.focus()
+
+        updated = extract_text(app.textarea.input)
+        if btn_name == "Test Data":
+            app.snapshot.update(user_data=updated)
+        else:
+            app.snapshot.update(test_data=updated)
+
+    else:
+        # Paste as new test data
+        if app.snapshot.user_data or app.snapshot.test_data:
+            if btn_name == "Test Data":
+                app.snapshot.update(user_data=data)
+            else:
+                app.snapshot.update(test_data=data)
+        else:
+            app.snapshot.update(user_data=data, test_data=data)
+
+        set_text(app.textarea.input, data)
+        enable_buttons(app, test_data=True, save=True, copy=True)
+        app.textarea.input.focus()
 
 
 def create_python_script(app):
@@ -357,29 +400,12 @@ def create_python_script(app):
     Handle the 'Snippet' button action to generate a lightweight Python test script.
     """
     # --- Validate prerequisites ---
-    if app.snapshot.test_data is None:
-        show_message_dialog(
-            title="Missing Test Data",
-            error=(
-                "Cannot build a Python test script without test data.\n"
-                "Please use the Open or Paste button to load test data."
-            )
-        )
-        return
-
-    user_data = extract_text(app.textarea.input)
-    if not user_data:
-        show_message_dialog(
-            title="Missing User Data",
-            error=(
-                "Cannot build a Python test script without data.\n"
-                "Please provide or load the required input."
-            )
-        )
+    if not validate_prerequisites(app, kind="python"):
         return
 
     # --- Build snippet script ---
     try:
+        user_data = extract_text(app.textarea.input)
         kwargs = app.get_template_args()
         factory = TemplateBuilder(
             user_data=user_data,
@@ -390,12 +416,8 @@ def create_python_script(app):
 
         # Update snapshot and UI
         set_text(app.textarea.output, script)
+        app.textarea.output.focus()
 
-        # Update toggle and enable actions
-        app.settings.test_data_btn_name.set('Test Data')
-        app.snapshot.update(result=script)
-        app.buttons.save.config(state=ui.tk.NORMAL)
-        app.buttons.copy.config(state=ui.tk.NORMAL)
     except Exception as ex:
         show_message_dialog(
             title='TextFSM Generator Error',
@@ -407,31 +429,13 @@ def create_unittest_script(app):
     """
     Handle the 'Unittest' button action to generate a Python unittest script.
     """
-
     # --- Validate prerequisites ---
-    if app.snapshot.test_data is None:
-        show_message_dialog(
-            title="Missing Test Data",
-            error=(
-                "Cannot build a Python unittest script without test data.\n"
-                "Please use the Open or Paste button to load the required data."
-            )
-        )
-        return
-
-    user_data = extract_text(app.textarea.input)
-    if not user_data:
-        show_message_dialog(
-            title="Missing User Data",
-            error=(
-                "Cannot build a Python unittest script without data.\n"
-                "Please provide or load the required user data."
-            )
-        )
+    if not validate_prerequisites(app, kind="unittest"):
         return
 
     # --- Build unittest script ---
     try:
+        user_data = extract_text(app.textarea.input)
         kwargs = app.get_template_args()
         factory = TemplateBuilder(
             user_data=user_data,
@@ -442,12 +446,8 @@ def create_unittest_script(app):
 
         # Update snapshot and UI
         set_text(app.textarea.output, script)
+        app.textarea.output.focus()
 
-        # Update toggle and enable actions
-        app.settings.test_data_btn_name.set('Test Data')
-        app.snapshot.update(result=script)
-        app.buttons.save.config(state=ui.tk.NORMAL)
-        app.buttons.copy.config(state=ui.tk.NORMAL)
     except Exception as ex:
         show_message_dialog(
             title='TextFSM Generator Error',
@@ -456,34 +456,15 @@ def create_unittest_script(app):
 
 
 def create_pytest_script(app):
-    """
-    Handle the 'Pytest' button action to generate a Python pytest script.
-    """
+    """Handle the 'Pytest' button action to generate a Python pytest script."""
 
     # --- Validate prerequisites ---
-    if app.snapshot.test_data is None:
-        show_message_dialog(
-            title="Missing Test Data",
-            error=(
-                "Cannot build a Python pytest script without test data.\n"
-                "Please use the Open or Paste button to load the required data."
-            )
-        )
-        return
-
-    user_data = extract_text(app.textarea.input)
-    if not user_data:
-        show_message_dialog(
-            title="Missing User Data",
-            error=(
-                "Cannot build a Python pytest script without data.\n"
-                "Please provide or load the required user data."
-            )
-        )
+    if not validate_prerequisites(app, kind="pytest"):
         return
 
     # --- Build pytest script ---
     try:
+        user_data = extract_text(app.textarea.input)
         kwargs = app.get_template_args()
         factory = TemplateBuilder(
             user_data=user_data,
@@ -494,12 +475,8 @@ def create_pytest_script(app):
 
         # Update snapshot and UI
         set_text(app.textarea.output, script)
+        app.textarea.output.focus()
 
-        # Update toggle and enable actions
-        app.settings.test_data_btn_name.set('Test Data')
-        app.snapshot.update(result=script)
-        app.buttons.save.config(state=ui.tk.NORMAL)
-        app.buttons.copy.config(state=ui.tk.NORMAL)
     except Exception as ex:
         show_message_dialog(
             title='TextFSM Generator Error',
@@ -507,54 +484,57 @@ def create_pytest_script(app):
         )
 
 
-def test_data_btn(app):
-    """
-    Handle the 'Test Data' button toggle.
-    """
-
-    if app.snapshot.test_data is None:
-        show_message_dialog(
-            title='No Test Data',
-            error="Please use Open or Paste button to load test data"
-        )
+def execute_test_script(app):
+    # --- Validate prerequisites ---
+    if not validate_prerequisites(app, kind="result"):
         return
 
-    name = app.settings.test_data_btn_name.get()
-    if name == 'Test Data':
-        # Show test data
-        app.settings.test_data_btn_name.set('Hide')
-        set_text(app.textarea.output, app.snapshot.test_data)
-    else:
-        # Restore result view
-        app.settings.test_data_btn_name.set('Test Data')
-        set_text(app.textarea.output, app.snapshot.result)
+    out_text = extract_text(app.textarea.output)
+
+    pattern = r'"""Python (?P<kind>\w+) script is generated by TextFSMGen CE"""'
+    match = re.match(pattern, out_text)
+
+    if match:
+        kind = match.group("kind")
+        set_text(app.textarea.output,
+                 f"Python {kind} execution will be implemented later.")
+        return
+
+    response = show_message_dialog(
+        title="Execution Test Script Options",
+        yesnocancel=(
+            "Choose how you want to execute the test:\n"
+            "  Y - Run pytest\n"
+            "  N - Run unittest\n"
+            "  C - Do not execute any test\n\n"
+            "-------------------------------\n"
+            "Note: To execute a Python test script:\n"
+            "  • Click 'Python' to generate the script\n"
+            "  • Click 'Execute' to run the Python test\n"
+        ),
+    )
+    if response is None:
+        return
+    if response == "Yes":
+        set_text(app.textarea.output,
+                 f"Python pytest execution will be implemented later.")
+        return
+
+    set_text(app.textarea.output,
+             f"Python unittest execution will be implemented later.")
 
 
-def show_parsed_result(app):
+def show_result(app):
     """
     Handle the 'Result' button action to parse test data with a TextFSM template.
     """
-
     # --- Validate prerequisites ---
-    if app.snapshot.test_data is None:
-        show_message_dialog(
-            title='No Test Data',
-            error=("Can NOT parse text without "
-                   "test data.\nPlease use Open or Paste button "
-                   "to load test data")
-        )
-        return
-
-    user_data = extract_text(app.textarea.input)
-    if not user_data:
-        show_message_dialog(
-            title='Empty Data',
-            error="Can NOT build regex pattern without data."
-        )
+    if not validate_prerequisites(app, kind="result"):
         return
 
     # --- Build or reuse template ---
     try:
+        user_data = extract_text(app.textarea.input)
         kwargs = app.get_template_args()
         factory = TemplateBuilder(user_data=user_data, **kwargs)
         app.snapshot.update(
@@ -577,32 +557,123 @@ def show_parsed_result(app):
     parser = TextFSM(stream)
     rows = parser.ParseTextToDicts(app.snapshot.test_data)
 
-    # --- Construct result string ---
-    result = ''
-    test_data = app.snapshot.test_data
-    divider_fmt = '\n\n<<{}>>\n\n{{}}'.format('=' * 20)
+    if not rows:
+        show_message_dialog(
+            title="Incorrect TextFSM Template or Test Data",
+            error=(
+                "The parsed result is empty. This may indicate "
+                "an incorrect TextFSM template or invalid test data."
+            ),
+        )
+        return
 
+    # --- Construct result string ---
+    test_data = app.snapshot.test_data
     result_sections = []
 
     if app.settings.template.get() and template:
-        result_sections.append('Template')
-        result += divider_fmt.format(template) if result else template
+        result_sections.append(template)
+        result_sections.append("\n<<====================>>\n")
 
     if app.settings.test_data.get() and test_data:
-        result_sections.append('Test Data')
-        result += divider_fmt.format(test_data) if result else test_data
+        result_sections.append(test_data)
+        result_sections.append("\n<<====================>>\n")
 
-    result_sections.append('Test Result')
-    if rows and app.settings.tabular.get():
-        tabular_data = get_data_as_tabular(rows)
-        result += divider_fmt.format \
-            (tabular_data) if result else tabular_data
+    if app.settings.tabular.get():
+        result_sections.append(get_data_as_tabular(rows))
     else:
         pretty_data = pformat(rows)
-        result += divider_fmt.format(pretty_data) if result else pretty_data
+        result_sections.append(pretty_data)
 
-    # --- Update snapshot and UI ---
-    app.settings.test_data_btn_name.set('Test Data')
-    app.snapshot.update(result=result)
+    set_text(app.textarea.output, "\n".join(result_sections))
 
-    set_text(app.textarea.output, result)
+
+def disable_buttons(app, **states) -> None:
+    """Disable selected UI buttons based on keyword flags."""
+    for name, flag in states.items():
+        button = app.buttons.get(name)
+        if flag and isinstance(button, ui.Button):
+            button.config(state="disabled")
+
+
+def enable_buttons(app, **states) -> None:
+    """Enable selected UI buttons based on keyword flags."""
+    for name, flag in states.items():
+        button = app.buttons.get(name)
+        if flag and isinstance(button, ui.Button):
+            button.config(state="normal")
+
+
+def has_user_data(app, title="Missing User Data", msg=""):
+    """Validate that user data exists; show guidance dialog if missing."""
+    if not app.snapshot.user_data:
+        show_message_dialog(
+            title=title,
+            error=(
+                f"{msg}\n\n" if msg else ""
+                "How to add user data:\n"
+                "  Option 1: File > Open\n"
+                "  Option 2: Click the 'Open' button to load data from a file\n"
+                "  Option 3:\n"
+                "    • If you see a 'Test Data' button, you are already in 'User Data' mode\n"
+                "    • Otherwise, click the 'Hide' button to switch to 'User Data' mode\n"
+                "    • Enter text manually or use the Paste button"
+            )
+        )
+        return False
+    return True
+
+
+def has_test_data(app, title="Missing Test Data", msg=""):
+    """Validate that test data exists; show guidance dialog if missing."""
+    if not app.snapshot.test_data:
+        show_message_dialog(
+            title=title,
+            error=(
+                f"{msg}\n\n" if msg else ""
+                "How to add test data:\n"
+                "  Option 1: File > Load Test Data\n"
+                "  Option 2:\n"
+                "    • If you see a 'Hide' button, you are already in 'Test Data' mode\n"
+                "    • Otherwise, click the 'Test Data' button to switch to 'Test Data' mode\n"
+                "    • Enter text manually or use the Paste button"
+            )
+        )
+        return False
+    return True
+
+
+def activate_user_data_mode(app):
+    """Switch to 'User Data' mode and sync snapshot/user data state."""
+    current_label = app.settings.test_data_btn_name.get()
+    if current_label == "Test Data":
+        return
+
+    user_input = extract_text(app.textarea.input)
+    app.snapshot.update(test_data=user_input)
+
+    set_text(app.textarea.input, app.snapshot.user_data)
+    app.settings.test_data_btn_name.set("Test Data")
+
+
+def validate_prerequisites(app, kind):
+    """Validate required test and user data before building scripts or templates."""
+    messages = {
+        "python":  "Cannot build a Python test script without %s data.",
+        "unittest": "Cannot build a Python unittest script without %s data.",
+        "pytest":   "Cannot build a Python pytest script without %s data.",
+        "result":   "Cannot build a TextFSM template and parse test data without %s data.",
+        "execute": "Cannot execute a generated test script without %s data.",
+    }
+
+    template = messages.get(kind)
+    if not template:
+        return False
+
+    activate_user_data_mode(app)
+
+    for name, func in (("user", has_user_data), ("test", has_test_data)):
+        if not func(app, msg=template % name):
+            return False
+
+    return True

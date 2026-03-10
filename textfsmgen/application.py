@@ -67,7 +67,7 @@ class Application:
 
         self.buttons = DotObject(
             test_data=None,
-            open_file=None,
+            open=None,
             clear=None,
             paste=None,
             save=None,
@@ -79,7 +79,7 @@ class Application:
             python=None,
             unittest=None,
             pytest=None,
-            run=None
+            execute=None
         )
 
         self.settings = DotObject(
@@ -98,14 +98,11 @@ class Application:
         self.settings.confirm.set(True)
 
         self.snapshot = DotObject(
-            title="",
             user_data="",
-            test_data=None,
+            test_data="",
             result="",
             template="",
             is_built=False,
-            input_textarea="",
-            output_textarea="",
         )
 
     def get_template_args(self):

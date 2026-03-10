@@ -87,7 +87,7 @@ class TestData:
         """Check license info."""
         assert "TextFSM Generator License" in config.license_name
         assert "2022" in config.copyright_text
-        assert isinstance(config.license, str)
+        assert isinstance(config.license_text, str)
 
     @pytest.mark.parametrize(
         "pkg",
