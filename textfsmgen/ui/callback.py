@@ -29,12 +29,12 @@ from textfsmgen.ui.common import (
 from tkinter import filedialog
 
 
-def build_btn(app):
+def build(app):
     """
     Handle the 'Build' button action to generate a TextFSM template.
     """
 
-    user_data = extract_text(app.input_textarea)
+    user_data = extract_text(app.textarea.input)
     if not user_data:
         show_message_dialog(
             title="Missing Input Data",
@@ -56,10 +56,10 @@ def build_btn(app):
         )
 
         # Enable buttons and update UI
-        app.test_data_btn_var.set('Test Data')
-        app.save_as_btn.config(state=ui.tk.NORMAL)
-        app.copy_text_btn.config(state=ui.tk.NORMAL)
-        set_text(app.output_textarea, factory.template)
+        app.settings.test_data_btn_name.set('Test Data')
+        app.buttons.save.config(state=ui.tk.NORMAL)
+        app.buttons.copy.config(state=ui.tk.NORMAL)
+        set_text(app.textarea.output, factory.template)
 
     except TemplateBuilderInvalidFormat as ex:
         show_message_dialog(
@@ -75,10 +75,10 @@ def build_btn(app):
         factory = TemplateBuilder(user_data=user_data, debug=True, **kwargs)
         content = (f"# Please fix user_data to produce "
                    f"a good template\n{factory.bad_template}")
-        set_text(app.output_textarea, content)
+        set_text(app.textarea.output, content)
 
     if app.snapshot.is_built:
-        app.result_btn.config(state=ui.tk.NORMAL)
+        app.buttons.result.config(state=ui.tk.NORMAL)
 
 
 def open_file(app):
@@ -97,17 +97,17 @@ def open_file(app):
 
         # Reset and update widgets
         app.test_data_btn.config(state=ui.tk.NORMAL)
-        app.test_data_btn_var.set('Test Data')
-        set_text(app.output_textarea, '')
+        app.settings.test_data_btn_name.set('Test Data')
+        set_text(app.textarea.output, '')
         app.snapshot.update(test_data=content)
 
         # Update title and input area
-        set_text(app.input_textarea, content)
+        set_text(app.textarea.input, content)
 
         # Enable actions and set focus
-        app.copy_text_btn.configure(state=ui.tk.NORMAL)
-        app.save_as_btn.configure(state=ui.tk.NORMAL)
-        app.input_textarea.focus()
+        app.buttons.copy.configure(state=ui.tk.NORMAL)
+        app.buttons.save.configure(state=ui.tk.NORMAL)
+        app.textarea.input.focus()
 
 
 def load_test_data_file(app):
@@ -127,27 +127,27 @@ def load_test_data_file(app):
 
         # Reset and enable test data button
         app.test_data_btn.config(state=ui.tk.NORMAL)
-        app.test_data_btn_var.set('Test Data')
+        app.settings.test_data_btn_name.set('Test Data')
 
         # Compare loaded content with current input
-        input_data = extract_text(app.input_textarea)
-        result_data = extract_text(app.output_textarea)
+        input_data = extract_text(app.textarea.input)
+        result_data = extract_text(app.textarea.output)
 
         if content.strip() == input_data.strip() or input_data.strip() == '':
-            set_text(app.input_textarea, content)
+            set_text(app.textarea.input, content)
             if input_data.strip() == '':
                 pattern = r'#+\s+# *Template +is +generated '
                 if not re.match(pattern, result_data):
-                    set_text(app.output_textarea, '')
+                    set_text(app.textarea.output, '')
                 else:
-                    app.result_btn.configure(state=ui.tk.NORMAL)
-            app.input_textarea.focus()
+                    app.buttons.result.configure(state=ui.tk.NORMAL)
+            app.textarea.input.focus()
         else:
-            set_text(app.output_textarea, content)
+            set_text(app.textarea.output, content)
 
         # Enable actions
-        app.copy_text_btn.configure(state=ui.tk.NORMAL)
-        app.save_as_btn.configure(state=ui.tk.NORMAL)
+        app.buttons.copy.configure(state=ui.tk.NORMAL)
+        app.buttons.save.configure(state=ui.tk.NORMAL)
 
         # Update snapshot and title
         app.snapshot.update(
@@ -155,14 +155,14 @@ def load_test_data_file(app):
         )
 
 
-def save_as_btn(app):
+def save(app):
     """
     Handle the 'Save As' button action for input or output text areas.
     """
 
     prev_widget_name = str(app.prev_widget)
-    is_input_area = prev_widget_name.endswith('.main_input_textarea')
-    widget = app.input_textarea if is_input_area else app.output_textarea
+    is_input_area = prev_widget_name.endswith('.input_textarea')
+    widget = app.textarea.input if is_input_area else app.textarea.output
     content = extract_text(widget)
 
     # Default settings
@@ -239,32 +239,32 @@ def save_as_btn(app):
         file.write(filename, content)
 
 
-def clear_text_btn(app):
+def clear(app):
     """
     Handle the 'Clear' button action for text widgets.
     """
 
     prev_widget_name = str(app.prev_widget)
-    is_input_area = prev_widget_name.endswith('.main_input_textarea')
+    is_input_area = prev_widget_name.endswith('.input_textarea')
     # --- Input text area or other ---
     if is_input_area and app.prev_widget.tag_ranges(ui.tk.SEL):
         app.prev_widget.delete(ui.tk.SEL_FIRST, ui.tk.SEL_LAST)
     else:
         # Clear input and result areas
-        clear_text(app.input_textarea)
-        clear_text(app.output_textarea)
+        clear_text(app.textarea.input)
+        clear_text(app.textarea.output)
 
         # Disable related buttons
         disabled_buttons = [
-            app.save_as_btn, app.copy_text_btn,
-            app.test_data_btn, app.result_btn
+            app.buttons.save, app.buttons.copy,
+            app.test_data_btn, app.buttons.result
         ]
 
         for button in disabled_buttons:
             button.config(state=ui.tk.DISABLED)
 
         # Reset input area state
-        app.input_textarea.config(state=ui.tk.NORMAL)
+        app.textarea.input.config(state=ui.tk.NORMAL)
 
         # Reset snapshot attributes
         app.snapshot.update(
@@ -276,27 +276,26 @@ def clear_text_btn(app):
         )
 
         # Reset UI variables
-        app.test_data_btn_var.set('Test Data')
-        app.build_btn_var.set('Build')
+        app.settings.test_data_btn_name.set('Test Data')
         # app.root.clipboard_clear()
 
-    app.input_textarea.focus()
+    app.textarea.input.focus()
 
 
-def copy_text_btn(app):
+def copy(app):
     """
     Handle the 'Copy' button action for text widgets.
     """
 
     prev_widget_name = str(app.prev_widget)
-    is_input_area = prev_widget_name.endswith('.main_input_textarea')
+    is_input_area = prev_widget_name.endswith('.input_textarea')
     if is_input_area:
         if app.prev_widget.tag_ranges(ui.tk.SEL):
             content = app.prev_widget.selection_get()
         else:
-            content = extract_text(app.input_textarea)
+            content = extract_text(app.textarea.input)
     else:
-        content = extract_text(app.output_textarea)
+        content = extract_text(app.textarea.output)
 
     # Update UI and clipboard
     app.root.clipboard_clear()
@@ -304,16 +303,16 @@ def copy_text_btn(app):
     app.root.update()
 
 
-def paste_text_btn(app):
+def paste(app):
     """
     Handle the 'Paste' button action for text input areas.
     """
 
-    curr_data = extract_text(app.input_textarea)
+    curr_data = extract_text(app.textarea.input)
     prev_widget_name = str(app.prev_widget)
 
     is_not_empty = len(curr_data.strip()) > 0
-    is_input_area = prev_widget_name.endswith('.main_input_textarea')
+    is_input_area = prev_widget_name.endswith('.input_textarea')
     try:
         data = app.root.clipboard_get()
         if not data:
@@ -329,21 +328,21 @@ def paste_text_btn(app):
             app.prev_widget.focus()
         else:
             # Paste as new test data
-            app.clear_text_btn.invoke()
+            app.buttons.clear.invoke()
             app.test_data_btn.config(state=ui.tk.NORMAL)
-            app.test_data_btn_var.set('Test Data')
-            set_text(app.output_textarea, '')
+            app.settings.test_data_btn_name.set('Test Data')
+            set_text(app.textarea.output, '')
             app.snapshot.update(
                 test_data=data,
                 result=''
             )
 
-            set_text(app.input_textarea, data)
-            app.input_textarea.focus()
+            set_text(app.textarea.input, data)
+            app.textarea.input.focus()
 
         # Enable actions
-        app.copy_text_btn.configure(state=ui.tk.NORMAL)
-        app.save_as_btn.configure(state=ui.tk.NORMAL)
+        app.buttons.copy.configure(state=ui.tk.NORMAL)
+        app.buttons.save.configure(state=ui.tk.NORMAL)
 
 
     except Exception as ex:     # noqa
@@ -353,7 +352,7 @@ def paste_text_btn(app):
         )
 
 
-def snippet_btn(app):
+def create_python_script(app):
     """
     Handle the 'Snippet' button action to generate a lightweight Python test script.
     """
@@ -368,7 +367,7 @@ def snippet_btn(app):
         )
         return
 
-    user_data = extract_text(app.input_textarea)
+    user_data = extract_text(app.textarea.input)
     if not user_data:
         show_message_dialog(
             title="Missing User Data",
@@ -390,13 +389,13 @@ def snippet_btn(app):
         script = factory.create_python_test()
 
         # Update snapshot and UI
-        set_text(app.output_textarea, script)
+        set_text(app.textarea.output, script)
 
         # Update toggle and enable actions
-        app.test_data_btn_var.set('Test Data')
+        app.settings.test_data_btn_name.set('Test Data')
         app.snapshot.update(result=script)
-        app.save_as_btn.config(state=ui.tk.NORMAL)
-        app.copy_text_btn.config(state=ui.tk.NORMAL)
+        app.buttons.save.config(state=ui.tk.NORMAL)
+        app.buttons.copy.config(state=ui.tk.NORMAL)
     except Exception as ex:
         show_message_dialog(
             title='TextFSM Generator Error',
@@ -404,7 +403,7 @@ def snippet_btn(app):
         )
 
 
-def unittest_btn(app):
+def create_unittest_script(app):
     """
     Handle the 'Unittest' button action to generate a Python unittest script.
     """
@@ -420,7 +419,7 @@ def unittest_btn(app):
         )
         return
 
-    user_data = extract_text(app.input_textarea)
+    user_data = extract_text(app.textarea.input)
     if not user_data:
         show_message_dialog(
             title="Missing User Data",
@@ -442,13 +441,13 @@ def unittest_btn(app):
         script = factory.create_unittest()
 
         # Update snapshot and UI
-        set_text(app.output_textarea, script)
+        set_text(app.textarea.output, script)
 
         # Update toggle and enable actions
-        app.test_data_btn_var.set('Test Data')
+        app.settings.test_data_btn_name.set('Test Data')
         app.snapshot.update(result=script)
-        app.save_as_btn.config(state=ui.tk.NORMAL)
-        app.copy_text_btn.config(state=ui.tk.NORMAL)
+        app.buttons.save.config(state=ui.tk.NORMAL)
+        app.buttons.copy.config(state=ui.tk.NORMAL)
     except Exception as ex:
         show_message_dialog(
             title='TextFSM Generator Error',
@@ -456,7 +455,7 @@ def unittest_btn(app):
         )
 
 
-def pytest_btn(app):
+def create_pytest_script(app):
     """
     Handle the 'Pytest' button action to generate a Python pytest script.
     """
@@ -472,7 +471,7 @@ def pytest_btn(app):
         )
         return
 
-    user_data = extract_text(app.input_textarea)
+    user_data = extract_text(app.textarea.input)
     if not user_data:
         show_message_dialog(
             title="Missing User Data",
@@ -494,13 +493,13 @@ def pytest_btn(app):
         script = factory.create_pytest()
 
         # Update snapshot and UI
-        set_text(app.output_textarea, script)
+        set_text(app.textarea.output, script)
 
         # Update toggle and enable actions
-        app.test_data_btn_var.set('Test Data')
+        app.settings.test_data_btn_name.set('Test Data')
         app.snapshot.update(result=script)
-        app.save_as_btn.config(state=ui.tk.NORMAL)
-        app.copy_text_btn.config(state=ui.tk.NORMAL)
+        app.buttons.save.config(state=ui.tk.NORMAL)
+        app.buttons.copy.config(state=ui.tk.NORMAL)
     except Exception as ex:
         show_message_dialog(
             title='TextFSM Generator Error',
@@ -520,18 +519,18 @@ def test_data_btn(app):
         )
         return
 
-    name = app.test_data_btn_var.get()
+    name = app.settings.test_data_btn_name.get()
     if name == 'Test Data':
         # Show test data
-        app.test_data_btn_var.set('Hide')
-        set_text(app.output_textarea, app.snapshot.test_data)
+        app.settings.test_data_btn_name.set('Hide')
+        set_text(app.textarea.output, app.snapshot.test_data)
     else:
         # Restore result view
-        app.test_data_btn_var.set('Test Data')
-        set_text(app.output_textarea, app.snapshot.result)
+        app.settings.test_data_btn_name.set('Test Data')
+        set_text(app.textarea.output, app.snapshot.result)
 
 
-def result_btn(app):
+def show_parsed_result(app):
     """
     Handle the 'Result' button action to parse test data with a TextFSM template.
     """
@@ -546,7 +545,7 @@ def result_btn(app):
         )
         return
 
-    user_data = extract_text(app.input_textarea)
+    user_data = extract_text(app.textarea.input)
     if not user_data:
         show_message_dialog(
             title='Empty Data',
@@ -603,7 +602,7 @@ def result_btn(app):
         result += divider_fmt.format(pretty_data) if result else pretty_data
 
     # --- Update snapshot and UI ---
-    app.test_data_btn_var.set('Test Data')
+    app.settings.test_data_btn_name.set('Test Data')
     app.snapshot.update(result=result)
 
-    set_text(app.output_textarea, result)
+    set_text(app.textarea.output, result)

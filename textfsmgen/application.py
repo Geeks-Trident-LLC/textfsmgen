@@ -28,72 +28,62 @@ class Application:
 
     def __init__(self):
         # standardize tkinter widget for macOS, Linux, and Window operating system
-        self.Frame = ttk.Frame
-        self.TextArea = tk.Text
-        self.PanedWindow = ttk.PanedWindow
-
-        self.root = tk.Tk()
-        self.root.geometry('900x600+100+100')
-        self.root.minsize(200, 200)
-        self.root.option_add('*tearOff', False)
-
-        self.root.title('TextFSM Generator CE')
-        ui.set_window_icon(self.root)
+        self.root = None
 
         # tkinter widgets for main layout
         self.paned_window = None
-        self.input_frame = None
-        self.buttons_frame = None
-        self.backup_frame = None
-        self.output_frame = None
-
-        self.input_textarea = None
-        self.output_textarea = None
-
-        self.open_file_btn = None
-        self.clear_text_btn = None
-        self.paste_text_btn = None
-        self.save_as_btn = None
-        self.copy_text_btn = None
-
-        self.build_btn = None
-        self.snippet_btn = None
-        self.unittest_btn = None
-        self.pytest_btn = None
-        self.test_data_btn = None
-        self.result_btn = None
+        self.frames = None
+        self.textarea = None
+        self.buttons = None
 
         self.curr_widget = None
         self.prev_widget = None
-        self.root.bind("<Button-1>", lambda e: self.callback_focus(e))
 
         # datastore
-
-        self.snapshot = DotObject()
-        self.snapshot.update(
-            title="",
-            stored_title="",
-            user_data="",
-            test_data=None,
-            result="",
-            template="",
-            is_built=False,
-            curr_app="main_app",
-            switch_app_template="",
-            switch_app_user_data="",
-            switch_app_result_data="",
-            main_input_textarea="",
-            main_result_textarea="",
-        )
-
-        # variables
-        self.build_btn_var = tk.StringVar()
-        self.build_btn_var.set('Build')
-        self.test_data_btn_var = tk.StringVar()
-        self.test_data_btn_var.set('Test Data')
+        self.snapshot = None
 
         # settings var
+        self.settings = None
+
+        # method call
+        self.build_main_window()
+        menu.create(self)
+        self.build_main_layout()
+        self.build_input_textarea()
+        controls.build_action_buttons(self)
+        self.build_output_textarea()
+
+    def _init(self):
+        self.frames = DotObject(
+            input=None,
+            buttons=None,
+            output=None
+        )
+
+        self.textarea = DotObject(
+            input=None,
+            output=None,
+        )
+
+        self.buttons = DotObject(
+            test_data=None,
+            open_file=None,
+            clear=None,
+            paste=None,
+            save=None,
+            copy=None,
+
+            build=None,
+            result=None,
+
+            python=None,
+            unittest=None,
+            pytest=None,
+            run=None
+        )
+
         self.settings = DotObject(
+            test_data_btn_name=tk.StringVar(),
             author=tk.StringVar(),
             email=tk.StringVar(),
             company=tk.StringVar(),
@@ -103,15 +93,20 @@ class Application:
             tabular=tk.BooleanVar(),
             confirm=tk.BooleanVar(),
         )
+        self.settings.test_data_btn_name.set("Test Data")
         self.settings.tabular.set(True)
         self.settings.confirm.set(True)
 
-        # method call
-        menu.create(self)
-        self.build_frame()
-        self.build_textarea()
-        controls.build_action_buttons(self)
-        self.build_result()
+        self.snapshot = DotObject(
+            title="",
+            user_data="",
+            test_data=None,
+            result="",
+            template="",
+            is_built=False,
+            input_textarea="",
+            output_textarea="",
+        )
 
     def get_template_args(self):
         return dict(
@@ -121,21 +116,8 @@ class Application:
             description=self.settings.description.get()
         )
 
-    def shift_to_backup_app(self):
-        """
-        Switch the application context from the main app to the backup app.
-        """
-        # Update snapshot to reflect active app
-        self.snapshot.update(curr_app='backup_app')
-
-        # Reconfigure GUI layout
-        self.paned_window.remove(self.buttons_frame)
-        self.paned_window.insert(1, self.backup_frame)
-
     def callback_focus(self, event):
-        """
-        Handle focus change when a new widget is selected.
-        """
+        """Handle focus change when a new widget is selected."""
 
         try:
             widget = getattr(event, "widget", None)
@@ -145,101 +127,109 @@ class Application:
         except Exception as ex:     # noqa
             print(f"... skip {getattr(event, 'widget', event)}")
 
-    def build_frame(self):
-        """
-        Construct the main layout frames for the TextFSM generator GUI.
-        """
+    def build_main_window(self):
+        self.root = tk.Tk()
+        self.root.geometry('900x600+100+100')
+        self.root.minsize(200, 200)
+        self.root.option_add('*tearOff', False)
+
+        self.root.title('TextFSM Generator CE')
+        ui.set_window_icon(self.root)
+        self.root.bind("<Button-1>", lambda e: self.callback_focus(e))
+
+        self._init()
+
+    def build_main_layout(self) -> None:
+        """Create the primary layout frames and attach them to the main paned window."""
+        # Main vertical paned container
 
         # Create main paned window
-        self.paned_window = self.PanedWindow(self.root, orient=tk.VERTICAL)
+        self.paned_window = ui.PanedWindow(self.root, orient=tk.VERTICAL)
         self.paned_window.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
 
         # Define frames
-        self.input_frame = self.Frame(
+        self.frames.input = ui.Frame(
             self.paned_window, width=600, height=300, relief=tk.RIDGE
         )
-        self.buttons_frame = self.Frame(
+        self.frames.buttons = ui.Frame(
             self.paned_window, width=600, height=10, relief=tk.RIDGE
         )
-        self.backup_frame = self.Frame(
-            self.paned_window, width=600, height=10, relief=tk.RIDGE
-        )
-        self.output_frame = self.Frame(
+        self.frames.output = ui.Frame(
             self.paned_window, width=600, height=350, relief=tk.RIDGE
         )
 
         # Add frames to paned window with weights
-        self.paned_window.add(self.input_frame, weight=2)
-        self.paned_window.add(self.buttons_frame)
-        self.paned_window.add(self.output_frame, weight=7)
+        self.paned_window.add(self.frames.input, weight=3)
+        self.paned_window.add(self.frames.buttons)
+        self.paned_window.add(self.frames.output, weight=7)
 
-    def build_textarea(self):
+    def build_input_textarea(self):
         """
         Construct the main input text area for the TextFSM generator GUI.
         """
         # Configure grid for resizing
-        self.input_frame.rowconfigure(0, weight=1)
-        self.input_frame.columnconfigure(0, weight=1)
+        self.frames.input.rowconfigure(0, weight=1)
+        self.frames.input.columnconfigure(0, weight=1)
 
         # Create main input text area
-        self.input_textarea = self.TextArea(
-            self.input_frame, width=20, height=5, wrap='none',
-            name='main_input_textarea',
+        self.textarea.input = ui.TextArea(
+            self.frames.input, width=20, height=5, wrap='none',
+            name='input_textarea',
         )
-        self.input_textarea.grid(row=0, column=0, sticky='nswe')
+        self.textarea.input.grid(row=0, column=0, sticky='nswe')
 
         # Add vertical scrollbar
         vscrollbar = ttk.Scrollbar(
-            self.input_frame, orient=tk.VERTICAL,
-            command=self.input_textarea.yview
+            self.frames.input, orient=tk.VERTICAL,
+            command=self.textarea.input.yview
         )
         vscrollbar.grid(row=0, column=1, sticky='ns')
 
         # Add horizontal scrollbar
         hscrollbar = ttk.Scrollbar(
-            self.input_frame, orient=tk.HORIZONTAL,
-            command=self.input_textarea.xview
+            self.frames.input, orient=tk.HORIZONTAL,
+            command=self.textarea.input.xview
         )
         hscrollbar.grid(row=1, column=0, sticky='ew')
 
         # Link scrollbars to text area
-        self.input_textarea.config(
+        self.textarea.input.config(
             yscrollcommand=vscrollbar.set,
             xscrollcommand=hscrollbar.set
         )
 
-    def build_result(self):
+    def build_output_textarea(self):
         """
         Construct the result display area for the application.
         """
 
         # Create result text area
-        self.output_frame.rowconfigure(0, weight=1)
-        self.output_frame.columnconfigure(0, weight=1)
+        self.frames.output.rowconfigure(0, weight=1)
+        self.frames.output.columnconfigure(0, weight=1)
 
         # Create result text area
-        self.output_textarea = self.TextArea(
-            self.output_frame, width=20, height=5, wrap='none',
+        self.textarea.output = ui.TextArea(
+            self.frames.output, width=20, height=5, wrap='none',
             state=tk.DISABLED,
-            name='main_result_textarea'
+            name='output_textarea'
         )
-        self.output_textarea.grid(row=0, column=0, sticky='nswe')
+        self.textarea.output.grid(row=0, column=0, sticky='nswe')
 
         # Attach scrollbars
         vscrollbar = ttk.Scrollbar(
-            self.output_frame, orient=tk.VERTICAL,
-            command=self.output_textarea.yview
+            self.frames.output, orient=tk.VERTICAL,
+            command=self.textarea.output.yview
         )
         vscrollbar.grid(row=0, column=1, sticky='ns')
 
         hscrollbar = ttk.Scrollbar(
-            self.output_frame, orient=tk.HORIZONTAL,
-            command=self.output_textarea.xview
+            self.frames.output, orient=tk.HORIZONTAL,
+            command=self.textarea.output.xview
         )
         hscrollbar.grid(row=1, column=0, sticky='ew')
 
         # Link scrollbars to text area
-        self.output_textarea.config(
+        self.textarea.output.config(
             yscrollcommand=vscrollbar.set, xscrollcommand=hscrollbar.set
         )
 

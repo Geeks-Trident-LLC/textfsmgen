@@ -39,8 +39,8 @@ class RewriteSync:
         self.initial_output = ""
         self.is_application_app = is_application_app(app)
         if self.is_application_app:
-            self.initial_input = extract_text(app.user_textarea)
-            self.initial_output = extract_text(app.output_textarea)
+            self.initial_input = extract_text(app.self.textarea.input)
+            self.initial_output = extract_text(app.self.textarea.output)
 
     def __bool__(self):
         return self.is_application_app
@@ -54,8 +54,8 @@ class RewriteSync:
         if not is_application_app(app) or not self:
             return False
 
-        current_in = extract_text(app.user_textarea)
-        current_out = extract_text(app.output_textarea)
+        current_in = extract_text(app.self.textarea.input)
+        current_out = extract_text(app.self.textarea.output)
 
         return (
             current_in.strip()
@@ -69,8 +69,8 @@ class RewriteSync:
         if not is_application_app(app) or not self:
             return False
 
-        current_in = extract_text(app.user_textarea)
-        current_out = extract_text(app.output_textarea)
+        current_in = extract_text(app.self.textarea.input)
+        current_out = extract_text(app.self.textarea.output)
 
         return (
             current_in.strip()
@@ -83,15 +83,15 @@ class RewriteSync:
         if not is_application_app(app) or not self:
             return False
 
-        current_in = extract_text(app.user_textarea).strip()
-        current_out = extract_text(app.output_textarea).strip()
+        current_in = extract_text(app.self.textarea.input).strip()
+        current_out = extract_text(app.self.textarea.output).strip()
         return bool(current_in) and not current_out
 
     def is_input_empty(self, app) -> bool:
         """Return True if user input is empty."""
         if not is_application_app(app) or not self:
             return False
-        return len(extract_text(app.user_textarea).strip()) == 0
+        return len(extract_text(app.self.textarea.input).strip()) == 0
 
 
 def is_application_app(app):

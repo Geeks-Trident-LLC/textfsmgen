@@ -26,91 +26,91 @@ def build_primary_buttons(app) -> None:
     btn_width = 6 if ui.is_macos else 8
     col = Position()
 
-    parent = app.buttons_frame
+    parent = app.frames.buttons
 
     # Test Data
     app.test_data_btn = ui.Button(
         parent,
-        name="main_test_data_btn",
+        name="test_data_btn",
         state=tk.DISABLED,
-        textvariable=app.test_data_btn_var,
+        textvariable=app.settings.test_data_btn_name,
         command=lambda: callback.test_data_btn(app),
         width=btn_width,
     )
     app.test_data_btn.grid(row=0, column=col.value, padx=(2, 0), pady=(2, 0))
 
     # Open
-    app.open_file_btn = ui.Button(
+    app.buttons.open = ui.Button(
         parent,
-        name="main_open_btn",
+        name="open_btn",
         text="Open",
         command=lambda: callback.open_file(app),
         width=btn_width,
     )
-    app.open_file_btn.grid(row=0, column=col.increment(), padx=(2, 0), pady=(2, 0))
+    app.buttons.open.grid(row=0, column=col.increment(), padx=(2, 0), pady=(2, 0))
 
     # Save As
-    app.save_as_btn = ui.Button(
+    app.buttons.save = ui.Button(
         parent,
-        name="main_save_as_btn",
-        text="Save As",
+        name="save_btn",
+        text="Save",
         state=tk.DISABLED,
-        command=lambda: callback.save_as_btn(app),
+        command=lambda: callback.save(app),
         width=btn_width,
     )
-    app.save_as_btn.grid(row=0, column=col.increment(), pady=(2, 0))
+    app.buttons.save.grid(row=0, column=col.increment(), pady=(2, 0))
 
     # Copy
-    app.copy_text_btn = ui.Button(
+    app.buttons.copy = ui.Button(
         parent,
-        name="main_copy_btn",
+        name="copy_btn",
         text="Copy",
         state=tk.DISABLED,
-        command=lambda: callback.copy_text_btn(app),
+        command=lambda: callback.copy(app),
         width=btn_width,
     )
-    app.copy_text_btn.grid(row=0, column=col.increment(), pady=(2, 0))
+    app.buttons.copy.grid(row=0, column=col.increment(), pady=(2, 0))
 
     # Paste
-    app.paste_text_btn = ui.Button(
+    app.buttons.paste = ui.Button(
         parent,
-        name="main_paste_btn",
+        name="paste_btn",
         text="Paste",
-        command=lambda: callback.paste_text_btn(app),
+        command=lambda: callback.paste(app),
         width=btn_width,
     )
-    app.paste_text_btn.grid(row=0, column=col.increment(), pady=(2, 0))
+    app.buttons.paste.grid(row=0, column=col.increment(), pady=(2, 0))
 
     # Clear
-    app.clear_text_btn = ui.Button(
+    app.buttons.clear = ui.Button(
         parent,
-        name="main_clear_btn",
+        name="clear_btn",
         text="Clear",
-        command=lambda: callback.clear_text_btn(app),
+        command=lambda: callback.clear(app),
         width=btn_width,
     )
-    app.clear_text_btn.grid(row=0, column=col.increment(), pady=(2, 0))
+    app.buttons.clear.grid(row=0, column=col.increment(), pady=(2, 0))
 
     # Build
-    app.build_btn = ui.Button(
+    app.buttons.build = ui.Button(
         parent,
-        name="main_build_btn",
-        textvariable=app.build_btn_var,
-        command=lambda: callback.build_btn(app),
+        name="build_btn",
+        text="Build",
+        command=lambda: callback.build(app),
         width=btn_width,
     )
-    app.build_btn.grid(row=0, column=col.increment(), pady=(2, 0))
+    app.buttons.build.grid(row=0, column=col.increment(), pady=(2, 0))
 
     # Result
-    app.result_btn = ui.Button(
+    app.buttons.result = ui.Button(
         parent,
-        name="main_result_btn",
+        name="result_btn",
         text="Result",
         state=tk.DISABLED,
-        command=lambda: callback.result_btn(app),
+        command=lambda: callback.show_parsed_result(app),
         width=btn_width,
     )
-    app.result_btn.grid(row=0, column=col.increment(), pady=(2, 0))
+    app.buttons.result.grid(row=0, column=col.increment(), pady=(2, 0))
 
 
 def build_secondary_buttons(app) -> None:
@@ -118,34 +118,34 @@ def build_secondary_buttons(app) -> None:
     col = Position()
     btn_width = 6 if ui.is_macos else 8
 
-    parent = app.buttons_frame
+    parent = app.frames.buttons
 
     # Snippet
-    app.snippet_btn = ui.Button(
+    app.buttons.python = ui.Button(
         parent,
-        name="main_snippet_btn",
-        text="Snippet",
-        command=lambda: callback.snippet_btn(app),
+        name="python_btn",
+        text="Python",
+        command=lambda: callback.create_python_script(app),
         width=btn_width,
     )
-    app.snippet_btn.grid(row=1, column=col.value, padx=(2, 0), pady=(0, 2))
+    app.buttons.python.grid(row=1, column=col.value, padx=(2, 0), pady=(0, 2))
 
     # Unittest
-    app.unittest_btn = ui.Button(
+    app.buttons.unittest = ui.Button(
         parent,
-        name="main_unittest_btn",
+        name="unittest_btn",
         text="Unittest",
-        command=lambda: callback.unittest_btn(app),
+        command=lambda: callback.create_unittest_script(app),
         width=btn_width,
     )
-    app.unittest_btn.grid(row=1, column=col.increment(), padx=(2, 0), pady=(0, 2))
+    app.buttons.unittest.grid(row=1, column=col.increment(), padx=(2, 0), pady=(0, 2))
 
     # Pytest
-    app.pytest_btn = ui.Button(
+    app.buttons.pytest = ui.Button(
         parent,
-        name="main_pytest_btn",
+        name="pytest_btn",
         text="Pytest",
-        command=lambda: callback.pytest_btn(app),
+        command=lambda: callback.create_pytest_script(app),
         width=btn_width,
     )
-    app.pytest_btn.grid(row=1, column=col.increment(), padx=(2, 0), pady=(0, 2))
+    app.buttons.pytest.grid(row=1, column=col.increment(), padx=(2, 0), pady=(0, 2))
