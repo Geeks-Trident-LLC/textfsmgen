@@ -79,8 +79,8 @@ class TestTemplateBuilderPythonScript:
                 print("\n%s\n" % ("+" * 40))
                 print("Result:\n-------\n%s\n" % rows)
 
-            # function call
-            test_textfsm_template(template, test_data)
+            if __name__ == "__main__":
+                test_textfsm_template(template, test_data)
         ''')
 
         dt_str = format(datetime.now(), '%Y-%m-%d')

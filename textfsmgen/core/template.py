@@ -474,6 +474,9 @@ class TemplateBuilder:
                     rows = parser.ParseTextToDicts(test_data)
                     total_rows_count = len(rows)
                     self.assertGreaterEqual(total_rows_count, 0)
+            
+            if __name__ == '__main__':
+                unittest.main()
         ''')
         error = 'Cannot create Python unittest script without test data.'
         test_script = self.create_test_script(test_script_fmt, error)
@@ -501,6 +504,10 @@ class TemplateBuilder:
                     rows = parser.ParseTextToDicts(test_data)
                     total_rows_count = len(rows)
                     assert total_rows_count > 0
+            
+            if __name__ == "__main__":
+                import pytest
+                raise SystemExit(pytest.main(["-v", __file__]))
         ''')
         error = "Cannot create Python pytest script without test data."
         test_script = self.create_test_script(test_script_fmt, error)
@@ -547,8 +554,8 @@ class TemplateBuilder:
                 print("\n%s\n" % ("+" * 40))
                 print("Result:\n-------\n%s\n" % rows)
             
-            # function call
-            test_textfsm_template(template, test_data)
+            if __name__ == "__main__":
+                test_textfsm_template(template, test_data)
         ''')
         error = 'Cannot create Python snippet script without test data.'
         test_script = self.create_test_script(test_script_fmt, error)

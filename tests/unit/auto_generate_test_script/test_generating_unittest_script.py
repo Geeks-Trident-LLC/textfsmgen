@@ -62,6 +62,9 @@ class TestTemplateBuilderUnittestScript:
                 rows = parser.ParseTextToDicts(test_data)
                 total_rows_count = len(rows)
                 self.assertGreaterEqual(total_rows_count, 0)
+                
+        if __name__ == '__main__':
+            unittest.main()
         ''')
 
         dt_str = format(datetime.now(), '%Y-%m-%d')

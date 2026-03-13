@@ -13,6 +13,7 @@ from pathlib import PurePath
 from textfsm import TextFSM
 from pprint import pformat
 
+from textfsmgen.core import testing
 from textfsmgen import ui
 
 from textfsmgen import TemplateBuilder
@@ -27,6 +28,14 @@ from textfsmgen.ui.common import (
 )
 
 from tkinter import filedialog
+
+venv_python_path = Path(PurePath(
+    Path.home(),
+    'workspace',
+    'venv_test',
+    'Scripts',
+    'python.exe'
+))
 
 
 def build(app):
@@ -495,9 +504,8 @@ def execute_test_script(app):
     match = re.match(pattern, out_text)
 
     if match:
-        kind = match.group("kind")
-        set_text(app.textarea.output,
-                 f"Python {kind} execution will be implemented later.")
+        result = testing.execute_test_script(venv_python_path, content=out_text)
+        set_text(app.textarea.output, str(result))
         return
 
     response = show_message_dialog(
@@ -506,22 +514,19 @@ def execute_test_script(app):
             "Choose how you want to execute the test:\n"
             "  Y - Run pytest\n"
             "  N - Run unittest\n"
-            "  C - Do not execute any test\n\n"
+            "  C - Run python test\n\n"
             "-------------------------------\n"
-            "Note: To execute a Python test script:\n"
-            "  • Click 'Python' to generate the script\n"
-            "  • Click 'Execute' to run the Python test\n"
+            "Note: To execute a test script without this prompt:\n"
+            "  • Click 'Python', 'Unittest', or 'Pytest' to generate the script\n"
+            "  • Click 'Execute' to run the test\n"
         ),
     )
-    if response is None:
-        return
-    if response == "Yes":
-        set_text(app.textarea.output,
-                 f"Python pytest execution will be implemented later.")
-        return
 
-    set_text(app.textarea.output,
-             f"Python unittest execution will be implemented later.")
+    btn_name = "pytest" if response else "python" if response is None else "unittest"
+    app.buttons.get(btn_name).invoke()
+    test_script = extract_text(app.textarea.output)
+    result = testing.execute_test_script(venv_python_path, content=test_script)
+    set_text(app.textarea.output, str(result))
 
 
 def show_result(app):

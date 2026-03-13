@@ -61,6 +61,10 @@ class TestTemplateBuilderPytestScript:
                     rows = parser.ParseTextToDicts(test_data)
                     total_rows_count = len(rows)
                     assert total_rows_count > 0
+            
+            if __name__ == "__main__":
+                import pytest
+                raise SystemExit(pytest.main(["-v", __file__]))
         ''')
 
         dt_str = format(datetime.now(), '%Y-%m-%d')

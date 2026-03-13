@@ -5,9 +5,15 @@ textfsmgen.libs
 General-purpose functions used across TextFSMGen.
 """
 
+import platform
 from enum import IntFlag
 
 from .pat import PATTERN
+
+
+is_macos = platform.system() == 'Darwin'
+is_linux = platform.system() == 'Linux'
+is_window = platform.system() == 'Windows'
 
 
 class ECODE(IntFlag):
@@ -21,4 +27,7 @@ class ECODE(IntFlag):
 __all__ = [
     'ECODE',
     'PATTERN',
+    'is_macos',
+    'is_linux',
+    'is_window',
 ]
