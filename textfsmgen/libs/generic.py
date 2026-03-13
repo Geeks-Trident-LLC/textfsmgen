@@ -35,16 +35,40 @@ class DotObject(dict):
 
 
 class StatusString(str):
-    def __init__(self, value, status):
-        """String value that carries a boolean flag controlling truthiness and length."""
-        super().__init__(value)
-        self.status = (
-            status if issubclass(status, bool)
-            else str(status).strip().lower() == "true"
-        )
+    def __new__(cls, *args, **kwargs):
+        """String subclass that carries a boolean status affecting truthiness and length."""
+        value_ = kwargs.pop("value", "")
+        status_ = kwargs.pop("status", False)
+
+        if not args:
+            txt = str.__new__(cls, value_, **kwargs)
+            txt.status = status_
+            return txt
+
+        txt = str.__new__(cls, args[0], **kwargs)
+        if len(args) > 1:
+            txt.status = (
+                arg1 if isinstance(args[0], bool) else
+                str(args[1]).strip().lower() == "true"
+            )
+            return txt
+        txt.status = status_
+        return txt
 
     def __bool__(self):
         return self.status
 
     def __len__(self):
         return int(self.status)
+
+    def is_good(self):
+        return self.status == True
+
+    def is_bad(self):
+        return self.status == False
+
+    def is_success(self):
+        return self.status == True
+
+    def is_failure(self):
+        return self.status == False
