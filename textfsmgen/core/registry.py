@@ -1,7 +1,5 @@
 import re
 
-from textfsmgen import config
-
 from textfsmgen.exceptions import PatternReferenceError, raise_exception
 from textfsmgen.libs import file
 
@@ -22,7 +20,6 @@ class PatternRegistry(dict):
 
     def load_system(self):
         """Load system-defined patterns."""
-        # yaml_obj = file.safe_load_yaml(config.sys_ref_yaml_file)
         for attr in dir(pat.PATTERN):
             val = getattr(pat.PATTERN, attr)
             if re.fullmatch("[A-Z][A-Z_]*[A-Z]", attr) and isinstance(val, str):

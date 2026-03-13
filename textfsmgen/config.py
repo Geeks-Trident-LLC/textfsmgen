@@ -23,25 +23,15 @@ __all__ = [
 ]
 
 # app yaml files
-user_template_filename = str(
-    PurePath(Path.home(), '.textfsmgen', 'user_templates.yaml')
+user_keyword_mapping_file = str(
+    PurePath(Path.home(), '.textfsmgen', 'user_keyword_mapping.yaml')
 )
 
-sys_ref_yaml_file = str(
-    PurePath(Path(__file__).parent, 'system_references.yaml')
-)
 
 app_version = version
 
 # main app
 main_app_text = 'TextFSM Generator v{}'.format(version)
-
-# packages
-textfsm_text = 'textfsm v{}'.format(textfsm.__version__)
-textfsm_link = 'https://pypi.org/project/textfsm/'
-
-pyyaml_text = 'pyyaml v{}'.format(yaml.__version__)
-pyyaml_link = 'https://pypi.org/project/PyYAML/'
 
 # company
 company = 'Geeks Trident LLC'
@@ -98,8 +88,14 @@ license_text = dedent_and_strip(
 def get_dependency():
     """Return dependency metadata for the application."""
     dependencies = dict(
-        textfsm=dict(package=textfsm_text, url=textfsm_link),
-        pyyaml=dict(package=pyyaml_text, url=pyyaml_link)
+        textfsm=dict(
+            package=f'textfsm v{textfsm.__version__}',
+            url='https://pypi.org/project/textfsm/'
+        ),
+        pyyaml=dict(
+            package=f'pyyaml v{yaml.__version__}',
+            url='https://pypi.org/project/PyYAML/'
+        )
     )
     return dependencies
 

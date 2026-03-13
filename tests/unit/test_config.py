@@ -39,38 +39,14 @@ def test_version_matches_config():
 class TestData:
     """Tests for Data class."""
 
-    def test_user_template_filename(self):
+    def test_user_keyword_mapping_file(self):
         """Check template filename path."""
-        expected = str(PurePath(Path.home(), '.textfsmgen', 'user_templates.yaml'))
-        assert config.user_template_filename == expected
+        expected = str(PurePath(Path.home(), '.textfsmgen', 'user_keyword_mapping.yaml'))
+        assert config.user_keyword_mapping_file == expected
 
     def test_main_app_text(self):
         """Check main app text."""
         assert f"v{version}" in config.main_app_text
-
-    @pytest.mark.parametrize(
-        "attr",
-        [
-            "textfsm",
-            "pyyaml",
-        ],
-    )
-    def test_package_texts(self, attr):
-        """Check package text strings."""
-        expected = f"{attr} v"
-        assert getattr(config, f"{attr}_text").lower().startswith(expected)
-
-    @pytest.mark.parametrize(
-        "attr",
-        [
-            "textfsm",
-            "pyyaml",
-        ],
-    )
-    def test_package_links(self, attr):
-        """Check package links."""
-        expected = f"https://pypi.org/project/{attr}"
-        assert getattr(config, f"{attr}_link").rstrip("/").lower() == expected
 
     def test_company_info(self):
         """Check company info."""
