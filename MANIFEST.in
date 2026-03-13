@@ -7,4 +7,3 @@ include textfsmgen/ui/images/icon_logo.png
 
 # Source files
 recursive-include textfsmgen *.py
-recursive-include textfsmgen *.yaml
