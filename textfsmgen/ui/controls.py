@@ -9,6 +9,7 @@ import tkinter as tk
 
 from textfsmgen import ui
 from textfsmgen.ui import callback
+from textfsmgen.ui import settings
 
 
 def build_action_buttons(app) -> None:
@@ -30,6 +31,7 @@ def build_primary_buttons(app) -> None:
         ("clear", "normal", lambda: callback.clear(app)),
         ("build", "normal", lambda: callback.build(app)),
         ("result", "disabled", lambda: callback.show_result(app)),
+        ("settings", "normal", lambda: settings.show_dialog(app)),
     )
 
     for pos, options in enumerate(button_lst):
@@ -45,6 +47,7 @@ def build_primary_buttons(app) -> None:
         else:
             name = "test_data"
             kwargs.update(textvariable=text, name=f"{name}_btn")
+
         button = ui.Button(parent, **kwargs)
         button.grid(row=0, column=pos, padx=(2, 0), pady=(2, 0))
         app.buttons.update({name: button})

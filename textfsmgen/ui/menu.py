@@ -8,7 +8,6 @@ UI helpers for building the TextFSMGen menu bar.
 from textfsmgen import ui
 from textfsmgen.ui.common import open_app_resource
 from textfsmgen.ui import about, callback
-from textfsmgen.ui import settings
 
 
 def create(app) -> None:
@@ -18,11 +17,9 @@ def create(app) -> None:
     root.config(menu=menu_bar)
 
     file_menu = ui.Menu(menu_bar, tearoff=False)
-    pref_menu = ui.Menu(menu_bar, tearoff=False)
     help_menu = ui.Menu(menu_bar, tearoff=False)
 
     menu_bar.add_cascade(label="File",        menu=file_menu)
-    menu_bar.add_cascade(label="Preferences", menu=pref_menu)
     menu_bar.add_cascade(label="Help",        menu=help_menu)
 
     items = (
@@ -31,9 +28,6 @@ def create(app) -> None:
         (file_menu, {"label": "Load Test Data", "command": lambda: callback.load_test_data_file(app)}),
         (file_menu, None),
         (file_menu, {"label": "Quit",           "command": app.root.destroy}),
-
-        # Preferences
-        (pref_menu, {"label": "Settings",       "command": lambda:settings.show_dialog(app)}),
 
         # Help
         (help_menu, {"label": "Documentation",  "command": lambda: open_app_resource("documentation")}),

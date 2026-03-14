@@ -9,6 +9,11 @@ from textfsmgen.libs import text
 from textfsmgen.libs.generic import StatusString
 
 
+def get_temp_dir():
+    """Return a temporary directory path"""
+    return tempfile.gettempdir()
+
+
 def create_temp_python_file(prefix="test_pytest_", content=""):
     """Create a temporary Python file with optional content and return its path."""
     temp = tempfile.NamedTemporaryFile(

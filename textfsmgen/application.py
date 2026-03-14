@@ -75,6 +75,7 @@ class Application:
 
             build=None,
             result=None,
+            settings=None,
 
             python=None,
             unittest=None,
@@ -84,18 +85,44 @@ class Application:
 
         self.settings = DotObject(
             test_data_btn_name=tk.StringVar(),
+
+            # general arguments for TemplateBuilder
             author=tk.StringVar(),
             email=tk.StringVar(),
             company=tk.StringVar(),
             description=tk.StringVar(),
-            test_data=tk.BooleanVar(),
-            template=tk.BooleanVar(),
-            tabular=tk.BooleanVar(),
-            confirm=tk.BooleanVar(),
+
+            # Category translator arguments
+            use_category_translator_flag=tk.BooleanVar(),
+            category_arg_count=tk.IntVar(),
+            category_arg_separator=tk.StringVar(),
+            category_arg_starting_from=tk.StringVar(),
+            category_arg_ending_to=tk.StringVar(),
+
+            # Running Test Setting: Virtual Environment Python Executable
+            always_ask_flag=tk.BooleanVar(),
+            delete_file_after_run_flag=tk.BooleanVar(),
+            python_interpreter=tk.StringVar(),
+
+            # Output Display Options
+            test_data_flag=tk.BooleanVar(),
+            template_flag=tk.BooleanVar(),
+            tabular_flag=tk.BooleanVar(),
         )
+
+        # General arguments
         self.settings.test_data_btn_name.set("Test Data")
-        self.settings.tabular.set(True)
-        self.settings.confirm.set(True)
+
+        # Category translator arguments
+        self.settings.category_arg_count.set(1)
+        self.settings.category_arg_separator.set(":")
+
+        # Test execution settings
+        self.settings.delete_file_after_run_flag.set(True)
+        self.settings.always_ask_flag.set(True)
+
+        # Output Display Options
+        self.settings.tabular_flag.set(True)
 
         self.snapshot = DotObject(
             user_data="",
@@ -106,11 +133,28 @@ class Application:
         )
 
     def get_template_args(self):
+        args = dict()
+        if self.settings.author.get():
+            args.update(author=self.settings.author.get())
+
+        if self.settings.email.get():
+            args.update(email=self.settings.email.get())
+
+        if self.settings.company.get():
+            args.update(company=self.settings.company.get())
+
+        if self.settings.description.get():
+            args.update(description=self.settings.description.get())
+
+        return args
+
+    def get_category_translator_args(self):
         return dict(
-            author=self.settings.author.get(),
-            email=self.settings.email.get(),
-            company=self.settings.company.get(),
-            description=self.settings.description.get()
+            options=self.get_template_args() or None,
+            count=self.settings.category_arg_count.get(),
+            separator=self.settings.category_arg_separator.get(),
+            starting_from=self.settings.category_arg_starting_from.get() or None,
+            ending_to=self.settings.category_arg_ending_to.get() or None,
         )
 
     def callback_focus(self, event):
