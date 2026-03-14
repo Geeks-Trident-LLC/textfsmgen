@@ -32,6 +32,8 @@ from textfsmgen.exceptions import TemplateParsedLineError
 from textfsmgen.exceptions import TemplateBuilderError
 from textfsmgen.exceptions import TemplateBuilderInvalidFormat
 
+from textfsmgen.engine.category import CategoryLinesTranslator
+
 import logging
 logger = logging.getLogger(__file__)
 
@@ -178,7 +180,6 @@ class TemplateBuilder:
         test_data_file='',
         user_data='',
         user_data_file='',
-        namespace='',
         author='',
         email='',
         company='',
@@ -192,7 +193,6 @@ class TemplateBuilder:
         user_data_ = file.read(user_data_file) if user_data_file else user_data
         self.user_data = text.list_to_text(user_data_)
 
-        self.namespace = str(namespace)
         self.author = str(author)
         self.email = str(email)
         self.company = str(company)
@@ -560,6 +560,90 @@ class TemplateBuilder:
         error = 'Cannot create Python snippet script without test data.'
         test_script = self.create_test_script(test_script_fmt, error)
         return test_script
+
+
+class CategoryTemplateBuilder:
+    def __init__(
+        self,
+        user_data='',
+        user_data_file='',
+        test_data='',
+        test_data_file='',
+        count=1,
+        separator=":",
+        starting_from=None,
+        ending_to=None,
+        author='',
+        email='',
+        company='',
+        description='',
+        test_script_file='',
+        debug=False
+    ):
+        self.translator = CategoryLinesTranslator(
+            user_data,
+            count=count,
+            separator=separator,
+            starting_from=starting_from,
+            ending_to=ending_to,
+        )
+
+        self.template_builder_args = dict(
+            user_data=user_data,
+            user_data_file=user_data_file,
+            test_data=test_data,
+            test_data_file=test_data_file,
+            author=author,
+            email=email,
+            company=company,
+            description=description,
+            test_script_file=test_script_file,
+            debug=debug
+        )
+
+        self.builder = None
+
+        if self.translator:
+            snippet = self.translator.to_template_snippet()
+            self.template_builder_args.update(user_data=snippet)
+            self.builder = TemplateBuilder(**self.template_builder_args)
+
+    def __bool__(self): return bool(self.translator)
+
+    def __len__(self): return 1 if self.translator else 0
+
+    @property
+    def template(self):
+        return self.builder.template if self.builder else ""
+
+
+    def verify(self, expected_rows_count=None, expected_result=None,
+               tabular=False, debug=False, ignore_space=False):
+        """Verify parsed test data against expected results."""
+
+        if not self.builder:
+            return False
+
+        return self.builder.verify(
+            expected_rows_count=expected_rows_count,
+            expected_result=expected_result,
+            tabular=tabular,
+            debug=debug,
+            ignore_space=ignore_space
+        )
+
+    def create_unittest(self):
+        """Generate a Python unittest script for the current template and test data."""
+        return self.builder.create_unittest() if self.builder else ""
+
+    def create_pytest(self):
+        """Generate a Python pytest script for the current template and test data."""
+        return self.builder.create_pytest() if self.builder else ""
+
+    def create_python_test(self):
+        """Generate a Python test script for the current template and test data."""
+        return self.builder.create_python_test() if self.builder else ""
+
 
 
 def get_textfsm_template(
