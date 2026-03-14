@@ -34,7 +34,7 @@ class TableTranslator(RuntimeException):
     def __init__(
         self, *lines, column_divider='', column_count=0, column_widths=None,
         headers=None, header_rows=None, custom_header_text='',
-        starting_from=None, ending_to=None, has_header_row=True
+        starting_from=None, ending_at=None, has_header_row=True
     ):
         self.lines = text.get_list_of_lines(*lines)
         self.kwargs = dict(
@@ -48,7 +48,7 @@ class TableTranslator(RuntimeException):
         )
 
         self.starting_from = starting_from
-        self.ending_to = ending_to
+        self.ending_at = ending_at
         self.tabular_parser = None
 
         self.index_start = None
@@ -103,7 +103,7 @@ class TableTranslator(RuntimeException):
     def process(self) -> None:
         """Initialize the tabular parser with the given lines and configuration."""
         self.index_start = get_line_position_by(self.lines, self.starting_from)
-        self.index_end = get_line_position_by(self.lines, self.ending_to)
+        self.index_end = get_line_position_by(self.lines, self.ending_at)
 
         lines = self.lines[self.index_start:self.index_end]
         self.tabular_parser = VarColumnTableTranslator(*lines, **self.kwargs)

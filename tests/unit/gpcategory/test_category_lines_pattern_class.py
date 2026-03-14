@@ -24,7 +24,7 @@ from textfsmgen.libs.decorators import normalize_output
 class DataForStartingEndingArgumentsTests:
     """
     Test data provider for verifying `CategoryLinesTranslator` behavior
-    with `starting_from` and `ending_to` arguments.
+    with `starting_from` and `ending_at` arguments.
     """
     @normalize_output
     def get_test_data(self):
@@ -237,13 +237,13 @@ class TestCategoryLinesPattern:
             ),
         ]
     )
-    def test_to_starting_from_and_ending_to_arguments(
+    def test_to_starting_from_and_ending_at_arguments(
             self, test_data, expected_snippet,
             expected_textfsm_template, expected_result
     ):
         # --- Action ---
 
-        node = CategoryLinesTranslator(test_data, starting_from=1, ending_to=5)
+        node = CategoryLinesTranslator(test_data, starting_from=1, ending_at=5)
         generated_snippet = node.to_template_snippet()
 
         # --- Assertions ---

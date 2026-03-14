@@ -97,7 +97,7 @@ class Application:
             category_arg_count=tk.IntVar(),
             category_arg_separator=tk.StringVar(),
             category_arg_starting_from=tk.StringVar(),
-            category_arg_ending_to=tk.StringVar(),
+            category_arg_ending_at=tk.StringVar(),
 
             # Running Test Setting: Virtual Environment Python Executable
             always_ask_flag=tk.BooleanVar(),
@@ -154,7 +154,7 @@ class Application:
             count=self.settings.category_arg_count.get(),
             separator=self.settings.category_arg_separator.get(),
             starting_from=self.settings.category_arg_starting_from.get() or None,
-            ending_to=self.settings.category_arg_ending_to.get() or None,
+            ending_at=self.settings.category_arg_ending_at.get() or None,
         )
 
     def callback_focus(self, event):

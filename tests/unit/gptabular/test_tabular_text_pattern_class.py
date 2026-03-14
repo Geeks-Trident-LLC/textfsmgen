@@ -76,7 +76,7 @@ start() letters(var_fruits) space(repetition_10_15) word(var_drinks, at_most_1_p
     assert tmpl_snippet == expected_tmpl_snippet
 
 
-def test_starting_from_and_ending_to_arguments():
+def test_starting_from_and_ending_at_arguments():
     text = dedent("""
 line 1: blab 123 blab
 line 2: 1.1.2 blab blab
@@ -98,7 +98,7 @@ start() digit(var_index)  non_wss(var_col)  mixed_word(var_col2) end() -> record
 line k: digits() blab blab -> EOF
     """).strip()
 
-    node = TableTranslator(text, column_widths="10, 15,", starting_from=2, ending_to=6)
+    node = TableTranslator(text, column_widths="10, 15,", starting_from=2, ending_at=6)
     tmpl_snippet = node.to_template_snippet()
     assert tmpl_snippet == expected_tmpl_snippet
 

@@ -106,9 +106,9 @@ def add_category_translator_arguments(app, parent: ui.Frame) -> None:
     entry = ui.TextBox(group, width=94, textvariable=app.settings.category_arg_starting_from)
     entry.grid(row=1, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
 
-    lbl = ui.Label(group, text="Ending To")
+    lbl = ui.Label(group, text="Ending At")
     lbl.grid(row=2, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
-    entry = ui.TextBox(group, width=94, textvariable=app.settings.category_arg_ending_to)
+    entry = ui.TextBox(group, width=94, textvariable=app.settings.category_arg_ending_at)
     entry.grid(row=2, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
 
 
@@ -196,7 +196,7 @@ def reset_default_setting(app):
     app.settings.category_arg_separator.set(":")
     app.settings.category_arg_count.set(0)
     app.settings.category_arg_starting_from.set("")
-    app.settings.category_arg_ending_to.set("")
+    app.settings.category_arg_ending_at.set("")
 
     # Test Execution
     app.settings.python_interpreter.set("")

@@ -391,7 +391,7 @@ class CategoryLinesTranslator(RuntimeException):
         count: int = 1,
         separator: str = ":",
         starting_from: Optional[str | int | None] = None,
-        ending_to: Optional[str | int | None] = None,
+        ending_at: Optional[str | int | None] = None,
     ):
         # Normalized input
         self.lines = text.get_list_of_lines(*lines)
@@ -404,7 +404,7 @@ class CategoryLinesTranslator(RuntimeException):
 
         # Range selection
         self.starting_from = starting_from
-        self.ending_to = ending_to
+        self.ending_at = ending_at
         self.start_index: Optional[int | None] = None
         self.end_index: Optional[int | None] = None
 
@@ -428,7 +428,7 @@ class CategoryLinesTranslator(RuntimeException):
         Parse the input lines into category pattern nodes.
         """
         self.start_index = get_line_position_by(self.lines, self.starting_from)
-        self.end_index = get_line_position_by(self.lines, self.ending_to)
+        self.end_index = get_line_position_by(self.lines, self.ending_at)
 
         if self.start_index and self.end_index and self.start_index >= self.end_index:
             self.end_index = None

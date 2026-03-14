@@ -572,7 +572,7 @@ class CategoryTemplateBuilder:
         count=1,
         separator=":",
         starting_from=None,
-        ending_to=None,
+        ending_at=None,
         author='',
         email='',
         company='',
@@ -585,7 +585,7 @@ class CategoryTemplateBuilder:
             count=count,
             separator=separator,
             starting_from=starting_from,
-            ending_to=ending_to,
+            ending_at=ending_at,
         )
 
         self.template_builder_args = dict(
