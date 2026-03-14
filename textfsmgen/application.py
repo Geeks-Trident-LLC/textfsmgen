@@ -132,29 +132,24 @@ class Application:
             is_built=False,
         )
 
-    def get_template_args(self):
-        args = dict()
-        if self.settings.author.get():
-            args.update(author=self.settings.author.get())
-
-        if self.settings.email.get():
-            args.update(email=self.settings.email.get())
-
-        if self.settings.company.get():
-            args.update(company=self.settings.company.get())
-
-        if self.settings.description.get():
-            args.update(description=self.settings.description.get())
-
-        return args
-
-    def get_category_translator_args(self):
+    def get_template_builder_args(self):
         return dict(
-            options=self.get_template_args() or None,
+            author=self.settings.author.get(),
+            email=self.settings.email.get(),
+            company=self.settings.company.get(),
+            description=self.settings.description.get()
+        )
+
+    def get_category_template_builder_args(self):
+        return dict(
             count=self.settings.category_arg_count.get(),
             separator=self.settings.category_arg_separator.get(),
             starting_from=self.settings.category_arg_starting_from.get() or None,
             ending_at=self.settings.category_arg_ending_at.get() or None,
+            author=self.settings.author.get(),
+            email=self.settings.email.get(),
+            company=self.settings.company.get(),
+            description=self.settings.description.get()
         )
 
     def callback_focus(self, event):

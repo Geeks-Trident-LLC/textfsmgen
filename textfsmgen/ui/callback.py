@@ -17,8 +17,7 @@ from textfsmgen.core import testing
 from textfsmgen import ui
 
 from textfsmgen import TemplateBuilder
-from textfsmgen.engine.category import CategoryLinesTranslator
-from textfsmgen.core.template import get_textfsm_template
+from textfsmgen import CategoryTemplateBuilder
 
 from textfsmgen.exceptions import TemplateBuilderInvalidFormat
 from textfsmgen.libs import file
@@ -81,38 +80,22 @@ def build(app):
 
     try:
         if app.settings.use_category_translator_flag.get():
-            kwargs = app.get_category_translator_args()
-            translator = CategoryLinesTranslator(user_data, **kwargs)
-            if translator:
-                template = get_textfsm_template(translator.to_template_snippet())
-                app.snapshot.update(
-                    result=template,
-                    template=template,
-                    is_built=True
-                )
-            else:
-                msg = (
-                    "Failed to translate category data into a TextFSM template. "
-                    "The 'count' or 'separator' settings may be incorrect."
-                )
-                app.snapshot.update(
-                    result=msg,
-                    template=msg,
-                    is_built=False
-                )
+            cls = CategoryTemplateBuilder
+            kwargs = app.get_category_template_builder_args()
         else:
-            kwargs = app.get_template_args()
-            factory = TemplateBuilder(user_data=user_data, **kwargs)
+            cls = TemplateBuilder
+            kwargs = app.get_template_builder_args()
+        builder = cls(user_data=user_data, **kwargs)
 
-            # Update snapshot with generated template
-            app.snapshot.update(
-                result=factory.template,
-                template=factory.template,
-                is_built=True
-            )
+        # Update snapshot with generated template
+        app.snapshot.update(
+            result=builder.template,
+            template=builder.template,
+            is_built=bool(builder)
+        )
 
         app.settings.test_data_btn_name.set('Test Data')
-        set_text(app.textarea.input, app.snapshot.user_data)
+        # set_text(app.textarea.input, app.snapshot.user_data)
 
         # Enable buttons and update UI
         enable_buttons(app, save=True, copy=True, result=True)
@@ -431,13 +414,19 @@ def create_python_script(app):
     # --- Build snippet script ---
     try:
         user_data = extract_text(app.textarea.input)
-        kwargs = app.get_template_args()
-        factory = TemplateBuilder(
+        if app.settings.use_category_translator_flag.get():
+            cls = CategoryTemplateBuilder
+            kwargs = app.get_category_template_builder_args()
+        else:
+            cls = TemplateBuilder
+            kwargs = app.get_template_builder_args()
+
+        builder = cls(
             user_data=user_data,
             test_data=app.snapshot.test_data,
             **kwargs
         )
-        script = factory.create_python_test()
+        script = builder.create_python_test()
 
         # Update snapshot and UI
         set_text(app.textarea.output, script)
@@ -461,13 +450,19 @@ def create_unittest_script(app):
     # --- Build unittest script ---
     try:
         user_data = extract_text(app.textarea.input)
-        kwargs = app.get_template_args()
-        factory = TemplateBuilder(
+        if app.settings.use_category_translator_flag.get():
+            cls = CategoryTemplateBuilder
+            kwargs = app.get_category_template_builder_args()
+        else:
+            cls = TemplateBuilder
+            kwargs = app.get_template_builder_args()
+
+        builder = cls(
             user_data=user_data,
             test_data=app.snapshot.test_data,
             **kwargs
         )
-        script = factory.create_unittest()
+        script = builder.create_unittest()
 
         # Update snapshot and UI
         set_text(app.textarea.output, script)
@@ -490,13 +485,19 @@ def create_pytest_script(app):
     # --- Build pytest script ---
     try:
         user_data = extract_text(app.textarea.input)
-        kwargs = app.get_template_args()
-        factory = TemplateBuilder(
+        if app.settings.use_category_translator_flag.get():
+            cls = CategoryTemplateBuilder
+            kwargs = app.get_category_template_builder_args()
+        else:
+            cls = TemplateBuilder
+            kwargs = app.get_template_builder_args()
+
+        builder = cls(
             user_data=user_data,
             test_data=app.snapshot.test_data,
             **kwargs
         )
-        script = factory.create_pytest()
+        script = builder.create_python_test()
 
         # Update snapshot and UI
         set_text(app.textarea.output, script)
@@ -568,14 +569,20 @@ def show_result(app):
     # --- Build or reuse template ---
     try:
         user_data = extract_text(app.textarea.input)
-        kwargs = app.get_template_args()
-        factory = TemplateBuilder(user_data=user_data, **kwargs)
+        if app.settings.use_category_translator_flag.get():
+            cls = CategoryTemplateBuilder
+            kwargs = app.get_category_template_builder_args()
+        else:
+            cls = TemplateBuilder
+            kwargs = app.get_template_builder_args()
+
+        builder = cls(user_data=user_data, **kwargs)
         app.snapshot.update(
             user_data=user_data,
-            template=factory.template,
-            is_built=True
+            template=builder.template,
+            is_built=bool(builder)
         )
-        template = factory.template
+        template = builder.template
     except Exception as ex:
         template = app.snapshot.template.strip()
         if not template:

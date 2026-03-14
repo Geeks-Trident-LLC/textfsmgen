@@ -91,13 +91,13 @@ def add_category_translator_arguments(app, parent: ui.Frame) -> None:
 
     lbl = ui.Label(group, text="Separator")
     lbl.grid(row=0, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
-    entry = ui.TextBox(group, width=4, justify="center",
+    entry = ui.TextBox(group, width=12, justify="center",
                        textvariable=app.settings.category_arg_separator)
     entry.grid(row=0, column=1, padx=2, pady=pad_y, sticky="nw")
 
     lbl = ui.Label(group, text="Count")
     lbl.grid(row=0, column=2, padx=2, pady=pad_y, sticky="se")
-    entry = ui.TextBox(group, width=4, justify="center",
+    entry = ui.TextBox(group, width=6, justify="center",
                        textvariable=app.settings.category_arg_count)
     entry.grid(row=0, column=3, padx=2, pady=pad_y, sticky="nw")
 
