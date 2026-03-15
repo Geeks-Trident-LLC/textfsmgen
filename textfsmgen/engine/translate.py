@@ -121,8 +121,8 @@ class PatternTranslator(RuntimeException):
     def is_letters(self) -> bool:
         return self.name == "letters"
 
-    def is_alphabet_numeric(self) -> bool:
-        return self.name == "alphabet_numeric"
+    def is_alnum(self) -> bool:
+        return self.name == "alnum"
 
     def is_punct(self) -> bool:
         return self.name == "punct"
@@ -330,7 +330,7 @@ class PatternTranslator(RuntimeException):
             LetterTranslator,
             LettersTranslator,
 
-            AlphabetNumericTranslator,
+            AlnumTranslator,
             WordTranslator,
 
             PunctTranslator,
@@ -402,7 +402,7 @@ class DigitTranslator(PatternTranslator):
             other.is_digits(),
             other.is_number(),
             other.is_mixed_number(),
-            other.is_alphabet_numeric(),
+            other.is_alnum(),
             other.is_graph(),
             other.is_word(),
             other.is_mixed_word(),
@@ -434,7 +434,7 @@ class DigitTranslator(PatternTranslator):
             )
 
         if other.is_letter():
-            return AlphabetNumericTranslator(self.data, other.data)
+            return AlnumTranslator(self.data, other.data)
         if other.is_letters():
             return WordTranslator(self.data, other.data)
         if other.is_punct():
@@ -502,7 +502,7 @@ class DigitsTranslator(PatternTranslator):
             return self.get_new_superset(other)
 
         if any([other.is_letter(), other.is_letters(),
-                other.is_alphabet_numeric()]):
+                other.is_alnum()]):
             return WordTranslator(self.data, other.data)
 
         if any([other.is_punct(), other.is_puncts(), other.is_graph()]):
@@ -569,7 +569,7 @@ class NumberTranslator(PatternTranslator):
             return self.get_new_superset(other)
 
         if any([other.is_letter(), other.is_letters(),
-                other.is_alphabet_numeric(), other.is_graph(), other.is_word()]):
+                other.is_alnum(), other.is_graph(), other.is_word()]):
             return MixedWordTranslator(self.data, other.data)
 
         if other.is_words():
@@ -636,7 +636,7 @@ class MixedNumberTranslator(PatternTranslator):
             return self.get_new_superset(other)
 
         if any([other.is_letter(), other.is_letters(),
-                other.is_alphabet_numeric(), other.is_graph(), other.is_word()]):
+                other.is_alnum(), other.is_graph(), other.is_word()]):
             return MixedWordTranslator(self.data, other.data)
 
         if other.is_words():
@@ -675,7 +675,7 @@ class LetterTranslator(PatternTranslator):
         return any([
             other.is_letter(),
             other.is_letters(),
-            other.is_alphabet_numeric(),
+            other.is_alnum(),
             other.is_graph(),
             other.is_word(),
             other.is_words(),
@@ -705,7 +705,7 @@ class LetterTranslator(PatternTranslator):
             return self.get_new_superset(other)
 
         if other.is_digit():
-            return AlphabetNumericTranslator(self.data, other.data)
+            return AlnumTranslator(self.data, other.data)
         if other.is_digits():
             return WordTranslator(self.data, other.data)
         if other.is_number() or other.is_mixed_number():
@@ -772,7 +772,7 @@ class LettersTranslator(PatternTranslator):
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        if other.is_digit() or other.is_digits() or other.is_alphabet_numeric():
+        if other.is_digit() or other.is_digits() or other.is_alnum():
             return WordTranslator(self.data, other.data)
 
         if any([other.is_number(), other.is_mixed_number(), other.is_graph()]):
@@ -787,29 +787,29 @@ class LettersTranslator(PatternTranslator):
         return self.raise_recommend_exception(other)
 
 
-class AlphabetNumericTranslator(PatternTranslator):
+class AlnumTranslator(PatternTranslator):
     """
-    Specialized translated pattern for alphanumeric inputs.
+    Specialized translated pattern for alnum inputs.
     """
 
     def __init__(self, data: str, *other: object):
         super().__init__(
             data,
             *other,
-            name="alphabet_numeric",
-            defined_pattern=PATTERN.ALPHABET_NUMERIC,
+            name="alnum",
+            defined_pattern=PATTERN.ALNUM,
             root_name="non_ws",
         )
 
     def is_subset_of(self, other) -> bool:
         """
-        Determine whether this alphanumeric pattern is a subset of another translated pattern.
+        Determine whether this alnum pattern is a subset of another translated pattern.
         """
         if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
 
         return any([
-            other.is_alphabet_numeric(),
+            other.is_alnum(),
             other.is_graph(),
             other.is_word(),
             other.is_words(),
@@ -822,7 +822,7 @@ class AlphabetNumericTranslator(PatternTranslator):
 
     def is_superset_of(self, other) -> bool:
         """
-        Determine whether this alphanumeric pattern is a superset of another translated pattern.
+        Determine whether this alnum pattern is a superset of another translated pattern.
         """
         if not isinstance(other, PatternTranslator):
             self.raise_recommend_exception(other)
@@ -830,7 +830,7 @@ class AlphabetNumericTranslator(PatternTranslator):
         return any([
             other.is_letter(),
             other.is_digit(),
-            other.is_alphabet_numeric()
+            other.is_alnum()
         ])
 
     def recommend(self, other):
@@ -910,7 +910,7 @@ class PunctTranslator(PatternTranslator):
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        if any([other.is_letter(), other.is_digit(), other.is_alphabet_numeric()]):
+        if any([other.is_letter(), other.is_digit(), other.is_alnum()]):
             return GraphTranslator(self.data)
 
         if any([other.is_letters(), other.is_digits(),
@@ -977,7 +977,7 @@ class PunctsTranslator(PatternTranslator):
         if any([
             other.is_letter(),
             other.is_digit(),
-            other.is_alphabet_numeric(),
+            other.is_alnum(),
             other.is_graph(),
             other.is_letters(),
             other.is_digits(),
@@ -1055,7 +1055,7 @@ class PunctsGroupTranslator(PatternTranslator):
         if any([
             other.is_letter(),
             other.is_digit(),
-            other.is_alphabet_numeric(),
+            other.is_alnum(),
             other.is_graph(),
             other.is_letters(),
             other.is_digits(),
@@ -1112,7 +1112,7 @@ class GraphTranslator(PatternTranslator):
         return any([
             other.is_letter(),
             other.is_digit(),
-            other.is_alphabet_numeric(),
+            other.is_alnum(),
             other.is_punct(),
             other.is_graph()
         ])
@@ -1197,7 +1197,7 @@ class WordTranslator(PatternTranslator):
             other.is_non_ws(),
             other.is_punct(),
             other.is_puncts(),
-            other.is_alphabet_numeric()
+            other.is_alnum()
         ]):
             return NonWSSTranslator(self.data, other.data)
 
@@ -1270,7 +1270,7 @@ class WordsTranslator(PatternTranslator):
             return self.get_new_superset(other)
 
         if any([
-            other.is_alphabet_numeric(),
+            other.is_alnum(),
             other.is_graph(),
             other.is_digit(),
             other.is_digits(),
@@ -1329,7 +1329,7 @@ class MixedWordTranslator(PatternTranslator):
             other.is_digits(),
             other.is_number(),
             other.is_mixed_number(),
-            other.is_alphabet_numeric(),
+            other.is_alnum(),
             other.is_word(),
             other.is_mixed_word()
         ])
@@ -1412,7 +1412,7 @@ class MixedWordsTranslator(PatternTranslator):
             other.is_digits(),
             other.is_number(),
             other.is_mixed_number(),
-            other.is_alphabet_numeric(),
+            other.is_alnum(),
             other.is_word(),
             other.is_words(),
             other.is_mixed_word(),
@@ -1478,7 +1478,7 @@ class NonWSTranslator(PatternTranslator):
         return any([
             other.is_letter(),
             other.is_digit(),
-            other.is_alphabet_numeric(),
+            other.is_alnum(),
             other.is_punct(),
             other.is_graph(),
             other.is_non_ws()
@@ -1554,7 +1554,7 @@ class NonWSSTranslator(PatternTranslator):
             other.is_mixed_number(),
             other.is_letter(),
             other.is_letters(),
-            other.is_alphabet_numeric(),
+            other.is_alnum(),
             other.is_graph(),
             other.is_punct(),
             other.is_puncts(),
@@ -1634,7 +1634,7 @@ class NonWSSGroupTranslator(PatternTranslator):
             other.is_mixed_number(),
             other.is_letter(),
             other.is_letters(),
-            other.is_alphabet_numeric(),
+            other.is_alnum(),
             other.is_graph(),
             other.is_punct(),
             other.is_puncts(),

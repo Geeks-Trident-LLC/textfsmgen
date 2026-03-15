@@ -582,9 +582,9 @@ class ParsedTable(RuntimeException):
 
         self.has_divider: bool = bool(self.column_divider.strip())
         escaped = re.escape(self.column_divider)
-        self.divider_snippet: str = f'zero_or_spaces(){escaped}zero_or_spaces()'
-        self.divider_leading_snippet: str = f'{escaped}zero_or_spaces()'
-        self.divider_trailing_snippet: str = f'zero_or_spaces(){escaped}'
+        self.divider_snippet: str = f'optional_spaces(){escaped}optional_spaces()'
+        self.divider_leading_snippet: str = f'{escaped}optional_spaces()'
+        self.divider_trailing_snippet: str = f'optional_spaces(){escaped}'
 
         self.process()
 
@@ -912,11 +912,11 @@ class ParsedTable(RuntimeException):
         if self.is_start_with_divider:
             lst.insert(0, divider_leading_pat)
         if self.is_leading:
-            lst.insert(0, PATTERN.ZERO_OR_MORE_SPACE)
+            lst.insert(0, ' *')
         if self.is_end_with_divider:
             lst.append(divider_trailing_pat)
         if self._is_trailing:
-            lst.append(PATTERN.ZERO_OR_MORE_SPACE)
+            lst.append(' *')
 
         return text.join_string(*lst)
 
@@ -926,7 +926,7 @@ class ParsedTable(RuntimeException):
         lst: List[str] = []
 
         for line in text.get_list_of_lines(*headers_lines):
-            is_line_of_puncts = bool(re.match(PATTERN.ENDS_WITH_PUNCTS_GROUP, line))
+            is_line_of_puncts = bool(re.match(f" *{PATTERN.PUNCTS_PHRASE} *$", line))
             is_header_line = text.Line.has_data(line) and not is_line_of_puncts
             if is_header_line:
                 lst.append(line)
@@ -1013,7 +1013,7 @@ class ParsedTable(RuntimeException):
         first_snippet = self.first_column.to_template_snippet(to_bared_snippet=True)
         if self.has_divider:
             first_snippet = f'{self.divider_leading_snippet}{first_snippet}'
-        snippets.append(f'{leading_snippet} {first_snippet}zero_or_spaces() -> continue.record')
+        snippets.append(f'{leading_snippet} {first_snippet}optional_spaces() -> continue.record')
 
         indices = self.last_column_data_info.get('indices', [])
         layouts = []
@@ -1255,7 +1255,7 @@ class Cell(RuntimeException):
             if self.is_empty:
                 self._trailing = ""
             else:
-                matches = re.findall(PATTERN.ENDS_WITH_SPACES, self.data)
+                matches = re.findall(' +$', self.data)
                 self._trailing = matches[0] if matches else ""
         return self._trailing or ""
 

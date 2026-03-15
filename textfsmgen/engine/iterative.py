@@ -14,11 +14,14 @@ from textfsmgen.core.patterns import TextPattern
 from textfsmgen.libs import PATTERN
 
 from textfsmgen.libs import text
-from textfsmgen.libs.pat import lookup_pattern
+from textfsmgen.libs.pat import resolve_pattern
 
 from textfsmgen.engine.translate import PatternTranslator
 from textfsmgen.engine import LineData
 from textfsmgen.exceptions import RuntimeException
+
+
+PATTERN_CRNL = r'\r?\n|\r'
 
 
 class SnippetElement(RuntimeException):
@@ -177,7 +180,7 @@ class SnippetElement(RuntimeException):
         if not self.is_kept and not self.is_captured:
             return TextPattern(f"{self.value}{self.trailing}")
 
-        pat = lookup_pattern(self.name)
+        pat = resolve_pattern(self.name)
         if self.is_captured:
             pat = f"(?P<{self.var_name}>({pat})|)" if self.is_empty else f"(?P<{self.var_name}>{pat})"
         elif self.is_empty:
@@ -203,7 +206,7 @@ class SnippetElement(RuntimeException):
             tmpl_snippet = f"{self.name}(or_empty)" if self.is_empty else f"{self.name}()"
 
         if self.is_empty and self.trailing:
-            ws = "zero_or_spaces()" if re.match(r" +$", self.trailing) else "zero_or_whitespaces()"
+            ws = "optional_spaces()" if re.match(r" +$", self.trailing) else "zero_or_whitespaces()"
             tmpl_snippet = f"{tmpl_snippet}{ws}"
         else:
             tmpl_snippet = f"{tmpl_snippet}{self.trailing}"
@@ -519,9 +522,9 @@ class EditingSnippet(LineData):
         """
         pattern = "".join(elmt.to_regex() for elmt in self.snippet_elements)
         if self.is_leading:
-            pattern = f"{PATTERN.ZERO_OR_MORE_SPACE}{pattern}"
+            pattern = f" *{pattern}"
         if self.is_trailing:
-            pattern = f"{pattern}{PATTERN.ZERO_OR_MORE_SPACE}"
+            pattern = f"{pattern} *"
         return pattern
 
     def to_template_snippet(self):
@@ -668,7 +671,7 @@ class IterativeLinesTranslator(RuntimeException):
                 patterns.append(r"[ \t\v]*")
 
         if patterns:
-            return rf"({PATTERN.CRNL})".join(patterns)
+            return rf"({PATTERN_CRNL})".join(patterns)
         return ""
 
     def to_template_snippet(self) -> str:

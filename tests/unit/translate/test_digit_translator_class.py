@@ -1,12 +1,12 @@
 """
-Unit tests for the `textfsmgen.gp.DigitTranslator` class.
+Unit tests for the `textfsmgen.engine.translate.DigitTranslator` class.
 
 Usage
 -----
 Run pytest in the project root to execute these tests:
-    $ pytest tests/unit/gp/test_translated_digit_pattern_class.py
+    $ pytest tests/unit/translate/test_digit_translator_class.py
     or
-    $ python -m pytest tests/unit/gp/test_translated_digit_pattern_class.py
+    $ python -m pytest tests/unit/translate/test_digit_translator_class.py
 """
 
 import pytest
@@ -19,7 +19,7 @@ from textfsmgen.engine.translate import (
     MixedNumberTranslator,
 # LetterTranslator,
 # LettersTranslator,
-    AlphabetNumericTranslator,
+    AlnumTranslator,
 # PunctTranslator,
 # PunctsTranslator,
 # PunctsGroupTranslator,
@@ -36,12 +36,12 @@ from textfsmgen.engine.translate import (
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
 
 
-class TestTranslatedDigitPatternClass:
+class TestDigitTranslatorClass:
     """Test suite for DigitTranslator class."""
 
     def setup_method(self):
         """Create a baseline DigitTranslator instance for reuse."""
-        self.digit_node = DigitTranslator("1", "2", "3")
+        self.translator = DigitTranslator("1", "2", "3")
 
     @pytest.mark.parametrize(
         "other",
@@ -69,7 +69,7 @@ class TestTranslatedDigitPatternClass:
         """
         args = to_list(other)
         other_instance = PatternTranslator.do_factory_create(*args)
-        assert self.digit_node.is_subset_of(other_instance) is True
+        assert self.translator.is_subset_of(other_instance) is True
 
     @pytest.mark.parametrize(
         "other",
@@ -85,7 +85,7 @@ class TestTranslatedDigitPatternClass:
         """
         args = to_list(other)
         other_instance = PatternTranslator.do_factory_create(*args)
-        assert self.digit_node.is_subset_of(other_instance) is False
+        assert self.translator.is_subset_of(other_instance) is False
 
     @pytest.mark.parametrize(
         "other",
@@ -102,7 +102,7 @@ class TestTranslatedDigitPatternClass:
         """
         args = to_list(other)
         other_instance = PatternTranslator.do_factory_create(*args)
-        assert self.digit_node.is_superset_of(other_instance) is False
+        assert self.translator.is_superset_of(other_instance) is False
 
     @pytest.mark.parametrize(
         "data, expected_class",
@@ -160,7 +160,7 @@ class TestTranslatedDigitPatternClass:
         """
         args = to_list(data)
         other = PatternTranslator.do_factory_create(*args)
-        recommend_instance = self.digit_node.recommend(other)
+        recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class)
 
     @pytest.mark.parametrize(
@@ -168,7 +168,7 @@ class TestTranslatedDigitPatternClass:
         [
             (
                 "a",  # letter
-                AlphabetNumericTranslator    # (digit, letter) => alphabet-numeric
+                AlnumTranslator    # (digit, letter) => alphabet-numeric
             ),
             (
                 "ab",  # letters
@@ -195,5 +195,5 @@ class TestTranslatedDigitPatternClass:
         """
         args = to_list(data)
         other = PatternTranslator.do_factory_create(*args)
-        recommend_instance = self.digit_node.recommend(other)
+        recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class)

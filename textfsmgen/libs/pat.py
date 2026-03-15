@@ -13,100 +13,60 @@ from textfsmgen.exceptions import raise_exception, EscapePatternError
 from .generic import StatusString
 
 
-class PATTERN:
+class PATTERN:  # noqa
     """Reusable regex fragments for common character classes."""
 
     # --- Generic wildcard ---
-    ANYTHING = '.'
-    ANY = '.'
-    ZERO_OR_ONE = '.?'
-    SOMETHING = '.*'
-    ZERO_OR_MORE = '.*'
-    EVERYTHING = '.+'
-    ONE_OR_MORE = '.+'
+    DOT = '.'
+    DOTS = '.+'
+    ANYTHING = '.*'
+    SOMETHING = '.+'
 
     # --- Literal spaces ---
     SPACE = ' '
     SPACES = ' +'
-    ZERO_OR_SPACE = ' ?'
-    ZERO_OR_SPACES = ' *'
-    ZERO_OR_MORE_SPACE = ' *'
-    AT_LEAST_ONE_SPACE = SPACES
-    MORE_THAN_ONE_SPACE = '  +'
-    STARTS_WITH_SPACE = '^ '
-    STARTS_WITH_SPACES = '^ +'
-    ENDS_WITH_SPACE = ' $'
-    ENDS_WITH_SPACES = ' +$'
+    OPTIONAL_SPACES = ' *'
 
     # --- Whitespace ---
     WS = r'\s'
-    ZERO_OR_WSS = r'\s*'
-    ZERO_OR_MORE_WS = r'\s*'
+    WHITESPACE = r'\s'
     WSS = r'\s+'
-    ONE_OR_WSS = r'\s+'
-    ONE_OR_MORE_WS = r'\s+'
-
-    # --- Newlines / CRLF ---
-    CRNL = r'\r?\n|\r'
-    CR_NL = CRNL
-    NEWLINE = CRNL
-    ZERO_OR_MORE_CRLF = r'[\r\n]*'
-    ZERO_OR_MORE_NEWLINE = ZERO_OR_MORE_CRLF
-    NEWLINES = ZERO_OR_MORE_NEWLINE
-    ONE_OR_MORE_CRLF = r'[\r\n]+'
-    ONE_OR_MORE_NEWLINE = ONE_OR_MORE_CRLF
+    WHITESPACES = r'\s+'
 
     # --- Digits ---
     DIGIT = r'\d'
-    ZERO_OR_DIGIT = r'\d?'
-    ZERO_OR_DIGITS = r'\d*'
     DIGITS = r'\d+'
-    ONE_OR_MORE_DIGITS = r'\d+'
-    AT_LEAST_ONE_DIGIT = r'\d+'
 
     # --- Numbers ---
     NUMBER = r'\d*[.]?\d+'
-    ZERO_OR_NUMBER = rf'{NUMBER}?'
+    NUM = r'\d*[.]?\d+'
     MIXED_NUMBER = r'[+\(\[\$-]?(\d+([,:/-]\d+)*)?[.]?\d+[\]\)%a-zA-Z]*'
-    ZERO_OR_MIXED_NUMBER = rf'{MIXED_NUMBER}?'
+    MIXED_NUM = r'[+\(\[\$-]?(\d+([,:/-]\d+)*)?[.]?\d+[\]\)%a-zA-Z]*'
 
     # --- letters ---
     LETTER = '[a-zA-Z]'
-    ZERO_OR_LETTER = rf'{LETTER}?'
-    ZERO_OR_LETTERS = rf'{LETTER}*'
-    ZERO_OR_MORE_LETTERS = ZERO_OR_LETTERS
     LETTERS = rf'{LETTER}+'
-    ONE_OR_MORE_LETTERS = LETTERS
-    AT_LEAST_ONE_LETTER = LETTERS
+    LETTERS_GROUP = rf'{LETTERS}(\s+{LETTERS})*'
 
     # --- alphabet numeric ---
-    ALPHABET_NUMERIC = '[a-zA-Z0-9]'
-    ZERO_OR_ALPHABET_NUMERIC = rf'{ALPHABET_NUMERIC}?'
-    ZERO_OR_MORE_ALPHABET_NUMERIC = rf'{ALPHABET_NUMERIC}*'
-    ONE_OR_MORE_ALPHABET_NUMERIC = rf'{ALPHABET_NUMERIC}+'
-    AT_LEAST_ONE_ALPHABET_NUMERIC = rf'{ALPHABET_NUMERIC}+'
+    ALNUM = '[a-zA-Z0-9]'
 
     # --- punctuations ---
     PUNCT = r'[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]'
     PUNCTS = r'%s+' % PUNCT
 
     # --- group of puncts ---
-    PUNCTS_GROUP = r'%s(\s+%s)*' % (PUNCTS, PUNCTS)
     PUNCTS_PHRASE = r'%s(\s+%s)+' % (PUNCTS, PUNCTS)
+    PUNCTS_GROUP = r'%s(\s+%s)*' % (PUNCTS, PUNCTS)
 
-    # --- puncts check ---
-    ENDS_WITH_PUNCT = r'%s$' % PUNCT
-    ENDS_WITH_PUNCTS = r'%s$' % PUNCTS
-    ENDS_WITH_PUNCTS_GROUP = ' *%s *$' % PUNCTS_PHRASE
+    SPACE_PUNCT = r'[ \x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]'
+    SP = r'[ \x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]'
 
-    SPACE_OR_PUNCT = r'[ \x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]'
-    SPACES_OR_PUNCTS = r'%s+' % SPACE_OR_PUNCT
+    LETTER_PUNCT = r'[a-zA-Z\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]'
+    LP = r'[a-zA-Z\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]'
 
     # --- Visible characters ---
     GRAPH = r'[\x21-\x7e]'
-    ZERO_OR_GRAPH = rf'{GRAPH}?'
-    ZERO_OR_MORE_GRAPH = rf'{GRAPH}*'
-    ONE_OR_MORE_GRAPH = rf'{GRAPH}+'
 
     # --- word ---
     WORD = r'[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*'
@@ -126,22 +86,313 @@ class PATTERN:
 
     # --- Non-whitespace(s) ---
     NON_WS = r'\S'
-    ZERO_OR_ONE_NON_WS = rf'{NON_WS}?'
-    ZERO_OR_MORE_NON_WSS = rf'{NON_WS}*'
-    NON_WSS = rf'{NON_WS}+'
+    NON_WHITESPACE = r'\S'
+    NON_WSS = r'\S+'
+    NON_WHITESPACES = r'\S+'
 
     # --- group of non-whitespace(s) ---
     NON_WSS_GROUP = r'%s(\s+%s)*' % (NON_WSS, NON_WSS)
+    NON_WHITESPACES_GROUP = r'%s(\s+%s)*' % (NON_WSS, NON_WSS)
     NON_WSS_PHRASE = r'%s(\s+%s)+' % (NON_WSS, NON_WSS)
 
+    @classmethod
+    def resolve_subset(cls, key):
+        """Return the subset name associated with the given key."""
+        subsets = {
+            "NON_WSS_GROUP": "NON_WSS",
+            "NON_WSS_PHRASE": "NON_WSS",
+            "NON_WSS": "NON_WSS",
+            "NON_WHITESPACES_GROUP": "NON_WHITESPACES",
+            "NON_WHITESPACES": "NON_WHITESPACES",
 
-def lookup_pattern(name, default=None):
-    """Retrieve a regex pattern constant by name."""
-    fallback = PATTERN.NON_WSS_GROUP
-    default = default or fallback
-    attr = name.upper()
-    pattern = getattr(PATTERN, attr, default)
-    return pattern
+            "MIXED_PHRASE": "MIXED_WORD",
+            "MIXED_WORDS": "MIXED_WORD",
+            "MIXED_WORD_GROUP": "MIXED_WORD",
+            "MIXED_WORD": "MIXED_WORD",
+
+            "PHRASE": "WORD",
+            "WORD_GROUP": "WORD",
+            "WORDS": "WORD",
+            "WORD": "WORD",
+
+            "PUNCTS_GROUP": "PUNCTS",
+            "PUNCTS_PHRASE": "PUNCTS",
+
+            "LETTERS_GROUP": "LETTERS",
+        }
+        return subsets.get(key.upper(), "")
+
+
+
+class ParsedKeywordMappingName:
+    def __init__(self, name: str, default=None):
+        self._default = default
+        self._name = str(name)
+
+        self._keyword = ''
+        self._pattern = ''
+        self._is_parsed = False
+
+        self._parse()
+
+    def __bool__(self): return self._is_parsed
+
+    def __len__(self): return 1 if self._is_parsed else 0
+
+    @property
+    def name(self): return self._name
+
+    @property
+    def keyword(self): return self._keyword
+
+    @property
+    def pattern(self): return self._pattern or PATTERN.NON_WSS_GROUP
+
+    def _apply(self, pattern):
+        if not pattern:
+            return
+        self._is_parsed = True
+        self._keyword = self._name.lower()
+        self._pattern = pattern
+
+    def _parse(self):
+        self._load_defined_pattern()
+        self._apply_optional()
+        self._apply_some()
+        self._apply_exact()
+        self._apply_range()
+
+    @classmethod
+    def to_digit(cls, value):
+        """Convert a numeric word to its digit string if possible."""
+        text = str(value).lower()
+
+        words = {
+            "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4,
+            "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9,
+            "ten": 10,
+        }
+
+        if text.isdigit():
+            return value
+
+        if text in words:
+            return str(words[text])
+
+        return value
+
+    @classmethod
+    def in_group(cls, name, index=0):
+        """Return True if the name belongs to the specified group or any group."""
+        groups = [
+            (  # group 0
+                "DOT",
+                "SPACE", "WS", "WHITESPACE",
+                "DIGIT", "LETTER", "ALNUM", "PUNCT",
+                "SP", "SPACE_PUNCT",
+                "LP", "LETTER_PUNCT",
+                "GRAPH", "NON_WS", "NON_WHITESPACE",
+            ),
+            (  # group 1
+                "DOTS", "SPACES", "WSS", "WHITESPACES",
+                "DIGITS", "LETTERS", "PUNCTS",
+                "NON_WSS", "NON_WHITESPACES",
+            ),
+            (  # group 2
+                "NUMBER", "NUM",
+                "MIXED_NUMBER", "MIXED_NUM",
+                "WORD", "MIXED_WORD",
+            ),
+            (  # group 3
+                "LETTERS_GROUP",
+                "PUNCTS_GROUP",
+                "WORD_GROUP", "WORDS",
+                "MIXED_WORD_GROUP",
+                "NON_WSS_GROUP",
+                "NON_WHITESPACES_GROUP",
+            ),
+        ]
+
+        key = name.upper()
+
+        if 0 <= index < len(groups):
+            return key in groups[index]
+
+        for group in groups:
+            if key in group:
+                return True
+
+        return False
+
+    @classmethod
+    def _resolve_defined(cls, name):
+        """Return the PATTERN constant matching the given name."""
+        return getattr(PATTERN, name.upper(), None)
+
+    def _load_defined_pattern(self):
+        """Resolve and apply the defined pattern for this instance."""
+        pattern = self._resolve_defined(self._name)
+        self._apply(pattern)
+
+    def _apply_optional(self):
+        """Apply the optional form of a defined pattern if matched."""
+        key = self._name
+        if self._is_parsed:
+            return
+
+        m = re.fullmatch(r"(?i)optional_(?P<name>\w+)", key)
+        if not m:
+            return
+
+        base = m.group("name").lower()
+        pattern = self._resolve_defined(base)
+        if not pattern:
+            return
+
+        # group 0 → single-char patterns
+        if self.in_group(base, index=0):
+            self._apply(rf"{pattern}?")
+            return
+
+        # group 1 → plural patterns ending with '+'
+        if self.in_group(base, index=1):
+            self._apply(rf"{pattern[:-1]}*")
+            return
+
+        # group 2 or 3 → grouped patterns
+        if self.in_group(base, index=2) or self.in_group(base, index=3):
+            self._apply(rf"({pattern})?")
+
+    def _apply_some(self):
+        """Apply the 'one or more' form of a defined pattern if matched."""
+        if self._is_parsed:
+            return
+
+        m = re.fullmatch(r"(?i)some_(?P<name>\w+)", self._name)
+        if not m:
+            return
+
+        base = m.group("name").lower()
+        pattern = self._resolve_defined(base)
+        if not pattern:
+            return
+
+        # group 0 → single‑unit patterns (use '+')
+        if self.in_group(base, index=0):
+            self._apply(rf"{pattern}+")
+            return
+
+        # groups 1–3 → already plural or grouped (use as‑is)
+        if (
+                self.in_group(base, index=1)
+                or self.in_group(base, index=2)
+                or self.in_group(base, index=3)
+        ):
+            self._apply(pattern)
+
+    def _apply_exact(self):
+        """Apply an exact-count pattern form if the name matches."""
+        if self._is_parsed:
+            return
+
+        m = re.fullmatch(r"(?i)(?P<value>\w+)_?(?P<name>\w+)", self._name)
+        if not m:
+            return
+
+        raw = m.group("value").lower()
+        count = self.to_digit(raw)
+        base = m.group("name").lower()
+        pattern = self._resolve_defined(base)
+
+        if not pattern or not count.isdigit():
+            return
+
+        # group 0 → single-unit patterns
+        if self.in_group(base, index=0):
+            self._apply(rf"{pattern}{{{count}}}")
+            return
+
+        # plural/grouped patterns → subtract 1 for the repeated tail
+        n = int(count) - 1
+
+        if self.in_group(base, index=1) or self.in_group(base, index=2):
+            if n > 0:
+                self._apply(rf"{pattern}(\s+{pattern}){{{n}}}")
+                return
+            self._apply(pattern)
+            return
+
+        if self.in_group(base, index=3):
+            subset = PATTERN.resolve_subset(base)
+            if not subset:
+                return
+
+            if n > 0:
+                self._apply(rf"{subset}(\s+{subset}){{{n}}}")
+                return
+            self._apply(pattern)
+
+    def _apply_range(self):
+        """Apply a ranged repetition form if the name encodes a range."""
+        if self._is_parsed:
+            return
+
+        m = re.fullmatch(
+            r"(?i)(?P<left>\w*)_(to_)?(?P<right>\w*)_(?P<name>\w+)", self._name)
+        if not m:
+            return
+
+        left_raw = m.group("left").lower() or "0"
+        right_raw = m.group("right").lower() or "999"
+        right_raw = "999" if right_raw == "n" else right_raw
+
+        lo = self.to_digit(left_raw)
+        hi = self.to_digit(right_raw)
+
+        base = m.group("name").lower()
+        pattern = self._resolve_defined(base)
+
+        if not pattern or not lo.isdigit() or not hi.isdigit():
+            return
+
+        if int(hi) <= int(lo):
+            return
+
+        # empty upper bound → open range
+        hi = "" if hi == "999" else hi
+
+        if lo == "0" and hi == "":
+            return
+
+        # group 0 → single-unit patterns
+        if self.in_group(base, index=0):
+            self._apply(rf"{pattern}{{{lo},{hi}}}")
+            return
+
+        # groups 1–2 → plural or mixed patterns
+        if self.in_group(base, index=1) or self.in_group(base, index=2):
+            self._apply(rf"{pattern}(\s+{pattern}){{{lo},{hi}}}")
+            return
+
+        # group 3 → subset-based patterns
+        if self.in_group(base, index=3):
+            subset = PATTERN.resolve_subset(base)
+            if not subset:
+                return
+            self._apply(rf"{subset}(\s+{subset}){{{lo},{hi}}}")
+
+
+def resolve_pattern(name, default=None):
+    """Return the resolved regex pattern for the given name."""
+    fallback = default or PATTERN.NON_WSS_GROUP
+    mapping = ParsedKeywordMappingName(name)
+    return mapping.pattern or fallback
+
+
+def resolve_keyword(name):
+    """Return the normalized keyword associated with the given name."""
+    mapping = ParsedKeywordMappingName(name)
+    return mapping.keyword
 
 
 def validate_pattern(

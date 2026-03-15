@@ -1,12 +1,12 @@
 """
-Unit tests for the `textfsmgen.gp.PatternTranslator` class.
+Unit tests for the `textfsmgen.engine.translate.PatternTranslator` class.
 
 Usage
 -----
 Run pytest in the project root to execute these tests:
-    $ pytest tests/unit/gp/test_translated_pattern_class.py
+    $ pytest tests/unit/translate/test_pattern_translator_class.py
     or
-    $ python -m pytest tests/unit/gp/test_translated_pattern_class.py
+    $ python -m pytest tests/unit/translate/test_pattern_translator_class.py
 """
 
 import pytest

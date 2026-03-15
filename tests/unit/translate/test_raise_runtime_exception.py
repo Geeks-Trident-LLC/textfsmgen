@@ -17,16 +17,16 @@ Usage
 -----
 Run pytest in the project root to execute these tests:
 
-    $ pytest tests/unit/gp/test_gp_raise_runtime_exception.py
+    $ pytest tests/unit/translate/test_raise_runtime_exception.py
     or
-    $ python -m pytest tests/unit/gp/test_gp_raise_runtime_exception.ply
+    $ python -m pytest tests/unit/translate/test_raise_runtime_exception.ply
 """
 
 import pytest
 
 from textfsmgen.engine.translate import PatternTranslator
 
-from tests.unit.gp import TranslatedDummyPattern
+from tests.unit.translate import TranslatedDummyPattern
 
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]

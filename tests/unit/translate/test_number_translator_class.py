@@ -1,12 +1,12 @@
 """
-Unit tests for the `textfsmgen.gp.NumberTranslator` class.
+Unit tests for the `textfsmgen.engine.translate.NumberTranslator` class.
 
 Usage
 -----
 Run pytest in the project root to execute these tests:
-    $ pytest tests/unit/gp/test_translated_number_pattern_class.py
+    $ pytest tests/unit/translate/test_number_translator_class.py
     or
-    $ python -m pytest tests/unit/gp/test_translated_number_pattern_class.py
+    $ python -m pytest tests/unit/translate/test_number_translator_class.py
 """
 
 import pytest
@@ -19,7 +19,7 @@ from textfsmgen.engine.translate import (
     MixedNumberTranslator,
 # LetterTranslator,
 # LettersTranslator,
-# AlphabetNumericTranslator,
+# AlnumTranslator,
 # PunctTranslator,
 # PunctsTranslator,
 # PunctsGroupTranslator,
@@ -36,12 +36,12 @@ from textfsmgen.engine.translate import (
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
 
 
-class TestTranslatedNumberPatternClass:
+class TestNumberTranslatorClass:
     """Test suite for NumberTranslator class."""
 
     def setup_method(self):
         """Create a baseline NumberTranslator instance for reuse."""
-        self.number_node = NumberTranslator("1.1")
+        self.translator = NumberTranslator("1.1")
 
     @pytest.mark.parametrize(
         "other",
@@ -59,7 +59,7 @@ class TestTranslatedNumberPatternClass:
         """
         args = to_list(other)
         other_instance = PatternTranslator.do_factory_create(*args)
-        assert self.number_node.is_subset_of(other_instance) is True
+        assert self.translator.is_subset_of(other_instance) is True
 
     @pytest.mark.parametrize(
         "other",
@@ -81,7 +81,7 @@ class TestTranslatedNumberPatternClass:
         """
         args = to_list(other)
         other_instance = PatternTranslator.do_factory_create(*args)
-        assert self.number_node.is_subset_of(other_instance) is False
+        assert self.translator.is_subset_of(other_instance) is False
 
     @pytest.mark.parametrize(
         "other",
@@ -96,7 +96,7 @@ class TestTranslatedNumberPatternClass:
         """
         args = to_list(other)
         other_instance = PatternTranslator.do_factory_create(*args)
-        assert self.number_node.is_superset_of(other_instance) is True
+        assert self.translator.is_superset_of(other_instance) is True
 
     @pytest.mark.parametrize(
         "number, expected_class",
@@ -126,7 +126,7 @@ class TestTranslatedNumberPatternClass:
         """
         args = to_list(number)
         other = PatternTranslator.do_factory_create(*args)
-        recommend_instance = self.number_node.recommend(other)
+        recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class)
 
     @pytest.mark.parametrize(
@@ -149,7 +149,7 @@ class TestTranslatedNumberPatternClass:
         """
         args = to_list(number)
         other = PatternTranslator.do_factory_create(*args)
-        recommend_instance = self.number_node.recommend(other)
+        recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class)
 
     @pytest.mark.parametrize(
@@ -209,5 +209,5 @@ class TestTranslatedNumberPatternClass:
         """
         args = to_list(number)
         other = PatternTranslator.do_factory_create(*args)
-        recommend_instance = self.number_node.recommend(other)
+        recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class)

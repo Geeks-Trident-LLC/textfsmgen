@@ -19,7 +19,7 @@ from textfsmgen.engine.translate import (
     MixedNumberTranslator,
 # LetterTranslator,
 # LettersTranslator,
-# AlphabetNumericTranslator,
+# AlnumTranslator,
 # PunctTranslator,
 # PunctsTranslator,
 # PunctsGroupTranslator,

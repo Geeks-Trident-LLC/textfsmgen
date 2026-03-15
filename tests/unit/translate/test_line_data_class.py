@@ -4,16 +4,16 @@ Unit tests for the `textfsmgen.gp.LineData` class.
 Usage
 -----
 Run pytest in the project root to execute these tests:
-    $ pytest tests/unit/gp/test_ldata_class.py
+    $ pytest tests/unit/translate/test_line_data_class.py
     or
-    $ python -m pytest tests/unit/gp/test_ldata_class.py
+    $ python -m pytest tests/unit/translate/test_line_data_class.py
 """
 
 import pytest
 from textfsmgen.engine import LineData
 
 
-class TestLData:
+class TestLineData:
     """Unit tests for the LineData class."""
 
     @pytest.mark.parametrize(

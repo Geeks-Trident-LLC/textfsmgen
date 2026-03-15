@@ -1,12 +1,12 @@
 """
-Unit tests for the `textfsmgen.gp.AlphabetNumericTranslator` class.
+Unit tests for the `textfsmgen.gp.AlnumTranslator` class.
 
 Usage
 -----
 Run pytest in the project root to execute these tests:
-    $ pytest tests/unit/gp/test_translated_alphabet_numeric_pattern_class.py
+    $ pytest tests/unit/translate/test_alnum_translator_class.py
     or
-    $ python -m pytest tests/unit/gp/test_translated_alphabet_numeric_pattern_class.py
+    $ python -m pytest tests/unit/translate/test_alnum_translator_class.py
 """
 
 import pytest
@@ -19,7 +19,7 @@ from textfsmgen.engine.translate import (
 # MixedNumberTranslator,
 # LetterTranslator,
 # LettersTranslator,
-    AlphabetNumericTranslator,
+    AlnumTranslator,
 # PunctTranslator,
 # PunctsTranslator,
 # PunctsGroupTranslator,
@@ -36,12 +36,12 @@ from textfsmgen.engine.translate import (
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
 
 
-class TestTranslatedAlphabetNumericPatternClass:
-    """Test suite for AlphabetNumericTranslator class."""
+class TestAlnumTranslatorClass:
+    """Test suite for AlnumTranslator class."""
 
     def setup_method(self):
-        """Create a baseline AlphabetNumericTranslator instance for reuse."""
-        self.alphabet_numeric_node = AlphabetNumericTranslator("a", "1")
+        """Create a baseline AlnumTranslator instance for reuse."""
+        self.translator = AlnumTranslator("a", "1")
 
     @pytest.mark.parametrize(
         "other",
@@ -64,7 +64,7 @@ class TestTranslatedAlphabetNumericPatternClass:
         """
         args = to_list(other)
         other_instance = PatternTranslator.do_factory_create(*args)
-        assert self.alphabet_numeric_node.is_subset_of(other_instance) is True
+        assert self.translator.is_subset_of(other_instance) is True
 
     @pytest.mark.parametrize(
         "other",
@@ -83,7 +83,7 @@ class TestTranslatedAlphabetNumericPatternClass:
         """
         args = to_list(other)
         other_instance = PatternTranslator.do_factory_create(*args)
-        assert self.alphabet_numeric_node.is_subset_of(other_instance) is False
+        assert self.translator.is_subset_of(other_instance) is False
 
     @pytest.mark.parametrize(
         "other",
@@ -98,14 +98,14 @@ class TestTranslatedAlphabetNumericPatternClass:
         """
         args = to_list(other)
         other_instance = PatternTranslator.do_factory_create(*args)
-        assert self.alphabet_numeric_node.is_superset_of(other_instance) is True
+        assert self.translator.is_superset_of(other_instance) is True
 
     @pytest.mark.parametrize(
         "data, expected_class",
         [
             (
                     ["a", "1"],  # alpha-num
-                    AlphabetNumericTranslator    # (alpha-num, alpha-num) => alpha-num
+                    AlnumTranslator    # (alpha-num, alpha-num) => alpha-num
             ),
             (
                 "abc123",  # a word
@@ -144,7 +144,7 @@ class TestTranslatedAlphabetNumericPatternClass:
         """
         args = to_list(data)
         other = PatternTranslator.do_factory_create(*args)
-        recommend_instance = self.alphabet_numeric_node.recommend(other)
+        recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
     @pytest.mark.parametrize(
@@ -152,11 +152,11 @@ class TestTranslatedAlphabetNumericPatternClass:
         [
             (
                 "a",  # letter
-                AlphabetNumericTranslator    # (alpha-num, letter) => alpha-num
+                AlnumTranslator    # (alpha-num, letter) => alpha-num
             ),
             (
                 "1",  # letter
-                AlphabetNumericTranslator    # (alpha-num, letter) => alpha-num
+                AlnumTranslator    # (alpha-num, letter) => alpha-num
             ),
         ],
     )
@@ -167,7 +167,7 @@ class TestTranslatedAlphabetNumericPatternClass:
         """
         args = to_list(data)
         other = PatternTranslator.do_factory_create(*args)
-        recommend_instance = self.alphabet_numeric_node.recommend(other)
+        recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
     @pytest.mark.parametrize(
@@ -206,5 +206,5 @@ class TestTranslatedAlphabetNumericPatternClass:
         """
         args = to_list(data)
         other = PatternTranslator.do_factory_create(*args)
-        recommend_instance = self.alphabet_numeric_node.recommend(other)
+        recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class)

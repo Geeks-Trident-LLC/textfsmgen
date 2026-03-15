@@ -91,7 +91,7 @@ class TestDChangeClass:
         [
             (("a", "case01", ["B", "z"]), "letter(var_case01)"),
             (("1", "case02", ["2", "3"]), "digit(var_case02)"),
-            (("a", "case03", ["b", "1"]), "alphabet_numeric(var_case03)"),
+            (("a", "case03", ["b", "1"]), "alnum(var_case03)"),
             (("-", "case04", ["+", "*"]), "punct(var_case04)"),
             (("a", "case05", ["1", "*"]), "graph(var_case05)"),
             (("a", "case06", ["1", "\xc8"]), "non_ws(var_case06)"),
@@ -149,7 +149,7 @@ class TestDChangeClass:
         [
             (("a", "case01", ["B", "z"]), r"(?P<case01>[a-zA-Z])"),
             (("1", "case02", ["2", "3"]), r"(?P<case02>\d)"),
-            # (("a", "case03", ["b", "1"]), "alphabet_numeric(var_case03)"),
+            # (("a", "case03", ["b", "1"]), "alnum(var_case03)"),
             (("-", "case04", ["+", "*"]), r"(?P<case04>[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e])"),
             (("a", "case05", ["1", "*"]), r"(?P<case05>[\x21-\x7e])"),
             (("a", "case06", ["1", "\xc8"]), r"(?P<case06>\S)"),

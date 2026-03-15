@@ -1,12 +1,12 @@
 """
-Unit tests for the `textfsmgen.gp` module.
+Unit tests for the `textfsmgen.engine.translate` module.
 
 Usage
 -----
 Run pytest in the project root to execute these tests:
-    $ pytest tests/unit/gp
+    $ pytest tests/unit/translate
     or
-    $ python -m pytest tests/unit/gp
+    $ python -m pytest tests/unit/translate
 """
 
 

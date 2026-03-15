@@ -4,9 +4,9 @@ Unit tests for the `textfsmgen.gp.LettersTranslator` class.
 Usage
 -----
 Run pytest in the project root to execute these tests:
-    $ pytest tests/unit/gp/test_translated_letters_pattern_class.py
+    $ pytest tests/unit/translate/test_letters_translator_class.py
     or
-    $ python -m pytest tests/unit/gp/test_translated_letters_pattern_class.py
+    $ python -m pytest tests/unit/translate/test_letters_translator_class.py
 """
 
 import pytest
@@ -19,7 +19,7 @@ from textfsmgen.engine.translate import (
 # MixedNumberTranslator,
 # LetterTranslator,
     LettersTranslator,
-# AlphabetNumericTranslator,
+# AlnumTranslator,
 # PunctTranslator,
 # PunctsTranslator,
 # PunctsGroupTranslator,
@@ -36,12 +36,12 @@ from textfsmgen.engine.translate import (
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
 
 
-class TestTranslatedLettersPatternClass:
+class TestLettersTranslatorClass:
     """Test suite for LettersTranslator class."""
 
     def setup_method(self):
         """Create a baseline LettersTranslator instance for reuse."""
-        self.letters_node = LettersTranslator("abc")
+        self.translator = LettersTranslator("abc")
 
     @pytest.mark.parametrize(
         "other",
@@ -62,7 +62,7 @@ class TestTranslatedLettersPatternClass:
         """
         args = to_list(other)
         other_instance = PatternTranslator.do_factory_create(*args)
-        assert self.letters_node.is_subset_of(other_instance) is True
+        assert self.translator.is_subset_of(other_instance) is True
 
     @pytest.mark.parametrize(
         "other",
@@ -83,7 +83,7 @@ class TestTranslatedLettersPatternClass:
         """
         args = to_list(other)
         other_instance = PatternTranslator.do_factory_create(*args)
-        assert self.letters_node.is_subset_of(other_instance) is False
+        assert self.translator.is_subset_of(other_instance) is False
 
     @pytest.mark.parametrize(
         "other",
@@ -97,7 +97,7 @@ class TestTranslatedLettersPatternClass:
         """
         args = to_list(other)
         other_instance = PatternTranslator.do_factory_create(*args)
-        assert self.letters_node.is_superset_of(other_instance) is True
+        assert self.translator.is_superset_of(other_instance) is True
 
     @pytest.mark.parametrize(
         "data, expected_class",
@@ -143,7 +143,7 @@ class TestTranslatedLettersPatternClass:
         """
         args = to_list(data)
         other = PatternTranslator.do_factory_create(*args)
-        recommend_instance = self.letters_node.recommend(other)
+        recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
     @pytest.mark.parametrize(
@@ -162,7 +162,7 @@ class TestTranslatedLettersPatternClass:
         """
         args = to_list(data)
         other = PatternTranslator.do_factory_create(*args)
-        recommend_instance = self.letters_node.recommend(other)
+        recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
     @pytest.mark.parametrize(
@@ -217,5 +217,5 @@ class TestTranslatedLettersPatternClass:
         """
         args = to_list(data)
         other = PatternTranslator.do_factory_create(*args)
-        recommend_instance = self.letters_node.recommend(other)
+        recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class)

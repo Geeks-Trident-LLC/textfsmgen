@@ -23,6 +23,7 @@ from textfsmgen.engine.iterative import IterativeLineTranslator
 from textfsmgen.engine.common import get_line_position_by
 from textfsmgen.engine.common import get_fixed_line_snippet
 
+PATTERN_CRNL = r'\r?\n|\r'
 
 class SeparatorNode(LineData):
     """
@@ -57,11 +58,11 @@ class SpacerNode(LineData):
 
     def to_regex(self) -> str:
         """Convert the spacer configuration into a regex pattern."""
-        return PATTERN.ZERO_OR_MORE_SPACE if self.is_empty else PATTERN.SPACES
+        return ' *' if self.is_empty else PATTERN.SPACES
 
     def to_template_snippet(self) -> str:
         """Generate a template snippet for the spacer."""
-        return "zero_or_spaces()" if self.is_empty else "  "
+        return "optional_spaces()" if self.is_empty else "  "
 
 
 class LeftDataNode(LineData):
@@ -107,7 +108,7 @@ class RightDataNode(LineData):
         if self.data:
             pat_obj = PatternTranslator.do_factory_create(self.data)
             return pat_obj.get_template_snippet(var=self.var_name)
-        return f"something(var_{self.var_name}, or_empty)"
+        return f"anything(var_{self.var_name}, or_empty)"
 
 
 class CategoryLineTranslator(LineData):
@@ -146,9 +147,9 @@ class CategoryLineTranslator(LineData):
         """
         Convert the parsed line into a regex pattern.
         """
-        zero_or_spaces_pat = PATTERN.ZERO_OR_MORE_SPACE
+        optional_spaces_pat = ' *'
         result: list[str] = [
-            zero_or_spaces_pat if self.is_leading else ""]
+            optional_spaces_pat if self.is_leading else ""]
         prev_item, is_last_item_empty, item = None, False, None
 
         for item in self._lst:
@@ -157,7 +158,7 @@ class CategoryLineTranslator(LineData):
                 isinstance(item, RightDataNode) and
                 item.is_empty and prev_item and not prev_item.is_trailing
             ):
-                pat = f"{zero_or_spaces_pat}{pat}"
+                pat = f"{optional_spaces_pat}{pat}"
             result.append(pat)
             prev_item = item
         else:
@@ -166,11 +167,11 @@ class CategoryLineTranslator(LineData):
 
         if is_last_item_empty:
             result.append(
-                zero_or_spaces_pat if self.is_trailing else "")
+                optional_spaces_pat if self.is_trailing else "")
 
         pattern = "".join(result)
-        replaced_pat = r"( +)(something[\(]var_\w+, or_empty[\)])"
-        return re.sub(replaced_pat, r"zero_or_spaces()\2", pattern)
+        replaced_pat = r"( +)(anything[\(]var_\w+, or_empty[\)])"
+        return re.sub(replaced_pat, r"optional_spaces()\2", pattern)
 
     def to_template_snippet(self) -> str:
         """
@@ -185,7 +186,7 @@ class CategoryLineTranslator(LineData):
                 isinstance(item, RightDataNode) and
                 item.is_empty and prev_item and not prev_item.is_trailing
             ):
-                snippet = f"zero_or_spaces(){snippet}"
+                snippet = f"optional_spaces(){snippet}"
             result.append(snippet)
             prev_item = item
         else:
@@ -196,8 +197,8 @@ class CategoryLineTranslator(LineData):
             result.append(self.trailing)
 
         tmpl_snippet = "".join(result)
-        replaced_pat = r"( +)(something[\(]var_\w+, or_empty[\)])"
-        return re.sub(replaced_pat, r"zero_or_spaces()\2", tmpl_snippet)
+        replaced_pat = r"( +)(anything[\(]var_\w+, or_empty[\)])"
+        return re.sub(replaced_pat, r"optional_spaces()\2", tmpl_snippet)
 
     def scan_to_boundary(self, char_pos: int, direction: str = "right") -> int:
         """
@@ -289,7 +290,7 @@ class CategoryLineTranslator(LineData):
         """
         Attempt to extract a value and remaining string from right data.
         """
-        mult_space_pat = PATTERN.MORE_THAN_ONE_SPACE
+        mult_space_pat = '  +'
         spaces_pat = PATTERN.SPACES
         double_spaces = "  "
         blank_space = " "
@@ -460,7 +461,7 @@ class CategoryLinesTranslator(RuntimeException):
             is_category_line_pat = isinstance(item, CategoryLineTranslator)
             result.append(item.to_regex() if is_category_line_pat else TextPattern(item))
 
-        return str.join(f"({PATTERN.CRNL})", result)
+        return str.join(f"({PATTERN_CRNL})", result)
 
     def to_template_snippet(self) -> str:
         """

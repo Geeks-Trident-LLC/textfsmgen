@@ -1,12 +1,12 @@
 """
-Unit tests for the `textfsmgen.gp.NonWSTranslator` class.
+Unit tests for the `textfsmgen.engine.translate.NonWSTranslator` class.
 
 Usage
 -----
 Run pytest in the project root to execute these tests:
-    $ pytest tests/unit/gp/test_translated_non_whitespace_pattern_class.py
+    $ pytest tests/unit/translate/test_non_ws_translator_class.py
     or
-    $ python -m pytest tests/unit/gp/test_translated_non_whitespace_pattern_class.py
+    $ python -m pytest tests/unit/translate/test_non_ws_translator_class.py
 """
 
 import pytest
@@ -19,7 +19,7 @@ from textfsmgen.engine.translate import (
 # MixedNumberTranslator,
 # LetterTranslator,
 # LettersTranslator,
-# AlphabetNumericTranslator,
+# AlnumTranslator,
 # PunctTranslator,
 # PunctsTranslator,
 # PunctsGroupTranslator,
@@ -36,12 +36,12 @@ from textfsmgen.engine.translate import (
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
 
 
-class TestTranslatedNonWhitespacePatternClass:
+class TestNonWSTranslatorClass:
     """Test suite for NonWSTranslator class."""
 
     def setup_method(self):
         """Create a baseline NonWSTranslator instance for reuse."""
-        self.non_whitespace_node = NonWSTranslator("\xc8")
+        self.translator = NonWSTranslator("\xc8")
 
     @pytest.mark.parametrize(
         "other",
@@ -57,7 +57,7 @@ class TestTranslatedNonWhitespacePatternClass:
         """
         args = to_list(other)
         other_instance = PatternTranslator.do_factory_create(*args)
-        assert self.non_whitespace_node.is_subset_of(other_instance) is True
+        assert self.translator.is_subset_of(other_instance) is True
 
     @pytest.mark.parametrize(
         "other",
@@ -75,7 +75,7 @@ class TestTranslatedNonWhitespacePatternClass:
         """
         args = to_list(other)
         other_instance = PatternTranslator.do_factory_create(*args)
-        assert self.non_whitespace_node.is_subset_of(other_instance) is False
+        assert self.translator.is_subset_of(other_instance) is False
 
     @pytest.mark.parametrize(
         "other",
@@ -93,7 +93,7 @@ class TestTranslatedNonWhitespacePatternClass:
         """
         args = to_list(other)
         other_instance = PatternTranslator.do_factory_create(*args)
-        assert self.non_whitespace_node.is_superset_of(other_instance) is True
+        assert self.translator.is_superset_of(other_instance) is True
 
     @pytest.mark.parametrize(
         "data, expected_class",
@@ -119,7 +119,7 @@ class TestTranslatedNonWhitespacePatternClass:
         """
         args = to_list(data)
         other = PatternTranslator.do_factory_create(*args)
-        recommend_instance = self.non_whitespace_node.recommend(other)
+        recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
     @pytest.mark.parametrize(
@@ -154,7 +154,7 @@ class TestTranslatedNonWhitespacePatternClass:
         """
         args = to_list(data)
         other = PatternTranslator.do_factory_create(*args)
-        recommend_instance = self.non_whitespace_node.recommend(other)
+        recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
     @pytest.mark.parametrize(
@@ -209,5 +209,5 @@ class TestTranslatedNonWhitespacePatternClass:
         """
         args = to_list(data)
         other = PatternTranslator.do_factory_create(*args)
-        recommend_instance = self.non_whitespace_node.recommend(other)
+        recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class)
