@@ -33,7 +33,7 @@ from textfsmgen.exceptions import TemplateBuilderError
 from textfsmgen.exceptions import TemplateBuilderInvalidFormat
 
 from textfsmgen.engine.category import CategoryLinesTranslator
-from textfsmgen.engine.tabular import TableTranslator
+from textfsmgen.engine.tabular import TabularTranslator
 
 import logging
 logger = logging.getLogger(__file__)
@@ -614,9 +614,12 @@ class CategoryTemplateBuilder:
     def __len__(self): return 1 if self.translator else 0
 
     @property
+    def snippet(self):
+        return self.builder.to_template_snippet() if self.translator else ""
+
+    @property
     def template(self):
         return self.builder.template if self.builder else ""
-
 
     def verify(self, expected_rows_count=None, expected_result=None,
                tabular=False, debug=False, ignore_space=False):
@@ -646,7 +649,7 @@ class CategoryTemplateBuilder:
         return self.builder.create_python_test() if self.builder else ""
 
 
-class TableTemplateBuilder:
+class TabularTemplateBuilder:
     def __init__(
         self,
         user_data='',
@@ -669,7 +672,7 @@ class TableTemplateBuilder:
         test_script_file='',
         debug=False
     ):
-        self.translator = TableTranslator(
+        self.translator = TabularTranslator(
             user_data,
             column_divider=column_divider,
             column_count=column_count,
@@ -707,9 +710,12 @@ class TableTemplateBuilder:
     def __len__(self): return 1 if self.translator else 0
 
     @property
+    def snippet(self):
+        return self.builder.to_template_snippet() if self.translator else ""
+
+    @property
     def template(self):
         return self.builder.template if self.builder else ""
-
 
     def verify(self, expected_rows_count=None, expected_result=None,
                tabular=False, debug=False, ignore_space=False):

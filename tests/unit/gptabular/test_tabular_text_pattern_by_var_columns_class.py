@@ -1,5 +1,5 @@
 """
-Unit tests for the `textfsmgen.gptabular.VarColumnTableTranslator` class.
+Unit tests for the `textfsmgen.gptabular.VarColumnTabularTranslator` class.
 
 Usage
 -----
@@ -20,7 +20,7 @@ from textfsmgen.libs import text
 from textfsmgen.libs import datatype
 from textfsmgen.libs.utils import get_data_as_tabular
 
-from textfsmgen.engine.tabular import VarColumnTableTranslator
+from textfsmgen.engine.tabular import VarColumnTabularTranslator
 
 from textfsmgen.core.verify import verify
 from textfsmgen.core.template import get_textfsm_template
@@ -44,7 +44,7 @@ LastWriteTime          Name
         {'lastwritetime': '11/2/2021 11:58:45 PM', 'name': 'README.md'},
         {'lastwritetime': '12/16/2021 12:30:59 PM', 'name': 'CONTRIBUTING.md'}
     ]
-    node = VarColumnTableTranslator(test_data, column_count=2, column_divider='  ')
+    node = VarColumnTabularTranslator(test_data, column_count=2, column_divider='  ')
     pattern = node.to_regex()
     assert pattern == expected_pattern
     for index, line in enumerate(text.get_list_of_lines(test_data)):
@@ -73,7 +73,7 @@ peach               pepsi soda
         {'fruits': 'peach', 'meat': '', 'drinks': 'pepsi soda'},
     ]
 
-    node = VarColumnTableTranslator(test_data, column_count=3, column_divider='  ')
+    node = VarColumnTabularTranslator(test_data, column_count=3, column_divider='  ')
     pattern = node.to_regex()
     assert pattern == expected_pattern
     for index, line in enumerate(text.get_list_of_lines(test_data)):
@@ -114,7 +114,7 @@ LastWriteTime           Name
 | 12/16/2021 12:30:59 PM | CONTRIBUTING.md |
 +------------------------+-----------------+
     """.strip()
-    node = VarColumnTableTranslator(test_data, column_divider='|', column_count=2)
+    node = VarColumnTabularTranslator(test_data, column_divider='|', column_count=2)
     table = node.parse_table()
     assert table
 
@@ -147,7 +147,7 @@ peach    |         | pepsi soda
 +--------+------+------------+
     """.strip()
 
-    node = VarColumnTableTranslator(test_data, column_divider='|', column_count=3)
+    node = VarColumnTabularTranslator(test_data, column_divider='|', column_count=3)
     table = node.parse_table()
     assert table
 
@@ -182,7 +182,7 @@ def test_to_tabular_custom_divider_ex3():
 +--------+------+------------+
     """.strip()
 
-    node = VarColumnTableTranslator(test_data, column_divider='|', column_count=3)
+    node = VarColumnTabularTranslator(test_data, column_divider='|', column_count=3)
     table = node.parse_table()
     assert table
     lst_of_dict = table.to_list_of_dict()
@@ -216,7 +216,7 @@ def test_to_tabular_custom_divider_ex4():
 +--------+------+------------+
     """.strip()
 
-    node = VarColumnTableTranslator(test_data, column_divider='|', column_count=3)
+    node = VarColumnTabularTranslator(test_data, column_divider='|', column_count=3)
     table = node.parse_table()
     assert table
 
@@ -254,7 +254,7 @@ LastWriteTime          Name
 +------------------------+-----------------+
     """.strip()
 
-    node = VarColumnTableTranslator(test_data, column_divider='  ', column_count=2)
+    node = VarColumnTabularTranslator(test_data, column_divider='  ', column_count=2)
     table = node.parse_table()
     assert table
 
@@ -286,7 +286,7 @@ peach               pepsi soda
 +--------+------+------------+
     """.strip()
 
-    node = VarColumnTableTranslator(test_data, column_divider='  ', column_count=3)
+    node = VarColumnTabularTranslator(test_data, column_divider='  ', column_count=3)
     table = node.parse_table()
     assert table
 
@@ -324,7 +324,7 @@ LastWriteTime          Name
 +------------------------+-----------------+
     """.strip()
 
-    node = VarColumnTableTranslator(test_data, column_divider=' ', column_count=2)
+    node = VarColumnTabularTranslator(test_data, column_divider=' ', column_count=2)
     table = node.parse_table()
     assert table
 
@@ -356,7 +356,7 @@ peach               pepsi soda
 +--------+------+------------+
     """.strip()
 
-    node = VarColumnTableTranslator(test_data, column_divider=' ', column_count=3)
+    node = VarColumnTabularTranslator(test_data, column_divider=' ', column_count=3)
     table = node.parse_table()
     assert table
 
@@ -397,8 +397,8 @@ LastWriteTime          Name
 +------------------------+-----------------+
     """.strip()
 
-    node = VarColumnTableTranslator(test_data, column_count=2,
-                                    custom_header_text='---------------------- ---------------')
+    node = VarColumnTabularTranslator(test_data, column_count=2,
+                                      custom_header_text='---------------------- ---------------')
     table = node.parse_table()
     assert table
 
@@ -455,8 +455,8 @@ peach               pepsi soda
 +--------+------+------------+
     """.strip()
 
-    node = VarColumnTableTranslator(test_data, column_count=3,
-                                    custom_header_text='--------- --------- ----------')
+    node = VarColumnTabularTranslator(test_data, column_count=3,
+                                      custom_header_text='--------- --------- ----------')
     table = node.parse_table()
     assert table
 
@@ -501,7 +501,7 @@ Start
         {'lastwritetime': '12/16/2021 12:30:59 PM', 'name': 'CONTRIBUTING.md'}
     ]
 
-    node = VarColumnTableTranslator(
+    node = VarColumnTabularTranslator(
         test_data, column_divider='  ', column_count=2, header_rows='LastWriteTime          Name'
     )
     tmpl_snippet = node.to_template_snippet()
@@ -553,7 +553,7 @@ Start
         {'fruits': 'mango', 'meat': 'chicken', 'drinks': ''}
     ]
 
-    node = VarColumnTableTranslator(test_data)
+    node = VarColumnTabularTranslator(test_data)
     tmpl_snippet = node.to_template_snippet()
     assert tmpl_snippet == expected_template_snippet
 

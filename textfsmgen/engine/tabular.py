@@ -26,7 +26,7 @@ from textfsmgen.engine.common import get_line_position_by
 from textfsmgen.engine.common import get_fixed_line_snippet
 
 
-class TableTranslator(RuntimeException):
+class TabularTranslator(RuntimeException):
     """
     Represents a tabular text pattern that can be parsed into regex patterns
     or template snippets.
@@ -106,7 +106,7 @@ class TableTranslator(RuntimeException):
         self.index_end = get_line_position_by(self.lines, self.ending_at)
 
         lines = self.lines[self.index_start:self.index_end]
-        self.tabular_parser = VarColumnTableTranslator(*lines, **self.kwargs)
+        self.tabular_parser = VarColumnTabularTranslator(*lines, **self.kwargs)
 
     def to_regex(self) -> str:
         """Return a regex pattern generated from the parsed table."""
@@ -146,7 +146,7 @@ class TableTranslator(RuntimeException):
         return tmpl_snippet
 
 
-class VarColumnTableTranslator(RuntimeException):
+class VarColumnTabularTranslator(RuntimeException):
     """
     Parse tabular text with variable column structures and optional dividers.
     """
