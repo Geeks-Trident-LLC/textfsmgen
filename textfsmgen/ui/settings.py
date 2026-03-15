@@ -30,6 +30,8 @@ def show_dialog(app):
 
     add_category_translator_arguments(app, frame)
 
+    add_tabular_translator_arguments(app, frame)
+
     add_running_test_options(app, frame)
 
     add_output_display_options(app, frame)
@@ -48,7 +50,7 @@ def create_window(parent: Optional[ui.Tk | ui.Toplevel]) -> ui.Toplevel:
     ui.set_window_icon(window)
 
     width = 830 if ui.is_macos else 784 if ui.is_linux else 680
-    height = 338 if ui.is_macos else 322 if ui.is_linux else 314
+    height = 538 if ui.is_macos else 522 if ui.is_linux else 514
 
     center_window(parent, window, width, height)
     return window
@@ -79,9 +81,8 @@ def add_general_arguments_fields(app, parent: ui.Frame) -> None:
 
 
 def add_category_translator_arguments(app, parent: ui.Frame) -> None:
-
     group = ui.LabelFrame(parent, height=120, width=780, text="Category Translator Arguments")
-    group.grid(row=1, column=0, padx=10, pady=4, sticky="nw")
+    group.grid(row=1, column=0, padx=10, pady=10, sticky="nw")
     pad_y = 0 if ui.is_macos else 1
 
     checkbox = ui.CheckBox(group, text="Use Category Translator",
@@ -112,6 +113,64 @@ def add_category_translator_arguments(app, parent: ui.Frame) -> None:
     entry.grid(row=2, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
 
 
+def add_tabular_translator_arguments(app, parent: ui.Frame) -> None:
+    group = ui.LabelFrame(parent, height=120, width=780, text="Tabular Translator Arguments")
+    group.grid(row=2, column=0, padx=10, pady=10, sticky="nw")
+    pad_y = 0 if ui.is_macos else 1
+
+    checkbox = ui.CheckBox(group, text="Use Tabular Translator",
+                           variable=app.settings.use_tabular_translator_flag,
+                           onvalue=True, offvalue=False)
+    checkbox.grid(row=0, column=10, sticky="se")
+
+    lbl = ui.Label(group, text="Divider")
+    lbl.grid(row=0, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
+    entry = ui.TextBox(group, width=8, justify="center",
+                       textvariable=app.settings.tabular_arg_divider)
+    entry.grid(row=0, column=1, padx=2, pady=pad_y, sticky="nw")
+
+    lbl = ui.Label(group, text="Count")
+    lbl.grid(row=0, column=2, padx=2, pady=pad_y, sticky="se")
+    entry = ui.TextBox(group, width=6, justify="center",
+                       textvariable=app.settings.tabular_arg_count)
+    entry.grid(row=0, column=3, padx=2, pady=pad_y, sticky="nw")
+
+    lbl = ui.Label(group, text="Widths")
+    lbl.grid(row=0, column=4, padx=2, pady=pad_y, sticky="se")
+    entry = ui.TextBox(group, width=20, justify="center",
+                       textvariable=app.settings.tabular_arg_widths)
+    entry.grid(row=0, column=5, padx=2, pady=pad_y, sticky="nw")
+
+    checkbox = ui.CheckBox(group, text="Has Header Row",
+                           variable=app.settings.tabular_arg_has_header_row_flag,
+                           onvalue=True, offvalue=False)
+    checkbox.grid(row=0, column=6, sticky="nw")
+
+    lbl = ui.Label(group, text="Headers")
+    lbl.grid(row=1, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
+    entry = ui.TextBox(group, width=94, textvariable=app.settings.tabular_arg_headers)
+    entry.grid(row=1, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
+
+    lbl = ui.Label(group, text="Custom Hdr")
+    lbl.grid(row=2, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
+    entry = ui.TextBox(group, width=94, textvariable=app.settings.tabular_arg_custom_header)
+    entry.grid(row=2, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
+
+    lbl = ui.Label(group, text="Header Rows")
+    lbl.grid(row=3, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
+    entry = ui.TextBox(group, width=94, textvariable=app.settings.tabular_arg_header_rows)
+    entry.grid(row=3, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
+
+    lbl = ui.Label(group, text="Starting From")
+    lbl.grid(row=4, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
+    entry = ui.TextBox(group, width=94, textvariable=app.settings.tabular_arg_starting_from)
+    entry.grid(row=4, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
+
+    lbl = ui.Label(group, text="Ending At")
+    lbl.grid(row=5, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
+    entry = ui.TextBox(group, width=94, textvariable=app.settings.tabular_arg_ending_at)
+    entry.grid(row=5, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
+
 
 def add_running_test_options(app, parent: ui.Frame) -> None:
 
@@ -125,7 +184,7 @@ def add_running_test_options(app, parent: ui.Frame) -> None:
         parent, height=120, width=780,
         text="Test Execution Settings - Prefer Python Virtual Environment"
     )
-    group.grid(row=3, column=0, padx=10, pady=4, sticky="nw")
+    group.grid(row=3, column=0, padx=10, pady=10, sticky="nw")
 
     pad_y = 0 if ui.is_macos else 1
 
@@ -149,7 +208,7 @@ def add_running_test_options(app, parent: ui.Frame) -> None:
 def add_output_display_options(app, parent: ui.Frame) -> None:
     """Add application setting checkboxes to the given parent frame."""
     group = ui.LabelFrame(parent, height=120, width=380, text="Output Display Options")
-    group.grid(row=4, column=0, padx=10, pady=1, sticky="nw")
+    group.grid(row=4, column=0, padx=10, pady=10, sticky="nw")
 
     settings = [
         ("Test Data",   app.settings.test_data_flag, 0, 0, 6),
@@ -194,9 +253,21 @@ def reset_default_setting(app):
     # Category Translator Arguments
     app.settings.use_category_translator_flag.set(False)
     app.settings.category_arg_separator.set(":")
-    app.settings.category_arg_count.set(0)
+    app.settings.category_arg_count.set(1)
     app.settings.category_arg_starting_from.set("")
     app.settings.category_arg_ending_at.set("")
+
+    # Tabular Translator Arguments
+    app.settings.use_tabular_translator_flag.set(False),
+    app.settings.tabular_arg_has_header_row_flag.set(True),
+    app.settings.tabular_arg_divider.set(""),
+    app.settings.tabular_arg_count.set(0),
+    app.settings.tabular_arg_widths.set(""),
+    app.settings.tabular_arg_headers.set(""),
+    app.settings.tabular_arg_header_rows.set(""),
+    app.settings.tabular_arg_custom_header.set(""),
+    app.settings.tabular_arg_starting_from.set(""),
+    app.settings.tabular_arg_ending_at.set(""),
 
     # Test Execution
     app.settings.python_interpreter.set("")

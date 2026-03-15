@@ -99,7 +99,19 @@ class Application:
             category_arg_starting_from=tk.StringVar(),
             category_arg_ending_at=tk.StringVar(),
 
-            # Running Test Setting: Virtual Environment Python Executable
+            # Tabular Translator arguments
+            use_tabular_translator_flag=tk.BooleanVar(),
+            tabular_arg_has_header_row_flag=tk.BooleanVar(),
+            tabular_arg_divider=tk.StringVar(),
+            tabular_arg_count=tk.IntVar(),
+            tabular_arg_widths=tk.StringVar(),
+            tabular_arg_headers=tk.StringVar(),
+            tabular_arg_header_rows=tk.StringVar(),
+            tabular_arg_custom_header=tk.StringVar(),
+            tabular_arg_starting_from=tk.StringVar(),
+            tabular_arg_ending_at=tk.StringVar(),
+
+            # Test execution settings
             always_ask_flag=tk.BooleanVar(),
             delete_file_after_run_flag=tk.BooleanVar(),
             python_interpreter=tk.StringVar(),
@@ -117,6 +129,9 @@ class Application:
         self.settings.category_arg_count.set(1)
         self.settings.category_arg_separator.set(":")
 
+        # Tabular Translator arguments
+        self.settings.tabular_arg_has_header_row_flag.set(True)
+
         # Test execution settings
         self.settings.delete_file_after_run_flag.set(True)
         self.settings.always_ask_flag.set(True)
@@ -132,7 +147,24 @@ class Application:
             is_built=False,
         )
 
+    def category_translator_enabled(self):
+        """Return True if the category translator is enabled."""
+        return self.settings.use_category_translator_flag.get()
+
+    def tabular_translator_enabled(self):
+        """Return True if the tabular translator is enabled."""
+        return self.settings.use_tabular_translator_flag.get()
+
+    def reset_category_translator(self):
+        """Reset the category‑translator flag to False."""
+        self.settings.use_category_translator_flag.set(False)
+
+    def reset_tabular_translator(self):
+        """Reset the tabular‑translator flag to False."""
+        self.settings.use_tabular_translator_flag.set(False)
+
     def get_template_builder_args(self):
+        """Return keyword arguments for initializing a TemplateBuilder."""
         return dict(
             author=self.settings.author.get(),
             email=self.settings.email.get(),
@@ -141,11 +173,43 @@ class Application:
         )
 
     def get_category_template_builder_args(self):
+        """Return keyword arguments for initializing a CategoryTemplateBuilder."""
+        starting_from = self.settings.category_arg_starting_from.get()
+        ending_at = self.settings.category_arg_ending_at.get()
+
         return dict(
             count=self.settings.category_arg_count.get(),
             separator=self.settings.category_arg_separator.get(),
-            starting_from=self.settings.category_arg_starting_from.get() or None,
-            ending_at=self.settings.category_arg_ending_at.get() or None,
+            starting_from=starting_from if starting_from.strip() else None,
+            ending_at=ending_at if ending_at.strip() else None,
+            # ----------
+            author=self.settings.author.get(),
+            email=self.settings.email.get(),
+            company=self.settings.company.get(),
+            description=self.settings.description.get()
+        )
+
+    def get_tabular_template_builder_args(self):
+        """Return keyword arguments for initializing a TabularTemplateBuilder."""
+
+        column_widths = self.settings.tabular_arg_widths.get().strip()
+        headers = self.settings.tabular_arg_headers.get()
+        header_rows = self.settings.tabular_arg_header_rows.get()
+        custom_header_text = self.settings.tabular_arg_custom_header.get()
+        starting_from = self.settings.tabular_arg_starting_from.get()
+        ending_at = self.settings.tabular_arg_ending_at.get()
+
+        return dict(
+            column_divider=self.settings.tabular_arg_divider.get(),
+            column_count=self.settings.tabular_arg_count.get(),
+            column_widths=column_widths if column_widths.strip() else None,
+            headers=headers if headers.strip() else None,
+            header_rows=header_rows if headers.strip() else None,
+            custom_header_text=custom_header_text if custom_header_text.strip() else None,
+            starting_from=starting_from if starting_from.strip() else None,
+            ending_at=ending_at if ending_at.strip() else None,
+            has_header_row=self.settings.tabular_arg_has_header_row_flag.get(),
+            # ----------
             author=self.settings.author.get(),
             email=self.settings.email.get(),
             company=self.settings.company.get(),

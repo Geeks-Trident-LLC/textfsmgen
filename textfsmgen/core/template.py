@@ -615,7 +615,7 @@ class CategoryTemplateBuilder:
 
     @property
     def snippet(self):
-        return self.builder.to_template_snippet() if self.translator else ""
+        return self.translator.to_template_snippet() if self.translator else ""
 
     @property
     def template(self):
@@ -711,7 +711,7 @@ class TabularTemplateBuilder:
 
     @property
     def snippet(self):
-        return self.builder.to_template_snippet() if self.translator else ""
+        return self.translator.to_template_snippet() if self.translator else ""
 
     @property
     def template(self):

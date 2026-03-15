@@ -18,6 +18,7 @@ from textfsmgen import ui
 
 from textfsmgen import TemplateBuilder
 from textfsmgen import CategoryTemplateBuilder
+from textfsmgen import TabularTemplateBuilder
 
 from textfsmgen.exceptions import TemplateBuilderInvalidFormat
 from textfsmgen.libs import file
@@ -79,12 +80,16 @@ def build(app):
     app.snapshot.update(user_data=user_data)
 
     try:
-        if app.settings.use_category_translator_flag.get():
+        if app.category_translator_enabled():
             cls = CategoryTemplateBuilder
             kwargs = app.get_category_template_builder_args()
+        elif app.tabular_translator_enabled():
+            cls = TabularTemplateBuilder
+            kwargs = app.get_tabular_template_builder_args()
         else:
             cls = TemplateBuilder
             kwargs = app.get_template_builder_args()
+
         builder = cls(user_data=user_data, **kwargs)
 
         # Update snapshot with generated template
@@ -95,7 +100,12 @@ def build(app):
         )
 
         app.settings.test_data_btn_name.set('Test Data')
-        # set_text(app.textarea.input, app.snapshot.user_data)
+
+        if app.category_translator_enabled() or app.tabular_translator_enabled():
+            app.reset_category_translator()
+            app.reset_tabular_translator()
+            app.snapshot.update(user_data=builder.snippet)
+            set_text(app.textarea.input, app.snapshot.user_data)
 
         # Enable buttons and update UI
         enable_buttons(app, save=True, copy=True, result=True)
@@ -414,9 +424,12 @@ def create_python_script(app):
     # --- Build snippet script ---
     try:
         user_data = extract_text(app.textarea.input)
-        if app.settings.use_category_translator_flag.get():
+        if app.category_translator_enabled():
             cls = CategoryTemplateBuilder
             kwargs = app.get_category_template_builder_args()
+        elif app.tabular_translator_enabled():
+            cls = TabularTemplateBuilder
+            kwargs = app.get_tabular_template_builder_args()
         else:
             cls = TemplateBuilder
             kwargs = app.get_template_builder_args()
@@ -427,6 +440,12 @@ def create_python_script(app):
             **kwargs
         )
         script = builder.create_python_test()
+
+        if app.category_translator_enabled() or app.tabular_translator_enabled():
+            app.reset_category_translator()
+            app.reset_tabular_translator()
+            app.snapshot.update(user_data=builder.snippet)
+            set_text(app.textarea.input, app.snapshot.user_data)
 
         # Update snapshot and UI
         set_text(app.textarea.output, script)
@@ -450,9 +469,12 @@ def create_unittest_script(app):
     # --- Build unittest script ---
     try:
         user_data = extract_text(app.textarea.input)
-        if app.settings.use_category_translator_flag.get():
+        if app.category_translator_enabled():
             cls = CategoryTemplateBuilder
             kwargs = app.get_category_template_builder_args()
+        elif app.tabular_translator_enabled():
+            cls = TabularTemplateBuilder
+            kwargs = app.get_tabular_template_builder_args()
         else:
             cls = TemplateBuilder
             kwargs = app.get_template_builder_args()
@@ -463,6 +485,12 @@ def create_unittest_script(app):
             **kwargs
         )
         script = builder.create_unittest()
+
+        if app.category_translator_enabled() or app.tabular_translator_enabled():
+            app.reset_category_translator()
+            app.reset_tabular_translator()
+            app.snapshot.update(user_data=builder.snippet)
+            set_text(app.textarea.input, app.snapshot.user_data)
 
         # Update snapshot and UI
         set_text(app.textarea.output, script)
@@ -485,9 +513,12 @@ def create_pytest_script(app):
     # --- Build pytest script ---
     try:
         user_data = extract_text(app.textarea.input)
-        if app.settings.use_category_translator_flag.get():
+        if app.category_translator_enabled():
             cls = CategoryTemplateBuilder
             kwargs = app.get_category_template_builder_args()
+        elif app.tabular_translator_enabled():
+            cls = TabularTemplateBuilder
+            kwargs = app.get_tabular_template_builder_args()
         else:
             cls = TemplateBuilder
             kwargs = app.get_template_builder_args()
@@ -498,6 +529,12 @@ def create_pytest_script(app):
             **kwargs
         )
         script = builder.create_python_test()
+
+        if app.category_translator_enabled() or app.tabular_translator_enabled():
+            app.reset_category_translator()
+            app.reset_tabular_translator()
+            app.snapshot.update(user_data=builder.snippet)
+            set_text(app.textarea.input, app.snapshot.user_data)
 
         # Update snapshot and UI
         set_text(app.textarea.output, script)
@@ -569,19 +606,28 @@ def show_result(app):
     # --- Build or reuse template ---
     try:
         user_data = extract_text(app.textarea.input)
-        if app.settings.use_category_translator_flag.get():
+        if app.category_translator_enabled():
             cls = CategoryTemplateBuilder
             kwargs = app.get_category_template_builder_args()
+        elif app.tabular_translator_enabled():
+            cls = TabularTemplateBuilder
+            kwargs = app.get_tabular_template_builder_args()
         else:
             cls = TemplateBuilder
             kwargs = app.get_template_builder_args()
 
         builder = cls(user_data=user_data, **kwargs)
         app.snapshot.update(
-            user_data=user_data,
             template=builder.template,
             is_built=bool(builder)
         )
+
+        if app.category_translator_enabled() or app.tabular_translator_enabled():
+            app.reset_category_translator()
+            app.reset_tabular_translator()
+            app.snapshot.update(user_data=builder.snippet)
+            set_text(app.textarea.input, app.snapshot.user_data)
+
         template = builder.template
     except Exception as ex:
         template = app.snapshot.template.strip()
