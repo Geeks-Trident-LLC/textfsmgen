@@ -11,7 +11,7 @@ with open("README.md", encoding="utf-8") as f:
 
 setup(
     name='textfsmgen',
-    version='0.4.1',
+    version='0.4.2',
     license='BSD-3-Clause',
     license_files=['LICENSE'],
     description='TextFSM Generator simplifies template creation by converting '
