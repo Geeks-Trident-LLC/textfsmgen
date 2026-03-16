@@ -1873,12 +1873,7 @@ class Column:
             max_items = max(cell.items_count for cell in self.cells)
             occurrence = max_items - 1
             if occurrence > 0:
-                if "_phrase" in snippet or re.match(r"(mixed_)?words", snippet):
-                    fmt = "%s, at_most_%s_phrase_occurrences)"
-                else:
-                    fmt = "%s, at_most_%s_group_occurrences)"
-                snippet = node.singular_name + "(" + snippet.split("(", 1)[-1]
-                snippet = fmt % (snippet[:-1], occurrence)
+                snippet = f"1_{max_items}_" + node.singular_name + "(" + snippet.split("(", 1)[-1]
 
         if added_list_meta_data:
             snippet = f"{snippet[:-1]}, meta_data_list)"

@@ -315,7 +315,7 @@ class ParsedKeywordMappingName:
         n = int(count) - 1
 
         if self.in_group(base, index=1) or self.in_group(base, index=2):
-            if n > 0:
+            if n >= 0:
                 self._apply(rf"{pattern}(\s+{pattern}){{{n}}}")
                 return
             self._apply(pattern)
@@ -326,7 +326,7 @@ class ParsedKeywordMappingName:
             if not subset:
                 return
 
-            if n > 0:
+            if n >= 0:
                 self._apply(rf"{subset}(\s+{subset}){{{n}}}")
                 return
             self._apply(pattern)
@@ -359,16 +359,18 @@ class ParsedKeywordMappingName:
         if int(hi) <= int(lo):
             return
 
-        # empty upper bound → open range
-        hi = "" if hi == "999" else hi
-
-        if lo == "0" and hi == "":
-            return
-
         # group 0 → single-unit patterns
         if self.in_group(base, index=0):
+            lo = "" if lo == "0" else lo
+            hi = "" if hi == "999" else hi
             self._apply(rf"{pattern}{{{lo},{hi}}}")
             return
+
+        lo = 0 if int(lo) - 1 <= 0 else int(lo) - 1
+        hi = 0 if int(hi) - 1 <= 0 else int(hi) - 1
+
+        lo = str(lo) if lo else ""
+        hi = "" if hi == 998 else str(hi)
 
         # groups 1–2 → plural or mixed patterns
         if self.in_group(base, index=1) or self.in_group(base, index=2):
