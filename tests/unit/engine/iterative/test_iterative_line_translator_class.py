@@ -1,12 +1,12 @@
 """
-Unit tests for the `textfsmgen.gpiterative` module.
+Unit tests for the `textfsmgen.engine.iterative.IterativeLineTranslator` class.
 
 Usage
 -----
 Run pytest in the project root to execute these tests:
-    $ pytest tests/unit/gpiterative/test_iterative_line_pattern_class.py
+    $ pytest tests/unit/engine/iterative/test_iterative_line_translator_class.py
     or
-    $ python -m pytest tests/unit/gpiterative/test_iterative_line_pattern_class.py
+    $ python -m pytest tests/unit/engine/iterative/test_iterative_line_translator_class.py
 """
 
 import pytest
@@ -14,8 +14,8 @@ import pytest
 from textfsmgen.engine.iterative import IterativeLineTranslator
 
 
-class TestIterativeLinePattern:
-    """Test class for TestIterativeLinePattern"""
+class TestIterativeLineTranslator:
+    """Test class for TestIterativeLineTranslator"""
     @pytest.mark.parametrize(
         "line,label,expected_snippet",
         [

@@ -1,12 +1,12 @@
 """
-Unit tests for the `textfsmgen.tabular.TabularTranslator` class.
+Unit tests for the `textfsmgen.engine.tabular.TabularTranslator` class.
 
 Usage
 -----
 Run pytest in the project root to execute these tests:
-    $ pytest tests/unit/gptabular/test_tabular_translator_class.py
+    $ pytest tests/unit/engine/tabular/test_tabular_translator_class.py
     or
-    $ python -m pytest tests/unit/gptabular/test_tabular_translator_class.py
+    $ python -m pytest tests/unit/engine/tabular/test_tabular_translator_class.py
 """
 
 import pytest           # noqa

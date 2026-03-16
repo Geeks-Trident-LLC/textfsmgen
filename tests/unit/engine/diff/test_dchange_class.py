@@ -1,12 +1,12 @@
 """
-Unit tests for the `textfsmgen.gpdiff.DChange` class.
+Unit tests for the `textfsmgen.engine.diff.DChange` class.
 
 Usage
 -----
 Run pytest in the project root to execute these tests:
-    $ pytest tests/unit/gpdiff/test_dchange_class.py
+    $ pytest tests/unit/engine/diff/test_dchange_class.py
     or
-    $ python -m pytest tests/unit/gpdiff/test_dchange_class.py
+    $ python -m pytest tests/unit/engine/diff/test_dchange_class.py
 """
 
 import pytest

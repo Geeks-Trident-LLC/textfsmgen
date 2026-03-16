@@ -1,12 +1,12 @@
 """
-Unit tests for the `textfsmgen.gpcategory.CategoryLineTranslator` class.
+Unit tests for the `textfsmgen.engine.category.CategoryLineTranslator` class.
 
 Usage
 -----
 Run pytest in the project root to execute these tests:
-    $ pytest tests/unit/gpcategory/test_category_line_pattern_class.py
+    $ pytest tests/unit/engine/category/test_category_line_category_class.py
     or
-    $ python -m pytest tests/unit/gpcategory/test_category_line_pattern_class.py
+    $ python -m pytest tests/unit/engine/category/test_category_line_category_class.py
 """
 
 
@@ -24,7 +24,7 @@ from tests.unit import replace_dates_with_placeholder
 from textfsmgen.libs.common import dedent_and_strip
 
 
-class TestCategoryLinePattern:
+class TestCategoryLineTranslator:
     """Test class for CategoryLineTranslator"""
     @pytest.mark.parametrize(
         "line, count, expected_pattern, expected_result",

@@ -1,12 +1,12 @@
 """
-Unit tests for the `textfsmgen.gpdiff.DText` class.
+Unit tests for the `textfsmgen.engine.diff.DText` class.
 
 Usage
 -----
 Run pytest in the project root to execute these tests:
-    $ pytest tests/unit/gpdiff/test_dtext_class.py
+    $ pytest tests/unit/engine/diff/test_dtext_class.py
     or
-    $ python -m pytest tests/unit/gpdiff/test_dtext_class.py
+    $ python -m pytest tests/unit/engine/diff/test_dtext_class.py
 """
 
 import pytest

@@ -1,12 +1,12 @@
 """
-Unit tests for the `textfsmgen.gpdiff.DiffLineTranslator` class.
+Unit tests for the `textfsmgen.engine.diff.DiffLineTranslator` class.
 
 Usage
 -----
 Run pytest in the project root to execute these tests:
-    $ pytest tests/unit/gpdiff/test_diff_line_pattern.py
+    $ pytest tests/unit/engine/diff/test_diff_line_pattern.py
     or
-    $ python -m pytest tests/unit/gpdiff/test_diff_line_pattern.py
+    $ python -m pytest tests/unit/engine/diff/test_diff_line_pattern.py
 """
 
 import pytest

@@ -1,12 +1,12 @@
 """
-Unit tests for the `textfsmgen.tabular.VarColumnTabularTranslator` class.
+Unit tests for the `textfsmgen.engine.tabular.VarColumnTabularTranslator` class.
 
 Usage
 -----
 Run pytest in the project root to execute these tests:
-    $ pytest tests/unit/tabular/test_var_column_tabular_translator_class.py
+    $ pytest tests/unit/engine/tabular/test_var_column_tabular_translator_class.py
     or
-    $ python -m pytest tests/unit/tabular/test_var_column_tabular_translator_class.py
+    $ python -m pytest tests/unit/engine/tabular/test_var_column_tabular_translator_class.py
 """
 
 

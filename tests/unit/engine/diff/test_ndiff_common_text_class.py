@@ -1,12 +1,12 @@
 """
-Unit tests for the `textfsmgen.gpdiff.NDiffCommonText` class.
+Unit tests for the `textfsmgen.engine.diff.NDiffCommonText` class.
 
 Usage
 -----
 Run pytest in the project root to execute these tests:
-    $ pytest tests/unit/gpdiff/test_ndiff_common_text_class.py
+    $ pytest tests/unit/engine/diff/test_ndiff_common_text_class.py
     or
-    $ python -m pytest tests/unit/gpdiff/test_ndiff_common_text_class.py
+    $ python -m pytest tests/unit/engine/diff/test_ndiff_common_text_class.py
 """
 
 import pytest

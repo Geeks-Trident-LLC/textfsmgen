@@ -1,12 +1,12 @@
 """
-Unit tests for the `textfsmgen.gpcommon.GPCommon` class.
+Unit tests for the `textfsmgen.engine.common.GPCommon` class.
 
 Usage
 -----
 Run pytest in the project root to execute these tests:
-    $ pytest tests/unit/gpcommon/test_gpcommon_module.py
+    $ pytest tests/unit/engine/common/test_common_module.py
     or
-    $ python -m pytest tests/unit/gpcommon/test_gpcommon_module.py
+    $ python -m pytest tests/unit/engine/common/test_common_module.py
 """
 import pytest
 from textfsmgen.engine.common import get_line_position_by

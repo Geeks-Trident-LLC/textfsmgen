@@ -26,7 +26,7 @@ import pytest
 
 from textfsmgen.engine.translate import PatternTranslator
 
-from tests.unit.translate import TranslatedDummyPattern
+from tests.unit.engine.translate import TranslatedDummyPattern
 
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
