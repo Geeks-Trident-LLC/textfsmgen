@@ -1,6 +1,6 @@
 """
-textfsmgen.verify
-=================
+textfsmgen.core.verify
+======================
 
 Validation utilities for TextFSM Generator.
 

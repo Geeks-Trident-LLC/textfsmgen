@@ -25,7 +25,6 @@ class PATTERN:  # noqa
     # --- Literal spaces ---
     SPACE = ' '
     SPACES = ' +'
-    OPTIONAL_SPACES = ' *'
 
     # --- Whitespace ---
     WS = r'\s'
@@ -295,7 +294,7 @@ class ParsedKeywordMappingName:
         if self._is_parsed:
             return
 
-        m = re.fullmatch(r"(?i)(?P<value>\w+)_?(?P<name>\w+)", self._name)
+        m = re.fullmatch(r"(?i)(?P<value>[0-9]+|[a-z]+)_?(?P<name>\w+)", self._name)
         if not m:
             return
 
@@ -338,7 +337,9 @@ class ParsedKeywordMappingName:
             return
 
         m = re.fullmatch(
-            r"(?i)(?P<left>\w*)_(to_)?(?P<right>\w*)_(?P<name>\w+)", self._name)
+            r"(?i)(?P<left>[a-z0-9]*)_(to_)?(?P<right>[a-z0-9]*)_(?P<name>\w+)",
+            self._name
+        )
         if not m:
             return
 

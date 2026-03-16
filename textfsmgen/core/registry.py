@@ -1,3 +1,10 @@
+"""
+textfsmgen.core.registry
+========================
+
+Registry for keyword-to-pattern mappings used by the TextFSM generator.
+"""
+
 import re
 
 from textfsmgen.exceptions import PatternReferenceError, raise_exception
@@ -52,6 +59,26 @@ class PatternRegistry(dict):
                         )
         except Exception as ex:
             raise_exception(ex, cls=PatternReferenceError)
+
+    def has_keyword(self, key):
+        """Return True if the keyword or its resolved form exists."""
+        key = str(key).lower()
+
+        if key in self:
+            return True
+
+        resolved = pat.resolve_keyword(key)
+        return bool(resolved)
+
+    def resolve_pattern(self, key, default=None):
+        """Return the pattern for the keyword, falling back if needed."""
+        key = str(key).lower()
+
+        if key in self:
+            return self[key]
+
+        return pat.resolve_pattern(key, default=default)
+
 
 
 class SymbolCls(dict):

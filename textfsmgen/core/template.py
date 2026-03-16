@@ -1,6 +1,6 @@
 """
-textfsmgen.core
-===============
+textfsmgen.core.template
+========================
 
 Core functionality for the TextFSM Generator.
 

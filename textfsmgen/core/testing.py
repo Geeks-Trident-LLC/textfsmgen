@@ -1,3 +1,9 @@
+"""
+textfsmgen.core.testing
+=======================
+
+Utilities for testing pattern resolution and keyword mappings.
+"""
 
 import re
 import tempfile

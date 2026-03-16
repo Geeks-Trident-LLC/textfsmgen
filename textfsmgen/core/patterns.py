@@ -1,7 +1,8 @@
 """
-textfsmgen.collection
-=====================
+textfsmgen.core.patterns
+========================
 
+Core regex pattern definitions for the TextFSM generator.
 """
 
 
@@ -24,7 +25,7 @@ from textfsmgen.libs.pat import validate_pattern, soft_escape
 from textfsmgen.libs.text import WHITESPACE_CHARS
 from textfsmgen.libs.text import Line
 
-PAT_REF = PatternRegistry()
+pattern_registry = PatternRegistry()
 
 SYMBOL = SymbolCls()
 
@@ -288,12 +289,12 @@ class ElementPattern(str):
 
     @classmethod
     def build_custom_pattern(cls, keyword, params):
-        if keyword not in PAT_REF:
+        if not pattern_registry.has_keyword(keyword):
             return False, ''
 
         arguments = re.split(r' *, *', params) if params else []
 
-        lst = [PAT_REF.get(keyword)]
+        lst = [pattern_registry.resolve_pattern(keyword)]
 
         name, vpat = '', r'var_(?P<name>\w+)$'
         or_pat = r'or_(?P<case>[^,]+)'
@@ -358,7 +359,7 @@ class ElementPattern(str):
                         spaces_occurrence_pat = cls('space(%s)' % o_case)
                         is_or_either = str.lower(case).startswith('either_')
                     else:
-                        pat = PAT_REF.get(case, case)
+                        pat = pattern_registry.resolve_pattern(case, default=case)
                         pat not in lst and lst.append(pat)
                 else:
                     pat = soft_escape(arg)
@@ -450,7 +451,7 @@ class ElementPattern(str):
                         is_empty = True
                         cls._or_empty = is_empty
                     else:
-                        pat = PAT_REF.get(case, case)
+                        pat = pattern_registry.resolve_pattern(case, default=case)
                         pat not in lst and lst.append(pat)
                 else:
                     pat = soft_escape(arg)
@@ -515,7 +516,7 @@ class ElementPattern(str):
                         is_empty = True
                         cls._or_empty = is_empty
                     else:
-                        pat = PAT_REF.get(case, case)
+                        pat = pattern_registry.resolve_pattern(case, default=case)
                         pat not in lst and lst.append(pat)
                 else:
                     pat = soft_escape(arg)
@@ -577,7 +578,7 @@ class ElementPattern(str):
                         is_empty = True
                         cls._or_empty = is_empty
                     else:
-                        pat = PAT_REF.get(case, case)
+                        pat = pattern_registry.resolve_pattern(case, default=case)
                         pat not in lst and lst.append(pat)
                 else:
                     pat = soft_escape(arg)
