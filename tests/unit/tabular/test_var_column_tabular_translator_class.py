@@ -1,12 +1,12 @@
 """
-Unit tests for the `textfsmgen.gptabular.VarColumnTabularTranslator` class.
+Unit tests for the `textfsmgen.tabular.VarColumnTabularTranslator` class.
 
 Usage
 -----
 Run pytest in the project root to execute these tests:
-    $ pytest tests/unit/gptabular/test_tabular_text_pattern_by_var_columns_class.py
+    $ pytest tests/unit/tabular/test_var_column_tabular_translator_class.py
     or
-    $ python -m pytest tests/unit/gptabular/test_tabular_text_pattern_by_var_columns_class.py
+    $ python -m pytest tests/unit/tabular/test_var_column_tabular_translator_class.py
 """
 
 
@@ -528,7 +528,7 @@ mango     chicken
 fruits    meat      drinks
 start() letters(var_fruits)  letters(var_meat)  word(var_drinks, at_most_1_phrase_occurrences) end() -> record
 start() letters(var_fruits)  letters(var_meat) end(space) -> record
-start() letters(var_fruits) space(repetition_10_15) word(var_drinks, at_most_1_phrase_occurrences) end() -> record
+start() letters(var_fruits) 10_15_space() word(var_drinks, at_most_1_phrase_occurrences) end() -> record
     """.strip()
 
     expected_template = r"""

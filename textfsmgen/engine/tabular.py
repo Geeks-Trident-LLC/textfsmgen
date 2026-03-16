@@ -973,7 +973,7 @@ class ParsedTable(RuntimeException):
                 m, n = column.width, column.max_width
                 if m == n:
                     m = n - 4 if (n - 4) > 2 else abs(n - 2)
-                space_snippet = f'space(repetition_{m}_{n})'
+                space_snippet = f'{m}_{n}_space()'
 
                 kwargs = {}
                 if self.last_column_data_info and index == self.column_count - 1:
@@ -989,17 +989,17 @@ class ParsedTable(RuntimeException):
                 next_snippet = f'{self.divider_leading_snippet}{next_snippet}{self.divider_trailing_snippet}'
                 next_snippet = f'start() {next_snippet} {trailing_snippet}'
             else:
-                if re.search(r' +space[(]repetition_\d+_\d+[)] *$', next_snippet):
-                    next_snippet = re.sub(r' +space[(]repetition_\d+_\d+[)] *$', ' end(space)', next_snippet)
+                if re.search(r' +\d+_\d+_space[(][)] *$', next_snippet):
+                    next_snippet = re.sub(r' +\d+_\d+_space[(][)] *$', ' end(space)', next_snippet)
                 else:
                     next_snippet = f'{next_snippet} {trailing_snippet}'
 
-                if re.match(r' *space[(]repetition_\d+_\d+[)] *', next_snippet):
+                if re.match(r' *\d+_\d+_space[(][)] *', next_snippet):
                     next_snippet = f'start() {next_snippet}'
                 else:
                     next_snippet = f'{leading_snippet} {next_snippet}'
 
-            next_snippet = re.sub(r' +(space[(]repetition_\d+_\d+[)]) +', r' \1 ', next_snippet)
+            next_snippet = re.sub(r' +(\d+_\d+_space[(][)]) +', r' \1 ', next_snippet)
 
             snippets.append(first_snippet)
             snippets.append(next_snippet)
@@ -1028,7 +1028,7 @@ class ParsedTable(RuntimeException):
                 m, n = column.width, column.max_width
                 if m == n:
                     m = n - 4 if (n - 4) > 2 else abs(n - 2)
-                space_snippet = f'space(repetition_{m}_{n})'
+                space_snippet = f'{m}_{n}_space()'
 
                 kwargs = dict()
                 if index == self.column_count - 1:
@@ -1044,7 +1044,7 @@ class ParsedTable(RuntimeException):
                     continue
 
                 last_item = parts[-1]
-                pat = r'space[(]repetition_(?P<m>\d+)_(?P<n>\d+)[)]$'
+                pat = r'(?P<m>\d+)_(?P<n>\d+)_space[(][)]$'
                 match = re.match(pat, last_item)
                 if match:
                     m, n = int(match.group('m')), int(match.group('n'))
@@ -1052,7 +1052,7 @@ class ParsedTable(RuntimeException):
                     n += column.max_width - column.max_edge_leading_width
                     if m == n:
                         m = n - 4 if (n - 4) > 2 else abs(n - 2)
-                    extend_space_snippet = f'space(repetition_{m}_{n})'
+                    extend_space_snippet = f'{m}_{n}space()'
                     if parts:
                         parts.pop()
                     parts.append(extend_space_snippet)
@@ -1064,26 +1064,26 @@ class ParsedTable(RuntimeException):
             if self.has_divider:
                 line_snippet = f'{self.divider_leading_snippet}{line_snippet}{self.divider_trailing_snippet}'
 
-            pat = r' *space[(]repetition_\d+_\d+[)] *$'
+            pat = r' *\d+_\d+_space[(][)] *$'
             if re.search(pat, line_snippet):
                 line_snippet = re.sub(pat, ' end(space) -> continue', line_snippet)
             else:
                 line_snippet = f'{line_snippet} end(space) -> continue'
 
-            pat = r' *space[(]repetition_\d+_\d+[)] *'
+            pat = r' *\d+_\d+_space[(][)] *'
             if re.match(pat, line_snippet):
                 line_snippet = f'start() {line_snippet}'
             else:
                 line_snippet = f'{leading_snippet} {line_snippet}'
 
-            pat = r' +(space[(]repetition_\d+_\d+[)]) +'
+            pat = r' +(\d+_\d+_space[(][)]) +'
             line_snippet = re.sub(pat, r' \1 ', line_snippet)
             snippets.append(line_snippet)
 
         last_snippet = self.last_column.to_template_snippet(skipped_empty=True, added_list_meta_data=True)
         m, n = self.last_column_data_info.get('spacers')
         m = n - 4 if (n - 4) > 0 else m
-        spacer_snippet = f'start() space(repetition_{m}_{n+2}) {last_snippet} end(space) -> continue'
+        spacer_snippet = f'start() {m}_{n+2}_space() {last_snippet} end(space) -> continue'
         snippets.append(spacer_snippet)
 
     def build_other_column_snippet(self, snippets: List[str]) -> None:
@@ -1113,7 +1113,7 @@ class ParsedTable(RuntimeException):
                 # Adjust equal-width columns
                 m = n - 2 if m == n and m > 1 else m
 
-                space_snippet = f'space(repetition_{m}_{n})'
+                space_snippet = f'{m}_{n}_space()'
 
                 kwargs = dict()
                 if self.last_column_data_info and index == self.column_count - 1:
@@ -1131,7 +1131,7 @@ class ParsedTable(RuntimeException):
                     continue
 
                 last_item = parts[-1]
-                pat = r'space[(]repetition_(?P<m>\d+)_(?P<n>\d+)[)]$'
+                pat = r'(?P<m>\d+)_(?P<n>\d+)_space[(][)]$'
                 match = re.match(pat, last_item)
                 if not match:
                     parts.append(space_snippet)
@@ -1140,7 +1140,7 @@ class ParsedTable(RuntimeException):
                 m, n = int(match.group('m')), int(match.group('n'))
                 m += column.width
                 n += column.max_width - column.max_edge_leading_width
-                extend_space_snippet = f'space(repetition_{m}_{n})'
+                extend_space_snippet = f'{m}_{n}_space()'
                 parts.pop()
                 parts.append(extend_space_snippet)
 
@@ -1152,7 +1152,7 @@ class ParsedTable(RuntimeException):
                                 f'{self.divider_trailing_snippet}')
 
             # Ending: end(space) -> record
-            space_end_pat = r' *space[(]repetition_\d+_\d+[)] *$'
+            space_end_pat = r' *\d+_\d+_space[(][)] *$'
             line_snippet = (
                 re.sub(space_end_pat, ' end(space) -> record', line_snippet)
                 if re.search(space_end_pat, line_snippet) else
@@ -1160,7 +1160,7 @@ class ParsedTable(RuntimeException):
             )
 
             # Leading start()
-            space_any_pat = r' *space[(]repetition_\d+_\d+[)] *'
+            space_any_pat = r' *\d+_\d+_space[(][)] *'
             line_snippet = (
                 f'start() {line_snippet}'
                 if re.match(space_any_pat, line_snippet) else
@@ -1168,7 +1168,7 @@ class ParsedTable(RuntimeException):
             )
 
             # Normalize spacing around space() blocks
-            space_between_pat = r' +(space[(]repetition_\d+_\d+[)]) +'
+            space_between_pat = r' +(\d+_\d+_space[(][)]) +'
             line_snippet = re.sub(space_between_pat, r' \1 ', line_snippet)
 
             # Ensure uniqueness

@@ -1,12 +1,12 @@
 """
-Unit tests for the `textfsmgen.gptabular.TabularTranslator` class.
+Unit tests for the `textfsmgen.tabular.TabularTranslator` class.
 
 Usage
 -----
 Run pytest in the project root to execute these tests:
-    $ pytest tests/unit/gptabular/test_tabular_text_pattern_class.py
+    $ pytest tests/unit/gptabular/test_tabular_translator_class.py
     or
-    $ python -m pytest tests/unit/gptabular/test_tabular_text_pattern_class.py
+    $ python -m pytest tests/unit/gptabular/test_tabular_translator_class.py
 """
 
 import pytest           # noqa
@@ -28,8 +28,8 @@ def test_fixed_columns():
     """).strip()
 
     node = TabularTranslator(text, column_widths="10, 15,")
-    # tmpl_snippet = node.to_template_snippet()
-    # assert tmpl_snippet == expected_tmpl_snippet
+    tmpl_snippet = node.to_template_snippet()
+    assert tmpl_snippet == expected_tmpl_snippet
 
 
 def test_tabular_calculating_max_width():
@@ -47,7 +47,7 @@ def test_tabular_calculating_max_width():
         a        b      
         start() mixed_word(var_a)  mixed_word(var_b) end(space) -> record
         start() mixed_word(var_a) end(space) -> record
-        start() space(repetition_7_9) mixed_word(var_b) end(space) -> record
+        start() 7_9_space() mixed_word(var_b) end(space) -> record
     """).strip()
 
     node = TabularTranslator(text)
@@ -68,7 +68,7 @@ mango     chicken
 fruits    meat      drinks
 start() letters(var_fruits)  letters(var_meat)  word(var_drinks, at_most_1_phrase_occurrences) end() -> record
 start() letters(var_fruits)  letters(var_meat) end(space) -> record
-start() letters(var_fruits) space(repetition_10_15) word(var_drinks, at_most_1_phrase_occurrences) end() -> record
+start() letters(var_fruits) 10_15_space() word(var_drinks, at_most_1_phrase_occurrences) end() -> record
         """).strip()
 
     node = TabularTranslator(text)
@@ -120,11 +120,11 @@ item5.1
 one       two       three
 start() mixed_word(var_one)  mixed_word(var_two)  mixed_word(var_three) end() -> record
 start() mixed_word(var_one)  mixed_word(var_two) end(space) -> record
-start() mixed_word(var_one) space(repetition_10_13) mixed_word(var_three) end() -> record
+start() mixed_word(var_one) 10_13_space() mixed_word(var_three) end() -> record
 start() mixed_word(var_one) end(space) -> record
-start() space(repetition_8_10) mixed_word(var_two)  mixed_word(var_three) end() -> record
-start() space(repetition_8_10) mixed_word(var_two) end(space) -> record
-start() space(repetition_18_20) mixed_word(var_three) end() -> record
+start() 8_10_space() mixed_word(var_two)  mixed_word(var_three) end() -> record
+start() 8_10_space() mixed_word(var_two) end(space) -> record
+start() 18_20_space() mixed_word(var_three) end() -> record
     """).strip()    # noqa
 
     node = TabularTranslator(text)
@@ -145,7 +145,7 @@ val3.1   val3.2  val3.3
     expected_tmpl_snippet = dedent("""
 a        b       c
 start() mixed_word(var_a) end(space) -> Next
-start() space(repetition_5_9) mixed_word(var_b)  mixed_word(var_c) end() -> record
+start() 5_9_space() mixed_word(var_b)  mixed_word(var_c) end() -> record
 start() mixed_word(var_a)  mixed_word(var_b)  mixed_word(var_c) end() -> record
     """).strip()
 
@@ -169,7 +169,7 @@ val3.1   val3.2  val3.3
 a        b       c
 start() mixed_word()optional_spaces() -> continue.record
 start() mixed_word(var_a)  mixed_word(var_b)  mixed_word(var_c, meta_data_list) end(space) -> continue
-start() space(repetition_13_19) mixed_word(var_c, meta_data_list) end(space) -> continue
+start() 13_19_space() mixed_word(var_c, meta_data_list) end(space) -> continue
     """).strip()
 
     node = TabularTranslator(text)
@@ -194,11 +194,11 @@ val7.1
 a        b       c
 start() mixed_word(var_a)  mixed_word(var_b)  mixed_word(var_c) end() -> record
 start() mixed_word(var_a)  mixed_word(var_b) end(space) -> record
-start() mixed_word(var_a) space(repetition_8_11) mixed_word(var_c) end() -> record
+start() mixed_word(var_a) 8_11_space() mixed_word(var_c) end() -> record
 start() mixed_word(var_a) end(space) -> record
-start() space(repetition_7_9) mixed_word(var_b)  mixed_word(var_c) end() -> record
-start() space(repetition_7_9) mixed_word(var_b) end(space) -> record
-start() space(repetition_15_17) mixed_word(var_c) end() -> record
+start() 7_9_space() mixed_word(var_b)  mixed_word(var_c) end() -> record
+start() 7_9_space() mixed_word(var_b) end(space) -> record
+start() 15_17_space() mixed_word(var_c) end() -> record
     """).strip()
 
     node = TabularTranslator(text)
