@@ -192,6 +192,11 @@ class Application:
     def get_tabular_template_builder_args(self):
         """Return keyword arguments for initializing a TabularTemplateBuilder."""
 
+        mapping = {"space": " ", "spaces": "  "}
+
+        divider = self.settings.tabular_arg_divider.get()
+        column_divider = mapping.get(divider.lower(), divider)
+
         column_widths = self.settings.tabular_arg_widths.get().strip()
         headers = self.settings.tabular_arg_headers.get()
         header_rows = self.settings.tabular_arg_header_rows.get()
@@ -200,7 +205,7 @@ class Application:
         ending_at = self.settings.tabular_arg_ending_at.get()
 
         return dict(
-            column_divider=self.settings.tabular_arg_divider.get(),
+            column_divider=column_divider,
             column_count=self.settings.tabular_arg_count.get(),
             column_widths=column_widths if column_widths.strip() else None,
             headers=headers if headers.strip() else None,
