@@ -45,7 +45,12 @@ class PATTERN:  # noqa
     # --- letters ---
     LETTER = '[a-zA-Z]'
     LETTERS = rf'{LETTER}+'
-    LETTERS_GROUP = rf'{LETTERS}(\s+{LETTERS})*'
+
+    OPTIONAL_LETTERS_GROUP = rf'{LETTERS}(\s+{LETTERS})*'
+    OPT_LETTERS_GRP = OPTIONAL_LETTERS_GROUP
+
+    LETTERS_GROUP = rf'{LETTERS}(\s+{LETTERS})+'
+    LETTERS_GRP = LETTERS_GROUP
 
     # --- alphabet numeric ---
     ALNUM = '[a-zA-Z0-9]'
@@ -55,8 +60,11 @@ class PATTERN:  # noqa
     PUNCTS = r'%s+' % PUNCT
 
     # --- group of puncts ---
-    PUNCTS_PHRASE = r'%s(\s+%s)+' % (PUNCTS, PUNCTS)
-    PUNCTS_GROUP = r'%s(\s+%s)*' % (PUNCTS, PUNCTS)
+    OPTIONAL_PUNCTS_GROUP = r'%s(\s+%s)*' % (PUNCTS, PUNCTS)
+    OPT_PUNCTS_GRP = OPTIONAL_PUNCTS_GROUP
+
+    PUNCTS_GROUP = r'%s(\s+%s)+' % (PUNCTS, PUNCTS)
+    PUNCTS_GRP = PUNCTS_GROUP
 
     SPACE_PUNCT = r'[ \x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]'
     SP = r'[ \x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]'
@@ -72,16 +80,22 @@ class PATTERN:  # noqa
 
     # --- group of word ---
     WORDS = r'%s(\s+%s)*' % (WORD, WORD)
-    WORD_GROUP = WORDS
-    PHRASE = r'%s(\s+%s)+' % (WORD, WORD)
+    OPTIONAL_WORD_GROUP = WORDS
+    OPT_WORD_GRP = WORDS
+
+    WORD_GROUP = r'%s(\s+%s)+' % (WORD, WORD)
+    WORD_GRP = WORD_GROUP
 
     # --- mixed-words ----
     MIXED_WORD = r'[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*'
 
     # --- group of mixed-word ---
     MIXED_WORDS = r'%s(\s+%s)*' % (MIXED_WORD, MIXED_WORD)
-    MIXED_WORD_GROUP = MIXED_WORDS
-    MIXED_PHRASE = r'%s(\s+%s)+' % (MIXED_WORD, MIXED_WORD)
+    OPTIONAL_MIXED_WORD_GROUP = MIXED_WORDS
+    OPT_MIXED_WORD_GRP = MIXED_WORDS
+
+    MIXED_WORD_GROUP = r'%s(\s+%s)+' % (MIXED_WORD, MIXED_WORD)
+    MIXED_WORD_GRP = MIXED_WORD_GROUP
 
     # --- Non-whitespace(s) ---
     NON_WS = r'\S'
@@ -90,34 +104,57 @@ class PATTERN:  # noqa
     NON_WHITESPACES = r'\S+'
 
     # --- group of non-whitespace(s) ---
-    NON_WSS_GROUP = r'%s(\s+%s)*' % (NON_WSS, NON_WSS)
-    NON_WHITESPACES_GROUP = r'%s(\s+%s)*' % (NON_WSS, NON_WSS)
-    NON_WSS_PHRASE = r'%s(\s+%s)+' % (NON_WSS, NON_WSS)
+    OPTIONAL_NON_WSS_GROUP = r'%s(\s+%s)*' % (NON_WSS, NON_WSS)
+    OPT_NON_WSS_GRP = OPTIONAL_NON_WSS_GROUP
+
+    NON_WSS_GROUP = r'%s(\s+%s)+' % (NON_WSS, NON_WSS)
+    NON_WSS_GRP = NON_WSS_GROUP
+
+    OPTIONAL_NON_WHITESPACES_GROUP = r'%s(\s+%s)*' % (NON_WSS, NON_WSS)
+    OPT_NON_WHITESPACES_GRP = OPTIONAL_NON_WHITESPACES_GROUP
+
+    NON_WHITESPACES_GROUP = r'%s(\s+%s)+' % (NON_WSS, NON_WSS)
+    NON_WHITESPACES_GRP = NON_WHITESPACES_GROUP
 
     @classmethod
     def resolve_subset(cls, key):
         """Return the subset name associated with the given key."""
         subsets = {
+            "OPTIONAL_NON_WSS_GROUP": "NON_WSS",
+            "OPT_NON_WSS_GRP": "NON_WSS",
             "NON_WSS_GROUP": "NON_WSS",
-            "NON_WSS_PHRASE": "NON_WSS",
+            "NON_WSS_GRP": "NON_WSS",
             "NON_WSS": "NON_WSS",
+
+            "OPTIONAL_NON_WHITESPACES_GROUP": "NON_WHITESPACES",
+            "OPT_NON_WHITESPACES_GRP": "NON_WHITESPACES",
             "NON_WHITESPACES_GROUP": "NON_WHITESPACES",
+            "NON_WHITESPACES_GRP": "NON_WHITESPACES",
             "NON_WHITESPACES": "NON_WHITESPACES",
 
-            "MIXED_PHRASE": "MIXED_WORD",
-            "MIXED_WORDS": "MIXED_WORD",
+            "OPTIONAL_MIXED_WORD_GROUP": "MIXED_WORD",
+            "OPT_MIXED_WORD_GRP": "MIXED_WORD",
             "MIXED_WORD_GROUP": "MIXED_WORD",
+            "MIXED_WORD_GRP": "MIXED_WORD",
+            "MIXED_WORDS": "MIXED_WORD",
             "MIXED_WORD": "MIXED_WORD",
 
-            "PHRASE": "WORD",
+            "OPTIONAL_WORD_GROUP": "WORD",
+            "OPT_WORD_GRP": "WORD",
             "WORD_GROUP": "WORD",
+            "WORD_GRP": "WORD",
             "WORDS": "WORD",
             "WORD": "WORD",
 
+            "OPTIONAL_PUNCTS_GROUP": "PUNCTS",
+            "OPT_PUNCTS_GRP": "PUNCTS",
             "PUNCTS_GROUP": "PUNCTS",
-            "PUNCTS_PHRASE": "PUNCTS",
+            "PUNCTS_GRP": "PUNCTS",
 
+            "OPTIONAL_LETTERS_GROUP": "LETTERS",
+            "OPT_LETTERS_GRP": "LETTERS",
             "LETTERS_GROUP": "LETTERS",
+            "LETTERS_GRP": "LETTERS",
         }
         return subsets.get(key.upper(), "")
 
@@ -145,7 +182,7 @@ class ParsedKeywordMappingName:
     def keyword(self): return self._keyword
 
     @property
-    def pattern(self): return self._pattern or PATTERN.NON_WSS_GROUP
+    def pattern(self): return self._pattern or PATTERN.OPTIONAL_NON_WSS_GROUP
 
     def _apply(self, pattern):
         if not pattern:
@@ -203,12 +240,12 @@ class ParsedKeywordMappingName:
                 "WORD", "MIXED_WORD",
             ),
             (  # group 3
-                "LETTERS_GROUP",
-                "PUNCTS_GROUP",
-                "WORD_GROUP", "WORDS",
-                "MIXED_WORD_GROUP",
-                "NON_WSS_GROUP",
-                "NON_WHITESPACES_GROUP",
+                "OPTIONAL_LETTERS_GROUP",
+                "OPTIONAL_PUNCTS_GROUP",
+                "OPTIONAL_WORD_GROUP", "WORDS",
+                "OPTIONAL_MIXED_WORD_GROUP",
+                "OPTIONAL_NON_WSS_GROUP",
+                "OPTIONAL_NON_WHITESPACES_GROUP",
             ),
         ]
 
@@ -387,7 +424,7 @@ class ParsedKeywordMappingName:
 
 def resolve_pattern(name, default=None):
     """Return the resolved regex pattern for the given name."""
-    fallback = default or PATTERN.NON_WSS_GROUP
+    fallback = default or PATTERN.OPTIONAL_NON_WSS_GROUP
     mapping = ParsedKeywordMappingName(name)
     return mapping.pattern or fallback
 

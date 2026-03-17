@@ -73,9 +73,9 @@ class PatternTranslator(RuntimeException):
         tbl = dict(
             non_ws=PATTERN.NON_WS,
             non_wss=PATTERN.NON_WSS,
-            non_wss_group=PATTERN.NON_WSS_GROUP
+            non_wss_group=PATTERN.OPTIONAL_NON_WSS_GROUP
         )
-        root_pattern = tbl.get(self.root_name, PATTERN.NON_WSS_GROUP)
+        root_pattern = tbl.get(self.root_name, PATTERN.OPTIONAL_NON_WSS_GROUP)
         return root_pattern
 
     def process(self):
@@ -1001,12 +1001,12 @@ class PunctsGroupTranslator(PatternTranslator):
 
     def __init__(self, data: str, *other: object):
         defined_patterns = [
+            PATTERN.OPTIONAL_PUNCTS_GROUP,
             PATTERN.PUNCTS_GROUP,
-            PATTERN.PUNCTS_PHRASE,
         ]
         ref_names = [
+            "optional_puncts_group",
             "puncts_group",
-            "puncts_phrase",
         ]
         super().__init__(
             data,
@@ -1016,7 +1016,7 @@ class PunctsGroupTranslator(PatternTranslator):
             ref_names=ref_names,
             singular_name="puncts",
             singular_pattern=PATTERN.PUNCTS,
-            root_name="non_wss_phrase",
+            root_name="non_wss_group",
         )
 
     def is_subset_of(self, other) -> bool:
@@ -1215,11 +1215,11 @@ class WordsTranslator(PatternTranslator):
     def __init__(self, data: str, *other: object):
         defined_patterns = [
             PATTERN.WORDS,
-            PATTERN.PHRASE,
+            PATTERN.WORD_GROUP,
         ]
         ref_names = [
             "words",
-            "phrase",
+            "word_group",
         ]
 
         super().__init__(
@@ -1230,7 +1230,7 @@ class WordsTranslator(PatternTranslator):
             ref_names=ref_names,
             singular_name="word",
             singular_pattern=PATTERN.WORD,
-            root_name="non_wss_phrase",
+            root_name="non_wss_group",
         )
 
     def is_subset_of(self, other) -> bool:
@@ -1368,11 +1368,11 @@ class MixedWordsTranslator(PatternTranslator):
     def __init__(self, data: str, *other: object):
         defined_patterns = [
             PATTERN.MIXED_WORDS,
-            PATTERN.MIXED_PHRASE,
+            PATTERN.MIXED_WORD_GROUP,
         ]
         ref_names = [
             "mixed_words",
-            "mixed_phrase",
+            "mixed_word_group",
         ]
 
         super().__init__(
@@ -1383,7 +1383,7 @@ class MixedWordsTranslator(PatternTranslator):
             ref_names=ref_names,
             singular_name="mixed_word",
             singular_pattern=PATTERN.MIXED_WORD,
-            root_name="non_wss_phrase",
+            root_name="non_wss_group",
         )
 
     def is_subset_of(self, other) -> bool:
@@ -1590,13 +1590,13 @@ class NonWSSGroupTranslator(PatternTranslator):
 
     def __init__(self, data: str, *other: object):
         defined_patterns = [
+            PATTERN.OPTIONAL_NON_WSS_GROUP,
             PATTERN.NON_WSS_GROUP,
-            PATTERN.NON_WSS_PHRASE,
 
         ]
         ref_names = [
+            "optional_non_wss_group",
             "non_wss_group",
-            "non_wss_phrase",
         ]
 
         super().__init__(
@@ -1607,7 +1607,7 @@ class NonWSSGroupTranslator(PatternTranslator):
             ref_names=ref_names,
             singular_name="non_wss",
             singular_pattern=PATTERN.NON_WSS,
-            root_name="non_wss_phrase",
+            root_name="non_wss_group",
         )
 
     def is_subset_of(self, other) -> bool:

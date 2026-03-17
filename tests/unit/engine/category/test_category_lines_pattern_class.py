@@ -50,12 +50,12 @@ class DataForStartingEndingArgumentsTests:
     def get_expected_snippet(self):
         """
         Returns the expected template snippet generated from the test data,
-        including parsing rules for digits, mixed phrases, and letters.
+        including parsing rules for digits, mixed-word group, and letters.
         """
         expected_snippet = r"""
             line 2: digits() blab -> Table
             Table
-            fruits: mixed_phrase(var_fruits)
+            fruits: mixed_word_group(var_fruits)
             meat: letters(var_meat)
             drinks: letters(var_drinks)
             line k: number() blab -> EOF            
@@ -157,7 +157,7 @@ class DataForToTemplateSnippetTests:
     @normalize_output
     def get_expected_snippet(self):
         expected_snippet = """
-            fruits: mixed_phrase(var_fruits)
+            fruits: mixed_word_group(var_fruits)
             meat: letters(var_meat)
             drinks: letters(var_drinks)
         """
@@ -167,7 +167,7 @@ class DataForToTemplateSnippetTests:
     def get_other_expected_snippet(self):
         other_expected_snippet = """
             blab blab 1 - +++ ***
-            fruits: mixed_phrase(var_fruits)
+            fruits: mixed_word_group(var_fruits)
             blab blab 2 - (?P<)
             meat: letters(var_meat)
             drinks: letters(var_drinks)

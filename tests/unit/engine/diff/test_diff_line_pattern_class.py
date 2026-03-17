@@ -188,7 +188,7 @@ class TestDiffLinePattern:
                     'this is the good yellow pen',
                     'that is a pencil'
                 ),
-                'start() letters(var_v0) is phrase(var_v1) end()'
+                'start() letters(var_v0) is word_group(var_v1) end()'
             ),
             (
                 (
@@ -197,7 +197,7 @@ class TestDiffLinePattern:
                     'this is the good yellow pen',
                     'that is a pencil'
                 ),
-                'start(space) letters(var_v0) is phrase(var_v1) end()'
+                'start(space) letters(var_v0) is word_group(var_v1) end()'
             ),
             (
                 (
@@ -206,7 +206,7 @@ class TestDiffLinePattern:
                     'this is the good yellow pen  ',
                     ' that is a pencil'
                 ),
-                'start(space) letters(var_v0) is phrase(var_v1) end(space)'
+                'start(space) letters(var_v0) is word_group(var_v1) end(space)'
             ),
             (
                 (
@@ -215,7 +215,7 @@ class TestDiffLinePattern:
                     '  this is the good yellow pen ',
                     '    that is a pencil'
                 ),
-                'start(spaces) letters(var_v0) is phrase(var_v1) end(space)'
+                'start(spaces) letters(var_v0) is word_group(var_v1) end(space)'
             ),
             (
                 (
@@ -224,7 +224,7 @@ class TestDiffLinePattern:
                     '  this is the good yellow pen ',
                     '    that is a pencil          '
                 ),
-                'start(spaces) letters(var_v0) is phrase(var_v1) end(spaces)'
+                'start(spaces) letters(var_v0) is word_group(var_v1) end(spaces)'
             ),
         ]
     )
@@ -272,18 +272,18 @@ class TestDiffLinePatternSnippets:
         node = DiffLineTranslator(*lines)
         assert node.snippet == exp_snip
 
-    def test_snippet_ipv6_with_phrase(self):
-        """Test snippet generation for IPv6 address with phrase differences."""
+    def test_snippet_ipv6_with_group(self):
+        """Test snippet generation for IPv6 address with group differences."""
         lines = [
             "ipv6_addr: 1::2 % 32",
             "ipv6_addr: 1::3 / 33",
         ]
-        exp_snip = "start() ipv6_addr: non_wss_phrase(var_v0) end()"
+        exp_snip = "start() ipv6_addr: non_wss_group(var_v0) end()"
         node = DiffLineTranslator(*lines)
         assert node.snippet == exp_snip
 
     def test_snippet_with_optional_letters(self):
-        """Test snippet generation with optional letters in phrase."""
+        """Test snippet generation with optional letters in group."""
         lines = [
             "this is yellow half \t pencil",
             "this is red half pencil",

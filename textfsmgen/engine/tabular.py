@@ -209,7 +209,7 @@ class VarColumnTabularTranslator(RuntimeException):
 
     def ensure_column_count(self):
         """Infer column count from lines or raise error if zero."""
-        pat = f"{PATTERN.PUNCTS_PHRASE}$"
+        pat = f"{PATTERN.PUNCTS_GROUP}$"
         for line in self.lines:
             if re.match(pat, line.strip()):
                 self.column_count = len(re.split(PATTERN.WSS, line.strip()))
@@ -342,7 +342,7 @@ class VarColumnTabularTranslator(RuntimeException):
 
         # Pattern to detect a valid reference row
         detect_pattern = r" *%(cell)s(%(gap)s +%(cell)s){%(n)s} *$" % {
-            "cell": PATTERN.NON_WSS_GROUP,
+            "cell": PATTERN.OPTIONAL_NON_WSS_GROUP,
             "gap": gap,
             "n": repetition,
         }
@@ -360,7 +360,7 @@ class VarColumnTabularTranslator(RuntimeException):
             key = f"v{index:03d}"
             base = {
                 "key": key,
-                "cell": PATTERN.NON_WSS_GROUP,
+                "cell": PATTERN.OPTIONAL_NON_WSS_GROUP,
                 "gap": gap,
             }
 
@@ -926,7 +926,7 @@ class ParsedTable(RuntimeException):
         lst: List[str] = []
 
         for line in text.get_list_of_lines(*headers_lines):
-            is_line_of_puncts = bool(re.match(f" *{PATTERN.PUNCTS_PHRASE} *$", line))
+            is_line_of_puncts = bool(re.match(f" *{PATTERN.PUNCTS_GROUP} *$", line))
             is_header_line = text.Line.has_data(line) and not is_line_of_puncts
             if is_header_line:
                 lst.append(line)

@@ -109,17 +109,17 @@ class TestDChangeClass:
 
             (("a1 b1", "case41", ["b1", "c1"]), "words(var_case41)"),
             (("a1", "case42", ["b1 d2", "c1"]), "words(var_case42)"),
-            (("a1 b1", "case43", ["b1 d2", "x3 y3"]), "phrase(var_case43)"),
+            (("a1 b1", "case43", ["b1 d2", "x3 y3"]), "word_group(var_case43)"),
 
             (("a.1 b1", "case51", ["b1", "c1"]), "mixed_words(var_case51)"),
             (("a1", "case52", ["b.1 d2", "c1"]), "mixed_words(var_case52)"),
-            (("a1 b2", "case53", ["b.1 d2", "1 4"]), "mixed_phrase(var_case53)"),
+            (("a1 b2", "case53", ["b.1 d2", "1 4"]), "mixed_word_group(var_case53)"),
 
-            (("-- ++", "v61", ["==", ".."]), "puncts_group(var_v61)"),
-            (("-- ++", "v62", ["== ++", ".. ::"]), "puncts_phrase(var_v62)"),
+            (("-- ++", "v61", ["==", ".."]), "optional_puncts_group(var_v61)"),
+            (("-- ++", "v62", ["== ++", ".. ::"]), "puncts_group(var_v62)"),
 
-            (("a1\xc8", "v71", ["b1 d2", "c1 123"]), "non_wss_group(var_v71)"),
-            (("a1\xc8 --", "v71", ["b1 d2", "c1 123"]), "non_wss_phrase(var_v71)"),
+            (("a1\xc8", "v71", ["b1 d2", "c1 123"]), "optional_non_wss_group(var_v71)"),
+            (("a1\xc8 --", "v71", ["b1 d2", "c1 123"]), "non_wss_group(var_v71)"),
 
             # add or_empty in snippet if diff change has or add empty string
             (("", "case81", ["B", "z"]), "letter(var_case81, or_empty)"),

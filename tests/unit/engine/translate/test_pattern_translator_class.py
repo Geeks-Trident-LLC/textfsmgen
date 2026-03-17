@@ -126,14 +126,14 @@ class TestGetReadableSnippetMethod:
             (
                 ["--", "== +++"],
                 "v1",
-                "puncts_group(var=v1, value=--)",   # expected snippet
+                "optional_puncts_group(var=v1, value=--)",   # expected snippet
                 # expected pattern
                 r"[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+(\s+[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+)*"
             ),
             (
                 "--  === ++++++",
                 "v1",
-                "puncts_phrase(var=v1, value=--  === ++++++)",   # expected snippet
+                "puncts_group(var=v1, value=--  === ++++++)",   # expected snippet
                 # expected pattern
                 r"[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+(\s+[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+)+"
             ),
@@ -177,7 +177,7 @@ class TestGetReadableSnippetMethod:
             (
                 "ab cd",
                 "v1",
-                "phrase(var=v1, value=ab cd)",                  # expected snippet
+                "word_group(var=v1, value=ab cd)",                  # expected snippet
                 r"[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)+"  # expected pattern
             ),
             (
@@ -196,7 +196,7 @@ class TestGetReadableSnippetMethod:
             (
                 "1.1.1.1 2.2.2.2",
                 "v1",
-                "mixed_phrase(var=v1, value=1.1.1.1 2.2.2.2)",  # expected snippet
+                "mixed_word_group(var=v1, value=1.1.1.1 2.2.2.2)",  # expected snippet
                 # expected pattern
                 r"[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*(\s+[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)+"
             ),
@@ -245,13 +245,13 @@ class TestGetReadableSnippetMethod:
             (
                 ["abc", "123", "---- ++++"],
                 "v1",
-                "non_wss_group(var=v1, value=abc)",
+                "optional_non_wss_group(var=v1, value=abc)",
                 r"\S+(\s+\S+)*"
             ),
             (
                 ["abc xyz", "123 456", "---- ++++"],
                 "v1",
-                "non_wss_phrase(var=v1, value=abc xyz)",
+                "non_wss_group(var=v1, value=abc xyz)",
                 r"\S+(\s+\S+)+"
             ),
         ],
