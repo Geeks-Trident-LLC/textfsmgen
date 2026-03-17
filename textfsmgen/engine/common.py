@@ -20,7 +20,7 @@ from textfsmgen.exceptions import raise_exception
 
 def get_line_position_by(
     lines: list[str],
-        item: Optional[str | int | None]
+    item: Optional[str | int | None]
 ) -> Optional[int | None]:
     """
     Determine the position of a line in `lines` based on a string
@@ -30,12 +30,9 @@ def get_line_position_by(
         return None
 
     regex_prefix = r'(?i)^\s*--regex\s+'
-    wildcard_prefix = r'(?i)^\s*--wildcard\s+'
     if text.is_string(item):
         if re.search(regex_prefix, item):
             pattern = re.sub(regex_prefix, "", item)
-        elif re.search(wildcard_prefix, item):
-            raise NotImplementedError("Unsupported wildcard directive")
         else:
             pattern = TextPattern(item)
 
