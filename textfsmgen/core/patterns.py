@@ -201,15 +201,6 @@ class ElementPattern(str):
     word_bound_pattern = r'word_bound(_left|_right|_raw)?$'
     head_pattern = r'head(_raw|((_just)?_(whitespaces?|ws|spaces?)(_plus)?))?$'
     tail_pattern = r'tail(_raw|((_just)?_(whitespaces?|ws|spaces?)(_plus)?))?$'
-    repetition_pattern = r'repetition_\d*(_\d*)?$'
-    occurrence_pattern = r'({})(?P<is_phrase>_(group|phrase))?_occurrences?$'.format(
-        '|'.join([
-            r'((?P<fda>\d+)_or_(?P<lda>\d+))',
-            r'((?P<fdb>\d+)_or_(?P<ldb>more))',
-            r'(at_(?P<fdc>least|most)_(?P<ldc>\d+))',
-            r'(?P<fdd>\d+)'
-        ])
-    )
     meta_data_pattern = r'^meta_data_\w+'
     _variable = None
 
@@ -302,8 +293,6 @@ class ElementPattern(str):
         word_bound = ''
         head = ''
         tail = ''
-        is_repeated = False
-        is_occurrence = False
         is_or_either = False
         spaces_occurrence_pat = ''
 
@@ -326,14 +315,6 @@ class ElementPattern(str):
                     'tail' not in lst and lst.append('tail')
                 else:
                     tail = arg
-            elif re.match(cls.repetition_pattern, arg):
-                if not is_repeated or not is_occurrence:
-                    lst = cls.add_repetition(lst, repetition=arg)
-                    is_repeated = True
-            elif re.match(cls.occurrence_pattern, arg):
-                if not is_repeated or not is_occurrence:
-                    lst = cls.add_occurrence(lst, occurrence=arg)
-                    is_occurrence = True
             elif re.match(cls.meta_data_pattern, arg):
                 if arg == 'meta_data_raw':
                     'meta_data' not in lst and lst.append('meta_data')
@@ -343,21 +324,9 @@ class ElementPattern(str):
                 match = re.match(or_pat, arg, flags=re.I)
                 if match:
                     case = match.group('case')
-                    repeating_space_pat = r'(?:either_)?repeat(?:s|ing)?(_[0-9_]+)_spaces?$'
-                    occurring_space_pat = r'(?:either_)?((at_(least|most)_)?\d+(_occurrences?)?)_spaces?$'
-
                     if case == 'empty':
                         is_empty = True
                         cls._or_empty = is_empty
-                    elif re.match(repeating_space_pat, case, flags=re.I):
-                        r_case = re.sub(repeating_space_pat, r'repetition\1', case.lower())
-                        spaces_occurrence_pat = cls('space(%s)' % r_case)
-                        is_or_either = str.lower(case).startswith('either_')
-                    elif re.match(occurring_space_pat, case, flags=re.I):
-                        o_case = re.sub(occurring_space_pat, r'\1', case.lower())
-                        o_case = o_case if 'occurrence' in o_case else '%s_occurrence' % o_case
-                        spaces_occurrence_pat = cls('space(%s)' % o_case)
-                        is_or_either = str.lower(case).startswith('either_')
                     else:
                         pat = pattern_registry.resolve_pattern(case, default=case)
                         pat not in lst and lst.append(pat)
@@ -408,8 +377,6 @@ class ElementPattern(str):
         word_bound = ''
         head = ''
         tail = ''
-        is_repeated = False
-        is_occurrence = False
 
         for arg in arguments:
             match = re.match(vpat, arg, flags=re.I)
@@ -430,14 +397,6 @@ class ElementPattern(str):
                     'tail' not in lst and lst.append('tail')
                 else:
                     tail = arg
-            elif re.match(cls.repetition_pattern, arg):
-                if not is_repeated or not is_occurrence:
-                    lst = cls.add_repetition(lst, repetition=arg)
-                    is_repeated = True
-            elif re.match(cls.occurrence_pattern, arg):
-                if not is_repeated or not is_occurrence:
-                    lst = cls.add_occurrence(lst, occurrence=arg)
-                    is_occurrence = True
             elif re.match(cls.meta_data_pattern, arg):
                 if arg == 'meta_data_raw':
                     'meta_data' not in lst and lst.append('meta_data')
@@ -859,97 +818,6 @@ class ElementPattern(str):
                 new_pattern = pattern
             return new_pattern
         return pattern
-
-    @classmethod
-    def add_repetition(cls, lst, repetition=''):
-        if not repetition:
-            return lst
-
-        new_lst = lst[:]
-        item = new_lst[0]
-
-        is_singular = ElementPattern.is_singular_pattern(item)
-        item = item if is_singular else '({})'.format(item)
-
-        _, m, *last = repetition.split('_', 2)
-        if last:
-            n = last[0]
-            new_lst[0] = '%s{%s,%s}' % (item, m, n)
-        else:
-            new_lst[0] = '%s{%s}' % (item, m)
-        return new_lst
-
-    @classmethod
-    def add_occurrence(cls, lst, occurrence=''):
-        if not occurrence:
-            return lst
-
-        new_lst = lst[:]
-        m = re.match(cls.occurrence_pattern, occurrence)
-        is_phrase = bool(m.group('is_phrase'))
-        spacer = ' +' if is_phrase and m.group('is_phrase') == '_group' else ' '
-
-        fda, lda = m.group('fda') or '', m.group('lda') or ''
-        fdb, ldb = m.group('fdb') or '', m.group('ldb') or ''
-        fdc, ldc = m.group('fdc') or '', m.group('ldc') or ''
-        fdd, ldd = m.group('fdd') or '', m.group('fdd') or ''
-
-        func = ElementPattern.add_case_occurrence
-
-        is_case_a = func(new_lst, fda, lda, is_phrase, spacer=spacer)
-        is_case_b = is_case_a or func(new_lst, fdb, ldb, is_phrase, spacer=spacer)
-        is_case_c = is_case_b or func(new_lst, fdc, ldc, is_phrase, spacer=spacer)
-        is_case_c or func(new_lst, fdd, ldd, is_phrase, spacer=spacer)
-
-        return new_lst
-
-    @classmethod
-    def add_case_occurrence(cls, lst, first, last, is_phrase, spacer=' '):
-        if not first and not last:
-            return False
-
-        item = lst[0]
-        if is_phrase:
-            # item = '{0}( {0})'.format(item)
-            item = f'{item}({spacer}{item})'
-        else:
-            is_singular = ElementPattern.is_singular_pattern(item)
-            item = item if is_singular else '({})'.format(item)
-
-        first = int(first) if first.isdigit() else first
-        last = int(last) if last.isdigit() else last
-
-        if first == 'least' or first == 'most':
-            if last == 0:
-                fmt = '%s*' if first == 'least' else '%s?'
-            else:
-                fmt = '%%s{%s,}' if first == 'least' else '%%s{,%s}'
-                fmt = fmt % last
-        elif last == 'more':
-            fmt = '%s*' if first == 0 else '%s+' if first == 1 else '%%s{%s,}' % first
-        elif first == last:
-            fmt = '%s' if first == 1 else '%%s{%s}' % first if first else '%s?'
-        else:
-            first, last = min(first, last), max(first, last)
-            fmt = '%s?' if first == 0 and last == 1 else '%%s{%s,%s}' % (first, last)
-
-        if fmt:
-            lst[0] = fmt % item
-            return True
-        else:
-            return False
-
-    @classmethod
-    def is_singular_pattern(cls, pattern):
-        left_bracket, right_bracket = '[', ']'
-        pattern = str(pattern)
-        first, last = pattern[:1], pattern[-1:]
-        total = len(pattern)
-        is_singular = total <= 1
-        is_escape = total == 2 and first == '\\'
-        is_char_set = pattern.count(first) == 1 and first == left_bracket
-        is_char_set &= pattern.count(last) == 1 and last == right_bracket
-        return is_singular or is_escape or is_char_set
 
     def remove_head_of_string(self):
         if self.prepended_pattern and self.startswith('^'):
