@@ -105,7 +105,14 @@ class TabularTranslator(RuntimeException):
         self.index_start = get_line_position_by(self.lines, self.starting_from)
         self.index_end = get_line_position_by(self.lines, self.ending_at)
 
-        lines = self.lines[self.index_start:self.index_end]
+        start = (
+            self.index_start + 1
+            if isinstance(self.index_start, int) and not self.kwargs.get("has_header_row")
+            else self.index_start
+        )
+        end = self.index_end
+
+        lines = self.lines[start:end]
         self.tabular_parser = VarColumnTabularTranslator(*lines, **self.kwargs)
 
     def to_regex(self) -> str:
@@ -1399,47 +1406,18 @@ class Cell(RuntimeException):
 
     def process(self) -> None:
         """Validate positions and initialize cell data."""
-        line, left_pos, right_pos, ref_cell = self.args
-
-        # Validate numeric boundaries
-
-        is_left, left = number.try_to_get_number(left_pos, return_type=int)
-        is_right, right = number.try_to_get_number(right_pos, return_type=int)
-
-        if not is_left:
-            self.raise_runtime_error(
-                msg=(
-                    f"Invalid left position in {self.__class__.__name__}.\n"
-                    f"Expected: integer value\n"
-                    f"Received: {left_pos!r}"
-                )
-            )
-        if not is_right:
-            self.raise_runtime_error(
-                msg=(
-                    f"Invalid right position in {self.__class__.__name__}.\n"
-                    f"Expected: integer value\n"
-                    f"Received: {right_pos!r}"
-                )
-            )
-
         # Reset cached flags
-
         self._leading = None
         self._trailing = None
 
+        line, left_pos, right_pos, ref_cell = self.args
+        self.line = line
+
+        # Validate numeric boundaries
+        left, right = self.validate_numeric_boundary(left_pos, right_pos)
+
         # Validate reference cell
-        if isinstance(ref_cell, self.__class__) or ref_cell is None:
-            self.reference = ref_cell
-        else:
-            cls_name = datatype.get_class_name(self)
-            self.raise_runtime_error(
-                msg=(
-                    f"Invalid reference_cell type detected in {cls_name}.\n"
-                    f"Object: {self!r}\n"
-                    "Hint: Ensure the reference cell is initialized with a supported type."
-                )
-            )
+        self.validate_reference_cell(ref_cell)
 
         # Compute boundaries
         self.left = left
@@ -1449,9 +1427,72 @@ class Cell(RuntimeException):
         self.line = line
         self.data = self.line[self.left:self.right]
 
+        self.adjust_bounds()
+
         # Compute inner boundaries based on leading/trailing whitespace
         self.inner_left = self.left + len(self.leading)
         self.inner_right = self.right - len(self.trailing)
+
+    def adjust_bounds(self):
+        """Expand left/right bounds to include adjacent non‑space characters."""
+        # Extend right bound leftward if the segment ends inside a word
+        if self.reference and self.right < len(self.line) and self.line[
+            self.right] != " ":
+            for idx in range(self.right - 1, self.left, -1):
+                if self.line[idx] == " ":
+                    break
+                self.right = idx
+            self.data = self.line[self.left:self.right]
+
+        # Extend left bound rightward if the segment starts inside a word
+        if self.reference and 0 < self.left < len(self.line) and self.line[
+            self.left - 1] != " ":
+            for idx in range(self.left - 1, 0, -1):
+                if self.line[idx] == " ":
+                    break
+                self.left = idx
+            self.data = self.line[self.left:self.right]
+
+    def validate_reference_cell(self, ref_cell):
+        """Validate and assign the reference cell."""
+
+        if isinstance(ref_cell, self.__class__) or ref_cell is None:
+            self.reference = ref_cell
+            return
+
+        cls_name = datatype.get_class_name(self)
+        self.raise_runtime_error(
+            msg=(
+                f"Invalid reference_cell type detected in {cls_name}.\n"
+                f"Object: {self!r}\n"
+                "Hint: Ensure the reference cell is initialized with a supported type."
+            )
+        )
+
+    def validate_numeric_boundary(self, left_pos, right_pos):
+        """Validate numeric left/right bounds and return them as integers."""
+        ok_left, left = number.try_to_get_number(left_pos, return_type=int)
+        ok_right, right = number.try_to_get_number(right_pos, return_type=int)
+
+        if not ok_left:
+            self.raise_runtime_error(
+                msg=(
+                    f"Invalid left position in {self.__class__.__name__}.\n"
+                    f"Expected: integer value\n"
+                    f"Received: {left_pos!r}"
+                )
+            )
+
+        if not ok_right:
+            self.raise_runtime_error(
+                msg=(
+                    f"Invalid right position in {self.__class__.__name__}.\n"
+                    f"Expected: integer value\n"
+                    f"Received: {right_pos!r}"
+                )
+            )
+
+        return left, right
 
     def set_data(self, data: str) -> None:
         """Update the cell's content and reset cached whitespace metadata."""
@@ -1529,18 +1570,19 @@ class Row(RuntimeException):
             bit = 1 if cell.text else 0
             self.row_layout += str(bit)
 
+    def is_punctuation_line(self):
+        """Return True if all cells contain only punctuation characters."""
+        if not self:
+            return False
+
+        return all(re.fullmatch(PATTERN.PUNCTS, cell.text) for cell in self.cells)
+
     # -----------------------------
     # Reference row creation methods
     # -----------------------------
 
     @classmethod
-    def create_reference_row(
-        cls,
-        line: str,
-        pattern: str,
-        tokens: list[str],
-        aligned: bool = True
-    ) -> "Row":
+    def create_reference_row(cls, line: str, pattern: str, tokens: list[str], aligned: bool = True) -> "Row":
         """Construct a reference row from parsed tokens and boundary positions."""
         if not tokens:
             RuntimeException.do_raise_runtime_error(
@@ -1576,12 +1618,7 @@ class Row(RuntimeException):
         return ref_row
 
     @classmethod
-    def create_reference_row_from_findall(
-            cls,
-            line: str,
-            pattern: str,
-            column_count: int = -1,
-    ) -> "Row":
+    def create_reference_row_from_findall(cls, line: str, pattern: str, column_count: int = -1) -> "Row":
         """Create a reference row by extracting tokens with regex findall."""
         tokens = re.findall(pattern, line)
         total = len(tokens)
@@ -1601,12 +1638,7 @@ class Row(RuntimeException):
         return cls.create_reference_row(line, pattern, tokens)
 
     @classmethod
-    def create_reference_row_from_split(
-        cls,
-        line: str,
-        separator: str,
-        column_count: int = 1
-    ) -> "Row":
+    def create_reference_row_from_split(cls, line: str, separator: str, column_count: int = 1) -> "Row":
         """Create a reference row by splitting the line on a separator and normalizing edge cases."""
         pattern = re.escape(separator)
         tokens = re.split(pattern, line)

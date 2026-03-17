@@ -34,7 +34,7 @@ def test_fixed_columns():
 
 def test_tabular_calculating_max_width():
     text = dedent("""
-        a        b      
+        a        b
         -------- -------
         val1.1   val1.2
                  val2.2
@@ -44,7 +44,7 @@ def test_tabular_calculating_max_width():
     """).strip()
 
     expected_tmpl_snippet = dedent("""
-        a        b      
+        a        b
         start() mixed_word(var_a)  mixed_word(var_b) end(space) -> record
         start() mixed_word(var_a) end(space) -> record
         start() 7_9_space() mixed_word(var_b) end(space) -> record
@@ -57,18 +57,18 @@ def test_tabular_calculating_max_width():
 
 def test_correctness_group_or_phrase():
     text = dedent("""
-fruits    meat      drinks
-------    --------  -------
-orange    pork      water
-peach               pepsi soda
-mango     chicken
+        fruits    meat      drinks
+        ------    --------  -------
+        orange    pork      water
+        peach               pepsi soda
+        mango     chicken
         """).strip()
 
     expected_tmpl_snippet = dedent("""
-fruits    meat      drinks
-start() letters(var_fruits)  letters(var_meat)  1_2_word(var_drinks) end() -> record
-start() letters(var_fruits)  letters(var_meat) end(space) -> record
-start() letters(var_fruits) 10_15_space() 1_2_word(var_drinks) end() -> record
+        fruits    meat      drinks
+        start() letters(var_fruits)  letters(var_meat)  1_2_word(var_drinks) end() -> record
+        start() letters(var_fruits)  letters(var_meat) end(space) -> record
+        start() letters(var_fruits) 10_15_space() 1_2_word(var_drinks) end() -> record
         """).strip()
 
     node = TabularTranslator(text)
@@ -78,26 +78,25 @@ start() letters(var_fruits) 10_15_space() 1_2_word(var_drinks) end() -> record
 
 def test_starting_from_and_ending_at_arguments():
     text = dedent("""
-line 1: blab 123 blab
-line 2: 1.1.2 blab blab
-index     col1            col2
-1         item1.1         item1.2
-2         item2.1         item2.2
-3         ?               item3.2
-line k: 123 blab blab
-index     col1            col2
-4         item4.1         item4.2
-5         item5.1         item5.2
-6         ?               item6.2
+        line 1: blab 123 blab
+        line 2: 1.1.2 blab blab
+        index     col1            col2
+        1         item1.1         item1.2
+        2         item2.1         item2.2
+        3         ?               item3.2
+        line k: 123 blab blab
+        index     col1            col2
+        4         item4.1         item4.2
+        5         item5.1         item5.2
+        6         ?               item6.2
     """).strip()
 
     expected_tmpl_snippet = dedent("""
-index     col1            col2 -> Table
-Table
-start() digit(var_index)  non_wss(var_col)  mixed_word(var_col2) end() -> record
-line k: digits() blab blab -> EOF
+        index     col1            col2 -> Table
+        Table
+        start() digit(var_index)  non_wss(var_col)  mixed_word(var_col2) end() -> record
+        line k: digits() blab blab -> EOF
     """).strip()
-
     node = TabularTranslator(text, column_widths="10, 15,", starting_from=2, ending_at=6)
     tmpl_snippet = node.to_template_snippet()
     assert tmpl_snippet == expected_tmpl_snippet

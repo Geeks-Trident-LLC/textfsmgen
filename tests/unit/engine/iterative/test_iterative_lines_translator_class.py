@@ -1,12 +1,12 @@
 """
-Unit tests for the `textfsmgen.gpiterative` module.
+Unit tests for the `textfsmgen.engine.iterative` module.
 
 Usage
 -----
 Run pytest in the project root to execute these tests:
-    $ pytest tests/unit/gpiterative/test_iterative_lines_pattern_class.py
+    $ pytest tests/unit/engine/iterative/test_iterative_lines_translator_class.py
     or
-    $ python -m pytest tests/unit/gpiterative/test_iterative_lines_pattern_class.py
+    $ python -m pytest tests/unit/engine/iterative/test_iterative_lines_translator_class.py
 """
 
 import re

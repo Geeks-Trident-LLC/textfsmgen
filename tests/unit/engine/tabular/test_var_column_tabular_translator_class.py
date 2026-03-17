@@ -90,11 +90,11 @@ peach               pepsi soda
 def test_to_tabular_custom_divider_ex1():
     test_data = """
 LastWriteTime           Name
-----------------------|--------------------
-9/1/2021 6:13:50 AM   | reference
-10/5/2021 9:13:50 PM  | dsc
-11/2/2021 11:58:45 PM | README.md
-12/16/2021 12:30:59 PM| CONTRIBUTING.md
+-----------------------|--------------------
+9/1/2021 6:13:50 AM    | reference
+10/5/2021 9:13:50 PM   | dsc
+11/2/2021 11:58:45 PM  | README.md
+12/16/2021 12:30:59 PM | CONTRIBUTING.md
                 """.strip()
 
     expected_result = [
@@ -410,29 +410,7 @@ LastWriteTime          Name
 
 
 def test_to_tabular_custom_header_data_ex2():
-    (
-        dedent("""
-            fruits    meat      drinks
-            orange    pork      water
-            peach               pepsi soda
-        """).strip(),
-        3,
-        '--------- --------- -----------',
-        [
-            {'col0': 'fruits', 'col1': 'meat', 'col2': 'drinks'},
-            {'col0': 'orange', 'col1': 'pork', 'col2': 'water'},
-            {'col0': 'peach', 'col1': '', 'col2': 'pepsi soda'}
-        ],
-        dedent("""
-            +--------+------+------------+
-            | col0   | col1 | col2       |
-            +--------+------+------------+
-            | fruits | meat | drinks     |
-            | orange | pork | water      |
-            | peach  |      | pepsi soda |
-            +--------+------+------------+
-        """).strip()
-    ),
+
     test_data = """
 fruits    meat      drinks
 orange    pork      water
