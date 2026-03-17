@@ -947,7 +947,13 @@ class ParsedTable(RuntimeException):
         self.build_first_column_snippet(snippets)
         self.build_other_column_snippet(snippets)
 
-        return text.join_string(*snippets, separator="\n")
+        cleaned: List[str] = []
+        for snippet in snippets:
+            if re.match(r"start[(]\w*[)]\s+end[(]\w*[)]", snippet):
+                continue
+            cleaned.append(snippet)
+
+        return text.join_string(*cleaned, separator="\n")
 
     def build_first_column_snippet(self, snippets: List[str]) -> None:
         """
