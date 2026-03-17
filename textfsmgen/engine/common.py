@@ -29,20 +29,20 @@ def get_line_position_by(
     if item is None:
         return None
 
-    regex_prefix = r'(?i)^\s*--regex\s+'
-    if text.is_string(item):
-        if re.search(regex_prefix, item):
-            pattern = re.sub(regex_prefix, "", item)
-        else:
-            pattern = TextPattern(item)
+    is_number, index = number.try_to_get_number(item, return_type=int)
+    if is_number:
+        return None if index >= len(lines) else index
 
-        for index, line in enumerate(lines):
-            if re.search(pattern, line, re.I):
-                return index
+    regex_prefix = r'(?i)^\s*--regex\s+'
+
+    if re.match(regex_prefix, item):
+        pattern = re.sub(regex_prefix, "", item)
     else:
-        is_number, index = number.try_to_get_number(item, return_type=int)
-        if is_number:
-            return None if index >= len(lines) else index
+        pattern = TextPattern(item)
+
+    for index, line in enumerate(lines):
+        if re.search(pattern, line, re.I):
+            return index
 
     return None
 
