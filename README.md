@@ -36,15 +36,9 @@ You can install the **textfsmgen** package directly from PyPI using `pip`:
 
 ```bash
 pip install textfsmgen
-```  
+```
 
-### ✅ Requirements  
-- Python 3.9 or higher  
-- Internet connection to fetch dependencies from PyPI
-
----
-
-## 📦 Dependencies  
+### 📦 Dependencies  
 
 This project depends on the following Python packages to provide core functionality and seamless integration:  
 
@@ -53,15 +47,8 @@ This project depends on the following Python packages to provide core functional
 
 ---
 
-## 🐞 Bugs & Feature Requests  
-
-If you encounter a bug or have a feature request, please submit it through the official [GitHub Issue Tracker](https://github.com/Geeks-Trident-LLC/textfsmgen/issues). This helps us track, prioritize, and resolve issues efficiently while keeping all feedback in one place.
-
----
-
 ## 🛣️ Roadmap  
 
-- ⚠️ **Deprecation Notice** - *TextFSM Generator Pro Edition* and *Enterprise Edition* will be deprecated and removed during the upcoming migration to 🚀 `textfsmgen` version **1.x**.   
 - ✨ **Template Generation Improvements** – Ongoing refinements to TextFSM template creation, deeper integration with parsing libraries, and streamlined developer workflows.  
 - 🐳 **Containerization** – Official Docker images and containerized deployment options for portability, scalability, and simplified setup.  
 - 🔄 **CI/CD Integration** – Automated pipelines for testing, building, and releasing to ensure faster and more reliable delivery.  
@@ -81,21 +68,23 @@ If you encounter a bug or have a feature request, please submit it through the o
 
 ---
 
+## 📚 References
+
+- [Wiki](https://github.com/Geeks-Trident-LLC/textfsmgen/wiki)
+- [FAQ](https://github.com/Geeks-Trident-LLC/textfsmgen/wiki/FAQ)
+
+---
+
+
+## 🐞 Bugs & Feature Requests  
+
+If you encounter a bug or have a feature request, please submit it through the official [GitHub Issue Tracker](https://github.com/Geeks-Trident-LLC/textfsmgen/issues). This helps us track, prioritize, and resolve issues efficiently while keeping all feedback in one place.
+
+---
+
 ## 📜 License  
 
-This project is licensed under the **BSD 3‑Clause License**.  
-You can review the full license text here:  
-- [BSD 3‑Clause License](https://github.com/Geeks-Trident-LLC/textfsmgen/blob/develop/LICENSE)  
-
-### 🔍 What the BSD 3‑Clause License Means  
-- ✅ **Freedom to Use** – You may use this library in both open‑source and proprietary projects.  
-- ✅ **Freedom to Modify** – You can adapt, extend, or customize the code to fit your needs.  
-- ✅ **Freedom to Distribute** – Redistribution of source or binary forms is permitted, with or without modification.  
-- ⚠️ **Conditions** – You must retain the copyright notice, license text, and disclaimers in redistributions.  
-- ❌ **Restrictions** – You cannot use the names of the project or its contributors to endorse or promote derived products without prior permission.  
-
-### ⚡ Why BSD 3‑Clause?  
-The BSD 3‑Clause License strikes a balance between openness and protection. It allows broad usage and collaboration while ensuring proper attribution and preventing misuse of contributor names for marketing or endorsement.  
+This project is licensed under the **[BSD 3‑Clause License](https://github.com/Geeks-Trident-LLC/textfsmgen/blob/develop/LICENSE)**, permitting broad use, modification, and redistribution with required attribution and no endorsement.
 
 ---
 
