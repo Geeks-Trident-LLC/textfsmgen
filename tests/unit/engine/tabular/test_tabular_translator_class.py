@@ -66,9 +66,9 @@ def test_correctness_group_or_phrase():
 
     expected_tmpl_snippet = dedent("""
         fruits    meat      drinks
-        start() letters(var_fruits)  letters(var_meat)  1_2_word(var_drinks) end() -> record
+        start() letters(var_fruits)  letters(var_meat)  words(var_drinks) end() -> record
         start() letters(var_fruits)  letters(var_meat) end(space) -> record
-        start() letters(var_fruits) 10_15_space() 1_2_word(var_drinks) end() -> record
+        start() letters(var_fruits) 10_15_space() words(var_drinks) end() -> record
         """).strip()
 
     node = TabularTranslator(text)

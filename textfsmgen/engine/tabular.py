@@ -1907,11 +1907,11 @@ class Column:
         if to_bared_snippet or (skipped_empty and not added_list_meta_data):
             return snippet
 
-        if node.is_group() and not self.is_last:
-            max_items = max(cell.items_count for cell in self.cells)
-            occurrence = max_items - 1
-            if occurrence > 0:
-                snippet = f"1_{max_items}_" + node.singular_name + "(" + snippet.split("(", 1)[-1]
+        # if node.is_group() and not self.is_last:
+        #     max_items = max(cell.items_count for cell in self.cells)
+        #     occurrence = max_items - 1
+        #     if occurrence > 0:
+        #         snippet = f"1_{max_items}_" + node.singular_name + "(" + snippet.split("(", 1)[-1]
 
         if added_list_meta_data:
             snippet = f"{snippet[:-1]}, meta_data_list)"
