@@ -18,7 +18,6 @@ from textfsmgen.libs import text
 from textfsmgen.engine.translate import PatternTranslator
 from textfsmgen.engine import LineData
 from textfsmgen.exceptions import RuntimeException
-from textfsmgen.engine.iterative import IterativeLineTranslator
 
 from textfsmgen.engine.common import get_line_position_by
 from textfsmgen.engine.common import get_fixed_line_snippet
@@ -35,11 +34,27 @@ class SeparatorNode(LineData):
         super().__init__(sep)
 
     def to_regex(self) -> str:
-        """
-        Convert category-separator data structure into a regex pattern.
-        """
-        node = IterativeLineTranslator(self.raw_data)
-        return node.to_regex()
+        """Convert a category-separator data structure into a regex pattern."""
+        raw = self.raw_data
+        cleaned = raw.strip()
+
+        # Always work with a Line object once
+        line = text.Line(raw)
+
+        # If there is meaningful content, build the pattern with optional leading/trailing spaces
+        if cleaned:
+            pattern_parts = [text.Line(cleaned).convert_to_regex_pattern()]
+
+            if line.is_leading:
+                pattern_parts.insert(0, r" *")
+
+            if line.is_trailing:
+                pattern_parts.append(r" *")
+
+            return "".join(pattern_parts)
+
+        # Fallback: empty or whitespace-only input
+        return line.convert_to_regex_pattern()
 
     def to_template_snippet(self) -> str:
         """Generate a line textfsm snippet."""
@@ -91,8 +106,8 @@ class RightDataNode(LineData):
     def __init__(self, data: str, var_txt: str):
         """Initialize a RightDataNode with raw data and variable text."""
         super().__init__(data)
-        symbol_n_space_pat = '[ %s' % PATTERN.PUNCTS[1:]
-        self.var_name = re.sub(symbol_n_space_pat, '_', var_txt).strip('_')
+        spaces_puncts_pat = f"{PATTERN.SPACE_PUNCT}+"
+        self.var_name = re.sub(spaces_puncts_pat, '_', var_txt.lower()).strip('_')
 
     @property
     def is_empty(self) -> bool: return self.data == ""
