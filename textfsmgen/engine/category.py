@@ -14,6 +14,7 @@ from typing import Optional
 from textfsmgen.core.patterns import TextPattern
 from textfsmgen.libs import PATTERN
 from textfsmgen.libs import text
+from textfsmgen.libs import utils
 
 from textfsmgen.engine.translate import PatternTranslator
 from textfsmgen.engine import LineData
@@ -365,6 +366,12 @@ class CategoryLineTranslator(LineData):
                         separator=self.separator)
             left_data = node.left_data
             pat = mult_space_pat if double_spaces in left_data else spaces_pat
+
+            if double_spaces in left_data and left_data.strip():
+                parts = utils.split_by_matches(left_data, "  +")
+                if parts:
+                    val = "".join(parts[:-1])
+                    return val, self.right_data[len(val):]
 
             if blank_space in left_data:
                 val, remaining = re.split(pat, self.right_data, maxsplit=1)
