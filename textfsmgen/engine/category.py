@@ -354,7 +354,6 @@ class CategoryLineTranslator(LineData):
         mult_space_pat = '  +'
         spaces_pat = PATTERN.SPACES
         double_spaces = "  "
-        blank_space = " "
 
         next_count = self.count - 1
         if not next_count or not self.right_data.strip():
@@ -365,17 +364,17 @@ class CategoryLineTranslator(LineData):
             node = self(self.right_data, count=next_count,
                         separator=self.separator)
             left_data = node.left_data
-            pat = mult_space_pat if double_spaces in left_data else spaces_pat
 
-            if double_spaces in left_data and left_data.strip():
-                parts = utils.split_by_matches(left_data, "  +")
-                if parts:
-                    val = "".join(parts[:-1])
-                    return val, self.right_data[len(val):]
+            if left_data.strip() and re.search(r"\s{2,}", left_data):
+                parts = utils.split_by_matches(left_data, r"\s{2,}")
+                val = "".join(parts[:-1])
+                return val, self.right_data[len(val):]
 
-            if blank_space in left_data:
-                val, remaining = re.split(pat, self.right_data, maxsplit=1)
-                return val, remaining
+            if left_data.strip() and re.search(r"\s+", left_data):
+                parts = utils.split_by_matches(left_data, r"\s+")
+                val = "".join(parts[:-1])
+                return val, self.right_data[len(val):]
+
             return "", self.right_data
 
         except Exception:     # noqa
