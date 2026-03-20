@@ -22,7 +22,52 @@ from textfsmgen.exceptions import RuntimeException
 from textfsmgen.engine.common import get_line_position_by
 from textfsmgen.engine.common import get_fixed_line_snippet
 
+
 PATTERN_CRNL = r'\r?\n|\r'
+
+
+class VarRegistry:
+    """Generate stable, unique variable names based on extracted text."""
+
+    def __init__(self):
+        self._registry = dict()
+
+    def assign(self, var_txt, value):
+        """
+        Return a unique variable name derived from `var_txt`.
+        If the same label maps to the same value, reuse the name.
+        Otherwise, append a numeric suffix.
+        """
+
+        var_name = re.sub(f"{PATTERN.SPACE_PUNCT}+", '_', var_txt.lower()).strip('_')
+
+        if re.match(r"[0-9]", var_txt):
+            var_name = f"var_{var_name}"
+
+        exists = [name for name in self._registry.keys() if
+                  re.fullmatch(f"{var_name}(_[0-9]+)?", name)]
+
+        # First occurrence of this base name
+        if not exists:
+            self._registry[var_name] = value
+            return var_name
+
+        # If the var name already maps to the same value, reuse it
+        if self._registry.get(var_name) == value:
+            return var_name
+
+        # Otherwise, create a new unique name
+        new_var_name = f"{var_name}_{len(exists)}"
+        self._registry[new_var_name] = value
+        return new_var_name
+
+    def reset(self):
+        """Clear all stored variable mappings."""
+        self._registry.clear()
+
+
+VAR_REGISTRY = VarRegistry()
+
 
 class SeparatorNode(LineData):
     """
@@ -106,8 +151,8 @@ class RightDataNode(LineData):
     def __init__(self, data: str, var_txt: str):
         """Initialize a RightDataNode with raw data and variable text."""
         super().__init__(data)
-        spaces_puncts_pat = f"{PATTERN.SPACE_PUNCT}+"
-        self.var_name = re.sub(spaces_puncts_pat, '_', var_txt.lower()).strip('_')
+        # self.var_name = re.sub(f"{PATTERN.SPACE_PUNCT}+", '_', var_txt.lower()).strip('_')
+        self.var_name = VAR_REGISTRY.assign(var_txt, data)
 
     @property
     def is_empty(self) -> bool: return self.data == ""
@@ -426,6 +471,9 @@ class CategoryLinesTranslator(RuntimeException):
 
         # Parsed nodes
         self._lst: list = []
+
+        VAR_REGISTRY.reset()
+
         self.process()
 
     @property

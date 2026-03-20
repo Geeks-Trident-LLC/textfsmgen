@@ -18,6 +18,7 @@ from textfsmgen.core.verify import verify
 from textfsmgen.core.template import get_textfsm_template
 
 from textfsmgen.engine.category import CategoryLineTranslator
+from textfsmgen.engine.category import VAR_REGISTRY
 
 from tests.unit import replace_dates_with_placeholder
 
@@ -121,6 +122,7 @@ class TestCategoryLineTranslator:
             The expected dictionary of captured groups from the regex match.
         """
         # --- Action ---
+        VAR_REGISTRY.reset()
         node = CategoryLineTranslator(line, count=count)
         pattern = node.to_regex()
 
@@ -311,6 +313,7 @@ class TestCategoryLineTranslator:
         snippet, produces a valid TextFSM template, and passes verification.
         """
         # --- Action ---
+        VAR_REGISTRY.reset()
         node = CategoryLineTranslator(line, count=count)
         generated_snippet = node.to_template_snippet()
         # --- Assertions ---
