@@ -119,22 +119,17 @@ def show_test_data(app):
 
 
 def open_file(app):
-    """
-    Handle the "File > Open" menu action.
-    """
+    """Handle the "File > Open" menu action."""
 
-    filetypes = [
-        ('Text Files', '.txt', 'TEXT'),
-        ('All Files', '*'),
-    ]
+    filetypes = [('Text Files', '.txt', 'TEXT'), ('All Files', '*'),]
     filename = filedialog.askopenfilename(filetypes=filetypes)
     if filename:
         # Read file content
         content = file.read(filename)
 
+        activate_user_data_mode(app)
+
         # Reset and update widgets
-        # enable_buttons(app, test_data=True)
-        app.settings.test_data_btn_name.set('Test Data')
         set_text(app.textarea.output, '')
         app.snapshot.update(user_data=content)
         app.snapshot.update(test_data=content)
