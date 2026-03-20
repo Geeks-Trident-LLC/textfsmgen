@@ -167,8 +167,13 @@ class RightDataNode(LineData):
 
     def to_template_snippet(self):
         if self.data:
-            pat_obj = PatternTranslator.do_factory_create(self.data)
-            return pat_obj.get_template_snippet(var=self.var_name)
+            translator = PatternTranslator.do_factory_create(self.data)
+            snippet = translator.get_template_snippet(var=self.var_name)
+            if re.sub(r"[ \r\n]+", "", self.leading):
+                snippet = f"wss(){snippet}"
+            if re.sub(r"[ \r\n]+", "", self.trailing):
+                snippet = f"{snippet}wss()"
+            return snippet
         return f"anything(var_{self.var_name}, or_empty)"
 
 
@@ -243,6 +248,13 @@ class CategoryLineTranslator(LineData):
 
         for item in self._lst:
             snippet = item.to_template_snippet()
+            if (
+                isinstance(item, SpacerNode) and
+                isinstance(prev_item, RightDataNode) and
+                prev_item.to_template_snippet().endswith("wss()")
+            ):
+                continue
+
             if (
                 isinstance(item, RightDataNode) and
                 item.is_empty and prev_item and not prev_item.is_trailing
