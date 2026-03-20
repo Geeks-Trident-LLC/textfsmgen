@@ -34,46 +34,15 @@ from tkinter import filedialog
 
 
 def build(app):
-    """
-    Handle the 'Build' button action to generate a TextFSM template.
-    """
+    """Handle the 'Build' button action to generate a TextFSM template."""
 
-    btn_name = app.settings.test_data_btn_name.get()
-    if btn_name == 'Hide':
-        in_text = extract_text(app.textarea.input)
-        if in_text != app.snapshot.test_data:
-            response = show_message_dialog(
-                title="Incorrect Input Data Mode",
-                yesno=(
-                    "You are currently in 'Test Data' mode.\n"
-                    "Instruction: Click the 'Hide' button to return to 'User Data' mode.\n\n"
-                    "If you have made changes, do you want to save this content "
-                    "and switch back to 'User Data' mode?"
-                )
-            )
-            if response:
-                app.snapshot.update(test_data=in_text)
-                app.settings.test_data_btn_name.set('Test Data')
-                set_text(app.textarea.input, app.snapshot.user_data)
-            return
-        response = show_message_dialog(
-            title="Incorrect Input Data Mode",
-            yesno=(
-                "You are currently in 'Test Data' mode.\n"
-                "Instruction: Click the 'Hide' button to return to 'User Data' mode.\n\n"
-                "Do you want to switch back to 'User Data' mode?"
-            )
-        )
-        if response:
-            app.settings.test_data_btn_name.set('Test Data')
-            set_text(app.textarea.input, app.snapshot.user_data)
-        return
-
+    activate_user_data_mode(app)
     user_data = extract_text(app.textarea.input)
     if not user_data:
         show_message_dialog(
             title="Missing Input Data",
-            error="Cannot build a TextFSM template because no input data was provided."
+            error="Cannot build a TextFSM template because "
+                  "no input data was provided."
         )
         return
 
@@ -105,13 +74,15 @@ def build(app):
             app.reset_category_translator()
             app.reset_tabular_translator()
             app.snapshot.update(user_data=builder.snippet)
-            set_text(app.textarea.input, app.snapshot.user_data)
+            set_text(app.textarea.input, builder.snippet)
 
         # Enable buttons and update UI
         enable_buttons(app, save=True, copy=True, result=True)
         if app.snapshot.test_data:
-            enable_buttons(app, test_data=True, python=True,
-                           unittest=True, pytest=True, execute=True)
+            enable_buttons(
+                app, test_data=True, python=True,
+                unittest=True, pytest=True, execute=True
+            )
         set_text(app.textarea.output, app.snapshot.template)
         app.textarea.output.focus()
 
@@ -293,11 +264,14 @@ def clear(app):
         enable_buttons(app, open=True, paste=True, clear=True, build=True)
 
         # Disable related buttons
-        disable_buttons(app, test_data=True, save=True, copy=True,
-                        result=True, python=True, unittest=True, pytest=True, execute=True)
+        disable_buttons(
+            app, test_data=True, save=True, copy=True,
+            result=True, python=True, unittest=True,
+            pytest=True, execute=True
+        )
 
         # Reset input area state
-        app.textarea.input.config(state=ui.tk.NORMAL)
+        app.textarea.input.config(state="normal")
 
         # Reset snapshot attributes
         app.snapshot.update(
