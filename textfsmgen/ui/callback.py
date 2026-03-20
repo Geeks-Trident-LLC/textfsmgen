@@ -150,10 +150,7 @@ def open_file(app):
 def load_test_data_file(app):
     """Handle the "File > Load Test Data" menu action."""
 
-    filetypes = [
-        ('Text Files', '.txt', 'TEXT'),
-        ('All Files', '*'),
-    ]
+    filetypes = [('Text Files', '.txt', 'TEXT'), ('All Files', '*'),]
     filename = filedialog.askopenfilename(filetypes=filetypes)
     if not filename:
         return
@@ -173,8 +170,7 @@ def load_test_data_file(app):
 
     app.settings.test_data_btn_name.set('Hide')
     input_data = extract_text(app.textarea.input)
-    if input_data.strip():
-        app.snapshot.update(user_data=input_data)
+    app.snapshot.update(user_data=input_data)
     set_text(app.textarea.input, content)
 
 
@@ -271,7 +267,7 @@ def clear(app):
         # Reset snapshot attributes
         app.snapshot.update(
             user_data="",
-            test_data=None,
+            test_data="",
             result="",
             template="",
             is_built=False,
