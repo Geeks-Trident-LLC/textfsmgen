@@ -317,43 +317,46 @@ class PatternTranslator(RuntimeException):
         return f"{name}({var_txt})"
 
     @classmethod
-    def do_factory_create(cls, data: str, *other):
-        """
-        Factory method to create a translated pattern instance.
-        """
-        classes = [
-            DigitTranslator,
-            DigitsTranslator,
+    def do_factory_create(cls, data: str, *other, multiple=False):
+        """Factory method to create a translated pattern instance."""
+        translator_pairs = [
+            (DigitTranslator, DigitsTranslator),
+            (DigitsTranslator, DigitsTranslator),
 
-            NumberTranslator,
+            (NumberTranslator, NumberTranslator),
 
-            LetterTranslator,
-            LettersTranslator,
+            (LetterTranslator, LettersTranslator),
+            (LettersTranslator, LettersTranslator),
 
-            AlnumTranslator,
-            WordTranslator,
+            (AlnumTranslator, WordTranslator),
+            (WordTranslator, WordTranslator),
 
-            PunctTranslator,
-            PunctsTranslator,
-            PunctsGroupTranslator,
+            (PunctTranslator, PunctsTranslator),
+            (PunctsTranslator, PunctsTranslator),
+            (PunctsGroupTranslator, PunctsGroupTranslator),
 
-            GraphTranslator,
+            (GraphTranslator, NonWSSTranslator),
 
-            MixedNumberTranslator,
-            MixedWordTranslator,
+            (MixedNumberTranslator, MixedNumberTranslator),
 
-            WordsTranslator,
+            (MixedWordTranslator, MixedWordTranslator),
 
-            MixedWordsTranslator,
+            (WordsTranslator, WordsTranslator),
 
-            NonWSTranslator,
-            NonWSSTranslator,
-            NonWSSGroupTranslator,
+            (MixedWordsTranslator, MixedWordsTranslator),
+
+            (NonWSTranslator, NonWSSTranslator),
+            (NonWSSTranslator, NonWSSTranslator),
+            (NonWSSGroupTranslator, NonWSSGroupTranslator),
         ]
-        for class_ in classes:
-            node = class_(data, *other)
-            if node:
-                return node
+
+        for primary_cls, secondary_cls in translator_pairs:
+            translator = primary_cls(data, *other)
+            if translator:
+                if multiple:
+                    return secondary_cls(data, *other)
+                return translator
+
         RuntimeException.do_raise_runtime_error(    # noqa
             obj="FactoryTranslatedPatternRTIssue",
             msg=f"Factory could not create a pattern for number={data!r}, other={other!r}",

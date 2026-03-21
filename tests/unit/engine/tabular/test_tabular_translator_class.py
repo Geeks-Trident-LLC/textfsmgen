@@ -24,7 +24,7 @@ def test_fixed_columns():
 
     expected_tmpl_snippet = dedent("""
         index     col1            col2
-        start() digit(var_index)  non_wss(var_col)  mixed_word(var_col2) end() -> record
+        start() digits(var_index)  non_wss(var_col)  mixed_word(var_col2) end() -> record
     """).strip()
 
     node = TabularTranslator(text, column_widths="10, 15,")
@@ -94,7 +94,7 @@ def test_starting_from_and_ending_at_arguments():
     expected_tmpl_snippet = dedent("""
         index     col1            col2 -> Table
         Table
-        start() digit(var_index)  non_wss(var_col)  mixed_word(var_col2) end() -> record
+        start() digits(var_index)  non_wss(var_col)  mixed_word(var_col2) end() -> record
         line k: digits() blab blab -> EOF
     """).strip()
     node = TabularTranslator(text, column_widths="10, 15,", starting_from=2, ending_at=6)

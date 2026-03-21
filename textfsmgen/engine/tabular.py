@@ -1871,7 +1871,7 @@ class Column:
         if self.extra_data:
             texts.extend(self.extra_data)
 
-        node = PatternTranslator.do_factory_create(*texts)
+        node = PatternTranslator.do_factory_create(*texts, multiple=True)
         pattern = node.get_regex_pattern(var=self.name)
 
         if node.is_group() and not self.is_last:
@@ -1900,7 +1900,7 @@ class Column:
         if self.extra_data:
             texts.extend(self.extra_data)
 
-        node = PatternTranslator.do_factory_create(*texts)
+        node = PatternTranslator.do_factory_create(*texts, multiple=True)
         kwargs = {} if to_bared_snippet else {"var": self.name}
         snippet = node.get_template_snippet(**kwargs)
 

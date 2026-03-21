@@ -161,13 +161,13 @@ class RightDataNode(LineData):
     def to_regex(self) -> str:
         """Convert the data into a regex pattern."""
         if self.data:
-            pat_obj = PatternTranslator.do_factory_create(self.data)
-            return pat_obj.get_regex_pattern(var=self.var_name)
+            translator = PatternTranslator.do_factory_create(self.data)
+            return translator.get_regex_pattern(var=self.var_name)
         return f"(?P<{self.var_name}>.*|)"
 
     def to_template_snippet(self):
         if self.data:
-            translator = PatternTranslator.do_factory_create(self.data)
+            translator = PatternTranslator.do_factory_create(self.data, multiple=True)
             snippet = translator.get_template_snippet(var=self.var_name)
             if re.sub(r"[ \r\n]+", "", self.leading):
                 snippet = f"wss(){snippet}"
