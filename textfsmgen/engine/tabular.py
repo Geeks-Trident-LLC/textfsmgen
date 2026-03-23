@@ -12,6 +12,7 @@ import math
 import statistics
 import operator as op
 import re
+import copy
 
 from textfsmgen.core.patterns import LinePattern
 from textfsmgen.libs import PATTERN
@@ -21,6 +22,7 @@ from textfsmgen.libs import number
 
 from textfsmgen.engine.translate import PatternTranslator
 from textfsmgen.exceptions import RuntimeException
+from textfsmgen.exceptions import raise_runtime_error
 
 from textfsmgen.engine.common import get_line_position_by
 from textfsmgen.engine.common import get_fixed_line_snippet
@@ -176,7 +178,10 @@ class VarColumnTabularTranslator(RuntimeException):
         self.header_rows = header_rows
         self.custom_header_text = custom_header_text
         self.raw_header_rows = []
+
         self.headers = headers
+        self.parse_headers()
+
         self.has_header_row = has_header_row
         self.variables = []
 
@@ -256,33 +261,94 @@ class VarColumnTabularTranslator(RuntimeException):
                         if item in line and line not in lst:
                             lst.append(line)
 
-    def normalize_headers(self):
-        """Normalize header names into valid, unique variable identifiers."""
+    def parse_headers(self):
+        """
+        Parse and validate header definitions.
+
+        Accepts:
+        - list/tuple: must match the expected column count
+        - string: split by comma or whitespace to match the expected count
+
+        On success, updates self.headers to a normalized list.
+        Raises a runtime error when the header format or count is invalid.
+        """
         headers = self.headers
+
         if not headers:
+            return
+
+        # Case 1: list/tuple input
+        if isinstance(headers, (list, tuple)):
+            if len(headers) == self.column_count:
+                return  # already valid
+            raise_runtime_error(
+                obj="TabularHeadersColumnCountError",
+                msg=(
+                    f"header count mismatch: expected {self.column_count}, "
+                    f"but received {len(headers)}\n"
+                    f"headers={headers!r}"
+                ),
+            )
+
+        # Case 2: unsupported type
+        if not isinstance(headers, str):
+            raise_runtime_error(
+                obj="TabularHeadersTypeError",
+                msg=(
+                    "headers must be a comma‑separated string or a list of strings; "
+                    f"received type {type(headers).__name__}\n"
+                    f"headers={headers!r}"
+                ),
+            )
+
+        # Case 3: string input — attempt to split
+        raw = headers.strip()
+
+        comma_split = re.split(r"\s*,\s*", raw)
+        space_split = re.split(r"\s+", raw)
+
+        expected = self.column_count
+
+        parsed = (
+            comma_split if len(comma_split) == expected
+            else space_split if len(space_split) == expected
+            else []
+        )
+
+        if parsed:
+            self.headers = parsed
+            return
+
+        raise_runtime_error(
+            obj="TabularHeadersColumnCountError",
+            msg=(
+                f"header count mismatch: expected {expected}, "
+                f"but received {len(parsed)}\n"
+                f"headers={parsed!r}"
+            ),
+        )
+
+    def normalize_headers(self):
+        """Convert parsed headers into valid, unique variable identifiers."""
+
+        if not self.headers:
             return []
 
-        # Accept comma/space‑separated string
-        if text.is_string(headers):
-            headers = re.split(r"[ ,]+", headers.strip())
-
-        # Only process when header count matches column count
-        if not (datatype.is_list(headers) and len(
-                headers) == self.column_count):
-            return []
-
+        pattern = f"{PATTERN.SPACE_PUNCT}+"
         variables = []
-        punct_pattern = f"[ {PATTERN.PUNCTS[1:]}]"
-        replacement = "_"
 
-        for i, hdr in enumerate(headers):
-            cleaned = re.sub(punct_pattern, replacement, hdr.strip())
-            cleaned = cleaned if cleaned != replacement else cleaned.rstrip(
-                replacement)
+        for index, hdr in enumerate(self.headers):
+            cleaned = re.sub(pattern, "_", hdr).strip("_").lower()
 
-            # Ensure uniqueness
-            final = f"{cleaned}{i}" if cleaned in variables else cleaned
-            variables.append(final)
+            if not cleaned:
+                variables.append(f"col{index}")
+                continue
+
+            if cleaned in variables:
+                variables.append(f"{cleaned}{index}")
+                continue
+
+            variables.append(cleaned)
 
         return variables
 
