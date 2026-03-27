@@ -362,10 +362,8 @@ class VarColumnTabularTranslator(RuntimeException):
 
     def find_reference_row_by_divider(self, custom_line=""):
         """Find a reference row defined by repeated punctuation dividers."""
-        pattern = r" *%(p)s( +%(p)s){%(n)s} *$" % {
-            "p": PATTERN.PUNCTS,
-            "n": self.column_count - 1,
-        }
+        repeat = self.column_count - 1
+        pattern = rf" *{PATTERN.PUNCTS}( +{PATTERN.PUNCTS}){{{repeat}}} *$"
 
         line = custom_line or next(
             (ln for ln in self.lines if re.match(pattern, ln)),
@@ -384,11 +382,12 @@ class VarColumnTabularTranslator(RuntimeException):
 
     def find_reference_row_by_separator(self, custom_line=""):
         """Find a reference row using the explicit column divider."""
-        pattern = r" *%(sep)s?(%(cell)s%(sep)s){%(n)s}%(cell)s%(sep)s? *$" % {
-            "sep": re.escape(self.column_divider),
-            "cell": r"[^%s]+" % self.column_divider,
-            "n": self.column_count - 1,
-        }
+
+        sep = re.escape(self.column_divider)
+        cell = rf"[^{self.column_divider}]+"
+        repeat = self.column_count - 1
+
+        pattern = rf" *{sep}?({cell}{sep}){{{repeat}}}{cell}{sep}? *$"
 
         line = custom_line or next(
             (ln for ln in self.lines if re.match(pattern, ln)),
@@ -404,21 +403,14 @@ class VarColumnTabularTranslator(RuntimeException):
             case="split",
         )
 
-    def find_reference_row_by_space_divider(
-            self,
-            spaces: str = " ",
-            custom_line: str = ""
-    ) -> Optional["Row"]:
+    def find_reference_row_by_space_divider(self, spaces=" ", custom_line=""):
         """Find a reference row where columns are separated by one or more spaces."""
-        gap = "" if spaces == " " else " "
-        repetition = self.column_count - 1
-
         # Pattern to detect a valid reference row
-        detect_pattern = r" *%(cell)s(%(gap)s +%(cell)s){%(n)s} *$" % {
-            "cell": PATTERN.OPTIONAL_NON_WSS_GROUP,
-            "gap": gap,
-            "n": repetition,
-        }
+        gap = "" if spaces == " " else " "
+        cell = PATTERN.OPTIONAL_NON_WSS_GROUP
+        repeat = self.column_count - 1
+
+        detect_pattern = rf" *{cell}({gap} +{cell}){{{repeat}}} *$"
 
         line = custom_line or next(
             (ln for ln in self.lines if re.match(detect_pattern, ln)),
