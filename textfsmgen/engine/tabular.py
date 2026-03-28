@@ -179,7 +179,8 @@ class VarColumnTabularTranslator(RuntimeException):
         self.custom_header_text = custom_header_text
         self.raw_header_rows = []
 
-        self.headers = headers
+        self.raw_headers = headers
+        self.headers = None
         self.parse_headers()
 
         self.has_header_row = has_header_row
@@ -272,7 +273,7 @@ class VarColumnTabularTranslator(RuntimeException):
         On success, updates self.headers to a normalized list.
         Raises a runtime error when the header format or count is invalid.
         """
-        headers = self.headers
+        headers = self.raw_headers
 
         if not headers:
             return
@@ -280,6 +281,7 @@ class VarColumnTabularTranslator(RuntimeException):
         # Case 1: list/tuple input
         if isinstance(headers, (list, tuple)):
             if len(headers) == self.column_count:
+                self.headers = headers.copy()
                 return  # already valid
             raise_runtime_error(
                 obj="TabularHeadersColumnCountError",
@@ -459,8 +461,7 @@ class VarColumnTabularTranslator(RuntimeException):
         """Find reference row using custom header line."""
         return self.find_reference_row_by_divider(custom_line=self.custom_header_text)
 
-    def find_reference_row_by_column_widths(self, custom_line: str = '') -> Optional[
-        'Row']:
+    def find_reference_row_by_column_widths(self, custom_line: str = '') -> Optional['Row']:
         """Find reference row using fixed column widths."""
         parts = [
             f'(?P<v{index:03d}>.{{{width}}})' if index < self.column_count - 1
@@ -479,8 +480,48 @@ class VarColumnTabularTranslator(RuntimeException):
         return Row.do_creating_reference_row(
             line, pattern,
             column_count=self.column_count,
-            case='variable'
+            case='variable',
+            width_mode=True
         )
+
+    def find_reference_row_by_headers(self) -> Optional['Row']:
+        """Find reference row using headers."""
+        if not self.raw_headers:
+            return None
+
+        if isinstance(self.raw_headers, (list, tuple)):
+            pattern = r"\s*" + f"{PATTERN.SPACE_PUNCT}+".join(
+               re.escape(hdr) for hdr in self.raw_headers
+            ) + r"\s*"
+            header_line = "" or next(
+                (ln for ln in self.lines if re.match(pattern, ln)),
+                ""
+            )
+        elif isinstance(self.raw_headers, str):
+            header_line = self.raw_headers
+        else:
+            header_line = ""
+
+        if not header_line:
+            return None
+
+        if len(re.split(",", header_line)) == self.column_count:
+            self.column_widths = [len(item) for item in re.split(",", header_line)]
+            ref_row = self.find_reference_row_by_column_widths()
+            if ref_row:
+                return ref_row
+
+        if len(re.split(r"\s{2,}", header_line)) == self.column_count:
+            ref_row = self.find_reference_row_by_multi_space()
+            if ref_row:
+                return ref_row
+
+        if len(re.split(r"\s{2,}", header_line)) == self.column_count:
+            ref_row = self.find_reference_row_by_single_space()
+            if ref_row:
+                return ref_row
+
+        return None
 
     # -------------------------------
     # Table parsing
@@ -500,7 +541,9 @@ class VarColumnTabularTranslator(RuntimeException):
         finder = strategies.get(case, self.find_reference_row_by_single_space)
         ref_row = finder()
         if not ref_row:
-            return False, None
+            ref_row = self.find_reference_row_by_headers()
+            if not ref_row:
+                return False, None
 
         headers = self.normalize_headers()
         table = ParsedTable(
@@ -1263,8 +1306,17 @@ class Cell(RuntimeException):
     Represents a single cell in a tabular text row.
     """
 
-    def __init__(self, line: str, left_pos: int, right_pos: int, reference: "Cell" = None):
+    def __init__(
+        self,
+        line: str,
+        left_pos: int,
+        right_pos: int,
+        reference: "Cell" = None,
+        width_mode: bool = False,
+    ):
         self.args = (line, left_pos, right_pos, reference)
+
+        self.width_mode = width_mode
 
         # Positional flags
         self._leading = None
@@ -1471,6 +1523,17 @@ class Cell(RuntimeException):
         line, left_pos, right_pos, ref_cell = self.args
         self.line = line
 
+        if ref_cell and ref_cell.width_mode:
+            data = self.line[ref_cell.left:ref_cell.right]
+            self.data = data
+            self.left = ref_cell.left
+            self.right = ref_cell.right
+
+            self.inner_left = self.left + data.index(data.lstrip()) if data.strip() else self.left
+            self.inner_right = self.left + len(data.strip()) if data.strip() else self.right
+            return
+
+
         # Validate numeric boundaries
         left, right = self.validate_numeric_boundary(left_pos, right_pos)
 
@@ -1482,7 +1545,6 @@ class Cell(RuntimeException):
         self.right = len(line) if self.reference and right == 999999 else right
 
         # Extract raw content
-        self.line = line
         self.data = self.line[self.left:self.right]
 
         self.adjust_bounds()
@@ -1562,9 +1624,16 @@ class Cell(RuntimeException):
 class Row(RuntimeException):
     """Represents a row in a tabular text structure."""
 
-    def __init__(self, line: str, reference_row: "Row" = None, aligned: bool = True):
+    def __init__(
+        self,
+        line: str,
+        reference_row: "Row" = None,
+        aligned: bool = True,
+        width_mode: bool = False,
+    ):
         self._is_puncts_group = None
         self.aligned = aligned
+        self.width_mode = width_mode
         self.line = line
         self.reference_row = reference_row
         self.row_layout = ""
@@ -1606,11 +1675,14 @@ class Row(RuntimeException):
         """Create a new cell for this row, align it with the reference row, and append it."""
 
         index = len(self.cells)
+        ref_row = self.reference_row
 
-        reference_cell = self.reference_row.cells[index] if self.reference_row else None
-        cell = Cell(self.line, left_pos, right_pos, reference=reference_cell)
+        width_mode = ref_row.width_mode if ref_row else self.width_mode
+        reference_cell = ref_row.cells[index] if ref_row else None
+        cell = Cell(self.line, left_pos, right_pos,
+                    reference=reference_cell, width_mode=width_mode)
 
-        if self.reference_row and self.reference_row.aligned:
+        if ref_row and ref_row.aligned and not ref_row.width_mode:
             prev_cell = self.cells[-1] if index else None
             cell.adjust_from_previous(prev_cell=prev_cell)
 
@@ -1640,7 +1712,14 @@ class Row(RuntimeException):
     # -----------------------------
 
     @classmethod
-    def create_reference_row(cls, line: str, pattern: str, tokens: list[str], aligned: bool = True) -> "Row":
+    def create_reference_row(
+        cls,
+        line: str,
+        pattern: str,
+        tokens: list[str],
+        aligned: bool = True,
+        width_mode: bool = False,
+    ) -> "Row":
         """Construct a reference row from parsed tokens and boundary positions."""
         if not tokens:
             RuntimeException.do_raise_runtime_error(
@@ -1653,7 +1732,7 @@ class Row(RuntimeException):
                 ),
             )
 
-        ref_row = cls(line, aligned=aligned)
+        ref_row = cls(line, aligned=aligned, width_mode=width_mode)
         prev_right, last_cell = 0, None
 
         for item in tokens:
@@ -1676,7 +1755,12 @@ class Row(RuntimeException):
         return ref_row
 
     @classmethod
-    def create_reference_row_from_findall(cls, line: str, pattern: str, column_count: int = -1) -> "Row":
+    def create_reference_row_from_findall(
+        cls,
+        line: str,
+        pattern: str,
+        column_count: int = -1
+    ) -> "Row":
         """Create a reference row by extracting tokens with regex findall."""
         tokens = re.findall(pattern, line)
         total = len(tokens)
@@ -1696,7 +1780,12 @@ class Row(RuntimeException):
         return cls.create_reference_row(line, pattern, tokens)
 
     @classmethod
-    def create_reference_row_from_split(cls, line: str, separator: str, column_count: int = 1) -> "Row":
+    def create_reference_row_from_split(
+        cls,
+        line: str,
+        separator: str,
+        column_count: int = 1
+    ) -> "Row":
         """Create a reference row by splitting the line on a separator and normalizing edge cases."""
         pattern = re.escape(separator)
         tokens = re.split(pattern, line)
@@ -1740,23 +1829,35 @@ class Row(RuntimeException):
         return cls.create_reference_row(line, pattern, tokens, aligned=False)
 
     @classmethod
-    def create_reference_row_by_variable(cls, line: str, pattern: str) -> "Row":
+    def create_reference_row_by_variable(
+        cls,
+        line: str,
+        pattern: str,
+        width_mode: bool = False,
+    ) -> "Row":
         """Create a reference row using regex named groups (v000, v001, ...)."""
         match = re.match(pattern, line)
         result = match.groupdict() if match else {}
         tokens = [result.get(f"v{i:03d}") for i in range(256) if f"v{i:03d}" in result]
 
-        return cls.create_reference_row(line, pattern, tokens)
+        return cls.create_reference_row(line, pattern, tokens, width_mode=width_mode)
 
     @classmethod
-    def do_creating_reference_row(cls, line: str, pattern: str, case: str = "", column_count: int = -1) -> "Row":
+    def do_creating_reference_row(
+        cls,
+        line: str,
+        pattern: str,
+        case: str = "",
+        column_count: int = -1,
+        width_mode: bool = False,
+    ) -> "Row":
         """Factory method to create a reference row using different parsing strategies."""
 
         if case == "findall":
             return cls.create_reference_row_from_findall(line, pattern, column_count)
 
         if case == "variable":
-            return cls.create_reference_row_by_variable(line, pattern)
+            return cls.create_reference_row_by_variable(line, pattern, width_mode=width_mode)
 
         if case == "split":
             return cls.create_reference_row_from_split(line, pattern, column_count)
