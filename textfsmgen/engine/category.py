@@ -20,8 +20,11 @@ from textfsmgen.engine.translate import PatternTranslator
 from textfsmgen.engine import LineData
 from textfsmgen.exceptions import RuntimeException
 
-from textfsmgen.engine.common import get_line_position_by
-from textfsmgen.engine.common import get_fixed_line_snippet
+from textfsmgen.engine.common import (
+get_line_position_by,
+get_fixed_line_snippet,
+sanitize_identifier
+)
 
 
 PATTERN_CRNL = r'\r?\n|\r'
@@ -40,7 +43,8 @@ class VarRegistry:
         Otherwise, append a numeric suffix.
         """
 
-        var_name = re.sub(f"{PATTERN.SPACE_PUNCT}+", '_', var_txt.lower()).strip('_')
+        # var_name = re.sub(f"{PATTERN.SPACE_PUNCT}+", '_', var_txt.lower()).strip('_')
+        var_name = sanitize_identifier(var_txt)
 
         if re.match(r"[0-9]", var_txt):
             var_name = f"var_{var_name}"

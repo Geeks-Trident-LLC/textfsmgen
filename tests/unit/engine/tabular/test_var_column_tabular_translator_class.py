@@ -397,8 +397,10 @@ LastWriteTime          Name
 +------------------------+-----------------+
     """.strip()
 
-    node = VarColumnTabularTranslator(test_data, column_count=2,
-                                      custom_header_text='---------------------- ---------------')
+    node = VarColumnTabularTranslator(
+        test_data, column_count=2,
+        custom_header_text='---------------------- ---------------'
+    )
     table = node.parse_table()
     assert table
 
@@ -433,8 +435,10 @@ peach               pepsi soda
 +--------+------+------------+
     """.strip()
 
-    node = VarColumnTabularTranslator(test_data, column_count=3,
-                                      custom_header_text='--------- --------- ----------')
+    node = VarColumnTabularTranslator(
+        test_data, column_count=3,
+        custom_header_text='--------- --------- ----------'
+    )
     table = node.parse_table()
     assert table
 
@@ -480,7 +484,8 @@ Start
     ]
 
     node = VarColumnTabularTranslator(
-        test_data, column_divider='  ', column_count=2, header_rows='LastWriteTime          Name'
+        test_data, column_divider='  ', column_count=2,
+        header_rows='LastWriteTime          Name'
     )
     tmpl_snippet = node.to_template_snippet()
     assert tmpl_snippet == expected_template_snippet

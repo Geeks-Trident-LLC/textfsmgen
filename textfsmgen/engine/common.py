@@ -111,3 +111,26 @@ def get_fixed_line_snippet(
     trailing = text.Line.get_trailing(line)
 
     return f"{leading}{snippet_body}{trailing}"
+
+
+def sanitize_identifier(value: str, fallback: str = "col", lower: bool = True) -> str:
+    """
+    Normalize an identifier by converting a trailing '%' into '_pct',
+    removing other percent signs, collapsing noise characters, and
+    stripping leading digits and underscores.
+    """
+    if not value:
+        return fallback
+
+    # Normalize percent suffix
+    pct = "_pct_".join(value.rsplit("%", maxsplit=1))
+    pct = pct.replace("%", "")
+
+    # Collapse punctuation and symbol noise
+    noise = r"[ \x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+"
+    cleaned = re.sub(noise, "_", pct).strip("_")
+
+    # Prevent leading digits
+    cleaned = re.sub(r"^\d+", "_", cleaned)
+
+    return cleaned.lower() if lower else cleaned

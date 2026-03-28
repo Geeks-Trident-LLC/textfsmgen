@@ -24,8 +24,11 @@ from textfsmgen.engine.translate import PatternTranslator
 from textfsmgen.exceptions import RuntimeException
 from textfsmgen.exceptions import raise_runtime_error
 
-from textfsmgen.engine.common import get_line_position_by
-from textfsmgen.engine.common import get_fixed_line_snippet
+from textfsmgen.engine.common import (
+get_line_position_by,
+get_fixed_line_snippet,
+sanitize_identifier
+)
 
 
 class TabularTranslator(RuntimeException):
@@ -545,12 +548,12 @@ class VarColumnTabularTranslator(RuntimeException):
             if not ref_row:
                 return False, None
 
-        headers = self.normalize_headers()
+        # headers = self.normalize_headers()
         table = ParsedTable(
             *self.lines,
             reference_row=ref_row,
             column_divider=self.column_divider,
-            headers=headers,
+            headers=self.headers,
             raw_header_rows=self.raw_header_rows,
             is_start_with_divider=self._is_start_with_divider,
             is_end_with_divider=self._is_end_with_divider,
@@ -947,16 +950,12 @@ class ParsedTable(RuntimeException):
         """Build and update column headers."""
         if self.has_header_row:
             if not self.headers:
-                replacement = "_"
-                noise_pattern = r'[0-9 \x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+'
 
                 for index, hdr_col in enumerate(self.header_columns):
                     # extract column name
-                    raw_col_name = replacement.join([cell.text for cell in hdr_col.cells])
+                    raw_col_name = "_".join([cell.text for cell in hdr_col.cells])
 
-                    # normalize: collapse noise -> strip -> lowercase
-                    col_name = re.sub(noise_pattern, replacement, raw_col_name)
-                    col_name = col_name.strip(replacement).lower() or f'col{index}'
+                    col_name = sanitize_identifier(raw_col_name, fallback=f"col{index}")
 
                     # ensure uniqueness
                     if col_name in self.headers:
@@ -964,11 +963,26 @@ class ParsedTable(RuntimeException):
 
                     self.headers.append(col_name)
                     self.columns[index].name = col_name
+            else:
+                col_names = []
+                for index, hdr in enumerate(self.headers):
+                    col_name = sanitize_identifier(hdr, fallback=f"col{index}")
+
+                    if col_name in col_names:
+                        col_name = f"{col_name}{index}"
+
+                    self.columns[index].name = col_name
+                    col_names.append(col_name)
         else:
             # Use provided headers when no header rows exist
             if self.headers and len(self.headers) == self.column_count:
-                for index, col_name in enumerate(self.headers):
+                col_names = []
+                for index, hdr in enumerate(self.headers):
+                    col_name = sanitize_identifier(hdr, fallback=f"col{index}")
+                    if col_name in col_names:
+                        col_name = f"{col_name}{index}"
                     self.columns[index].name = col_name
+                    col_names.append(col_name)
 
     # -------------------------------
     # Processing pipeline
