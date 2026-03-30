@@ -8,6 +8,8 @@ Common grammar pattern utilities for the TextFSM Generator framework.
 import re
 from typing import Optional
 
+import yaml
+
 from textfsmgen.core.patterns import TextPattern
 from textfsmgen.libs import PATTERN
 from textfsmgen.libs import number
@@ -134,3 +136,49 @@ def sanitize_identifier(value: str, fallback: str = "col", lower: bool = True) -
     cleaned = re.sub(r"^\d+", "_", cleaned)
 
     return cleaned.lower() if lower else cleaned
+
+
+def apply_replacements(data: str, rules=None) -> str:
+    """
+    Apply string replacement rules to multi-line text. Rules may be provided as:
+    - YAML string containing a list of [old, new] pairs or a dict of {key: {old, new}}
+    - A list/tuple of [old, new] pairs
+    - A dict whose values are {old, new} mappings
+    """
+    if not data or not rules:
+        return data
+
+    # Normalize rules: YAML string -> Python object
+    if isinstance(rules, str):
+        parsed = yaml.safe_load(rules)
+        if not parsed:
+            return data
+        if not isinstance(parsed, (list, tuple)):
+            raise ValueError("YAML must define a list of pairs or a dict of {old,new} mappings.")
+        rules = parsed
+
+    # Validate and normalize list/tuple of pairs
+    if isinstance(rules[0], (list, tuple)):
+        if not all(isinstance(pair, (list, tuple)) and len(pair) == 2 for pair in rules):
+            raise ValueError("Expected a list/tuple of [old, new] pairs.")
+        pairs = [(old, new) for old, new in rules]
+
+    # Validate and normalize dict of {key: {old,new}}
+    elif isinstance(rules[0], dict):
+        if not all(isinstance(v, dict) and "curr" in v and "new" in v for v in rules):
+            raise ValueError("Expected element of the list form {'curr': ..., 'new': ...}.")
+        pairs = [(v["curr"], v["new"]) for v in rules]
+
+    else:
+        raise ValueError("Rules must be a YAML string, list/tuple of pairs.")
+
+    # Apply replacements line-by-line
+    output_lines = []
+    for line in data.splitlines():
+        for old, new in pairs:
+            if old in line:
+                line = line.replace(old, new)
+        if line.strip():
+            output_lines.append(line)
+
+    return "\n".join(output_lines)

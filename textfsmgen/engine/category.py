@@ -23,7 +23,8 @@ from textfsmgen.exceptions import RuntimeException
 from textfsmgen.engine.common import (
 get_line_position_by,
 get_fixed_line_snippet,
-sanitize_identifier
+sanitize_identifier,
+apply_replacements
 )
 
 
@@ -475,6 +476,7 @@ class CategoryLinesTranslator(RuntimeException):
         separator: str = ":",
         starting_from: Optional[str | int | None] = None,
         ending_at: Optional[str | int | None] = None,
+        replacing_rules: Optional[str | list | tuple | dict | None] = None,
     ):
         # Normalized input
         self.lines = text.get_list_of_lines(*lines)
@@ -490,6 +492,9 @@ class CategoryLinesTranslator(RuntimeException):
         self.ending_at = ending_at
         self.start_index: Optional[int | None] = None
         self.end_index: Optional[int | None] = None
+
+        # replacing rules
+        self.replacing_rules = replacing_rules
 
         # Parsed nodes
         self._lst: list = []
@@ -568,5 +573,7 @@ class CategoryLinesTranslator(RuntimeException):
         if self.end_index is not None:
             line_snippet = get_fixed_line_snippet(self.lines, index=self.end_index)
             tmpl_snippet = f"{tmpl_snippet}\n{line_snippet} -> EOF"
+
+        tmpl_snippet = apply_replacements(tmpl_snippet, rules=self.replacing_rules)
 
         return tmpl_snippet

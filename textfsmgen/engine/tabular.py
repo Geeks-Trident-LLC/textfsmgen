@@ -27,7 +27,8 @@ from textfsmgen.exceptions import raise_runtime_error
 from textfsmgen.engine.common import (
 get_line_position_by,
 get_fixed_line_snippet,
-sanitize_identifier
+sanitize_identifier,
+apply_replacements
 )
 
 
@@ -39,9 +40,11 @@ class TabularTranslator(RuntimeException):
     def __init__(
         self, *lines, column_divider='', column_count=0, column_widths=None,
         headers=None, header_rows=None, custom_header_text='',
-        starting_from=None, ending_at=None, has_header_row=True
+        starting_from=None, ending_at=None, has_header_row=True,
+        replacing_rules=None
     ):
         self.lines = text.get_list_of_lines(*lines)
+        self.replacing_rules = replacing_rules
         self.kwargs = dict(
             column_divider=column_divider,
             column_count=column_count,
@@ -154,6 +157,8 @@ class TabularTranslator(RuntimeException):
                 if re.search(LinePattern(line_snippet), last_line):
                     tmpl_snippet = text.join_string(*lines[:-1], separator="\n")
                 tmpl_snippet = f"{tmpl_snippet}\n{line_snippet} -> EOF"
+
+        tmpl_snippet = apply_replacements(tmpl_snippet, rules=self.replacing_rules)
 
         return tmpl_snippet
 
