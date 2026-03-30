@@ -176,7 +176,7 @@ def load_test_data_file(app):
 
 def save(app):
     """Save content from the active input or output textarea based on its type."""
-    activate_user_data_mode(app)
+    activate_user_data_mode(app, use_test_data=False)
 
     widget_name = str(app.prev_widget)
     saving_input  = widget_name.endswith(".input_textarea")
@@ -281,19 +281,61 @@ def clear(app):
 
 
 def copy(app):
-    """
-    Handle the 'Copy' button action for text widgets.
-    """
+    """Handle the 'Copy' button action for text widgets."""
+
+    # Helper: get selected text or full widget text
+    def get_content(widget):
+        if widget.tag_ranges(ui.tk.SEL):
+            return widget.selection_get()
+        return extract_text(widget)
+
 
     prev_widget_name = str(app.prev_widget)
     is_input_area = prev_widget_name.endswith('.input_textarea')
+    is_output_area = prev_widget_name.endswith('.output_textarea')
     if is_input_area:
-        if app.prev_widget.tag_ranges(ui.tk.SEL):
-            content = app.prev_widget.selection_get()
-        else:
-            content = extract_text(app.textarea.input)
+        content = get_content(app.textarea.input)
+        if not content.strip():
+            show_message_dialog(
+                title="Copy Options",
+                warning="There is no text in the input window to copy.",
+            )
+            return
+
+    elif is_output_area:
+        content = get_content(app.textarea.output)
+        if not content.strip():
+            show_message_dialog(
+                title="Copy Options",
+                warning="There is no text in the output window to copy.",
+            )
+            return
     else:
-        content = extract_text(app.textarea.output)
+        in_text = extract_text(app.textarea.input)
+        out_text = extract_text(app.textarea.output)
+        if in_text.strip() and out_text.strip():
+            response = show_message_dialog(
+                title="Copy Options",
+                yesnocancel=(
+                    "Choose what you want to copy:\n"
+                    "  Y - Copy text from the input window text.\n"
+                    "  N - Copy text from the output window text.\n"
+                    "  C - Do not copy."
+                ),
+            )
+            if response is None:
+                return
+            content = in_text if response else out_text
+        elif in_text.strip():
+            content = in_text
+        elif out_text.strip():
+            content = out_text
+        else:
+            show_message_dialog(
+                title="Copy Options",
+                warning="There is no text available in either window to copy.",
+            )
+            return
 
     # Update UI and clipboard
     app.root.clipboard_clear()
@@ -694,12 +736,12 @@ def has_test_data(app, title="Missing Test Data", msg=""):
     return True
 
 
-def activate_user_data_mode(app):
+def activate_user_data_mode(app, use_test_data=True):
     """Switch to 'User Data' mode and sync snapshot/user data state."""
     current_label = app.settings.test_data_btn_name.get()
     translators_on = app.category_translator_enabled() or app.tabular_translator_enabled()
     if current_label == "Test Data":
-        if translators_on and app.snapshot.test_data:
+        if translators_on and app.snapshot.test_data and use_test_data:
             set_text(app.textarea.input, app.snapshot.test_data)
         return
 
@@ -709,7 +751,7 @@ def activate_user_data_mode(app):
     set_text(app.textarea.input, app.snapshot.user_data)
     app.settings.test_data_btn_name.set("Test Data")
 
-    if translators_on and app.snapshot.test_data:
+    if translators_on and app.snapshot.test_data and use_test_data:
         set_text(app.textarea.input, app.snapshot.test_data)
 
 
