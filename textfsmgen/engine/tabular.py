@@ -338,30 +338,6 @@ class VarColumnTabularTranslator(RuntimeException):
             ),
         )
 
-    def normalize_headers(self):
-        """Convert parsed headers into valid, unique variable identifiers."""
-
-        if not self.headers:
-            return []
-
-        pattern = f"{PATTERN.SPACE_PUNCT}+"
-        variables = []
-
-        for index, hdr in enumerate(self.headers):
-            cleaned = re.sub(pattern, "_", hdr).strip("_").lower()
-
-            if not cleaned:
-                variables.append(f"col{index}")
-                continue
-
-            if cleaned in variables:
-                variables.append(f"{cleaned}{index}")
-                continue
-
-            variables.append(cleaned)
-
-        return variables
-
     def default_variables(self):
         """Generate default variable names: col0, col1, ..."""
         return [f"col{i}" for i in range(self.column_count)]
@@ -553,7 +529,6 @@ class VarColumnTabularTranslator(RuntimeException):
             if not ref_row:
                 return False, None
 
-        # headers = self.normalize_headers()
         table = ParsedTable(
             *self.lines,
             reference_row=ref_row,
