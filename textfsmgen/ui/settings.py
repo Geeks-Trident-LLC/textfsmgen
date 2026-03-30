@@ -50,7 +50,7 @@ def create_window(parent: Optional[ui.Tk | ui.Toplevel]) -> ui.Toplevel:
     ui.set_window_icon(window)
 
     width = 830 if ui.is_macos else 784 if ui.is_linux else 680
-    height = 538 if ui.is_macos else 522 if ui.is_linux else 514
+    height = 588 if ui.is_macos else 572 if ui.is_linux else 564
 
     center_window(parent, window, width, height)
     return window
@@ -112,6 +112,10 @@ def add_category_translator_arguments(app, parent: ui.Frame) -> None:
     entry = ui.TextBox(group, width=94, textvariable=app.settings.category_arg_ending_at)
     entry.grid(row=2, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
 
+    lbl = ui.Label(group, text="Replacing")
+    lbl.grid(row=3, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
+    entry = ui.TextBox(group, width=94, textvariable=app.settings.category_arg_replacing_rules)
+    entry.grid(row=3, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
 
 def add_tabular_translator_arguments(app, parent: ui.Frame) -> None:
     group = ui.LabelFrame(parent, height=120, width=780, text="Tabular Translator Arguments")
@@ -170,6 +174,11 @@ def add_tabular_translator_arguments(app, parent: ui.Frame) -> None:
     lbl.grid(row=5, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
     entry = ui.TextBox(group, width=94, textvariable=app.settings.tabular_arg_ending_at)
     entry.grid(row=5, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
+
+    lbl = ui.Label(group, text="Replacing")
+    lbl.grid(row=6, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
+    entry = ui.TextBox(group, width=94, textvariable=app.settings.tabular_arg_replacing_rules)
+    entry.grid(row=6, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
 
 
 def add_running_test_options(app, parent: ui.Frame) -> None:
@@ -256,6 +265,7 @@ def reset_default_setting(app):
     app.settings.category_arg_count.set(1)
     app.settings.category_arg_starting_from.set("")
     app.settings.category_arg_ending_at.set("")
+    app.settings.category_arg_replacing_rules.set("")
 
     # Tabular Translator Arguments
     app.settings.use_tabular_translator_flag.set(False),
@@ -268,6 +278,7 @@ def reset_default_setting(app):
     app.settings.tabular_arg_custom_header.set(""),
     app.settings.tabular_arg_starting_from.set(""),
     app.settings.tabular_arg_ending_at.set(""),
+    app.settings.tabular_arg_replacing_rules.set(""),
 
     # Test Execution
     app.settings.python_interpreter.set("")

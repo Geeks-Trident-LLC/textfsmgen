@@ -574,6 +574,7 @@ class CategoryTemplateBuilder:
         separator=":",
         starting_from=None,
         ending_at=None,
+        replacing_rules=None,
         author='',
         email='',
         company='',
@@ -587,6 +588,7 @@ class CategoryTemplateBuilder:
             separator=separator,
             starting_from=starting_from,
             ending_at=ending_at,
+            replacing_rules=replacing_rules,
         )
 
         self.template_builder_args = dict(
@@ -665,6 +667,7 @@ class TabularTemplateBuilder:
         starting_from=None,
         ending_at=None,
         has_header_row=True,
+        replacing_rules=None,
         author='',
         email='',
         company='',
@@ -683,6 +686,7 @@ class TabularTemplateBuilder:
             has_header_row=has_header_row,
             starting_from=starting_from,
             ending_at=ending_at,
+            replacing_rules=replacing_rules,
         )
 
         self.template_builder_args = dict(

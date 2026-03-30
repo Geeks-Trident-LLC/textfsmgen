@@ -98,6 +98,7 @@ class Application:
             category_arg_separator=tk.StringVar(),
             category_arg_starting_from=tk.StringVar(),
             category_arg_ending_at=tk.StringVar(),
+            category_arg_replacing_rules=tk.StringVar(),
 
             # Tabular Translator arguments
             use_tabular_translator_flag=tk.BooleanVar(),
@@ -110,6 +111,7 @@ class Application:
             tabular_arg_custom_header=tk.StringVar(),
             tabular_arg_starting_from=tk.StringVar(),
             tabular_arg_ending_at=tk.StringVar(),
+            tabular_arg_replacing_rules=tk.StringVar(),
 
             # Test execution settings
             always_ask_flag=tk.BooleanVar(),
@@ -182,6 +184,7 @@ class Application:
             separator=self.settings.category_arg_separator.get(),
             starting_from=starting_from if starting_from.strip() else None,
             ending_at=ending_at if ending_at.strip() else None,
+            replacing_rules=self.settings.category_arg_replacing_rules.get(),
             # ----------
             author=self.settings.author.get(),
             email=self.settings.email.get(),
@@ -214,6 +217,7 @@ class Application:
             starting_from=starting_from if starting_from.strip() else None,
             ending_at=ending_at if ending_at.strip() else None,
             has_header_row=self.settings.tabular_arg_has_header_row_flag.get(),
+            replacing_rules=self.settings.tabular_arg_replacing_rules.get(),
             # ----------
             author=self.settings.author.get(),
             email=self.settings.email.get(),

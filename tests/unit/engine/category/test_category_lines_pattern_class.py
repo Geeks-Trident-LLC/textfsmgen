@@ -166,9 +166,7 @@ class DataForToTemplateSnippetTests:
     @normalize_output
     def get_other_expected_snippet(self):
         other_expected_snippet = """
-            blab blab 1 - +++ ***
             fruits: mixed_word_group(var_fruits)
-            blab blab 2 - (?P<)
             meat: letters(var_meat)
             drinks: letters(var_drinks)
         """
@@ -204,9 +202,7 @@ class DataForToTemplateSnippetTests:
             Value drinks ([a-zA-Z]+)
 
             Start
-              ^blab blab 1 - \+{2,} \*{2,}
               ^fruits: ${fruits}
-              ^blab blab 2 - \(\?P<\)
               ^meat: ${meat}
               ^drinks: ${drinks}
         """

@@ -36,6 +36,11 @@ class VarRegistry:
 
     def __init__(self):
         self._registry = dict()
+        self._duplicates = []
+
+    def is_duplicate(self, name: str) -> bool:
+        """Return True if the given variable name has been generated before."""
+        return name in self._duplicates
 
     def assign(self, var_txt, value):
         """
@@ -44,7 +49,6 @@ class VarRegistry:
         Otherwise, append a numeric suffix.
         """
 
-        # var_name = re.sub(f"{PATTERN.SPACE_PUNCT}+", '_', var_txt.lower()).strip('_')
         var_name = sanitize_identifier(var_txt)
 
         if re.match(r"[0-9]", var_txt):
@@ -64,6 +68,7 @@ class VarRegistry:
 
         # Otherwise, create a new unique name
         new_var_name = f"{var_name}_{len(exists)}"
+        self._duplicates.append(new_var_name)
         self._registry[new_var_name] = value
         return new_var_name
 
@@ -159,6 +164,7 @@ class RightDataNode(LineData):
         super().__init__(data)
         # self.var_name = re.sub(f"{PATTERN.SPACE_PUNCT}+", '_', var_txt.lower()).strip('_')
         self.var_name = VAR_REGISTRY.assign(var_txt, data)
+        self.is_duplicate_var = VAR_REGISTRY.is_duplicate(self.var_name)
 
     @property
     def is_empty(self) -> bool: return self.data == ""
@@ -200,6 +206,7 @@ class CategoryLineTranslator(LineData):
 
         # Internal Node List
         self._lst = []
+        self.duplicated_var_name = ""
 
         self.process()
 
@@ -450,7 +457,11 @@ class CategoryLineTranslator(LineData):
 
         # Append right data node
         val, remainder = self.extract_next_value()
-        self._lst.append(RightDataNode(val, left_text))
+        right_node = RightDataNode(val, left_text)
+        self._lst.append(right_node)
+
+        if right_node.is_duplicate_var:
+            self.duplicated_var_name = right_node.var_name
 
         # Recursively parse remaining data if present
         if remainder:
@@ -554,15 +565,20 @@ class CategoryLinesTranslator(RuntimeException):
         return str.join(f"({PATTERN_CRNL})", result)
 
     def to_template_snippet(self) -> str:
-        """
-        Generate a template snippet string from parsed lines.
-        """
+        """Generate a template snippet string from parsed lines."""
         self.validate_category_format()
 
-        result: list[str] = [
-            item.to_template_snippet() if isinstance(item, CategoryLineTranslator) else item
-            for item in self._lst
-        ]
+        result: list[str] = []
+
+        for node in self._lst:
+            if not isinstance(node, CategoryLineTranslator):
+                continue
+
+            if node.duplicated_var_name and result:
+                dup_var_name = node.duplicated_var_name
+                result[-1] = f"{result[-1]} -> {dup_var_name}\n{dup_var_name}"
+
+            result.append(node.to_template_snippet())
 
         tmpl_snippet = text.join_string(*result, separator="\n")
 

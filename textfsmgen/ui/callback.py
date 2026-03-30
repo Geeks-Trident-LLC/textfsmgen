@@ -697,7 +697,10 @@ def has_test_data(app, title="Missing Test Data", msg=""):
 def activate_user_data_mode(app):
     """Switch to 'User Data' mode and sync snapshot/user data state."""
     current_label = app.settings.test_data_btn_name.get()
+    translators_on = app.category_translator_enabled() or app.tabular_translator_enabled()
     if current_label == "Test Data":
+        if translators_on and app.snapshot.test_data:
+            set_text(app.textarea.input, app.snapshot.test_data)
         return
 
     user_input = extract_text(app.textarea.input)
@@ -705,6 +708,9 @@ def activate_user_data_mode(app):
 
     set_text(app.textarea.input, app.snapshot.user_data)
     app.settings.test_data_btn_name.set("Test Data")
+
+    if translators_on and app.snapshot.test_data:
+        set_text(app.textarea.input, app.snapshot.test_data)
 
 
 def notify_test_execution(app):

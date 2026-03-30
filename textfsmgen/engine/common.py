@@ -169,6 +169,12 @@ def apply_replacements(data: str, rules=None) -> str:
             raise ValueError("Expected element of the list form {'curr': ..., 'new': ...}.")
         pairs = [(v["curr"], v["new"]) for v in rules]
 
+    elif isinstance(rules, (list, tuple)) and len(rules) == 2:
+        pairs = [rules.copy()]
+
+    elif isinstance(rules, dict) and "curr" in rules and "new" in rules:
+        pairs = [(rules.get("curr"), rules.get("new"))]
+
     else:
         raise ValueError("Rules must be a YAML string, list/tuple of pairs.")
 
