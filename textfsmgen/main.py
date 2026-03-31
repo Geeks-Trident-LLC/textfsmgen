@@ -189,7 +189,9 @@ class Cli:
             return
 
         allowed = {
-            "count", "separator", "starting_from", "ending_at",
+            "count", "separator",
+            "starting_from", "ending_at",
+            "replacing_rules"
         }
         if key not in allowed or not value or not str(value).strip():
             return
@@ -210,7 +212,7 @@ class Cli:
             "column_widths", "headers", "header_rows",
             "custom_header_text",
             "starting_from", "ending_at",
-            "has_header_row"
+            "has_header_row", "replacing_rules"
         }
 
         if key == "column_divider":
@@ -232,8 +234,10 @@ class Cli:
 
     def _update_verify_arg(self, key: str, value) -> None:
         """Update a verification keyword argument if it is supported."""
-        allowed = {"expected_rows_count", "expected_result", "tabular", "debug",
-                   "ignore_space"}
+        allowed = {
+            "expected_rows_count", "expected_result",
+            "tabular", "debug", "ignore_space"
+        }
         if key not in allowed:
             return
 
@@ -264,7 +268,10 @@ class Cli:
 
     def _update_other_option(self, key, value):
         """Update miscellaneous template options such as run mode, platform, and file paths."""
-        allowed = {"run_test", "platform", "save_template", "save_test_script"}
+        allowed = {
+            "run_test", "platform",
+            "save_template", "save_test_script"
+        }
         if key not in allowed:
             return
 
