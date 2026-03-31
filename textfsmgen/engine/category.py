@@ -36,11 +36,48 @@ class VarRegistry:
 
     def __init__(self):
         self._registry = dict()
-        self._duplicates = []
+        self._duplicates = dict()
 
-    def is_duplicate(self, name: str) -> bool:
-        """Return True if the given variable name has been generated before."""
-        return name in self._duplicates
+    def get_duplicate_variants(self, name: str) -> list[str]:
+        """Return all duplicate-name variants associated with the given base name."""
+        if name not in self._duplicates:
+            return []
+
+        variants = list(self._duplicates[name].keys())
+        if name in variants:
+            variants.remove(name)
+        return variants
+
+    def has_equivalent_duplicate(self, name: str) -> bool:
+        """Return True if the given name has a duplicate with an equivalent translator."""
+        # return name in self._duplicates
+
+        if name not in self._duplicates:
+            return False
+
+        group = self._duplicates[name].copy()
+        base_value = group.pop(name)
+
+        func = PatternTranslator.do_factory_create
+
+        translator_a = func(base_value.strip(), multiple=True)
+
+        for other_value in group.values():
+            translator_b = func(other_value.strip(), multiple=True)
+            if type(translator_a) is type(translator_b):
+                return True
+
+        return False
+
+    def record_duplicate_group(self, base_name: str, value: str, existing_names: list[str]) -> None:
+        """Store a duplicate-name group, including the base name and any existing variants."""
+        group = {base_name: value}
+        for name in existing_names:
+            existing_value = self._registry.get(name)
+            if existing_value:
+                group[name] = existing_value
+
+        self._duplicates[base_name] = group
 
     def assign(self, var_txt, value):
         """
@@ -68,13 +105,14 @@ class VarRegistry:
 
         # Otherwise, create a new unique name
         new_var_name = f"{var_name}_{len(exists)}"
-        self._duplicates.append(new_var_name)
+        self.record_duplicate_group(new_var_name, value, exists)
         self._registry[new_var_name] = value
         return new_var_name
 
     def reset(self):
         """Clear all stored variable mappings."""
         self._registry.clear()
+        self._duplicates.clear()
 
 
 VAR_REGISTRY = VarRegistry()
@@ -162,9 +200,8 @@ class RightDataNode(LineData):
     def __init__(self, data: str, var_txt: str):
         """Initialize a RightDataNode with raw data and variable text."""
         super().__init__(data)
-        # self.var_name = re.sub(f"{PATTERN.SPACE_PUNCT}+", '_', var_txt.lower()).strip('_')
         self.var_name = VAR_REGISTRY.assign(var_txt, data)
-        self.is_duplicate_var = VAR_REGISTRY.is_duplicate(self.var_name)
+        self.is_duplicate_var = VAR_REGISTRY.has_equivalent_duplicate(self.var_name)
 
     @property
     def is_empty(self) -> bool: return self.data == ""
@@ -206,7 +243,6 @@ class CategoryLineTranslator(LineData):
 
         # Internal Node List
         self._lst = []
-        self.duplicated_var_name = ""
 
         self.process()
 
@@ -215,11 +251,42 @@ class CategoryLineTranslator(LineData):
     def __len__(self) -> int: return len(self._lst)
 
     @property
-    def parsed(self) -> bool:
-        """
-        Indicate whether parsing produced any category pattern nodes.
-        """
-        return bool(self)
+    def parsed(self) -> bool: return bool(self)
+
+    @property
+    def actual_count(self):
+        if not self:
+            return 0
+
+        count = 0
+        for item in self._lst:
+            if isinstance(item, RightDataNode):
+                count += 1
+            elif isinstance(item, type(self)):
+                count += item.actual_count
+        return count
+
+    @property
+    def duplicated_var_name(self):
+        if not self:
+            return ""
+
+        dup_var = ""
+        for item in self._lst:
+            if isinstance(item, RightDataNode) and item.is_duplicate_var:
+                dup_var = item.var_name
+            elif isinstance(item, type(self)):
+                dup_var = item.duplicated_var_name
+        return dup_var
+
+    def contains_var_name(self, target: str) -> bool:
+        """Return True if this node or any child node contains the given variable name."""
+        for node in self._lst:
+            if isinstance(node, RightDataNode) and node.var_name == target:
+                return True
+            if isinstance(node, type(self)) and node.contains_var_name(target):
+                return True
+        return False
 
     def to_regex(self) -> str:
         """
@@ -460,9 +527,6 @@ class CategoryLineTranslator(LineData):
         right_node = RightDataNode(val, left_text)
         self._lst.append(right_node)
 
-        if right_node.is_duplicate_var:
-            self.duplicated_var_name = right_node.var_name
-
         # Recursively parse remaining data if present
         if remainder:
             try:
@@ -570,13 +634,20 @@ class CategoryLinesTranslator(RuntimeException):
 
         result: list[str] = []
 
-        for node in self._lst:
+        for index, node in enumerate(self._lst):
             if not isinstance(node, CategoryLineTranslator):
                 continue
-
             if node.duplicated_var_name and result:
                 dup_var_name = node.duplicated_var_name
-                result[-1] = f"{result[-1]} -> {dup_var_name}\n{dup_var_name}"
+                variants = VAR_REGISTRY.get_duplicate_variants(dup_var_name)
+                is_duplicated = False if variants else True
+                for variant in variants:
+                    for other in self._lst[:index]:
+                        if type(other) is type(node) and other.contains_var_name(variant):
+                            is_duplicated = True
+                            break
+                if is_duplicated:
+                    result[-1] = f"{result[-1]} -> {dup_var_name}\n{dup_var_name}"
 
             result.append(node.to_template_snippet())
 
