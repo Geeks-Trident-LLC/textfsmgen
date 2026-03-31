@@ -4,9 +4,9 @@ Unit tests for the `textfsmgen.engine.category.TabularTranslator` class.
 Usage
 -----
 Run pytest in the project root to execute these tests:
-    $ pytest tests/unit/engine/tabular/test_replacing_rules_para.py
+    $ pytest tests/unit/engine/tabular/test_replacing_rules_param.py
     or
-    $ python -m pytest tests/unit/engine/tabular/test_replacing_rules_para.py
+    $ python -m pytest tests/unit/engine/tabular/test_replacing_rules_param.py
 """
 from textfsmgen.engine.tabular import TabularTranslator
 
