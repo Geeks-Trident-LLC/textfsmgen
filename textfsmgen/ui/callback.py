@@ -241,41 +241,48 @@ def clear(app):
     Handle the 'Clear' button action for text widgets.
     """
 
+    focus = app.root.focus_get()
+
     prev_widget_name = str(app.prev_widget)
     is_input_area = prev_widget_name.endswith('.input_textarea')
     # --- Input text area or other ---
-    if is_input_area and app.prev_widget.tag_ranges(ui.tk.SEL):
-        app.prev_widget.delete(ui.tk.SEL_FIRST, ui.tk.SEL_LAST)
-    else:
-        # Clear input and result areas
-        clear_text(app.textarea.input)
-        clear_text(app.textarea.output)
+    if (
+        (is_input_area and app.textarea.input.tag_ranges(ui.tk.SEL)) or
+        (focus is app.textarea.input and focus.tag_ranges(ui.tk.SEL))
+    ):
+        app.textarea.input.delete(ui.tk.SEL_FIRST, ui.tk.SEL_LAST)
+        app.textarea.input.focus()
+        return
 
-        # enable buttons
-        enable_buttons(app, open=True, paste=True, clear=True, build=True)
+    # Clear input and result areas
+    clear_text(app.textarea.input)
+    clear_text(app.textarea.output)
 
-        # Disable related buttons
-        disable_buttons(
-            app, test_data=True, save=True, copy=True,
-            result=True, python=True, unittest=True,
-            pytest=True, execute=True
-        )
+    # enable buttons
+    enable_buttons(app, open=True, paste=True, clear=True, build=True)
 
-        # Reset input area state
-        app.textarea.input.config(state="normal")
+    # Disable related buttons
+    disable_buttons(
+        app, test_data=True, save=True, copy=True,
+        result=True, python=True, unittest=True,
+        pytest=True, execute=True
+    )
 
-        # Reset snapshot attributes
-        app.snapshot.update(
-            user_data="",
-            test_data="",
-            result="",
-            template="",
-            is_built=False,
-        )
+    # Reset input area state
+    app.textarea.input.config(state="normal")
 
-        # Reset UI variables
-        app.settings.test_data_btn_name.set('Test Data')
-        # app.root.clipboard_clear()
+    # Reset snapshot attributes
+    app.snapshot.update(
+        user_data="",
+        test_data="",
+        result="",
+        template="",
+        is_built=False,
+    )
+
+    # Reset UI variables
+    app.settings.test_data_btn_name.set('Test Data')
+    # app.root.clipboard_clear()
 
     app.textarea.input.focus()
 
@@ -289,11 +296,12 @@ def copy(app):
             return widget.selection_get()
         return extract_text(widget)
 
+    focus = app.root.focus_get()
 
     prev_widget_name = str(app.prev_widget)
     is_input_area = prev_widget_name.endswith('.input_textarea')
     is_output_area = prev_widget_name.endswith('.output_textarea')
-    if is_input_area:
+    if is_input_area or focus is app.textarea.input:
         content = get_content(app.textarea.input)
         if not content.strip():
             show_message_dialog(
@@ -302,7 +310,7 @@ def copy(app):
             )
             return
 
-    elif is_output_area:
+    elif is_output_area or focus is app.textarea.output:
         content = get_content(app.textarea.output)
         if not content.strip():
             show_message_dialog(
@@ -377,9 +385,17 @@ def paste(app) -> None:
         if response is None:
             return
 
-        app.snapshot.update(user_data=data, test_data=data)
+        # app.snapshot.update(user_data=data, test_data=data)
         if response:
+            activate_user_data_mode(app)
             app.buttons.get("clear").invoke()
+            app.snapshot.update(user_data=data, test_data=data)
+        else:
+            btn_name = app.settings.test_data_btn_name.get()
+            if btn_name == "Test Data":
+                app.snapshot.update(test_data=data)
+            else:
+                app.snapshot.update(user_data=data)
 
         set_text(app.textarea.input, data)
         enable_buttons(app, test_data=True, save=True, copy=True)
