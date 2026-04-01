@@ -20,11 +20,36 @@ class DotObject(dict):
     def __getattr__(self, name):
         if name in self._dict_members:
             return super().__getattribute__(name)
-        if name in self and self._valid_key.fullmatch(name):
+
+        if not self._valid_key.fullmatch(name):
+            raise AttributeError(
+                f"Invalid attribute name {name!r}. Expected attribute "
+                f"matching pattern {self._valid_key.pattern!r}."
+            )
+
+        # Direct match
+        if name in self:
             return self._wrap(self[name])
+
+        # Allow trailing underscore for dict-member shadowing
+        if name[:-1] in self._dict_members and name.endswith("_") and name[:-1] in self:
+            return self._wrap(self[name[:-1]])
+
+        # Normalization attempts
+        space_key = name.replace("_", " ").strip()
+        if space_key in self:
+            return self._wrap(self[space_key])
+
+        dot_key = name.replace("_", ".").strip(".")
+        if dot_key in self:
+            return self._wrap(self[dot_key])
+
+        dash_key = name.replace("_", "-").strip("-")
+        if dash_key in self:
+            return self._wrap(self[dash_key])
+
         raise AttributeError(
-            f"Invalid attribute name {name!r}. Expected attribute "
-            f"matching pattern {self._valid_key.pattern!r}."
+            f"Invalid attribute name {name!r}."
         )
 
     def _wrap(self, value):
@@ -55,20 +80,14 @@ class StatusString(str):
         txt.status = status_
         return txt
 
-    def __bool__(self):
-        return self.status
+    def __bool__(self): return self.status
 
-    def __len__(self):
-        return int(self.status)
+    def __len__(self): return int(self.status)
 
-    def is_good(self):
-        return self.status == True
+    def is_good(self): return self.status == True
 
-    def is_bad(self):
-        return self.status == False
+    def is_bad(self): return self.status == False
 
-    def is_success(self):
-        return self.status == True
+    def is_success(self): return self.status == True
 
-    def is_failure(self):
-        return self.status == False
+    def is_failure(self): return self.status == False
