@@ -527,7 +527,11 @@ class VarColumnTabularTranslator(RuntimeException):
         if not ref_row:
             ref_row = self.find_reference_row_by_headers()
             if not ref_row:
-                return False, None
+                ref_row = self.find_reference_row_by_multi_space()
+                if not ref_row:
+                    ref_row = self.find_reference_row_by_single_space()
+                    if not ref_row:
+                        return False, None
 
         table = ParsedTable(
             *self.lines,
