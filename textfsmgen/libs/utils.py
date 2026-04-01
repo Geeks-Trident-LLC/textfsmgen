@@ -109,14 +109,14 @@ class TextMatcher:
 
 class Tabular:
     """A utility class for constructing and displaying tabular data."""
-    def __init__(self, data, columns=None, justify='left', missing='not_found'):
+    def __init__(self, data, columns=None, missing='not_found'):
         self.result = ''
         if isinstance(data, dict):
             self.data = [data]
         else:
             self.data = data
         self.columns = columns
-        self.justify = str(justify).lower()
+        self.justify = "left"
         self.missing = missing
         self.is_ready = True
         self.is_tabular = False
@@ -231,14 +231,14 @@ class Tabular:
             print(tabular_data)
 
 
-def get_data_as_tabular(data, columns=None, justify='left', missing='not_found'):
+def get_data_as_tabular(data, columns=None, missing='not_found'):
     """Convert structured data into a tabular string representation."""
-    node = Tabular(data, columns=columns, justify=justify, missing=missing)
+    node = Tabular(data, columns=columns, missing=missing)
     result = node.get()
     return result
 
 
-def print_data_as_tabular(data, columns=None, justify='left', missing='not_found'):
+def print_data_as_tabular(data, columns=None, missing='not_found'):
     """Print structured data in a tabular format."""
-    node = Tabular(data, columns=columns, justify=justify, missing=missing)
+    node = Tabular(data, columns=columns, missing=missing)
     node.print()
