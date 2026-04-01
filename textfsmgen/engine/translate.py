@@ -307,8 +307,8 @@ class PatternTranslator(RuntimeException):
 
             (NumberTranslator, NumberTranslator),
 
-            (LetterTranslator, LettersTranslator),
-            (LettersTranslator, LettersTranslator),
+            (LetterTranslator, WordTranslator),
+            (LettersTranslator, WordTranslator),
 
             (AlnumTranslator, WordTranslator),
             (WordTranslator, WordTranslator),

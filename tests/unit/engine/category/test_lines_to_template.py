@@ -34,8 +34,8 @@ def get_test_data():
 def get_expected_snippet():
     return """
         fruits: mixed_word_group(var_fruits)
-        meat: letters(var_meat)
-        drinks: letters(var_drinks)
+        meat: word(var_meat)
+        drinks: word(var_drinks)
     """
 
 
@@ -47,8 +47,8 @@ def get_expected_template():
         # Created date: YYYY-mm-dd
         ################################################################################
         Value fruits ([\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*(\s+[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)+)
-        Value meat ([a-zA-Z]+)
-        Value drinks ([a-zA-Z]+)
+        Value meat ([a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)
+        Value drinks ([a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)
 
         Start
           ^fruits: ${fruits}

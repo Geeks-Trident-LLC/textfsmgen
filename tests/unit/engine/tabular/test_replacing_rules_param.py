@@ -25,7 +25,7 @@ expected = (
 def test_yaml_list_of_pairs():
     """YAML string defining a list of [old, new] replacement pairs."""
     rules = """
-- - letters(var_month)  digits(var_date)  mixed_number(var_time)
+- - word(var_month)  digits(var_date)  mixed_number(var_time)
   - 3_mixed_word(var_datatime)
     """
     node = TabularTranslator(
@@ -42,7 +42,7 @@ def test_yaml_list_of_pairs():
 def test_yaml_dict_of_pairs():
     """YAML string defining a dict with {curr, new} replacement entries."""
     rules = """
-- curr: letters(var_month)  digits(var_date)  mixed_number(var_time)
+- curr: word(var_month)  digits(var_date)  mixed_number(var_time)
   new: 3_mixed_word(var_datatime)
     """
     node = TabularTranslator(
@@ -60,7 +60,7 @@ def test_list_of_pairs():
     """Python list of [old, new] replacement pairs."""
     rules = [
         [
-            "letters(var_month)  digits(var_date)  mixed_number(var_time)",
+            "word(var_month)  digits(var_date)  mixed_number(var_time)",
             "3_mixed_word(var_datatime)",
         ]
     ]
@@ -79,7 +79,7 @@ def test_list_of_dict_pairs():
     """Python list of dicts containing {'curr': old, 'new': new} mappings."""
     rules = [
         {
-            "curr": "letters(var_month)  digits(var_date)  mixed_number(var_time)",
+            "curr": "word(var_month)  digits(var_date)  mixed_number(var_time)",
             "new": "3_mixed_word(var_datatime)",
         }
     ]
