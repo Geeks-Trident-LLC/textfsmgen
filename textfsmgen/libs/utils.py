@@ -118,43 +118,13 @@ class Tabular:
         self.columns = columns
         self.justify = "left"
         self.missing = missing
-        self.is_ready = True
         self.is_tabular = False
         self.failure = ''
-        self.validate_list_of_dicts()
         self.process()
 
-    def validate_list_of_dicts(self):
-        """Validate that data is a non‑empty list of dicts with identical keys."""
-        if not isinstance(self.data, (list, tuple)):
-            self.is_ready = False
-            self.failure = "data MUST be a list."
-            return
+    def __bool__(self): return self.is_tabular
 
-        if not self.data:
-            self.is_ready = False
-            self.failure = "data MUST NOT be empty."
-            return
-
-        expected_keys = None
-        for item in self.data:
-            if not isinstance(item, dict):
-                self.is_ready = False
-                self.failure = "all elements MUST be dictionaries."
-                return
-
-            if not item:
-                self.is_ready = False
-                self.failure = "dictionary elements MUST NOT be empty."
-                return
-
-            keys = list(item.keys())
-            if expected_keys is None:
-                expected_keys = keys
-            elif keys != expected_keys:
-                self.is_ready = False
-                self.failure = "all dictionaries MUST have identical keys."
-                return
+    def __len__(self): return 1 if self.is_tabular else 0
 
     def compute_column_widths(self, columns):
         """Return max display width for each column based on data and defaults."""
@@ -197,7 +167,10 @@ class Tabular:
 
     def process(self):
         """Assemble the full tabular output using columns, widths, and formatted rows."""
-        if not self.is_ready:
+
+        ok, failure = validate_uniform_tabular_data(self.data)
+        if not ok:
+            self.failure = failure
             return
 
         try:
@@ -229,6 +202,27 @@ class Tabular:
             pprint(tabular_data)
         else:
             print(tabular_data)
+
+
+def validate_uniform_tabular_data(records):
+    """Validate that data is a non‑empty list of dicts with identical keys."""
+    error = "records MUST be a non-empty list of dicts with identical keys."
+    if not records or not isinstance(records, (list, tuple)):
+        return False, error
+
+    expected_keys = None
+
+    for record in records:
+        if not isinstance(record, dict):
+            return False, error
+        keys = record.keys()
+        if expected_keys is None:
+            expected_keys = keys
+
+        if keys != expected_keys:
+            return False, error
+
+    return True, ""
 
 
 def get_data_as_tabular(data, columns=None, missing='not_found'):
