@@ -17,6 +17,7 @@ from textfsmgen.libs import PATTERN
 from textfsmgen.libs import datatype
 
 from textfsmgen.exceptions import RuntimeException
+from textfsmgen.exceptions import raise_runtime_error
 
 
 class PatternTranslator(RuntimeException):
@@ -41,19 +42,14 @@ class PatternTranslator(RuntimeException):
         self._pattern = ""
         self.process()
 
-    def __len__(self):
-        """Determine whether the pattern is non-empty."""
-        chk = self._pattern != ""
-        return chk
+    def __bool__(self): return self._pattern != ""
 
-    def __call__(self, *args, **kwargs):
-        new_instance = self.__class__(*args, **kwargs)
-        return new_instance
+    def __len__(self): return 1 if self._pattern != "" else 0
+
+    def __call__(self, *args, **kwargs): return self.__class__(*args, **kwargs)
 
     @property
-    def translated(self):
-        chk = self._pattern != ""
-        return chk
+    def translated(self): return self._pattern != ""
 
     @property
     def actual_name(self):
@@ -103,59 +99,41 @@ class PatternTranslator(RuntimeException):
         is_matched = all(re.match(pat, data) for data in self.lst_of_all_data)
         return is_matched
 
-    def is_digit(self) -> bool:
-        return self.name == "digit"
+    def is_digit(self) -> bool: return self.name == "digit"
 
-    def is_digits(self) -> bool:
-        return self.name == "digits"
+    def is_digits(self) -> bool: return self.name == "digits"
 
-    def is_number(self) -> bool:
-        return self.name == "number"
+    def is_number(self) -> bool: return self.name == "number"
 
-    def is_mixed_number(self) -> bool:
-        return self.name == "mixed_number"
+    def is_mixed_number(self) -> bool: return self.name == "mixed_number"
 
-    def is_letter(self) -> bool:
-        return self.name == "letter"
+    def is_letter(self) -> bool: return self.name == "letter"
 
-    def is_letters(self) -> bool:
-        return self.name == "letters"
+    def is_letters(self) -> bool: return self.name == "letters"
 
-    def is_alnum(self) -> bool:
-        return self.name == "alnum"
+    def is_alnum(self) -> bool: return self.name == "alnum"
 
-    def is_punct(self) -> bool:
-        return self.name == "punct"
+    def is_punct(self) -> bool: return self.name == "punct"
 
-    def is_puncts(self) -> bool:
-        return self.name == "puncts"
+    def is_puncts(self) -> bool: return self.name == "puncts"
 
-    def is_puncts_group(self) -> bool:
-        return self.name == "puncts_group"
+    def is_puncts_group(self) -> bool: return self.name == "puncts_group"
 
-    def is_graph(self) -> bool:
-        return self.name == "graph"
+    def is_graph(self) -> bool: return self.name == "graph"
 
-    def is_word(self) -> bool:
-        return self.name == "word"
+    def is_word(self) -> bool: return self.name == "word"
 
-    def is_words(self) -> bool:
-        return self.name == "words"
+    def is_words(self) -> bool: return self.name == "words"
 
-    def is_mixed_word(self) -> bool:
-        return self.name == "mixed_word"
+    def is_mixed_word(self) -> bool: return self.name == "mixed_word"
 
-    def is_mixed_words(self) -> bool:
-        return self.name == "mixed_words"
+    def is_mixed_words(self) -> bool: return self.name == "mixed_words"
 
-    def is_non_ws(self) -> bool:
-        return self.name == "non_ws"
+    def is_non_ws(self) -> bool: return self.name == "non_ws"
 
-    def is_non_wss(self) -> bool:
-        return self.name == "non_wss"
+    def is_non_wss(self) -> bool: return self.name == "non_wss"
 
-    def is_non_wss_group(self) -> bool:
-        return self.name == "non_wss_group"
+    def is_non_wss_group(self) -> bool: return self.name == "non_wss_group"
 
     def is_group(self):
         chk = (
@@ -183,8 +161,7 @@ class PatternTranslator(RuntimeException):
         return all(not data.isalpha() for data in self.lst_of_all_data)
 
     def is_punctuation(self) -> bool:
-        return all(data.isprintable() and not data.isalnum() for data in
-                   self.lst_of_all_data)
+        return all(data.isprintable() and not data.isalnum() for data in self.lst_of_all_data)
 
     def is_printable(self) -> bool:
         return all(data.isprintable() for data in self.lst_of_all_data)
@@ -225,24 +202,18 @@ class PatternTranslator(RuntimeException):
         return not self.is_singular() and not self.is_plural()
 
     def get_singular_data(self) -> str:
-        """
-        Extract the first word from the number string.
-        """
+        """Extract the first word from the number string."""
         return self.data.split(" ")[0]
 
     def get_plural_data(self) -> str:
-        """
-        Retrieve plural number from the list of entries.
-        """
+        """Retrieve plural number from the list of entries."""
         for data in self.lst_of_all_data:
             if " " in data.strip():
                 return data
         return f"{self.data} {self.data}"
 
     def get_reference_data(self, other):
-        """
-        Retrieve reference number based on the relationship with another object.
-        """
+        """Retrieve reference number based on the relationship with another object."""
         if isinstance(other, PatternTranslator):
             if self.is_subset_of(other) or self.is_superset_of(other):
                 return other.data
@@ -252,9 +223,7 @@ class PatternTranslator(RuntimeException):
         return self.data
 
     def raise_recommend_exception(self, other) -> None:
-        """
-        Raise a runtime exception for unimplemented recommended pattern cases.
-        """
+        """Raise a runtime exception for unimplemented recommended pattern cases."""
         cls_name = datatype.get_class_name(self)
 
         if isinstance(other, PatternTranslator):
@@ -264,11 +233,11 @@ class PatternTranslator(RuntimeException):
 
         msg = (
             f"Recommended pattern not implemented for class {cls_name} "
-            f"with number pair ({self.data!r}, {other_repr})"
+            f"with data pair ({self.data!r}, {other_repr})"
         )
 
         self.raise_runtime_error(
-            name="NotImplementRecommendedRTPattern",
+            name="NotImplementTranslator",
             msg=msg,
         )
 
@@ -278,7 +247,7 @@ class PatternTranslator(RuntimeException):
         """
         if not self.name:
             self.raise_runtime_error(
-                name="TranslatedPatternSnippetRTError",
+                name="PatternTranslatorSnippetError",
                 msg="Cannot create snippet without a defined name",
             )
 
@@ -293,7 +262,7 @@ class PatternTranslator(RuntimeException):
         """Generate a regex pattern string for the current instance."""
         if not self.name:
             self.raise_runtime_error(
-                name="TranslatedPatternRegexRTError",
+                name="PatternTranslatorRegexError",
                 msg="Cannot create regex pattern without a defined name",
             )
         pattern = self.root_pattern if is_root else self.pattern
@@ -303,22 +272,35 @@ class PatternTranslator(RuntimeException):
 
         return pattern
 
-    def get_template_snippet(self, var: str = "", is_root: bool = False) -> str:
+    def get_template_snippet(self, var="", is_root=False, generic=True) -> str:
         """Generate a template snippet string for the current pattern."""
         if not self.name:
             self.raise_runtime_error(
-                name="TranslatedPatternTemplateSnippetRTError",
+                name="PatternTranslatorSnippetError",
                 msg="Cannot create template snippet without a defined name",
             )
 
         var_txt = f"var_{var}" if var else ""
         name = self.root_name if is_root else self.actual_name
 
-        return f"{name}({var_txt})"
+        if generic or not self.is_group():
+            return f"{name}({var_txt})"
+
+        counts = [len(re.split(r"\s+", item)) for item in self.lst_of_all_data]
+        min_c, max_c = min(counts), max(counts)
+
+        if max_c <= 1:
+            return f"{name}({var_txt})"
+
+        if max_c == min_c:
+            return f"{max_c}_{self.singular_name}({var_txt})"
+
+        return f"{min_c}_{max_c}_{self.singular_name}({var_txt})"
+
 
     @classmethod
     def do_factory_create(cls, data: str, *other, multiple=False):
-        """Factory method to create a translated pattern instance."""
+        """Factory method to create a translator instance."""
         translator_pairs = [
             (DigitTranslator, DigitsTranslator),
             (DigitsTranslator, DigitsTranslator),
@@ -357,27 +339,22 @@ class PatternTranslator(RuntimeException):
                     return secondary_cls(data, *other)
                 return translator
 
-        RuntimeException.do_raise_runtime_error(    # noqa
-            obj="FactoryTranslatedPatternRTIssue",
-            msg=f"Factory could not create a pattern for number={data!r}, other={other!r}",
+        raise_runtime_error(    # noqa
+            obj="PatternTranslatorFactoryError",
+            msg=f"Failed to create translator: data={data!r}, other={other!r}",
         )
 
     @classmethod
-    def recommend_pattern(cls, translated_pat_obj1, translated_pat_obj2):
-        """
-        Recommend a generalized pattern from two translated pattern objects.
-        """
-        generalized_pat = translated_pat_obj1.recommend(translated_pat_obj2)
-        return generalized_pat
+    def recommend_translator(cls, translator_a, translator_b):
+        """Return a generalized translator derived from two translators."""
+        return translator_a.recommend(translator_b)
 
     @classmethod
-    def recommend_pattern_using_data(cls, data1: str, data2: str):
-        """
-        Recommend a generalized pattern from two raw number inputs.
-        """
-        translated_pat_obj1 = cls.do_factory_create(data1)
-        translated_pat_obj2 = cls.do_factory_create(data2)
-        return translated_pat_obj1.recommend(translated_pat_obj2)
+    def recommend_translator_by_data(cls, data_a: str, data_b: str):
+        """Return a generalized translator derived from two raw inputs."""
+        translator_a = cls.do_factory_create(data_a)
+        translator_b = cls.do_factory_create(data_b)
+        return translator_a.recommend(translator_b)
 
 
 class DigitTranslator(PatternTranslator):

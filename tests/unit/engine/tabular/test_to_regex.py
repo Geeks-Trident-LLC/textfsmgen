@@ -59,7 +59,7 @@ orange    pork      water
 peach               pepsi soda
     """.strip()
 
-    expected_pattern = r'(?P<fruits>[a-zA-Z]+) (?P<meat>( {10,15})|( *[a-zA-Z]+ *)) (?P<drinks>[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*){,1})'  # noqa
+    expected_pattern = r'(?P<fruits>[a-zA-Z]+) (?P<meat>( {10,15})|( *[a-zA-Z]+ *)) (?P<drinks>[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)*)'  # noqa
 
     expected_results = [
         {'fruits': 'fruits', 'meat': 'meat', 'drinks': 'drinks'},

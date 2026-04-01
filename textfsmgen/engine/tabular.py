@@ -858,7 +858,7 @@ class ParsedTable(RuntimeException):
         for row in self.rows:
             prev_column = None
             for index, cell in enumerate(row.cells):
-                new_col = Column(index=index)
+                new_col = Column(index=index, is_last=index+1==row.cell_count)
                 column = self.columns[index] if is_created else new_col
                 if not is_created:
                     self.columns.append(column)
@@ -2055,6 +2055,8 @@ class Column:
 
         node = PatternTranslator.do_factory_create(*texts, multiple=True)
         kwargs = {} if to_bared_snippet else {"var": self.name}
+        if not self.is_last:
+            kwargs.update(generic=False)
         snippet = node.get_template_snippet(**kwargs)
 
         if to_bared_snippet or (skipped_empty and not added_list_meta_data):

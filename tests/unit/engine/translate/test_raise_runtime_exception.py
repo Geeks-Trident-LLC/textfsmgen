@@ -1,17 +1,5 @@
 """
-Unit tests for runtime exception handling in the `textfsmgen.gp` module.
-
-This test module validates that unimplemented recommendation cases
-within translated pattern classes correctly raise a dynamically
-generated runtime exception (`NotImplementRecommendedRTPattern`).
-
-Coverage
---------
-- Ensures `is_subset_of`, `is_superset_of`, and `recommend` methods
-  raise the expected exception when interacting with unsupported
-  or dummy patterns.
-- Confirms that exception names and messages are consistent with
-  the runtime error generation logic.
+Unit tests for runtime exception handling in the `textfsmgen.engine.translate` module.
 
 Usage
 -----
@@ -57,7 +45,7 @@ to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
 )
 def test_raise_exception_in_is_subset_of(data):
     """
-    Verify that `is_subset_of` raises a NotImplementRecommendedRTPattern
+    Verify that `is_subset_of` raises a NotImplementTranslator
     when called with an unsupported dummy pattern.
     """
     dummy_other = TranslatedDummyPattern()
@@ -65,7 +53,7 @@ def test_raise_exception_in_is_subset_of(data):
     translated_pattern_node = PatternTranslator.do_factory_create(*args)
     with pytest.raises(Exception) as ex:
         translated_pattern_node.is_subset_of(dummy_other)
-    assert ex.type.__name__ == "NotImplementRecommendedRTPattern"
+    assert ex.type.__name__ == "NotImplementTranslator"
 
 
 @pytest.mark.parametrize(
@@ -93,7 +81,7 @@ def test_raise_exception_in_is_subset_of(data):
 )
 def test_raise_exception_in_is_superset_of(data):
     """
-    Verify that `is_superset_of` raises a NotImplementRecommendedRTPattern
+    Verify that `is_superset_of` raises a NotImplementTranslator
     when called with an unsupported dummy pattern.
     """
     dummy_other = TranslatedDummyPattern()
@@ -101,7 +89,7 @@ def test_raise_exception_in_is_superset_of(data):
     translated_pattern_node = PatternTranslator.do_factory_create(*args)
     with pytest.raises(Exception) as ex:
         translated_pattern_node.is_subset_of(dummy_other)
-    assert ex.type.__name__ == "NotImplementRecommendedRTPattern"
+    assert ex.type.__name__ == "NotImplementTranslator"
 
 @pytest.mark.parametrize(
     "data",
@@ -128,7 +116,7 @@ def test_raise_exception_in_is_superset_of(data):
 )
 def test_raise_exception_in_is_superset_of(data):
     """
-    Verify that `recommend` raises a NotImplementRecommendedRTPattern
+    Verify that `recommend` raises a NotImplementTranslator
     when called with an unsupported dummy pattern.
     """
     dummy_other = TranslatedDummyPattern()
@@ -136,4 +124,4 @@ def test_raise_exception_in_is_superset_of(data):
     translated_pattern_node = PatternTranslator.do_factory_create(*args)
     with pytest.raises(Exception) as ex:
         translated_pattern_node.is_subset_of(dummy_other)
-    assert ex.type.__name__ == "NotImplementRecommendedRTPattern"
+    assert ex.type.__name__ == "NotImplementTranslator"
