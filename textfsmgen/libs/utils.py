@@ -285,14 +285,33 @@ def validate_uniform_tabular_data(records):
     return True, ""
 
 
-def get_data_as_tabular(data, missing='not_found'):
-    """Convert structured data into a tabular string representation."""
-    node = Tabular(data, missing=missing)
-    result = node.get()
-    return result
+def get_data_as_tabular(data, missing="not_found", with_index=False):
+    """Return a tabular string representation of structured data."""
+    ok, failure = validate_uniform_tabular_data(data)
+    if not ok:
+        return data
+
+    # Normalize input into a list of row dicts
+    rows = data.copy() if isinstance(data, list) else [data.copy()]
+
+    if with_index:
+        indexed_rows = []
+        for idx, row in enumerate(rows, start=1):
+            # Only add index if not already present
+            if "index" in row:
+                indexed_rows.append(row.copy())
+            else:
+                indexed_rows.append({"index": str(idx), **row})
+        rows = indexed_rows
+
+    table = Tabular(rows, missing=missing)
+    return table.get()
 
 
-def print_data_as_tabular(data, missing='not_found'):
+def print_data_as_tabular(data, missing='not_found', with_index=False):
     """Print structured data in a tabular format."""
-    node = Tabular(data, missing=missing)
-    node.print()
+    result = get_data_as_tabular(data, missing=missing, with_index=with_index)
+    if isinstance(result, (list, tuple, dict)):
+        pprint(result)
+    else:
+        print(result)
