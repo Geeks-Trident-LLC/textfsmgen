@@ -116,7 +116,6 @@ class Tabular:
         else:
             self.data = data
         self.columns = columns
-        self.justify = "left"
         self.missing = missing
         self.is_tabular = False
         self.failure = ''
@@ -137,30 +136,90 @@ class Tabular:
 
         return widths
 
-    def format_cell(self, text, width):
-        """Return text aligned to the given width using the current justification."""
-        text = str(text)
+    def infer_column_alignments(self) -> list[str]:
+        """Infer text alignment for each column based on cell content."""
 
-        if self.justify == "center":
-            return text.center(width)
-        if self.justify == "right":
-            return text.rjust(width)
-        return text.ljust(width)
-
-    def format_header_row(self, columns, widths):
-        """Return a formatted header row using column names and computed widths."""
-        cells = [self.format_cell(col, widths[col]) for col in columns]
-        return f"| {' | '.join(cells)} |"
-
-    def format_body_rows(self, columns, widths):
-        """Return formatted body rows using column values and computed widths."""
-        rows = []
+        # Build column-wise lists
+        num_cols = len(self.data[0].keys())
+        columns = [[] for _ in range(num_cols)]
 
         for row in self.data:
+            for idx, value in enumerate(row.values()):
+                columns[idx].append(value)
+
+        alignments = []
+
+        for col in columns:
+            numeric_flags = []
+            punct_flags = []
+
+            for cell in col:
+                text = str(cell).strip()
+
+                if isinstance(cell, (int, float, bool)):
+                    numeric_flags.append(True)
+                    punct_flags.append(False)
+                    continue
+
+                if isinstance(cell, str):
+                    if re.fullmatch(PATTERN.MIXED_NUMBER, text):
+                        numeric_flags.append(True)
+                        punct_flags.append(False)
+                        continue
+
+                    if re.fullmatch(PATTERN.PUNCTS, text):
+                        numeric_flags.append(False)
+                        punct_flags.append(True)
+                        continue
+
+                    if text.lower() in {"n/a", "na"}:
+                        numeric_flags.append(True)
+                        punct_flags.append(False)
+                        continue
+
+                numeric_flags.append(False)
+                punct_flags.append(False)
+
+            if all(numeric_flags):
+                align = "right"
+            elif all(punct_flags):
+                align = "center"
+            else:
+                align = "left"
+
+            alignments.append(align)
+
+        return alignments
+
+
+    def format_cell(self, text, width, align="left"):   # noqa
+        """Return text aligned to the given width using the current justification."""
+        align_mapping = {
+            "left": str.ljust,
+            "center": str.center,
+            "right": str.rjust,
+        }
+        return align_mapping.get(align, "left")(text, width)
+
+    def format_header_row(self, columns, widths, alignments):
+        """Return a formatted header row using column names and computed widths."""
+        cells = []
+        use_align = len(alignments) == len(columns)
+        for idx, col in enumerate(columns):
+            align = alignments[idx] if use_align else "left"
+            cells.append(self.format_cell(col, widths[col], align=align))
+        return f"| {' | '.join(cells)} |"
+
+    def format_body_rows(self, columns, widths, alignments):
+        """Return formatted body rows using column values and computed widths."""
+        rows = []
+        use_align = len(alignments) == len(columns)
+        for row in self.data:
             cells = []
-            for col in columns:
+            for idx, col in enumerate(columns):
+                align = alignments[idx] if use_align else "left"
                 value = row.get(col, self.missing)
-                cells.append(self.format_cell(value, widths[col]))
+                cells.append(self.format_cell(value, widths[col], align=align))
             rows.append(f"| {' | '.join(cells)} |")
 
         return "\n".join(rows)
@@ -176,11 +235,12 @@ class Tabular:
         try:
             columns = self.columns or list(self.data[0].keys())
             widths = self.compute_column_widths(columns)
+            alignments = self.infer_column_alignments()
 
             border = "+-{}-+".format(
                 "-+-".join("-" * widths[c] for c in columns))
-            header = self.format_header_row(columns, widths)
-            body = self.format_body_rows(columns, widths)
+            header = self.format_header_row(columns, widths, alignments)
+            body = self.format_body_rows(columns, widths, alignments)
 
             parts = [border, header, border, body, border]
             self.result = "\n".join(parts)
@@ -189,6 +249,7 @@ class Tabular:
         except Exception as ex:
             self.failure = f"{type(ex).__name__}: {ex}"
             self.is_tabular = False
+            raise ex
 
     def get(self):
         """Retrieve the processed tabular output or the raw data."""
