@@ -930,43 +930,42 @@ class ParsedTable(RuntimeException):
             self.header_columns.append(hdr_col)
             col.cells = col.cells[row_pos + 1:]
 
-    def build_and_update_headers(self) -> None:
-        """Build and update column headers."""
-        if self.has_header_row:
-            if not self.headers:
+    def assign_column_names(self) -> None:
+        """Assign sanitized, unique column names from headers or header rows."""
 
-                for index, hdr_col in enumerate(self.header_columns):
-                    # extract column name
-                    raw_col_name = "_".join([cell.text for cell in hdr_col.cells])
+        def build_names(raw_names_):
+            names = []
+            for idx, raw in enumerate(raw_names_):
+                name_ = sanitize_identifier(raw, fallback=f"col{idx}")
 
-                    col_name = sanitize_identifier(raw_col_name, fallback=f"col{index}")
+                if name_ in names:
+                    name_ = f"{name_}{idx}"
 
-                    # ensure uniqueness
-                    if col_name in self.headers:
-                        col_name = f'{col_name}{index}'
+                if re.search(r"[a-zA-Z]", name_):
+                    names.append(name_)
 
-                    self.headers.append(col_name)
-                    self.columns[index].name = col_name
-            else:
-                col_names = []
-                for index, hdr in enumerate(self.headers):
-                    col_name = sanitize_identifier(hdr, fallback=f"col{index}")
+            return names if len(names) == self.column_count else None
 
-                    if col_name in col_names:
-                        col_name = f"{col_name}{index}"
+        # Determine source of header names
+        raw_names = None
 
-                    self.columns[index].name = col_name
-                    col_names.append(col_name)
-        else:
-            # Use provided headers when no header rows exist
-            if self.headers and len(self.headers) == self.column_count:
-                col_names = []
-                for index, hdr in enumerate(self.headers):
-                    col_name = sanitize_identifier(hdr, fallback=f"col{index}")
-                    if col_name in col_names:
-                        col_name = f"{col_name}{index}"
-                    self.columns[index].name = col_name
-                    col_names.append(col_name)
+        if self.has_header_row and not self.headers:
+            raw_names = [
+                "_".join(cell.text for cell in col.cells if cell.text.strip())
+                for col in self.header_columns
+            ]
+        elif self.headers:
+            raw_names = self.headers
+
+        if not raw_names:
+            return
+
+        col_names = build_names(raw_names)
+        if not col_names:
+            return
+
+        for col, name in zip(self.columns, col_names):
+            col.name = name
 
     # -------------------------------
     # Processing pipeline
@@ -985,7 +984,7 @@ class ParsedTable(RuntimeException):
         self.add_data_to_rows()
         self.add_data_to_columns()
         self.do_cleaning_data()
-        self.build_and_update_headers()
+        self.assign_column_names()
 
     # -------------------------------
     # Regex and template generation
