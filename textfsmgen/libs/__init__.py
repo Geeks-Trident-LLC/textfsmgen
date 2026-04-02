@@ -8,7 +8,7 @@ General-purpose functions used across TextFSMGen.
 import platform
 from enum import IntFlag
 
-from .pat import PATTERN
+from .pattern import PATTERN
 
 
 is_macos = platform.system() == 'Darwin'

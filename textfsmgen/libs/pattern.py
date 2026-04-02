@@ -1,6 +1,6 @@
 """
-textfsmgen.libs.common
-======================
+textfsmgen.libs.pattern
+=======================
 
 General-purpose Patter class and functions used across TextFSMGen.
 """

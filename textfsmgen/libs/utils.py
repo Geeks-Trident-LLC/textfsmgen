@@ -9,7 +9,7 @@ import re
 from textwrap import wrap
 from pprint import pprint
 
-from .pat import PATTERN
+from .pattern import PATTERN
 
 
 def split_by_matches(text, pattern=r"(?u)\s+"):

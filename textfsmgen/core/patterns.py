@@ -21,7 +21,7 @@ from textfsmgen.exceptions import ElementPatternError
 from textfsmgen.exceptions import LinePatternError
 from textfsmgen.exceptions import raise_exception
 
-from textfsmgen.libs.pat import validate_pattern, soft_escape
+from textfsmgen.libs.pattern import validate_pattern, soft_escape
 from textfsmgen.libs.text import WHITESPACE_CHARS
 from textfsmgen.libs.text import Line
 

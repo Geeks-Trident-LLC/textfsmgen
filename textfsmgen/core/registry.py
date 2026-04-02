@@ -10,7 +10,7 @@ import re
 from textfsmgen.exceptions import PatternReferenceError, raise_exception
 from textfsmgen.libs import file
 
-from textfsmgen.libs import pat
+from textfsmgen.libs import pattern
 
 import logging
 logger = logging.getLogger(__file__)
@@ -27,8 +27,8 @@ class PatternRegistry(dict):
 
     def load_system(self):
         """Load system-defined patterns."""
-        for attr in dir(pat.PATTERN):
-            val = getattr(pat.PATTERN, attr)
+        for attr in dir(pattern.PATTERN):
+            val = getattr(pattern.PATTERN, attr)
             if re.fullmatch("[A-Z][A-Z_]*[A-Z]", attr) and isinstance(val, str):
                 self[attr.lower()] = val
 
@@ -44,7 +44,7 @@ class PatternRegistry(dict):
                 raise PatternReferenceError(msg)
 
             for key, value in yaml_obj.items():
-                valid_pat = pat.is_valid_pattern(value)
+                valid_pat = pattern.is_valid_pattern(value)
                 if not valid_pat:
                     if warn:
                         logger.warning(valid_pat)
@@ -67,7 +67,7 @@ class PatternRegistry(dict):
         if key in self:
             return True
 
-        resolved = pat.resolve_keyword(key)
+        resolved = pattern.resolve_keyword(key)
         return bool(resolved)
 
     def resolve_pattern(self, key, default=None):
@@ -77,7 +77,7 @@ class PatternRegistry(dict):
         if key in self:
             return self[key]
 
-        return pat.resolve_pattern(key, default=default)
+        return pattern.resolve_pattern(key, default=default)
 
 
 
