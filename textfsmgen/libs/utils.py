@@ -109,13 +109,9 @@ class TextMatcher:
 
 class Tabular:
     """A utility class for constructing and displaying tabular data."""
-    def __init__(self, data, columns=None, missing='not_found'):
+    def __init__(self, data, missing='not_found'):
         self.result = ''
-        if isinstance(data, dict):
-            self.data = [data]
-        else:
-            self.data = data
-        self.columns = columns
+        self.data = [data] if isinstance(data, dict) else data
         self.missing = missing
         self.is_tabular = False
         self.failure = ''
@@ -233,7 +229,7 @@ class Tabular:
             return
 
         try:
-            columns = self.columns or list(self.data[0].keys())
+            columns = list(self.data[0].keys())
             widths = self.compute_column_widths(columns)
             alignments = self.infer_column_alignments()
 
@@ -268,8 +264,11 @@ class Tabular:
 def validate_uniform_tabular_data(records):
     """Validate that data is a non‑empty list of dicts with identical keys."""
     error = "records MUST be a non-empty list of dicts with identical keys."
-    if not records or not isinstance(records, (list, tuple)):
+    if not records or not isinstance(records, (list, tuple, dict)):
         return False, error
+
+    if isinstance(records, dict):
+        return True, ""
 
     expected_keys = None
 
@@ -286,14 +285,14 @@ def validate_uniform_tabular_data(records):
     return True, ""
 
 
-def get_data_as_tabular(data, columns=None, missing='not_found'):
+def get_data_as_tabular(data, missing='not_found'):
     """Convert structured data into a tabular string representation."""
-    node = Tabular(data, columns=columns, missing=missing)
+    node = Tabular(data, missing=missing)
     result = node.get()
     return result
 
 
-def print_data_as_tabular(data, columns=None, missing='not_found'):
+def print_data_as_tabular(data, missing='not_found'):
     """Print structured data in a tabular format."""
-    node = Tabular(data, columns=columns, missing=missing)
+    node = Tabular(data, missing=missing)
     node.print()
