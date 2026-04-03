@@ -6,6 +6,7 @@ General-purpose utility functions used across TextFSMGen.
 """
 
 import re
+from collections import defaultdict
 from textwrap import wrap
 from pprint import pprint
 
@@ -136,21 +137,21 @@ class Tabular:
         """Infer text alignment for each column based on cell content."""
 
         # Build column-wise lists
-        num_cols = len(self.data[0].keys())
-        columns = [[] for _ in range(num_cols)]
+        columns = defaultdict(list)
+        alignments = dict()
 
         for row in self.data:
-            for idx, value in enumerate(row.values()):
-                columns[idx].append(value)
+            for col_name, cell in row.items():
+                columns[col_name].append(cell)
 
-        alignments = []
-
-        for col in columns:
+        for col_name, cells in columns.items():
             numeric_flags = []
             punct_flags = []
+            widths = []
 
-            for cell in col:
+            for cell in cells:
                 text = str(cell).strip()
+                widths.append(len(text))
 
                 if isinstance(cell, (int, float, bool)):
                     numeric_flags.append(True)
@@ -177,13 +178,18 @@ class Tabular:
                 punct_flags.append(False)
 
             if all(numeric_flags):
-                align = "right"
+                align = "center" if len(set(widths)) == 1 else "right"
             elif all(punct_flags):
                 align = "center"
             else:
-                align = "left"
+                align = "center" if len(set(widths)) == 1 else "left"
 
-            alignments.append(align)
+            alignments[col_name] = align
+
+        if alignments:
+            first_key = next(iter(alignments))
+            if first_key.lower() == "index":
+                alignments[first_key] = "center"
 
         return alignments
 
@@ -200,22 +206,22 @@ class Tabular:
     def format_header_row(self, columns, widths, alignments):
         """Return a formatted header row using column names and computed widths."""
         cells = []
-        use_align = len(alignments) == len(columns)
-        for idx, col in enumerate(columns):
-            align = alignments[idx] if use_align else "left"
-            cells.append(self.format_cell(col, widths[col], align=align))
+        for col in columns:
+            cells.append(self.format_cell(
+                col, widths[col], align=alignments.get(col, "left")
+            ))
         return f"| {' | '.join(cells)} |"
 
     def format_body_rows(self, columns, widths, alignments):
         """Return formatted body rows using column values and computed widths."""
         rows = []
-        use_align = len(alignments) == len(columns)
         for row in self.data:
             cells = []
-            for idx, col in enumerate(columns):
-                align = alignments[idx] if use_align else "left"
+            for col in columns:
                 value = row.get(col, self.missing)
-                cells.append(self.format_cell(value, widths[col], align=align))
+                cells.append(self.format_cell(
+                    value, widths[col], align=alignments.get(col, "left")
+                ))
             rows.append(f"| {' | '.join(cells)} |")
 
         return "\n".join(rows)
