@@ -13,6 +13,7 @@ import statistics
 import operator as op
 import re
 import copy
+import yaml
 
 from textfsmgen.core.patterns import LinePattern
 from textfsmgen.libs import PATTERN
@@ -181,7 +182,6 @@ class VarColumnTabularTranslator(RuntimeException):
         self.column_divider = column_divider
         self.column_widths = column_widths or []
         self.column_count = column_count
-        self.ensure_column_count()
 
         self.header_rows = header_rows
         self.custom_header_text = custom_header_text
@@ -189,12 +189,15 @@ class VarColumnTabularTranslator(RuntimeException):
 
         self.raw_headers = headers
         self.headers = None
-        self.parse_headers()
 
         self.has_header_row = has_header_row
         self.variables = []
 
         self.kwargs = kwargs
+
+        self.parse_custom_header()
+        self.ensure_column_count()
+        self.parse_headers()
         self.prepare_header_rows()
 
     def __len__(self):
@@ -227,6 +230,99 @@ class VarColumnTabularTranslator(RuntimeException):
             else:
                 self._is_end_with_divider = False
         return self._is_end_with_divider
+
+    def parse_custom_header(self):
+        """Parse and normalize custom header text into headers and column count."""
+        txt = self.custom_header_text
+        if not txt:
+            return
+
+        # Case 1: punctuation-only header (e.g., "--- --- ---")
+        punct_pattern = rf"\s*{PATTERN.PUNCTS_GROUP}\s*"
+        if re.fullmatch(punct_pattern, txt):
+            self.column_count = len(re.split(r"\s+", txt))
+            return
+
+        # Case 2: header row exists in raw lines → convert to dashed placeholder
+        if txt in self.lines:
+            dashed = re.sub(r"\S", "-", txt)
+            self.custom_header_text = dashed
+            self.column_count = len(re.split(r"\s+", txt.strip()))
+            return
+
+        # Case 3: YAML-formatted header (list, dict, tuple, scalar)
+        result = yaml.safe_load(txt)
+        if not result:
+            return
+
+        # YAML list, tuple, or dict
+        if isinstance(result, (list, tuple, dict)):
+            values = None
+
+            # YAML dict → keys = headers, values = row
+            if isinstance(result, dict):
+                self.headers = list(result.keys())
+                values = [str(v) for v in result.values()]
+                self.column_count = len(result)
+
+            # YAML list/tuple
+            else:
+                # Special case: [[headers], [values]]
+                if (
+                        len(result) == 2
+                        and isinstance(result[0], (list, tuple))
+                        and isinstance(result[1], (list, tuple))
+                ):
+                    hdrs, vals = result
+                    if len(hdrs) != len(vals):
+                        raise_runtime_error(
+                            obj="InvalidCustomHeaderTextParamFormat",
+                            msg=(
+                                "Unsupported custom header format.\n"
+                                "Expected: test-data style row, YAML list, or YAML dict.\n"
+                                f"Received: {txt!r}\n"
+                                f"unmatched total elements: {len(hdrs)} vs {len(vals)}"
+                            ),
+                        )
+                    self.headers = list(hdrs)
+                    values = [str(v) for v in vals]
+                    self.column_count = len(hdrs)
+
+                # Simple YAML list
+                else:
+                    values = [str(item) for item in result]
+                    self.column_count = len(result)
+
+            # Build dashed placeholder preserving leading/trailing spaces
+            masked_items = []
+            for val in values:
+                stripped = val.strip()
+                leading = val[: val.index(stripped)] if stripped else ""
+                trailing = val[len(val.rstrip()):]
+                dash = "-" * len(stripped)
+                masked_items.append(f"{leading}{dash}{trailing}")
+
+            dashed = re.sub(r"\S", "-", "".join(masked_items))
+            self.custom_header_text = dashed
+            return
+
+        # Case 4: YAML scalar → must match existing column count
+        dashed = re.sub(r"\S", "-", str(result))
+        item_count = len(re.split(r"\s+", dashed.strip()))
+
+        if item_count == self.column_count:
+            self.custom_header_text = dashed
+            return
+
+        raise_runtime_error(
+            obj="InvalidCustomHeaderTextParamFormat",
+            msg=(
+                "Unsupported custom header format.\n"
+                "Expected: test-data style row, YAML list, or YAML dict.\n"
+                f"Received: {txt!r}\n"
+                f"Column count: {self.column_count}, parsed items: {item_count}"
+            ),
+        )
 
     def ensure_column_count(self):
         """Infer column count from lines or raise error if zero."""
