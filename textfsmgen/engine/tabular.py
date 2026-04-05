@@ -988,7 +988,7 @@ class ParsedTable(RuntimeException):
         divider = self.column_divider
 
         for row_index, row in enumerate(self.rows):
-            if row.is_puncts_group:
+            if row.is_punct_group:
                 continue
 
             row_dict: Dict[str, str] = {}
@@ -1006,13 +1006,10 @@ class ParsedTable(RuntimeException):
 
     def do_cleaning_data(self) -> None:
         """Clean table data by separating header rows from data rows."""
-        if not self.reference_row:
-            return
-
-        if not self.has_header_row:
-            return
-
-        if not self.reference_row.line in self.lines:
+        if (not self.reference_row or
+            not self.has_header_row or
+            not self.reference_row.line in self.lines
+        ):
             return
 
         ref_line = self.reference_row.line
@@ -1724,7 +1721,6 @@ class Row(RuntimeException):
         aligned: bool = True,
         width_mode: bool = False,
     ):
-        self._is_puncts_group = None
         self.aligned = aligned
         self.width_mode = width_mode
         self.line = line
@@ -1754,15 +1750,9 @@ class Row(RuntimeException):
         return self.cell_count
 
     @property
-    def is_puncts_group(self) -> bool:
+    def is_punct_group(self) -> bool:
         """Return True if the row consists only of symbols."""
-        if self._is_puncts_group is None:
-            if not self.cells:
-                return False
-            # pattern = ' *%(p)s( +%(p)s)* *$' % dict(p=PATTERN.PUNCTS)
-            pattern = rf" *{PATTERN.PUNCTS}( +{PATTERN.PUNCTS})* *$"
-            self._is_puncts_group = bool(re.match(pattern, self.line))
-        return self._is_puncts_group
+        return bool(re.fullmatch(PATTERN.OPTIONAL_PUNCTS_GROUP, self.line.strip()))
 
     def append_new_cell(self, left_pos: int, right_pos: int) -> "Cell":
         """Create a new cell for this row, align it with the reference row, and append it."""
