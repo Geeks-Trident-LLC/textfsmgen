@@ -14,22 +14,24 @@ import re
 
 from textwrap import dedent
 
-from textfsmgen.libs.utils import get_data_as_tabular
-
 from textfsmgen.engine.tabular import VarColumnTabularTranslator
 
 from textfsmgen.core.verify import verify
-from textfsmgen.core.template import get_textfsm_template
 
 
 def test_ex1():
-    test_data = """
-LastWriteTime          Name
-9/1/2021 6:13:50 AM    reference
-10/5/2021 9:13:50 PM   dsc
-11/2/2021 11:58:45 PM  README.md
-12/16/2021 12:30:59 PM CONTRIBUTING.md
-                """.strip()
+    test_data = dedent("""
+        LastWriteTime          Name
+        9/1/2021 6:13:50 AM    reference
+        10/5/2021 9:13:50 PM   dsc
+        11/2/2021 11:58:45 PM  README.md
+        12/16/2021 12:30:59 PM CONTRIBUTING.md
+                """).strip()
+
+    expected_snippet = dedent("""
+        LastWriteTime          Name
+        start() 3_mixed_word(var_lastwritetime)  mixed_word(var_name) end() -> record
+    """).strip()
 
     expected_result = [
         {'lastwritetime': '9/1/2021 6:13:50 AM', 'name': 'reference'},
@@ -38,55 +40,45 @@ LastWriteTime          Name
         {'lastwritetime': '12/16/2021 12:30:59 PM', 'name': 'CONTRIBUTING.md'}
     ]
 
-    expected_result_as_tabular_text = """
-+------------------------+-----------------+
-| lastwritetime          | name            |
-+------------------------+-----------------+
-| 9/1/2021 6:13:50 AM    | reference       |
-| 10/5/2021 9:13:50 PM   | dsc             |
-| 11/2/2021 11:58:45 PM  | README.md       |
-| 12/16/2021 12:30:59 PM | CONTRIBUTING.md |
-+------------------------+-----------------+
-    """.strip()
-
     node = VarColumnTabularTranslator(test_data, column_divider=' ', column_count=2)
     table = node.parse_table()
     assert table
 
-    lst_of_dict = table.to_list_of_dict()
-    assert lst_of_dict == expected_result
+    template_snippet = table.to_template_snippet()
+    assert template_snippet == expected_snippet
 
-    tabular_txt = get_data_as_tabular(lst_of_dict)
-    assert tabular_txt == expected_result_as_tabular_text
+    ok = verify(template_snippet, test_data, expected_result=expected_result)
+    assert ok
+
 
 
 def test_ex2():
-    test_data = """
-fruits    meat      drinks
-orange    pork      water
-peach               pepsi soda
-                """.strip()
+    test_data = dedent("""
+        fruits    meat      drinks
+        orange    pork      water
+        peach               pepsi soda
+                """).strip()
+
+    expected_snippet = dedent("""
+        fruits    meat      drinks
+        start() word(var_fruits)  word(var_meat)  words(var_drinks) end() -> record
+        start() word(var_fruits) 10_15_space() words(var_drinks) end() -> record
+    """).strip()
 
     expected_result = [
         {'fruits': 'orange', 'meat': 'pork', 'drinks': 'water'},
         {'fruits': 'peach', 'meat': '', 'drinks': 'pepsi soda'}
     ]
 
-    expected_result_as_tabular_text = """
-+--------+------+------------+
-| fruits | meat | drinks     |
-+--------+------+------------+
-| orange | pork | water      |
-| peach  |      | pepsi soda |
-+--------+------+------------+
-    """.strip()
-
     node = VarColumnTabularTranslator(test_data, column_divider=' ', column_count=3)
     table = node.parse_table()
     assert table
 
-    lst_of_dict = table.to_list_of_dict()
-    assert lst_of_dict == expected_result
+    template_snippet = table.to_template_snippet()
+    assert template_snippet == expected_snippet
 
-    tabular_txt = get_data_as_tabular(lst_of_dict)
-    assert tabular_txt == expected_result_as_tabular_text
+    adjust_template_snippet = template_snippet.replace(
+        "  word(var_meat)  ", "1_8_space()word(var_meat)1_8_space()"
+    )
+    ok = verify(adjust_template_snippet, test_data, expected_result=expected_result)
+    assert ok

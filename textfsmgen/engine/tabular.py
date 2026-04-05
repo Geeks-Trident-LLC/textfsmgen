@@ -772,10 +772,10 @@ class ParsedTable(RuntimeException):
         # Divider snippets for regex/template generation
 
         self.has_divider: bool = bool(self.column_divider.strip())
-        escaped = re.escape(self.column_divider)
-        self.divider_snippet: str = f'optional_spaces(){escaped}optional_spaces()'
-        self.divider_leading_snippet: str = f'{escaped}optional_spaces()'
-        self.divider_trailing_snippet: str = f'optional_spaces(){escaped}'
+
+        self.divider_snippet: str = f'optional_spaces(){self.column_divider}optional_spaces()'
+        self.divider_leading_snippet: str = f'{self.column_divider}optional_spaces()'
+        self.divider_trailing_snippet: str = f'optional_spaces(){self.column_divider}'
 
         self.process()
 
@@ -958,7 +958,11 @@ class ParsedTable(RuntimeException):
         for row in self.rows:
             prev_column = None
             for index, cell in enumerate(row.cells):
-                new_col = Column(index=index, is_last=index+1==row.cell_count)
+                new_col = Column(
+                    index=index,
+                    is_last=index+1==row.cell_count,
+                    column_divider=self.column_divider
+                )
                 column = self.columns[index] if is_created else new_col
                 if not is_created:
                     self.columns.append(column)
@@ -1006,14 +1010,17 @@ class ParsedTable(RuntimeException):
 
     def do_cleaning_data(self) -> None:
         """Clean table data by separating header rows from data rows."""
-        if (not self.reference_row or
-            not self.has_header_row or
-            not self.reference_row.line in self.lines
-        ):
+        if not self.reference_row or not self.has_header_row:
             return
 
-        ref_line = self.reference_row.line
-        row_pos = self.lines.index(ref_line)
+        if not self.reference_row.line in self.lines:
+            if not self.has_header_row:
+                return
+            row_pos = 0
+        else:
+            ref_line = self.reference_row.line
+            row_pos = self.lines.index(ref_line)
+
         self.rows = self.rows[row_pos + 1:]
         self.header_lines = self.lines[:row_pos + 1]
 
@@ -1124,9 +1131,9 @@ class ParsedTable(RuntimeException):
         lst: List[str] = []
 
         for line in text.get_list_of_lines(*headers_lines):
-            is_line_of_puncts = bool(re.match(f" *{PATTERN.PUNCTS_GROUP} *$", line))
-            is_header_line = text.Line.has_data(line) and not is_line_of_puncts
-            if is_header_line:
+            if re.fullmatch(PATTERN.OPTIONAL_PUNCTS_GROUP, line.strip()):
+                continue
+            if line.strip():
                 lst.append(line)
 
         return text.join_string(*lst, separator="\n")
@@ -1204,7 +1211,6 @@ class ParsedTable(RuntimeException):
                     next_snippet = f'{leading_snippet} {next_snippet}'
 
             next_snippet = re.sub(r' +(\d+_\d+_space[(][)]) +', r' \1 ', next_snippet)
-
             snippets.append(first_snippet)
             snippets.append(next_snippet)
 
@@ -1302,11 +1308,14 @@ class ParsedTable(RuntimeException):
         last_indices = self.last_column_data_info.get('indices', [])
 
         # Layouts for rows that are not part of either special-case group
-        layouts = [
-            row.row_layout
-            for row in self.rows
-            if row.line not in first_indices and row.line not in last_indices
-        ]
+        layouts = []
+        for row in self.rows:
+            if (row.line in first_indices or
+                row.line in last_indices or
+                row.row_layout in layouts
+            ):
+                continue
+            layouts.append(row.row_layout)
 
         for layout in sorted(layouts, reverse=True):
             parts = []
@@ -1965,7 +1974,8 @@ class Column:
         name="",
         left_column=None,
         right_column=None,
-        is_last=False
+        is_last=False,
+        column_divider='',
     ):
 
         # Structural relationships
@@ -2109,9 +2119,14 @@ class Column:
         if not self:
             return ""
 
-        texts = [cell.text for cell in self.cells if cell.text]
+        pat = PATTERN.OPTIONAL_PUNCTS_GROUP
+        texts = [cell.text for cell in self.cells
+                 if cell.text and not re.fullmatch(pat, cell.line.strip())]
         if self.extra_data:
             texts.extend(self.extra_data)
+
+        if not texts:
+            return ""
 
         node = PatternTranslator.do_factory_create(*texts, multiple=True)
         pattern = node.get_regex_pattern(var=self.name)
@@ -2138,9 +2153,14 @@ class Column:
         if not self:
             return ""
 
-        texts = [cell.text for cell in self.cells if cell.text]
+        pat = PATTERN.OPTIONAL_PUNCTS_GROUP
+        texts = [cell.text for cell in self.cells
+                 if cell.text and not re.fullmatch(pat, cell.line.strip())]
         if self.extra_data:
             texts.extend(self.extra_data)
+
+        if not texts:
+            return ""
 
         node = PatternTranslator.do_factory_create(*texts, multiple=True)
         kwargs = {} if to_bared_snippet else {"var": self.name}
