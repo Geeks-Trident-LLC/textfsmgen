@@ -258,20 +258,6 @@ class PatternTranslator(RuntimeException):
             return f"{self.actual_name}(var={var}, value={value})"
         return f"{self.actual_name}(value={value})"
 
-    def get_regex_pattern(self, var: str = "", is_root: bool = False) -> str:
-        """Generate a regex pattern string for the current instance."""
-        if not self.name:
-            self.raise_runtime_error(
-                name="PatternTranslatorRegexError",
-                msg="Cannot create regex pattern without a defined name",
-            )
-        pattern = self.root_pattern if is_root else self.pattern
-
-        if var:
-            pattern = f"(?P<{var}>{pattern})"
-
-        return pattern
-
     def get_template_snippet(self, var="", is_root=False, generic=True) -> str:
         """Generate a template snippet string for the current pattern."""
         if not self.name:
