@@ -258,7 +258,7 @@ class PatternTranslator(RuntimeException):
             return f"{self.actual_name}(var={var}, value={value})"
         return f"{self.actual_name}(value={value})"
 
-    def get_template_snippet(self, var="", is_root=False, generic=True) -> str:
+    def to_snippet(self, var="", is_root=False, generic=True) -> str:
         """Generate a template snippet string for the current pattern."""
         if not self.name:
             self.raise_runtime_error(

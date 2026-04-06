@@ -106,7 +106,7 @@ def get_fixed_line_snippet(
         if token.strip():
             factory = PatternTranslator.do_factory_create(token)
             if factory.name in {"digit", "digits", "number", "mixed_number", "puncts"}:
-                tokens[i] = factory.get_template_snippet()
+                tokens[i] = factory.to_snippet()
 
     snippet_body = text.join_string(*tokens)
     leading = text.Line.get_leading(line)

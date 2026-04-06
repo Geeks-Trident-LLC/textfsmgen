@@ -2251,7 +2251,7 @@ class Column:
         kwargs = {} if to_bared_snippet else {"var": self.name}
         if not self.is_last:
             kwargs.update(generic=False)
-        snippet = node.get_template_snippet(**kwargs)
+        snippet = node.to_snippet(**kwargs)
 
         if self.has_divider:
             if self.has_empty_cell:

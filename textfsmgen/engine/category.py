@@ -178,7 +178,7 @@ class RightDataNode(LineData):
     def to_template_snippet(self):
         if self.data:
             translator = PatternTranslator.do_factory_create(self.data, multiple=True)
-            snippet = translator.get_template_snippet(var=self.var_name)
+            snippet = translator.to_snippet(var=self.var_name)
             if re.sub(r"[ \r\n]+", "", self.leading):
                 snippet = f"wss(){snippet}"
             if re.sub(r"[ \r\n]+", "", self.trailing):
