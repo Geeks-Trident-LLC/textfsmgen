@@ -483,6 +483,7 @@ class VarColumnTabularTranslator(RuntimeException):
             self.column_divider,
             column_count=self.column_count,
             case="split",
+            column_divider=self.column_divider,
         )
 
     def find_reference_row_by_space_divider(self, spaces=" ", custom_line=""):
@@ -1002,7 +1003,7 @@ class ParsedTable(RuntimeException):
         """Populate rows from lines and attach first column data if available."""
         self.rows.clear()
         for index, line in enumerate(self.lines):
-            row = Row(line, reference_row=self.reference_row)
+            row = Row(line, reference_row=self.reference_row, column_divider=self.column_divider)
             if index in self.first_column_data_info:
                 first_cell = row.cells[0]
                 first_cell.set_data(self.first_column_data_info.get(index))
@@ -1689,7 +1690,8 @@ class Cell(RuntimeException):
         # Extract raw content
         self.data = self.line[self.left:self.right]
 
-        self.adjust_bounds()
+        if not self.width_mode:
+            self.adjust_bounds()
 
         # Compute inner boundaries based on leading/trailing whitespace
         self.inner_left = self.left + len(self.leading)
@@ -1772,9 +1774,14 @@ class Row(RuntimeException):
         reference_row: "Row" = None,
         aligned: bool = True,
         width_mode: bool = False,
+        column_divider: str = "",
     ):
         self.aligned = aligned
         self.width_mode = width_mode
+
+        self.column_divider = column_divider
+        self.has_divider = bool(column_divider.strip())
+
         self.line = line
         self.reference_row = reference_row
         self.row_layout = ""
@@ -1824,11 +1831,83 @@ class Row(RuntimeException):
         self.cells.append(cell)
         return cell
 
+    def parse_cells_by_divider(self):
+        """Split the line using the column divider and build Cell objects accordingly."""
+        if not self.has_divider:
+            return False
+
+        ref_cols = self.reference_row.column_count
+        divider = self.column_divider
+
+        # Must contain enough dividers to form valid columns
+        if divider not in self.line or self.line.count(divider) < ref_cols - 1:
+            return False
+
+        escaped = re.escape(divider)
+        parts = re.split(rf"{escaped}", self.line)
+        total = len(parts)
+
+        start, stop = None, None
+
+        # Case: leading + trailing divider
+        if total == ref_cols + 2:
+            start, stop = 1, -1
+
+        # Case: either leading or trailing divider
+        elif total == ref_cols + 1:
+            if re.match(rf"\s*{escaped}+", self.line):
+                start = 1
+            elif re.search(rf"{escaped}+\s*$", self.line):
+                stop = -1
+
+        # Extract the relevant segments
+        segments = parts[start:stop]
+        seg_count = len(segments)
+
+        divider_width = len(divider)
+        ref_row = self.reference_row
+        line = self.line
+
+        prev_right = 0
+
+        for idx, segment in enumerate(segments):
+            ref_cell = ref_row.cells[idx] if ref_row else None
+
+            # First cell
+            if idx == 0:
+                left = 0
+                right = line.index(segment) + len(
+                    segment) if segment else divider_width
+
+            # Last cell
+            elif idx == seg_count - 1:
+                left = prev_right
+                right = 999999  # sentinel for "until end"
+
+            # Middle cells
+            else:
+                left = prev_right
+                right = left + len(segment) + divider_width
+
+            cell = Cell(line, left, right, reference=ref_cell, width_mode=True)
+            self.cells.append(cell)
+            self.row_layout += "1"
+
+            prev_right = right
+
+        return bool(self.cells)
+
+
     def process(self) -> None:
         """Initialize cells based on the reference row."""
         self.cells.clear()
         if not self.reference_row:
             return
+
+        if self.has_divider:
+            ok = self.parse_cells_by_divider()
+            if ok:
+                return
 
         for ref_cell in self.reference_row.cells:
             cell = self.append_new_cell(ref_cell.left, ref_cell.right)
@@ -1854,6 +1933,7 @@ class Row(RuntimeException):
         tokens: list[str],
         aligned: bool = True,
         width_mode: bool = False,
+        column_divider=""
     ) -> "Row":
         """Construct a reference row from parsed tokens and boundary positions."""
         if not tokens:
@@ -1867,10 +1947,13 @@ class Row(RuntimeException):
                 ),
             )
 
-        ref_row = cls(line, aligned=aligned, width_mode=width_mode)
+        ref_row = cls(
+            line, aligned=aligned, width_mode=width_mode,
+            column_divider=column_divider
+        )
         prev_right, last_cell = 0, None
 
-        for item in tokens:
+        for index, item in enumerate(tokens):
             left = prev_right
 
             # First token: compute its true position in the line
@@ -1879,6 +1962,8 @@ class Row(RuntimeException):
 
             # Subsequent tokens: boundaries follow sequentially
             right = prev_right + len(item)
+            if index > 0:
+                right += len(column_divider.strip())
             prev_right = right
 
             last_cell = ref_row.append_new_cell(left, right)
@@ -1919,7 +2004,8 @@ class Row(RuntimeException):
         cls,
         line: str,
         separator: str,
-        column_count: int = 1
+        column_count: int = 1,
+        column_divider: str = "",
     ) -> "Row":
         """Create a reference row by splitting the line on a separator and normalizing edge cases."""
         pattern = re.escape(separator)
@@ -1961,7 +2047,9 @@ class Row(RuntimeException):
                 ),
             )
 
-        return cls.create_reference_row(line, pattern, tokens, aligned=False)
+        return cls.create_reference_row(
+            line, pattern, tokens, aligned=False, column_divider=column_divider
+        )
 
     @classmethod
     def create_reference_row_by_variable(
@@ -1985,6 +2073,7 @@ class Row(RuntimeException):
         case: str = "",
         column_count: int = -1,
         width_mode: bool = False,
+        column_divider: str = "",
     ) -> "Row":
         """Factory method to create a reference row using different parsing strategies."""
 
@@ -1995,7 +2084,11 @@ class Row(RuntimeException):
             return cls.create_reference_row_by_variable(line, pattern, width_mode=width_mode)
 
         if case == "split":
-            return cls.create_reference_row_from_split(line, pattern, column_count)
+            return cls.create_reference_row_from_split(
+                line, pattern,
+                column_count=column_count,
+                column_divider=column_divider
+            )
 
         return RuntimeException.do_raise_runtime_error(
             obj=f"{cls.__name__}RTError",

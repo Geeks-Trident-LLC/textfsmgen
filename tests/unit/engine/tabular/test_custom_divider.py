@@ -9,6 +9,7 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/unit/engine/tabular/test_custom_divider.py
 """
 
+import pytest
 
 import re
 
@@ -17,7 +18,7 @@ from textfsmgen.engine.tabular import VarColumnTabularTranslator
 from textfsmgen.core.verify import verify
 
 
-def test_ex1():
+def test_parses_two_column_table():
     test_data = dedent("""
         LastWriteTime           Name
         -----------------------|--------------------
@@ -39,12 +40,12 @@ def test_ex1():
         {'lastwritetime': '12/16/2021 12:30:59 PM', 'name': 'CONTRIBUTING.md'}
     ]
 
-    node = VarColumnTabularTranslator(
+    translator = VarColumnTabularTranslator(
         test_data,
         column_divider='|',
         column_count=2
     )
-    table = node.parse_table()
+    table = translator.parse_table()
     assert table
 
     template_snippet = table.to_template_snippet()
@@ -54,7 +55,7 @@ def test_ex1():
     assert ok
 
 
-def test_ex2():
+def test_parses_with_empty_cell():
     test_data = dedent("""
         fruits   | meat    | drinks
         ---------|---------|------------
@@ -72,12 +73,12 @@ def test_ex2():
         {'fruits': 'peach', 'meat': '', 'drinks': 'pepsi soda'}
     ]
 
-    node = VarColumnTabularTranslator(
+    translator = VarColumnTabularTranslator(
         test_data,
         column_divider='|',
         column_count=3
     )
-    table = node.parse_table()
+    table = translator.parse_table()
     assert table
 
     template_snippet = table.to_template_snippet()
@@ -87,7 +88,7 @@ def test_ex2():
     assert ok
 
 
-def test_ex3():
+def test_parses_with_full_enclosing_divider():
     test_data = dedent("""
         +------------+-------------+---------------+
         | fruits     |    meat     |        drinks |
@@ -107,12 +108,12 @@ def test_ex3():
         {'fruits': 'peach', 'meat': '', 'drinks': 'pepsi soda'}
     ]
 
-    node = VarColumnTabularTranslator(
+    translator = VarColumnTabularTranslator(
         test_data,
         column_divider='|',
         column_count=3
     )
-    table = node.parse_table()
+    table = translator.parse_table()
     assert table
 
     template_snippet = table.to_template_snippet()
@@ -122,7 +123,7 @@ def test_ex3():
     assert ok
 
 
-def test_ex4():
+def test_parses_with_left_enclosing_divider():
     test_data = dedent("""
         +------------+-------------+---------------
         | fruits     |    meat     |        drinks        
@@ -142,12 +143,12 @@ def test_ex4():
         {'fruits': 'peach', 'meat': '', 'drinks': 'pepsi soda'}
     ]
 
-    node = VarColumnTabularTranslator(
+    translator = VarColumnTabularTranslator(
         test_data,
         column_divider='|',
         column_count=3
     )
-    table = node.parse_table()
+    table = translator.parse_table()
     assert table
 
     template_snippet = table.to_template_snippet()
@@ -157,7 +158,7 @@ def test_ex4():
     assert ok
 
 
-def test_ex5():
+def test_parses_with_right_enclosing_divider():
     test_data = dedent("""
         -----------+-------------+---------------+
         fruits     |    meat     |        drinks |
@@ -177,12 +178,12 @@ def test_ex5():
         {'fruits': 'peach', 'meat': '', 'drinks': 'pepsi soda'}
     ]
 
-    node = VarColumnTabularTranslator(
+    translator = VarColumnTabularTranslator(
         test_data,
         column_divider='|',
         column_count=3
     )
-    table = node.parse_table()
+    table = translator.parse_table()
     assert table
 
     template_snippet = table.to_template_snippet()
@@ -192,33 +193,136 @@ def test_ex5():
     assert ok
 
 
-# def test_ex6():
-#     test_data = dedent("""
-#         fruits|meat|drinks
-#         orange|pork|water
-#         peach||pepsi soda
-#                 """).strip()
-#
-#     expected_snippet = dedent("""
-#     """).strip()
-#
-#     expected_result = [
-#         {'fruits': 'orange', 'meat': 'pork', 'drinks': 'water'},
-#         {'fruits': 'peach', 'meat': '', 'drinks': 'pepsi soda'}
-#     ]
-#
-#     node = VarColumnTabularTranslator(
-#         test_data,
-#         column_divider='|',
-#         column_count=3,
-#         has_header_row=True
-#     )
-#     table = node.parse_table()
-#     assert table
-#
-#     template_snippet = table.to_template_snippet()
-#     breakpoint()
-#     assert template_snippet == expected_snippet
-#
-#     ok = verify(template_snippet, test_data, expected_result=expected_result)
-#     assert ok
+def test_parses_with_purge_divider():
+    test_data = dedent("""
+        fruits|meat|drinks
+        orange|pork|water
+        peach||pepsi soda
+                """).strip()
+
+    expected_snippet = dedent("""
+        fruits|meat|drinks
+        start() word(var_fruits)|word(var_meat, or_empty)|words(var_drinks) end() -> record
+    """).strip()
+
+    expected_result = [
+        {'fruits': 'orange', 'meat': 'pork', 'drinks': 'water'},
+        {'fruits': 'peach', 'meat': '', 'drinks': 'pepsi soda'}
+    ]
+
+    translator = VarColumnTabularTranslator(
+        test_data,
+        column_divider='|',
+        column_count=3,
+        has_header_row=True
+    )
+    table = translator.parse_table()
+    assert table
+
+    template_snippet = table.to_template_snippet()
+    assert template_snippet == expected_snippet
+
+    ok = verify(template_snippet, test_data, expected_result=expected_result)
+    assert ok
+
+
+@pytest.mark.skip(reason="Pending implementation of left‑purge divider handling")
+def test_parses_with_left_purge_divider():
+    test_data = dedent("""
+        |fruits|meat|drinks
+        |orange|pork|water
+        |peach|beef|pepsi soda
+                """).strip()
+
+    expected_snippet = dedent("""
+        |fruits|meat|drinks
+        start() |word(var_fruits)|word(var_meat)|words(var_drinks) end() -> record
+    """).strip()
+
+    expected_result = [
+        {'fruits': 'orange', 'meat': 'pork', 'drinks': 'water'},
+        {'fruits': 'peach', 'meat': 'beef', 'drinks': 'pepsi soda'}
+    ]
+
+    translator = VarColumnTabularTranslator(
+        test_data,
+        column_divider='|',
+        column_count=3,
+        has_header_row=True
+    )
+    table = translator.parse_table()
+    assert table
+
+    template_snippet = table.to_template_snippet()
+    assert template_snippet == expected_snippet
+
+    ok = verify(template_snippet, test_data, expected_result=expected_result)
+    assert ok
+
+
+@pytest.mark.skip(reason="Pending implementation of right‑purge divider handling")
+def test_parses_with_right_purge_divider():
+    test_data = dedent("""
+        fruits|meat|drinks|
+        orange|pork|water|
+        peach|beef|pepsi soda|
+                """).strip()
+
+    expected_snippet = dedent("""
+        fruits|meat|drinks|
+        start() word(var_fruits)|word(var_meat)|words(var_drinks)| end() -> record
+    """).strip()
+
+    expected_result = [
+        {'fruits': 'orange', 'meat': 'pork', 'drinks': 'water'},
+        {'fruits': 'peach', 'meat': 'beef', 'drinks': 'pepsi soda'}
+    ]
+
+    translator = VarColumnTabularTranslator(
+        test_data,
+        column_divider='|',
+        column_count=3,
+        has_header_row=True
+    )
+    table = translator.parse_table()
+    assert table
+
+    template_snippet = table.to_template_snippet()
+    assert template_snippet == expected_snippet
+
+    ok = verify(template_snippet, test_data, expected_result=expected_result)
+    assert ok
+
+
+@pytest.mark.skip(reason="Pending implementation of full‑purge divider handling")
+def test_parses_with_full_purge_divider():
+    test_data = dedent("""
+        |fruits|meat|drinks|
+        |orange|pork|water|
+        |peach|beef|pepsi soda|
+                """).strip()
+
+    expected_snippet = dedent("""
+        |fruits|meat|drinks|
+        start() |word(var_fruits)|word(var_meat)|words(var_drinks)| end() -> record
+    """).strip()
+
+    expected_result = [
+        {'fruits': 'orange', 'meat': 'pork', 'drinks': 'water'},
+        {'fruits': 'peach', 'meat': 'beef', 'drinks': 'pepsi soda'}
+    ]
+
+    translator = VarColumnTabularTranslator(
+        test_data,
+        column_divider='|',
+        column_count=3,
+        has_header_row=True
+    )
+    table = translator.parse_table()
+    assert table
+
+    template_snippet = table.to_template_snippet()
+    assert template_snippet == expected_snippet
+
+    ok = verify(template_snippet, test_data, expected_result=expected_result)
+    assert ok
