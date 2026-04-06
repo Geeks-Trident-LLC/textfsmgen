@@ -124,10 +124,6 @@ class TabularTranslator(RuntimeException):
         lines = self.lines[start:end]
         self.tabular_parser = VarColumnTabularTranslator(*lines, **self.kwargs)
 
-    def to_regex(self) -> str:
-        """Return a regex pattern generated from the parsed table."""
-        return self.tabular_parser.to_regex() if self else ""
-
     def to_template_snippet(self) -> str:
         """Return a template snippet generated from the parsed table."""
         tmpl_snippet = (
@@ -706,18 +702,6 @@ class VarColumnTabularTranslator(RuntimeException):
 
         return table
 
-    def to_regex(self) -> str:
-        """Convert parsed tabular text into a regex pattern."""
-        table = self.parse_table()
-        if not table:
-            self.raise_runtime_error(
-                msg=(
-                    f"Unable to build regex pattern in {self.__class__.__name__}.\n"
-                    "Reason: Provided text is not in a valid tabular format."
-                )
-            )
-        return table.to_regex()
-
     def to_template_snippet(self) -> str:
         """Convert parsed tabular text into a template snippet."""
         table = self.parse_table()
@@ -1130,43 +1114,8 @@ class ParsedTable(RuntimeException):
         self.assign_column_names()
 
     # -------------------------------
-    # Regex and template generation
+    # template generation
     # -------------------------------
-
-    def to_regex(self) -> str:
-        """Generate a regex pattern representing the table structure."""
-        if not self:
-            return ""
-
-        lst: List[str] = []
-        does_prev_col_has_empty_cell = False
-        divider_pat = f' *{re.escape(self.column_divider)} *'
-        divider_leading_pat = f'{re.escape(self.column_divider)} *'
-        divider_trailing_pat = f' *{re.escape(self.column_divider)}'
-
-        for column in self.columns:
-            has_empty_cell = does_prev_col_has_empty_cell or column.has_empty_cell
-            if self.has_divider:
-                if lst:
-                    lst.append(divider_pat)
-            else:
-                sep_pat = PATTERN.SPACE if has_empty_cell else PATTERN.SPACES
-                if lst:
-                    lst.append(sep_pat)
-
-            lst.append(column.to_regex())
-            does_prev_col_has_empty_cell = column.has_empty_cell
-
-        if self.is_start_with_divider:
-            lst.insert(0, divider_leading_pat)
-        if self.is_leading:
-            lst.insert(0, ' *')
-        if self.is_end_with_divider:
-            lst.append(divider_trailing_pat)
-        if self._is_trailing:
-            lst.append(' *')
-
-        return text.join_string(*lst)
 
     def get_header_lines_snippet(self) -> str:
         """Extract header lines snippet."""
@@ -2280,35 +2229,6 @@ class Column:
         key = f"{int(len(left_edges) == 1)}{int(len(right_edges) == 1)}"
         alignment_map = {"11": "left", "10": "left", "01": "right", "00": "center"}
         self._alignment = alignment_map.get(key, "left")
-
-    def to_regex(self) -> str:
-        """Generate a regex pattern for the column based on its cells."""
-        if not self:
-            return ""
-
-        pat = PATTERN.OPTIONAL_PUNCTS_GROUP
-        texts = [cell.text for cell in self.cells
-                 if cell.text and not re.fullmatch(pat, cell.line.strip())]
-        if self.extra_data:
-            texts.extend(self.extra_data)
-
-        if not texts:
-            return ""
-
-        node = PatternTranslator.do_factory_create(*texts, multiple=True)
-        pattern = node.get_regex_pattern(var=self.name)
-
-        if node.is_group() and not self.is_last:
-            max_items = max(cell.items_count for cell in self.cells)
-            occurrence = max_items - 1
-            if occurrence > 0:
-                pattern = f"{pattern[:-2]}{{,{occurrence}}})"
-
-        if self.has_empty_cell:
-            first, last = str.split(pattern, ">", maxsplit=1)
-            pattern = f"{first}>( {{{self.width},{self.max_width}}})|( *{last[:-1]} *))"
-
-        return pattern
 
     def to_template_snippet(
         self,
