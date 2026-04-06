@@ -241,7 +241,7 @@ class PatternTranslator(RuntimeException):
             msg=msg,
         )
 
-    def get_readable_snippet(self, var: str = "") -> str:
+    def to_readable_snippet(self, var: str = "") -> str:
         """
         Generate a human-readable snippet representation of the pattern.
         """
