@@ -127,29 +127,6 @@ class SeparatorNode(LineData):
         """Initialize a SeparatorNode with the given separator."""
         super().__init__(sep)
 
-    def to_regex(self) -> str:
-        """Convert a category-separator data structure into a regex pattern."""
-        raw = self.raw_data
-        cleaned = raw.strip()
-
-        # Always work with a Line object once
-        line = text.Line(raw)
-
-        # If there is meaningful content, build the pattern with optional leading/trailing spaces
-        if cleaned:
-            pattern_parts = [text.Line(cleaned).convert_to_regex_pattern()]
-
-            if line.is_leading:
-                pattern_parts.insert(0, r" *")
-
-            if line.is_trailing:
-                pattern_parts.append(r" *")
-
-            return "".join(pattern_parts)
-
-        # Fallback: empty or whitespace-only input
-        return line.convert_to_regex_pattern()
-
     def to_template_snippet(self) -> str:
         """Generate a line textfsm snippet."""
         return f"{self.leading}{TextPattern(self.data)}{self.trailing}"
@@ -165,10 +142,6 @@ class SpacerNode(LineData):
         super().__init__("")
         self.is_empty = is_empty
 
-    def to_regex(self) -> str:
-        """Convert the spacer configuration into a regex pattern."""
-        return ' *' if self.is_empty else PATTERN.SPACES
-
     def to_template_snippet(self) -> str:
         """Generate a template snippet for the spacer."""
         return "optional_spaces()" if self.is_empty else "  "
@@ -182,10 +155,6 @@ class LeftDataNode(LineData):
     def __init__(self, data: str):
         """Initialize a LeftDataNode with the given raw data string."""
         super().__init__(data)
-
-    def to_regex(self) -> str:
-        """Convert raw data into a regex pattern."""
-        return TextPattern(self.raw_data)
 
     def to_template_snippet(self) -> str:
         """Generate a template snippet for the raw data."""
@@ -205,13 +174,6 @@ class RightDataNode(LineData):
 
     @property
     def is_empty(self) -> bool: return self.data == ""
-
-    def to_regex(self) -> str:
-        """Convert the data into a regex pattern."""
-        if self.data:
-            translator = PatternTranslator.do_factory_create(self.data)
-            return translator.get_regex_pattern(var=self.var_name)
-        return f"(?P<{self.var_name}>.*|)"
 
     def to_template_snippet(self):
         if self.data:
@@ -287,36 +249,6 @@ class CategoryLineTranslator(LineData):
             if isinstance(node, type(self)) and node.contains_var_name(target):
                 return True
         return False
-
-    def to_regex(self) -> str:
-        """
-        Convert the parsed line into a regex pattern.
-        """
-        optional_spaces_pat = ' *'
-        result: list[str] = [
-            optional_spaces_pat if self.is_leading else ""]
-        prev_item, is_last_item_empty, item = None, False, None
-
-        for item in self._lst:
-            pat = item.to_regex()
-            if (
-                isinstance(item, RightDataNode) and
-                item.is_empty and prev_item and not prev_item.is_trailing
-            ):
-                pat = f"{optional_spaces_pat}{pat}"
-            result.append(pat)
-            prev_item = item
-        else:
-            if isinstance(item, RightDataNode) and item.is_empty:
-                is_last_item_empty = True
-
-        if is_last_item_empty:
-            result.append(
-                optional_spaces_pat if self.is_trailing else "")
-
-        pattern = "".join(result)
-        replaced_pat = r"( +)(anything[\(]var_\w+, or_empty[\)])"
-        return re.sub(replaced_pat, r"optional_spaces()\2", pattern)
 
     def to_template_snippet(self) -> str:
         """
@@ -614,19 +546,6 @@ class CategoryLinesTranslator(RuntimeException):
         """Raise an error if the parsed lines are not in category format."""
         if not self.is_category_format:
             self.raise_runtime_error(msg="Text is not in category format.")
-
-    def to_regex(self) -> str:
-        """
-        Convert the parsed lines into a regex pattern.
-        """
-        self.validate_category_format()
-
-        result: list[str] = []
-        for item in self._lst:
-            is_category_line_pat = isinstance(item, CategoryLineTranslator)
-            result.append(item.to_regex() if is_category_line_pat else TextPattern(item))
-
-        return str.join(f"({PATTERN_CRNL})", result)
 
     def to_template_snippet(self) -> str:
         """Generate a template snippet string from parsed lines."""
