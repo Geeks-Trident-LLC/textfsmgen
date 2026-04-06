@@ -983,28 +983,6 @@ class ParsedTable(RuntimeException):
             last_column.add_extra_data(self.last_column_data_info.get('lst_data'))
 
     # -------------------------------
-    # Conversion utilities
-    # -------------------------------
-
-    def to_list_of_dict(self) -> List[Dict[str, str]]:
-        """Convert table rows into a list of dictionaries."""
-        lst_of_dict: List[Dict[str, str]] = []
-        divider = self.column_divider
-
-        for row_index, row in enumerate(self.rows):
-            if row.is_punct_group:
-                continue
-
-            row_dict: Dict[str, str] = {}
-            for col in self.columns:
-                txt = col.cells[row_index].data.strip()
-                txt = txt.strip(divider).strip() if divider else txt
-                row_dict[col.name] = txt
-            lst_of_dict.append(row_dict)
-
-        return lst_of_dict
-
-    # -------------------------------
     # Header cleaning and building
     # -------------------------------
 
