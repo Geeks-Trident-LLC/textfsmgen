@@ -14,10 +14,7 @@ import re
 
 from textwrap import dedent
 
-from textfsmgen.libs.utils import get_data_as_tabular
-
 from textfsmgen.engine.tabular import VarColumnTabularTranslator
-
 from textfsmgen.core.verify import verify
 
 

@@ -773,9 +773,13 @@ class ParsedTable(RuntimeException):
 
         self.has_divider: bool = bool(self.column_divider.strip())
 
-        self.divider_snippet: str = f'optional_spaces(){self.column_divider}optional_spaces()'
-        self.divider_leading_snippet: str = f'{self.column_divider}optional_spaces()'
-        self.divider_trailing_snippet: str = f'optional_spaces(){self.column_divider}'
+        self.divider_snippet: str = ""
+        self.divider_leading_snippet: str = ""
+        self.divider_trailing_snippet: str = ""
+
+        # self.divider_snippet: str = f'optional_spaces(){self.column_divider}optional_spaces()'
+        # self.divider_leading_snippet: str = f'{self.column_divider}optional_spaces()'
+        # self.divider_trailing_snippet: str = f'optional_spaces(){self.column_divider}'
 
         self.process()
 
@@ -835,6 +839,66 @@ class ParsedTable(RuntimeException):
     def last_column(self) -> 'Column':
         """Return the last column."""
         return self.columns[-1]
+
+    # -------------------------------
+    #  divider snippet
+    # -------------------------------
+    def build_divider_snippets(self):
+        """Analyze divider patterns in lines and derive leading, middle, and trailing snippets."""
+        if not self.has_divider:
+            return
+
+        div = re.escape(self.column_divider)
+        first_hits, last_hits, mid_hits = [], [], []
+
+        for line in self.lines:
+            parts = re.findall(rf"\s*{div}\s*", line)
+            count = len(parts)
+
+            # Case: only middle dividers (--- --- ---)
+            if count == self.column_count - 1:
+                mid_hits.extend(parts)
+
+            # Case: full row with leading + trailing divider
+            elif count == self.column_count + 1:
+                first_hits.append(parts[0])
+                last_hits.append(parts[-1])
+                mid_hits.extend(parts[1:-1])
+
+            # Case: ambiguous row with either leading or trailing divider
+            elif count == self.column_count:
+                if re.match(rf"\s*{div}\s*", line):
+                    first_hits.append(parts[0])
+                    mid_hits.extend(parts[1:])
+                else:
+                    if len(parts) >= 2:
+                        last_hits.append(parts[-2])
+                    mid_hits.extend(parts[:-1])
+
+        # Deduplicate
+        first_hits = list(set(first_hits))
+        last_hits = list(set(last_hits))
+        mid_hits = list(set(mid_hits))
+
+        # Leading snippet
+        if first_hits:
+            if len(first_hits) == 1 and first_hits[0] == self.column_divider:
+                self.divider_leading_snippet = self.column_divider
+            else:
+                self.divider_leading_snippet = f"{self.column_divider}optional_spaces()"
+
+        # Trailing snippet
+        if last_hits:
+            if len(last_hits) == 1 and last_hits[0] == self.column_divider:
+                self.divider_trailing_snippet = self.column_divider
+            else:
+                self.divider_trailing_snippet = f"optional_spaces(){self.column_divider}"
+
+        # Middle snippet
+        if len(mid_hits) == 1 and mid_hits[0] == self.column_divider:
+            self.divider_snippet = self.column_divider
+        else:
+            self.divider_snippet = f"optional_spaces(){self.column_divider}optional_spaces()"
 
     # -------------------------------
     # Line preparation
@@ -1126,6 +1190,7 @@ class ParsedTable(RuntimeException):
         if self.has_header_row and headers_snippet:
             snippets.append(headers_snippet)
 
+        self.build_divider_snippets()
         self.build_last_column_snippet(snippets)
         self.build_first_column_snippet(snippets)
         self.build_other_column_snippet(snippets)
@@ -1961,6 +2026,9 @@ class Column:
         self.right_column = right_column
         self.is_last = is_last
 
+        self.column_divider = column_divider
+        self.has_divider = bool(column_divider.strip())
+
         # Identity
         self.index = index
         self.name = name or f"col{index}"
@@ -1991,6 +2059,28 @@ class Column:
 
     @property
     def rows_count(self) -> int: return self.cells_count
+
+    @property
+    def cell_texts(self):
+        """Return a list of cell text values, stripping dividers when present."""
+        if not self:
+            return []
+
+        texts = []
+        pat = PATTERN.OPTIONAL_PUNCTS_GROUP
+        for cell in self.cells:
+            txt = cell.text
+            if not txt or re.fullmatch(pat, cell.line.strip()):
+                continue
+
+            if self.has_divider:
+                cleaned = txt.strip(self.column_divider).strip()
+                if cleaned:
+                    texts.append(cleaned)
+            else:
+                texts.append(txt)
+
+        return texts.copy()
 
     @property
     def is_left_alignment(self) -> bool:
@@ -2070,7 +2160,13 @@ class Column:
     @property
     def has_empty_cell(self) -> bool:
         """Return True if any cell in the column is empty."""
-        return any(cell.is_empty for cell in self.cells)
+        if not self.has_divider:
+            return any(cell.is_empty for cell in self.cells)
+
+        for cell in self.cells:
+            if cell.text.strip() == self.column_divider:
+                return True
+        return False
 
     def add_extra_data(self, extra_data) -> None:
         """Attach extra metadata to the column."""
@@ -2131,9 +2227,7 @@ class Column:
         if not self:
             return ""
 
-        pat = PATTERN.OPTIONAL_PUNCTS_GROUP
-        texts = [cell.text for cell in self.cells
-                 if cell.text and not re.fullmatch(pat, cell.line.strip())]
+        texts = self.cell_texts
         if self.extra_data:
             texts.extend(self.extra_data)
 
@@ -2146,8 +2240,12 @@ class Column:
             kwargs.update(generic=False)
         snippet = node.get_template_snippet(**kwargs)
 
-        if to_bared_snippet or (skipped_empty and not added_list_meta_data):
-            return snippet
+        if self.has_divider:
+            if self.has_empty_cell:
+                snippet = snippet[:-1] + ", or_empty)"
+        else:
+            if to_bared_snippet or (skipped_empty and not added_list_meta_data):
+                return snippet
 
         # if node.is_group() and not self.is_last:
         #     max_items = max(cell.items_count for cell in self.cells)
