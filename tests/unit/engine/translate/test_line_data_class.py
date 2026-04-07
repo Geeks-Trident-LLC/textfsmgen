@@ -9,7 +9,8 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/unit/translate/test_line_data_class.py
 """
 
-import pytest
+import pytest   # noqa
+
 from textfsmgen.engine import LineData
 
 

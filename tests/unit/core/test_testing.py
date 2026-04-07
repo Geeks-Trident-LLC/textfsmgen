@@ -1,4 +1,16 @@
-import pytest
+"""
+Unit tests for the `textfsmgen.core.testing` module.
+
+Usage
+-----
+Run pytest in the project root to execute these tests:
+    $ pytest tests/unit/core/test_testing.py
+    or
+    $ python -m pytest tests/unit/core/test_testing.py
+"""
+
+import pytest   # noqa
+
 from pathlib import Path, PurePath
 
 from textfsmgen.libs import is_window

@@ -8,7 +8,9 @@ Run pytest in the project root to execute these tests:
     or
     $ python -m pytest tests/unit/engine/common/test_common_module.py
 """
-import pytest
+
+import pytest   # noqa
+
 from textfsmgen.engine.common import get_line_position_by
 from textfsmgen.engine.common import get_fixed_line_snippet
 

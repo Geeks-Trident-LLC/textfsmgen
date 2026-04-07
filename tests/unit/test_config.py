@@ -10,7 +10,8 @@ Run pytest in the project root to execute these tests:
 """
 
 
-import pytest
+import pytest   # noqa
+
 from pathlib import Path
 from pathlib import PurePath
 

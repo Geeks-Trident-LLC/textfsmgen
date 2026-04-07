@@ -9,7 +9,7 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/unit/translate/test_digit_translator_class.py
 """
 
-import pytest
+import pytest   # noqa
 
 from textfsmgen.engine.translate import (
     PatternTranslator,
@@ -17,13 +17,9 @@ from textfsmgen.engine.translate import (
     DigitsTranslator,
     NumberTranslator,
     MixedNumberTranslator,
-# LetterTranslator,
-# LettersTranslator,
+
     AlnumTranslator,
-# PunctTranslator,
-# PunctsTranslator,
-# PunctsGroupTranslator,
-# GraphTranslator,
+
     WordTranslator,
     WordsTranslator,
     MixedWordTranslator,
