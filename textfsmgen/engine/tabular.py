@@ -203,7 +203,7 @@ class VarColumnTabularTranslator(RuntimeException):
     @property
     def is_punct_divider(self):
         """Check if the column_divider is a punctuation symbol."""
-        return bool(re.match(PATTERN.ENDS_WITH_PUNCT, self.column_divider))
+        return bool(re.match(PATTERN.PUNCTS, self.column_divider.strip()))
 
     @property
     def is_start_with_divider(self):
@@ -253,7 +253,6 @@ class VarColumnTabularTranslator(RuntimeException):
 
         # YAML list, tuple, or dict
         if isinstance(result, (list, tuple, dict)):
-            values = None
 
             # YAML dict → keys = headers, values = row
             if isinstance(result, dict):
@@ -889,7 +888,7 @@ class ParsedTable(RuntimeException):
     # Line preparation
     # -------------------------------
 
-    def prepare_lines(self, lines: List[str]) -> List[str]:
+    def prepare_lines(self, lines) -> List[str]:
         """Normalize and preprocess input lines, handling user markers."""
 
         def update_last_column_info(
@@ -1598,13 +1597,13 @@ class Cell(RuntimeException):
             # skip adjustment
             return
 
-        postfix = previous.get_postfix_data()
+        postfix = prev_cell.get_postfix_data()
         if not postfix:
             return
 
         shift = len(postfix) + 1
         self.update_position("left", value=self.left - shift)
-        previous.update_position("right", value=self.right - shift)
+        prev_cell.update_position("right", value=self.right - shift)
 
     def process(self) -> None:
         """Validate positions and initialize cell data."""
