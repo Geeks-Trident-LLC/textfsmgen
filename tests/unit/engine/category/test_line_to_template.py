@@ -192,7 +192,7 @@ def test(line, count, exp_snippet, exp_template, exp_result):
     # --- Action ---
     VAR_REGISTRY.reset()
     node = CategoryLineTranslator(line, count=count)
-    generated_snippet = node.to_template_snippet()
+    generated_snippet = node.to_snippet()
     # --- Assertions ---
     # Snippet matches expected
     assert generated_snippet == exp_snippet, (

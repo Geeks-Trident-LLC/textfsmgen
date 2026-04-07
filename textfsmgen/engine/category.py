@@ -127,7 +127,7 @@ class SeparatorNode(LineData):
         """Initialize a SeparatorNode with the given separator."""
         super().__init__(sep)
 
-    def to_template_snippet(self) -> str:
+    def to_snippet(self) -> str:
         """Generate a line textfsm snippet."""
         return f"{self.leading}{TextPattern(self.data)}{self.trailing}"
 
@@ -142,7 +142,7 @@ class SpacerNode(LineData):
         super().__init__("")
         self.is_empty = is_empty
 
-    def to_template_snippet(self) -> str:
+    def to_snippet(self) -> str:
         """Generate a template snippet for the spacer."""
         return "optional_spaces()" if self.is_empty else "  "
 
@@ -156,7 +156,7 @@ class LeftDataNode(LineData):
         """Initialize a LeftDataNode with the given raw data string."""
         super().__init__(data)
 
-    def to_template_snippet(self) -> str:
+    def to_snippet(self) -> str:
         """Generate a template snippet for the raw data."""
         return self.raw_data
 
@@ -175,7 +175,7 @@ class RightDataNode(LineData):
     @property
     def is_empty(self) -> bool: return self.data == ""
 
-    def to_template_snippet(self):
+    def to_snippet(self):
         if self.data:
             translator = PatternTranslator.do_factory_create(self.data, multiple=True)
             snippet = translator.to_snippet(var=self.var_name)
@@ -250,7 +250,7 @@ class CategoryLineTranslator(LineData):
                 return True
         return False
 
-    def to_template_snippet(self) -> str:
+    def to_snippet(self) -> str:
         """
         Generate a template snippet string from parsed nodes.
         """
@@ -258,11 +258,11 @@ class CategoryLineTranslator(LineData):
         prev_item, is_last_item_empty, item = None, False, None
 
         for item in self._lst:
-            snippet = item.to_template_snippet()
+            snippet = item.to_snippet()
             if (
                 isinstance(item, SpacerNode) and
                 isinstance(prev_item, RightDataNode) and
-                prev_item.to_template_snippet().endswith("wss()")
+                prev_item.to_snippet().endswith("wss()")
             ):
                 continue
 
@@ -568,7 +568,7 @@ class CategoryLinesTranslator(RuntimeException):
                 if is_duplicated:
                     result[-1] = f"{result[-1]} -> {dup_var_name}\n{dup_var_name}"
 
-            result.append(node.to_template_snippet())
+            result.append(node.to_snippet())
 
         tmpl_snippet = text.join_string(*result, separator="\n")
 
