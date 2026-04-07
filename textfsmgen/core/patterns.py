@@ -941,7 +941,7 @@ class LinePattern(str):
             return
 
         total = len(lst)
-        ws_pat = ElementPattern('zero_or_whitespaces()')
+        ws_pat = ElementPattern('optional_wss()')
         insert_indices = []
         for index, item in enumerate(lst[1:], 1):
             prev_item = lst[index-1]
