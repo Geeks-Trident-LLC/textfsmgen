@@ -11,7 +11,6 @@ Run pytest in the project root to execute these tests:
 
 import pytest
 
-import re
 
 from textwrap import dedent
 from textfsmgen.engine.tabular import VarColumnTabularTranslator

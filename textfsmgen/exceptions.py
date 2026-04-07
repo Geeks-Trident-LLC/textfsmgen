@@ -7,7 +7,6 @@ Custom exception classes for the TextFSM Generator library.
 """
 
 from typing import Type, Optional
-import re
 
 
 class PatternError(Exception):

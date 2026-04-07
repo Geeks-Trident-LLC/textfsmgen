@@ -12,7 +12,7 @@ import math
 import statistics
 import operator as op
 import re
-import copy
+
 import yaml
 
 from textfsmgen.core.patterns import LinePattern

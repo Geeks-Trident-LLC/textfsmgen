@@ -6,8 +6,6 @@ Entry point for the TextFSM Generator command‑line interface (CLI).
 """
 
 import argparse
-import re
-import yaml
 
 from textfsmgen.libs.common import sys_exit
 from textfsmgen.libs.common import decorate_list_of_line

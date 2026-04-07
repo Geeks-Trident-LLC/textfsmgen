@@ -7,7 +7,7 @@ Utilities for testing pattern resolution and keyword mappings.
 
 import re
 import tempfile
-from pathlib import Path, PurePath
+from pathlib import Path
 from datetime import datetime
 
 from textfsmgen.libs import shell

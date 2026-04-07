@@ -19,8 +19,8 @@ from os import path
 
 import tkinter as tk
 from tkinter import ttk
-from tkinter import messagebox
-from tkinter.font import Font
+from tkinter import messagebox      # noqa
+from tkinter.font import Font       # noqa
 
 is_macos = platform.system() == 'Darwin'
 is_linux = platform.system() == 'Linux'

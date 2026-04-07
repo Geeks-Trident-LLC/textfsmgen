@@ -7,7 +7,7 @@ General-purpose utility functions used across TextFSMGen.
 
 import re
 from collections import defaultdict
-from textwrap import wrap
+
 from pprint import pprint
 
 from .pattern import PATTERN

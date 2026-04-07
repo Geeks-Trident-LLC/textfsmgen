@@ -8,8 +8,6 @@ Run pytest in the project root to execute these tests:
     or
     $ python -m pytest tests/unit/engine/category/test_starting_from_ending_at_param.py
 """
-import re
-import pytest
 
 from textfsmgen.core.template import get_textfsm_template
 from textfsmgen.core.verify import verify

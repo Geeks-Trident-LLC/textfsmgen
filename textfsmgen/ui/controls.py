@@ -5,8 +5,6 @@ textfsmgen.ui.controls
 Reusable UI controls buttons for the TextFSMGen application.
 """
 
-import tkinter as tk
-
 from textfsmgen import ui
 from textfsmgen.ui import callback
 from textfsmgen.ui import settings

@@ -8,8 +8,6 @@ Callback functions for UI actions in TextFSMGen.
 import re
 from io import StringIO
 
-from pathlib import Path
-from pathlib import PurePath
 from textfsm import TextFSM
 from pprint import pformat
 

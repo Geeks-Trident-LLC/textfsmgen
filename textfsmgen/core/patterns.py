@@ -7,12 +7,7 @@ Core regex pattern definitions for the TextFSM generator.
 
 
 import re
-from typing import Optional, Type
-from pathlib import Path
-from pathlib import PurePath
 
-import yaml
-import string
 from copy import copy
 
 from textfsmgen.core.registry import PatternRegistry, SymbolCls
