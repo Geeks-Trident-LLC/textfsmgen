@@ -122,6 +122,7 @@ class Application:
             test_data_flag=tk.BooleanVar(),
             template_flag=tk.BooleanVar(),
             tabular_flag=tk.BooleanVar(),
+            index_flag=tk.BooleanVar()
         )
 
         # General arguments

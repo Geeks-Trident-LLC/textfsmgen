@@ -220,9 +220,10 @@ def add_output_display_options(app, parent: ui.Frame) -> None:
     group.grid(row=4, column=0, padx=10, pady=10, sticky="nw")
 
     settings = [
-        ("Test Data",   app.settings.test_data_flag, 0, 0, 6),
-        ("Template",    app.settings.template_flag,  0, 1, 10),
-        ("Tabular",     app.settings.tabular_flag,   0, 2, 10),
+        ("Test Data",   app.settings.test_data_flag,    0, 0, 6),
+        ("Template",    app.settings.template_flag,     0, 1, 10),
+        ("Tabular",     app.settings.tabular_flag,      0, 2, 10),
+        ("Index",       app.settings.index_flag,        0, 3, 10),
     ]
 
     for label, var, row, col, pad in settings:
@@ -289,3 +290,4 @@ def reset_default_setting(app):
     app.settings.test_data_flag.set(False)
     app.settings.template_flag.set(False)
     app.settings.tabular_flag.set(True)
+    app.settings.index_flag.set(False)

@@ -731,7 +731,8 @@ def show_result(app):
         result_sections.append("\n<<====================>>\n")
 
     if app.settings.tabular_flag.get():
-        result_sections.append(get_data_as_tabular(rows))
+        with_index = app.settings.index_flag.get()
+        result_sections.append(get_data_as_tabular(rows, with_index=with_index))
     else:
         pretty_data = pformat(rows)
         result_sections.append(pretty_data)
