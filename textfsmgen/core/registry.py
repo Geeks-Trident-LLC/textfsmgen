@@ -55,7 +55,7 @@ class PatternRegistry(dict):
                 else:
                     if warn:
                         logger.warning(
-                            "%r already exists; skipping update for %r.", key, val
+                            "%r already exists; skipping update for %r.", key, value
                         )
         except Exception as ex:
             raise_exception(ex, cls=PatternReferenceError)
@@ -80,13 +80,13 @@ class PatternRegistry(dict):
         return pattern.resolve_pattern(key, default=default)
 
 
-
 class SymbolCls(dict):
     """
     Dictionary-like container for symbol references loaded from `symbols.yaml`.
     """
 
     def __init__(self):
+        super().__init__()
         self._update_symbols()
 
     def _update_symbols(self):
