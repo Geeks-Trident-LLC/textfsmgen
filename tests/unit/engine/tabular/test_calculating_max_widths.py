@@ -25,16 +25,16 @@ def test():
         val5.1
     """).strip()
 
-    expected_tmpl_snippet = dedent("""
+    exp_snippet = dedent("""
         a        b
         start() mixed_word(var_a)  mixed_word(var_b) end(space) -> record
         start() mixed_word(var_a) end(space) -> record
         start() 7_9_space() mixed_word(var_b) end(space) -> record
     """).strip()
 
-    node = TabularTranslator(text)
-    tmpl_snippet = node.to_template_snippet()
-    assert tmpl_snippet == expected_tmpl_snippet
+    translator = TabularTranslator(text)
+    snippet = translator.to_snippet()
+    assert snippet == exp_snippet
 
 
 def test_other_case():
@@ -50,7 +50,7 @@ val5.1   val5.2
 val7.1
     """).strip()
 
-    expected_tmpl_snippet = dedent("""
+    exp_snippet = dedent("""
 a        b       c
 start() mixed_word(var_a)  mixed_word(var_b)  mixed_word(var_c) end() -> record
 start() mixed_word(var_a)  mixed_word(var_b) end(space) -> record
@@ -61,6 +61,6 @@ start() 7_9_space() mixed_word(var_b) end(space) -> record
 start() 15_17_space() mixed_word(var_c) end() -> record
     """).strip()
 
-    node = TabularTranslator(text)
-    tmpl_snippet = node.to_template_snippet()
-    assert tmpl_snippet == expected_tmpl_snippet
+    translator = TabularTranslator(text)
+    snippet = translator.to_snippet()
+    assert snippet == exp_snippet

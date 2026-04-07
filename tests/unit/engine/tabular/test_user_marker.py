@@ -23,16 +23,16 @@ val1.1   val1.2  val1.3
 val3.1   val3.2  val3.3
     """).strip()
 
-    expected_tmpl_snippet = dedent("""
+    exp_snippet = dedent("""
 a        b       c
 start() mixed_word(var_a) end(space) -> Next
 start() 5_9_space() mixed_word(var_b)  mixed_word(var_c) end() -> record
 start() mixed_word(var_a)  mixed_word(var_b)  mixed_word(var_c) end() -> record
     """).strip()
 
-    node = TabularTranslator(text)
-    tmpl_snippet = node.to_template_snippet()
-    assert tmpl_snippet == expected_tmpl_snippet
+    translator = TabularTranslator(text)
+    snippet = translator.to_snippet()
+    assert snippet == exp_snippet
 
 
 def test_mark_multi_line():
@@ -46,13 +46,13 @@ val1.1   val1.2  val1.3
 val3.1   val3.2  val3.3
     """).strip()
 
-    expected_tmpl_snippet = dedent("""
+    exp_snippet = dedent("""
 a        b       c
 start() mixed_word()optional_spaces() -> continue.record
 start() mixed_word(var_a)  mixed_word(var_b)  mixed_word(var_c, meta_data_list) end(space) -> continue
 start() 13_19_space() mixed_word(var_c, meta_data_list) end(space) -> continue
     """).strip()
 
-    node = TabularTranslator(text)
-    tmpl_snippet = node.to_template_snippet()
-    assert tmpl_snippet == expected_tmpl_snippet
+    translator = TabularTranslator(text)
+    snippet = translator.to_snippet()
+    assert snippet == exp_snippet

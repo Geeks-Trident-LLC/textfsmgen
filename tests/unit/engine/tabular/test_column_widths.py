@@ -21,12 +21,12 @@ def test():
         3         ?               item3.2
     """).strip()
 
-    expected_tmpl_snippet = dedent("""
+    exp_snippet = dedent("""
         index     col1            col2
         start() digits(var_index)  non_wss(var_col1)  mixed_word(var_col2) end() -> record
     """).strip()
 
-    node = TabularTranslator(text, column_widths="10, 15,")
-    tmpl_snippet = node.to_template_snippet()
-    assert tmpl_snippet == expected_tmpl_snippet
+    translator = TabularTranslator(text, column_widths="10, 15,")
+    snippet = translator.to_snippet()
+    assert snippet == exp_snippet
 

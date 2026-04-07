@@ -28,7 +28,7 @@ def test_parses_two_column_table():
         12/16/2021 12:30:59 PM | CONTRIBUTING.md
                 """).strip()
 
-    expected_snippet = dedent("""
+    exp_snippet = dedent("""
         LastWriteTime           Name
         start() 3_mixed_word(var_lastwritetime)optional_spaces()|optional_spaces()mixed_word(var_name) end() -> record
     """).strip()
@@ -48,10 +48,10 @@ def test_parses_two_column_table():
     table = translator.parse_table()
     assert table
 
-    template_snippet = table.to_template_snippet()
-    assert template_snippet == expected_snippet
+    snippet = table.to_snippet()
+    assert snippet == exp_snippet
 
-    ok = verify(template_snippet, test_data, expected_result=expected_result)
+    ok = verify(snippet, test_data, expected_result=expected_result)
     assert ok
 
 
@@ -63,7 +63,7 @@ def test_parses_with_empty_cell():
         peach    |         | pepsi soda
                 """).strip()
 
-    expected_snippet = dedent("""
+    exp_snippet = dedent("""
         fruits   | meat    | drinks
         start() word(var_fruits)optional_spaces()|optional_spaces()word(var_meat, or_empty)optional_spaces()|optional_spaces()words(var_drinks) end() -> record
     """).strip()
@@ -81,10 +81,10 @@ def test_parses_with_empty_cell():
     table = translator.parse_table()
     assert table
 
-    template_snippet = table.to_template_snippet()
-    assert template_snippet == expected_snippet
+    snippet = table.to_snippet()
+    assert snippet == exp_snippet
 
-    ok = verify(template_snippet, test_data, expected_result=expected_result)
+    ok = verify(snippet, test_data, expected_result=expected_result)
     assert ok
 
 
@@ -98,7 +98,7 @@ def test_parses_with_full_enclosing_divider():
         +------------+-------------+---------------+
                 """).strip()
 
-    expected_snippet = dedent("""
+    exp_snippet = dedent("""
         | fruits     |    meat     |        drinks |
         start() |optional_spaces()word(var_fruits)optional_spaces()|optional_spaces()word(var_meat, or_empty)optional_spaces()|optional_spaces()words(var_drinks)optional_spaces()| end() -> record
     """).strip()
@@ -116,10 +116,10 @@ def test_parses_with_full_enclosing_divider():
     table = translator.parse_table()
     assert table
 
-    template_snippet = table.to_template_snippet()
-    assert template_snippet == expected_snippet
+    snippet = table.to_snippet()
+    assert snippet == exp_snippet
 
-    ok = verify(template_snippet, test_data, expected_result=expected_result)
+    ok = verify(snippet, test_data, expected_result=expected_result)
     assert ok
 
 
@@ -133,7 +133,7 @@ def test_parses_with_left_enclosing_divider():
         +------------+-------------+---------------
                 """).strip()
 
-    expected_snippet = dedent("""
+    exp_snippet = dedent("""
         | fruits     |    meat     |        drinks        
         start() |optional_spaces()word(var_fruits)optional_spaces()|optional_spaces()word(var_meat, or_empty)optional_spaces()|optional_spaces()words(var_drinks) end(space) -> record
     """).strip()
@@ -151,10 +151,10 @@ def test_parses_with_left_enclosing_divider():
     table = translator.parse_table()
     assert table
 
-    template_snippet = table.to_template_snippet()
-    assert template_snippet == expected_snippet
+    snippet = table.to_snippet()
+    assert snippet == exp_snippet
 
-    ok = verify(template_snippet, test_data, expected_result=expected_result)
+    ok = verify(snippet, test_data, expected_result=expected_result)
     assert ok
 
 
@@ -168,7 +168,7 @@ def test_parses_with_right_enclosing_divider():
         -----------+-------------+---------------+
                 """).strip()
 
-    expected_snippet = dedent("""
+    exp_snippet = dedent("""
         fruits     |    meat     |        drinks |
         start() word(var_fruits)optional_spaces()|optional_spaces()word(var_meat, or_empty)optional_spaces()|optional_spaces()words(var_drinks)optional_spaces()| end() -> record
     """).strip()
@@ -186,10 +186,10 @@ def test_parses_with_right_enclosing_divider():
     table = translator.parse_table()
     assert table
 
-    template_snippet = table.to_template_snippet()
-    assert template_snippet == expected_snippet
+    snippet = table.to_snippet()
+    assert snippet == exp_snippet
 
-    ok = verify(template_snippet, test_data, expected_result=expected_result)
+    ok = verify(snippet, test_data, expected_result=expected_result)
     assert ok
 
 
@@ -200,7 +200,7 @@ def test_parses_with_purge_divider():
         peach||pepsi soda
                 """).strip()
 
-    expected_snippet = dedent("""
+    exp_snippet = dedent("""
         fruits|meat|drinks
         start() word(var_fruits)|word(var_meat, or_empty)|words(var_drinks) end() -> record
     """).strip()
@@ -219,10 +219,10 @@ def test_parses_with_purge_divider():
     table = translator.parse_table()
     assert table
 
-    template_snippet = table.to_template_snippet()
-    assert template_snippet == expected_snippet
+    snippet = table.to_snippet()
+    assert snippet == exp_snippet
 
-    ok = verify(template_snippet, test_data, expected_result=expected_result)
+    ok = verify(snippet, test_data, expected_result=expected_result)
     assert ok
 
 
@@ -234,7 +234,7 @@ def test_parses_with_left_purge_divider():
         |peach|beef|pepsi soda
                 """).strip()
 
-    expected_snippet = dedent("""
+    exp_snippet = dedent("""
         |fruits|meat|drinks
         start() |word(var_fruits)|word(var_meat)|words(var_drinks) end() -> record
     """).strip()
@@ -253,10 +253,10 @@ def test_parses_with_left_purge_divider():
     table = translator.parse_table()
     assert table
 
-    template_snippet = table.to_template_snippet()
-    assert template_snippet == expected_snippet
+    snippet = table.to_snippet()
+    assert snippet == exp_snippet
 
-    ok = verify(template_snippet, test_data, expected_result=expected_result)
+    ok = verify(snippet, test_data, expected_result=expected_result)
     assert ok
 
 
@@ -268,7 +268,7 @@ def test_parses_with_right_purge_divider():
         peach|beef|pepsi soda|
                 """).strip()
 
-    expected_snippet = dedent("""
+    exp_snippet = dedent("""
         fruits|meat|drinks|
         start() word(var_fruits)|word(var_meat)|words(var_drinks)| end() -> record
     """).strip()
@@ -287,10 +287,10 @@ def test_parses_with_right_purge_divider():
     table = translator.parse_table()
     assert table
 
-    template_snippet = table.to_template_snippet()
-    assert template_snippet == expected_snippet
+    snippet = table.to_snippet()
+    assert snippet == exp_snippet
 
-    ok = verify(template_snippet, test_data, expected_result=expected_result)
+    ok = verify(snippet, test_data, expected_result=expected_result)
     assert ok
 
 
@@ -302,7 +302,7 @@ def test_parses_with_full_purge_divider():
         |peach|beef|pepsi soda|
                 """).strip()
 
-    expected_snippet = dedent("""
+    exp_snippet = dedent("""
         |fruits|meat|drinks|
         start() |word(var_fruits)|word(var_meat)|words(var_drinks)| end() -> record
     """).strip()
@@ -321,8 +321,8 @@ def test_parses_with_full_purge_divider():
     table = translator.parse_table()
     assert table
 
-    template_snippet = table.to_template_snippet()
-    assert template_snippet == expected_snippet
+    snippet = table.to_snippet()
+    assert snippet == exp_snippet
 
-    ok = verify(template_snippet, test_data, expected_result=expected_result)
+    ok = verify(snippet, test_data, expected_result=expected_result)
     assert ok

@@ -705,7 +705,7 @@ class TabularTemplateBuilder:
         self.builder = None
 
         if self.translator:
-            snippet = self.translator.to_template_snippet()
+            snippet = self.translator.to_snippet()
             self.template_builder_args.update(user_data=snippet)
             self.builder = TemplateBuilder(**self.template_builder_args)
 
@@ -715,7 +715,7 @@ class TabularTemplateBuilder:
 
     @property
     def snippet(self):
-        return self.translator.to_template_snippet() if self.translator else ""
+        return self.translator.to_snippet() if self.translator else ""
 
     @property
     def template(self):

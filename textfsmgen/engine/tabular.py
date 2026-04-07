@@ -124,10 +124,10 @@ class TabularTranslator(RuntimeException):
         lines = self.lines[start:end]
         self.tabular_parser = VarColumnTabularTranslator(*lines, **self.kwargs)
 
-    def to_template_snippet(self) -> str:
+    def to_snippet(self) -> str:
         """Return a template snippet generated from the parsed table."""
         tmpl_snippet = (
-            self.tabular_parser.to_template_snippet() if self else ""
+            self.tabular_parser.to_snippet() if self else ""
         )
 
         if not tmpl_snippet.strip():
@@ -702,7 +702,7 @@ class VarColumnTabularTranslator(RuntimeException):
 
         return table
 
-    def to_template_snippet(self) -> str:
+    def to_snippet(self) -> str:
         """Convert parsed tabular text into a template snippet."""
         table = self.parse_table()
         if not table:
@@ -712,7 +712,7 @@ class VarColumnTabularTranslator(RuntimeException):
                     "Reason: Provided text is not in a valid tabular format."
                 )
             )
-        return table.to_template_snippet()
+        return table.to_snippet()
 
 
 class ParsedTable(RuntimeException):
@@ -1130,7 +1130,7 @@ class ParsedTable(RuntimeException):
 
         return text.join_string(*lst, separator="\n")
 
-    def to_template_snippet(self) -> str:
+    def to_snippet(self) -> str:
         """Generate a template snippet representing the table."""
         if not self:
             return ""
@@ -1164,7 +1164,7 @@ class ParsedTable(RuntimeException):
         leading_snippet = 'start(space)' if self.is_leading else 'start()'
         trailing_snippet = 'end(space) -> record' if self.is_trailing else 'end() -> record'
 
-        first_snippet = self.first_column.to_template_snippet(skipped_empty=True)
+        first_snippet = self.first_column.to_snippet(skipped_empty=True)
         first_snippet = f'{leading_snippet} {first_snippet} end(space) -> Next'
 
         indices = self.first_column_data_info.get('indices', [])
@@ -1183,7 +1183,7 @@ class ParsedTable(RuntimeException):
                 if self.last_column_data_info and index == self.column_count - 1:
                     kwargs.update(added_list_meta_data=True)
 
-                col_snippet = column.to_template_snippet(**kwargs)
+                col_snippet = column.to_snippet(**kwargs)
                 parts.append(col_snippet if int(bit) else space_snippet)
 
             sep = self.divider_snippet if self.has_divider else "  "
@@ -1213,7 +1213,7 @@ class ParsedTable(RuntimeException):
 
         leading_snippet = 'start(space)' if self.is_leading else 'start()'
 
-        first_snippet = self.first_column.to_template_snippet(to_bared_snippet=True)
+        first_snippet = self.first_column.to_snippet(to_bared_snippet=True)
         if self.has_divider:
             first_snippet = f'{self.divider_leading_snippet}{first_snippet}'
         snippets.append(f'{leading_snippet} {first_snippet}optional_spaces() -> continue.record')
@@ -1236,7 +1236,7 @@ class ParsedTable(RuntimeException):
                 kwargs = dict()
                 if index == self.column_count - 1:
                     kwargs.update(added_list_meta_data=True)
-                col_snippet = column.to_template_snippet(**kwargs)
+                col_snippet = column.to_snippet(**kwargs)
 
                 if int(bit) or self.has_divider:
                     parts.append(col_snippet if int(bit) else space_snippet)
@@ -1283,7 +1283,7 @@ class ParsedTable(RuntimeException):
             line_snippet = re.sub(pat, r' \1 ', line_snippet)
             snippets.append(line_snippet)
 
-        last_snippet = self.last_column.to_template_snippet(skipped_empty=True, added_list_meta_data=True)
+        last_snippet = self.last_column.to_snippet(skipped_empty=True, added_list_meta_data=True)
         m, n = self.last_column_data_info.get('spacers')
         m = n - 4 if (n - 4) > 0 else m
         spacer_snippet = f'start() {m}_{n+2}_space() {last_snippet} end(space) -> continue'
@@ -1324,7 +1324,7 @@ class ParsedTable(RuntimeException):
                 kwargs = dict()
                 if self.last_column_data_info and index == self.column_count - 1:
                     kwargs.update(added_list_meta_data=True)
-                col_snippet = column.to_template_snippet(**kwargs)
+                col_snippet = column.to_snippet(**kwargs)
 
                 # If bit is 1 or divider is present → direct append
                 if int(bit) or self.has_divider:
@@ -2230,7 +2230,7 @@ class Column:
         alignment_map = {"11": "left", "10": "left", "01": "right", "00": "center"}
         self._alignment = alignment_map.get(key, "left")
 
-    def to_template_snippet(
+    def to_snippet(
         self,
         added_list_meta_data: bool = False,
         skipped_empty: bool = False,

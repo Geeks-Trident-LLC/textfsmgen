@@ -28,12 +28,12 @@ def test_starting_from_and_ending_at_arguments():
         6         ?               item6.2
     """).strip()
 
-    expected_tmpl_snippet = dedent("""
+    exp_snippet = dedent("""
         index     col1            col2 -> Table
         Table
         start() digits(var_index)  non_wss(var_col1)  mixed_word(var_col2) end() -> record
         line k: digits() blab blab -> EOF
     """).strip()
-    node = TabularTranslator(text, column_widths="10, 15,", starting_from=2, ending_at=6)
-    tmpl_snippet = node.to_template_snippet()
-    assert tmpl_snippet == expected_tmpl_snippet
+    translator = TabularTranslator(text, column_widths="10, 15,", starting_from=2, ending_at=6)
+    snippet = translator.to_snippet()
+    assert snippet == exp_snippet

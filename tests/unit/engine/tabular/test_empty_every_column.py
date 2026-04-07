@@ -26,7 +26,7 @@ item5.1
                     item7.3
     """).strip()
 
-    expected_tmpl_snippet = dedent("""
+    exp_snippet = dedent("""
 one       two       three
 start() mixed_word(var_one)  mixed_word(var_two)  mixed_word(var_three) end() -> record
 start() mixed_word(var_one)  mixed_word(var_two) end(space) -> record
@@ -37,7 +37,7 @@ start() 8_10_space() mixed_word(var_two) end(space) -> record
 start() 18_20_space() mixed_word(var_three) end() -> record
     """).strip()    # noqa
 
-    node = TabularTranslator(text)
-    tmpl_snippet = node.to_template_snippet()
-    assert tmpl_snippet == expected_tmpl_snippet
+    translator = TabularTranslator(text)
+    snippet = translator.to_snippet()
+    assert snippet == exp_snippet
 

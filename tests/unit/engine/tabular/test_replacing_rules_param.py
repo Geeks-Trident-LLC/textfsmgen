@@ -28,7 +28,7 @@ def test_yaml_list_of_pairs():
 - - word(var_month)  digits(var_date)  mixed_number(var_time)
   - 3_mixed_word(var_datatime)
     """
-    node = TabularTranslator(
+    translator = TabularTranslator(
         test_data,
         column_divider=" ",
         column_count=9,
@@ -36,7 +36,7 @@ def test_yaml_list_of_pairs():
         has_header_row=False,
         replacing_rules=rules
     )
-    assert node.to_template_snippet() == expected
+    assert translator.to_snippet() == expected
 
 
 def test_yaml_dict_of_pairs():
@@ -45,7 +45,7 @@ def test_yaml_dict_of_pairs():
 - curr: word(var_month)  digits(var_date)  mixed_number(var_time)
   new: 3_mixed_word(var_datatime)
     """
-    node = TabularTranslator(
+    translator = TabularTranslator(
         test_data,
         column_divider=" ",
         column_count=9,
@@ -53,7 +53,7 @@ def test_yaml_dict_of_pairs():
         has_header_row=False,
         replacing_rules=rules
     )
-    assert node.to_template_snippet() == expected
+    assert translator.to_snippet() == expected
 
 
 def test_list_of_pairs():
@@ -64,7 +64,7 @@ def test_list_of_pairs():
             "3_mixed_word(var_datatime)",
         ]
     ]
-    node = TabularTranslator(
+    translator = TabularTranslator(
         test_data,
         column_divider=" ",
         column_count=9,
@@ -72,7 +72,7 @@ def test_list_of_pairs():
         has_header_row=False,
         replacing_rules=rules
     )
-    assert node.to_template_snippet() == expected
+    assert translator.to_snippet() == expected
 
 
 def test_list_of_dict_pairs():
@@ -83,7 +83,7 @@ def test_list_of_dict_pairs():
             "new": "3_mixed_word(var_datatime)",
         }
     ]
-    node = TabularTranslator(
+    translator = TabularTranslator(
         test_data,
         column_divider=" ",
         column_count=9,
@@ -91,4 +91,4 @@ def test_list_of_dict_pairs():
         has_header_row=False,
         replacing_rules=rules
     )
-    assert node.to_template_snippet() == expected
+    assert translator.to_snippet() == expected

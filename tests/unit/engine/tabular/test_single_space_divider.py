@@ -19,7 +19,7 @@ from textfsmgen.engine.tabular import VarColumnTabularTranslator
 from textfsmgen.core.verify import verify
 
 
-def test_ex1():
+def test_parses_rows_with_full_cells_per_column():
     test_data = dedent("""
         LastWriteTime          Name
         9/1/2021 6:13:50 AM    reference
@@ -28,7 +28,7 @@ def test_ex1():
         12/16/2021 12:30:59 PM CONTRIBUTING.md
                 """).strip()
 
-    expected_snippet = dedent("""
+    exp_snippet = dedent("""
         LastWriteTime          Name
         start() 3_mixed_word(var_lastwritetime)  mixed_word(var_name) end() -> record
     """).strip()
@@ -40,26 +40,25 @@ def test_ex1():
         {'lastwritetime': '12/16/2021 12:30:59 PM', 'name': 'CONTRIBUTING.md'}
     ]
 
-    node = VarColumnTabularTranslator(test_data, column_divider=' ', column_count=2)
-    table = node.parse_table()
+    translator = VarColumnTabularTranslator(test_data, column_divider=' ', column_count=2)
+    table = translator.parse_table()
     assert table
 
-    template_snippet = table.to_template_snippet()
-    assert template_snippet == expected_snippet
+    snippet = table.to_snippet()
+    assert snippet == exp_snippet
 
-    ok = verify(template_snippet, test_data, expected_result=expected_result)
+    ok = verify(snippet, test_data, expected_result=expected_result)
     assert ok
 
 
-
-def test_ex2():
+def test_parses_row_with_empty_cell():
     test_data = dedent("""
         fruits    meat      drinks
         orange    pork      water
         peach               pepsi soda
                 """).strip()
 
-    expected_snippet = dedent("""
+    exp_snippet = dedent("""
         fruits    meat      drinks
         start() word(var_fruits)  word(var_meat)  words(var_drinks) end() -> record
         start() word(var_fruits) 10_15_space() words(var_drinks) end() -> record
@@ -70,15 +69,15 @@ def test_ex2():
         {'fruits': 'peach', 'meat': '', 'drinks': 'pepsi soda'}
     ]
 
-    node = VarColumnTabularTranslator(test_data, column_divider=' ', column_count=3)
-    table = node.parse_table()
+    translator = VarColumnTabularTranslator(test_data, column_divider=' ', column_count=3)
+    table = translator.parse_table()
     assert table
 
-    template_snippet = table.to_template_snippet()
-    assert template_snippet == expected_snippet
+    snippet = table.to_snippet()
+    assert snippet == exp_snippet
 
-    adjust_template_snippet = template_snippet.replace(
+    adjust_snippet = snippet.replace(
         "  word(var_meat)  ", "1_8_space()word(var_meat)1_8_space()"
     )
-    ok = verify(adjust_template_snippet, test_data, expected_result=expected_result)
+    ok = verify(adjust_snippet, test_data, expected_result=expected_result)
     assert ok
