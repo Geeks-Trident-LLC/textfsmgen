@@ -94,6 +94,9 @@ def build(app):
         )
         return
     except Exception as ex:
+        if not validate_count_fields(app):
+            return
+
         show_message_dialog(
             title="Template Generation Error",
             error=f"Your snippet needs correction to produce a valid template.\n\n"
@@ -505,6 +508,9 @@ def create_python_script(app):
         app.textarea.output.focus()
 
     except Exception as ex:
+        if not validate_count_fields(app):
+            return
+
         show_message_dialog(
             title='TextFSM Generator Error',
             error=f"{type(ex).__name__}: {ex}"
@@ -550,6 +556,9 @@ def create_unittest_script(app):
         app.textarea.output.focus()
 
     except Exception as ex:
+        if not validate_count_fields(app):
+            return
+
         show_message_dialog(
             title='TextFSM Generator Error',
             error=f"{type(ex).__name__}: {ex}"
@@ -594,6 +603,9 @@ def create_pytest_script(app):
         app.textarea.output.focus()
 
     except Exception as ex:
+        if not validate_count_fields(app):
+            return
+
         show_message_dialog(
             title='TextFSM Generator Error',
             error=f"{type(ex).__name__}: {ex}"
@@ -670,10 +682,7 @@ def show_result(app):
             kwargs = app.get_template_builder_args()
 
         builder = cls(user_data=user_data, **kwargs)
-        app.snapshot.update(
-            template=builder.template,
-            is_built=bool(builder)
-        )
+        app.snapshot.update(template=builder.template, is_built=bool(builder))
 
         if app.category_translator_enabled() or app.tabular_translator_enabled():
             app.reset_category_translator()
@@ -683,6 +692,9 @@ def show_result(app):
 
         template = builder.template
     except Exception as ex:
+        if not validate_count_fields(app):
+            return
+
         template = app.snapshot.template.strip()
         if not template:
             show_message_dialog(
@@ -870,3 +882,24 @@ def validate_python_interpreter(app):
         return False
 
     return True
+
+
+def validate_count_fields(app):
+    """Validate category and tabular count fields; show an error dialog if invalid."""
+    try:
+        category_count = app.settings.category_arg_count.get()
+        tabular_count = app.settings.tabular_arg_count.get()
+        return True
+    except Exception as ex:
+        # Identify which field failed based on which value was successfully retrieved
+        field = "Category" if "category_count" not in locals() else "Tabular"
+        show_message_dialog(
+            title=f"Invalid Count Entry - {field} Template Translator",
+            error=(
+                f"Count field of must be integers.\n"
+                f"Please enter a correct count in Settings - {field}.\n"
+                "----------------------------------------------------------------\n"
+                f"{type(ex).__name__}: {ex}"
+            ),
+        )
+        return False

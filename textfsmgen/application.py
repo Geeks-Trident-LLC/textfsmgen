@@ -180,7 +180,7 @@ class Application:
         ending_at = self.settings.category_arg_ending_at.get()
 
         return dict(
-            count=self.settings.category_arg_count.get(),
+            count=abs(self.settings.category_arg_count.get()),
             separator=self.settings.category_arg_separator.get(),
             starting_from=starting_from if starting_from.strip() else None,
             ending_at=ending_at if ending_at.strip() else None,
@@ -209,7 +209,7 @@ class Application:
 
         return dict(
             column_divider=column_divider,
-            column_count=self.settings.tabular_arg_count.get(),
+            column_count=abs(self.settings.tabular_arg_count.get()),
             column_widths=column_widths if column_widths.strip() else None,
             headers=headers if headers.strip() else None,
             header_rows=header_rows if headers.strip() else None,
