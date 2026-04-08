@@ -20,6 +20,30 @@ from textfsmgen.exceptions import RuntimeException
 from textfsmgen.exceptions import raise_runtime_error
 
 
+def require_return_translator(method):
+    """Wrap a one‑argument method and raise an error if it returns None."""
+    def wrapper(self, arg):
+        result = method(self, arg)
+        if result is None:
+            cls_name = type(self).__name__
+
+            if isinstance(arg, PatternTranslator):
+                arg_repr = repr(arg.data)
+            else:
+                arg_repr = f"<unknown instance of {type(arg).__name__}>"
+
+            raise_runtime_error(
+                obj=arg_repr,
+                msg=(
+                    f"Recommended pattern not implemented for {cls_name} "
+                    f"with data pair ({self.data!r}, {arg_repr})"
+                )
+            )
+
+        return result
+    return wrapper
+
+
 class PatternTranslator(RuntimeException):
     """
     Represents a translated text pattern used in FSM (Finite State Machine)
@@ -325,7 +349,7 @@ class PatternTranslator(RuntimeException):
                     return secondary_cls(data, *other)
                 return translator
 
-        raise_runtime_error(    # noqa
+        raise_runtime_error(
             obj="PatternTranslatorFactoryError",
             msg=f"Failed to create translator: data={data!r}, other={other!r}",
         )
@@ -388,6 +412,7 @@ class DigitTranslator(PatternTranslator):
 
         return other.is_digit()
 
+    @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized pattern when combined with another pattern.
@@ -410,7 +435,7 @@ class DigitTranslator(PatternTranslator):
         if other.is_puncts_group():
             return NonWSSGroupTranslator(self.data, other.data)
 
-        return self.raise_recommend_exception(other)
+        return None
 
 
 class DigitsTranslator(PatternTranslator):
@@ -458,12 +483,14 @@ class DigitsTranslator(PatternTranslator):
             other.is_digits()
         ])
 
+    @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
         if self.is_subset_of(other):
             return self.get_new_subset(other)
+
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
@@ -480,7 +507,7 @@ class DigitsTranslator(PatternTranslator):
         if other.is_non_ws():
             return NonWSSTranslator(self.data, other.data)
 
-        return self.raise_recommend_exception(other)
+        return None
 
 
 class NumberTranslator(PatternTranslator):
@@ -525,12 +552,14 @@ class NumberTranslator(PatternTranslator):
             other.is_number()
         ])
 
+    @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
         if self.is_subset_of(other):
             return self.get_new_subset(other)
+
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
@@ -547,7 +576,7 @@ class NumberTranslator(PatternTranslator):
         if other.is_puncts_group():
             return NonWSSGroupTranslator(self.data, other.data)
 
-        return self.raise_recommend_exception(other)
+        return None
 
 
 class MixedNumberTranslator(PatternTranslator):
@@ -592,12 +621,14 @@ class MixedNumberTranslator(PatternTranslator):
             other.is_mixed_number()
         ])
 
+    @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
         if self.is_subset_of(other):
             return self.get_new_subset(other)
+
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
@@ -614,7 +645,7 @@ class MixedNumberTranslator(PatternTranslator):
         if other.is_puncts_group():
             return NonWSSGroupTranslator(self.data, other.data)
 
-        return self.raise_recommend_exception(other)
+        return None
 
 
 class LetterTranslator(PatternTranslator):
@@ -661,12 +692,14 @@ class LetterTranslator(PatternTranslator):
 
         return other.is_letter()
 
+    @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
         if self.is_subset_of(other):
             return self.get_new_subset(other)
+
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
@@ -683,7 +716,7 @@ class LetterTranslator(PatternTranslator):
         if other.is_puncts_group():
             return NonWSSGroupTranslator(self.data, other.data)
 
-        return self.raise_recommend_exception(other)
+        return None
 
 
 class LettersTranslator(PatternTranslator):
@@ -729,12 +762,14 @@ class LettersTranslator(PatternTranslator):
             other.is_letters()
         ])
 
+    @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
         if self.is_subset_of(other):
             return self.get_new_subset(other)
+
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
@@ -750,7 +785,7 @@ class LettersTranslator(PatternTranslator):
         if any([other.is_punct(), other.is_puncts(), other.is_non_ws()]):
             return NonWSSTranslator(self.data, other.data)
 
-        return self.raise_recommend_exception(other)
+        return None
 
 
 class AlnumTranslator(PatternTranslator):
@@ -799,12 +834,14 @@ class AlnumTranslator(PatternTranslator):
             other.is_alnum()
         ])
 
+    @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
         if self.is_subset_of(other):
             return self.get_new_subset(other)
+
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
@@ -823,7 +860,7 @@ class AlnumTranslator(PatternTranslator):
         if other.is_puncts_group():
             return NonWSSGroupTranslator(self.data, other.data)
 
-        return self.raise_recommend_exception(other)
+        return None
 
 
 class PunctTranslator(PatternTranslator):
@@ -867,12 +904,14 @@ class PunctTranslator(PatternTranslator):
             self.raise_recommend_exception(other)
         return other.is_punct()
 
+    @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
         if self.is_subset_of(other):
             return self.get_new_subset(other)
+
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
@@ -886,7 +925,7 @@ class PunctTranslator(PatternTranslator):
         if other.is_words():
             return NonWSSGroupTranslator(self.data, other.data)
 
-        return self.raise_recommend_exception(other)
+        return None
 
 
 class PunctsTranslator(PatternTranslator):
@@ -931,12 +970,14 @@ class PunctsTranslator(PatternTranslator):
             other.is_puncts()
         ])
 
+    @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
         if self.is_subset_of(other):
             return self.get_new_subset(other)
+
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
@@ -957,7 +998,7 @@ class PunctsTranslator(PatternTranslator):
         if other.is_words():
             return NonWSSGroupTranslator(self.data, other.data)
 
-        return self.raise_recommend_exception(other)
+        return None
 
 
 class PunctsGroupTranslator(PatternTranslator):
@@ -1010,11 +1051,13 @@ class PunctsGroupTranslator(PatternTranslator):
             other.is_puncts_group()
         ])
 
+    @require_return_translator
     def recommend(self, other):
         """Recommend a generalized translated pattern when
         combined with another pattern."""
         if self.is_subset_of(other):
             return self.get_new_subset(other)
+
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
@@ -1035,7 +1078,7 @@ class PunctsGroupTranslator(PatternTranslator):
         ]):
             return NonWSSGroupTranslator(self.data, other.data)
 
-        return self.raise_recommend_exception(other)
+        return None
 
 
 class GraphTranslator(PatternTranslator):
@@ -1083,12 +1126,14 @@ class GraphTranslator(PatternTranslator):
             other.is_graph()
         ])
 
+    @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
         if self.is_subset_of(other):
             return self.get_new_subset(other)
+
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
@@ -1099,7 +1144,7 @@ class GraphTranslator(PatternTranslator):
         if other.is_words():
             return MixedWordsTranslator(self.data, other.data)
 
-        return self.raise_recommend_exception(other)
+        return None
 
 
 class WordTranslator(PatternTranslator):
@@ -1145,12 +1190,14 @@ class WordTranslator(PatternTranslator):
             other.is_word()
         ])
 
+    @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
         if self.is_subset_of(other):
             return self.get_new_subset(other)
+
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
@@ -1170,7 +1217,7 @@ class WordTranslator(PatternTranslator):
         if other.is_puncts_group():
             return NonWSSGroupTranslator(self.data, other.data)
 
-        return self.raise_recommend_exception(other)
+        return None
 
 
 class WordsTranslator(PatternTranslator):
@@ -1226,12 +1273,14 @@ class WordsTranslator(PatternTranslator):
             other.is_words()
         ])
 
+    @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
         if self.is_subset_of(other):
             return self.get_new_subset(other)
+
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
@@ -1250,7 +1299,7 @@ class WordsTranslator(PatternTranslator):
         ]):
             return NonWSSGroupTranslator(self.data, other.data)
 
-        return self.raise_recommend_exception(other)
+        return None
 
 
 class MixedWordTranslator(PatternTranslator):
@@ -1300,12 +1349,14 @@ class MixedWordTranslator(PatternTranslator):
             other.is_mixed_word()
         ])
 
+    @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
         if self.is_subset_of(other):
             return self.get_new_subset(other)
+
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
@@ -1323,7 +1374,7 @@ class MixedWordTranslator(PatternTranslator):
         if other.is_puncts_group():
             return NonWSSGroupTranslator(self.data, other.data)
 
-        return self.raise_recommend_exception(other)
+        return None
 
 
 class MixedWordsTranslator(PatternTranslator):
@@ -1385,12 +1436,14 @@ class MixedWordsTranslator(PatternTranslator):
             other.is_mixed_words()
         ])
 
+    @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
         if self.is_subset_of(other):
             return self.get_new_subset(other)
+
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
@@ -1404,7 +1457,7 @@ class MixedWordsTranslator(PatternTranslator):
         ]):
             return NonWSSGroupTranslator(self.data, other.data)
 
-        return self.raise_recommend_exception(other)
+        return None
 
 
 class NonWSTranslator(PatternTranslator):
@@ -1450,12 +1503,14 @@ class NonWSTranslator(PatternTranslator):
             other.is_non_ws()
         ])
 
+    @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
         if self.is_subset_of(other):
             return self.get_new_subset(other)
+
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
@@ -1477,7 +1532,7 @@ class NonWSTranslator(PatternTranslator):
         ]):
             return NonWSSGroupTranslator(self.data, other.data)
 
-        return self.raise_recommend_exception(other)
+        return None
 
 
 class NonWSSTranslator(PatternTranslator):
@@ -1530,12 +1585,14 @@ class NonWSSTranslator(PatternTranslator):
             other.is_non_wss()
         ])
 
+    @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
         if self.is_subset_of(other):
             return self.get_new_subset(other)
+
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
@@ -1546,7 +1603,7 @@ class NonWSSTranslator(PatternTranslator):
         ]):
             return NonWSSGroupTranslator(self.data, other.data)
 
-        return self.raise_recommend_exception(other)
+        return None
 
 
 class NonWSSGroupTranslator(PatternTranslator):
@@ -1614,13 +1671,15 @@ class NonWSSGroupTranslator(PatternTranslator):
             other.is_non_wss_group(),
         ])
 
+    @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
         if self.is_subset_of(other):
             return self.get_new_subset(other)
+
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        return self.raise_recommend_exception(other)
+        return None
