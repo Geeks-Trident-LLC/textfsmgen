@@ -23,25 +23,47 @@ from textfsmgen.exceptions import raise_runtime_error
 def require_return_translator(method):
     """Wrap a one‑argument method and raise an error if it returns None."""
     def wrapper(self, arg):
-        result = method(self, arg)
-        if result is None:
-            cls_name = type(self).__name__
+        if not isinstance(self, PatternTranslator):
+            raise_runtime_error(
+                obj="InvalidPatternTranslatorSubclass",
+                msg=f"Unexpected translator type: {type(self).__name__}"
+            )
 
-            if isinstance(arg, PatternTranslator):
-                arg_repr = repr(arg.data)
-            else:
-                arg_repr = f"<unknown instance of {type(arg).__name__}>"
+        result = method(self, arg)  # noqa
+        if result is None:
 
             raise_runtime_error(
-                obj=arg_repr,
+                obj=repr(arg.data) if isinstance(arg, PatternTranslator) else "NotImplementTranslator",
                 msg=(
-                    f"Recommended pattern not implemented for {cls_name} "
-                    f"with data pair ({self.data!r}, {arg_repr})"
+                    f"Recommended pattern not implemented for {type(self).__name__} "
+                    f"with data pair ({self.data!r}, {arg!r})"
                 )
             )
 
         return result
     return wrapper
+
+
+def require_same_translator_type(method):
+    """Ensure both arguments are PatternTranslator instances of compatible type."""
+    def wrapper(self, arg):
+        if not isinstance(self, PatternTranslator):
+            raise_runtime_error(
+                obj="InvalidPatternTranslatorSubclass",
+                msg=f"Unexpected translator type: {type(self).__name__}"
+            )
+
+        if not isinstance(arg, PatternTranslator):
+            raise_runtime_error(
+                obj="NotImplementTranslator",
+                msg=(
+                    f"Recommended pattern not implemented for {type(self).__name__} "
+                    f"with data pair ({self.data!r}, {arg!r})"
+                )
+            )
+        return method(self, arg)
+    return wrapper
+
 
 
 class PatternTranslator(RuntimeException):
@@ -380,13 +402,11 @@ class DigitTranslator(PatternTranslator):
             root_name="non_ws",
         )
 
+    @require_same_translator_type
     def is_subset_of(self, other):
         """
         Check if this digit pattern is a subset of another pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return any([
             other.is_digit(),
             other.is_digits(),
@@ -403,13 +423,11 @@ class DigitTranslator(PatternTranslator):
             other.is_non_wss_group()
         ])
 
+    @require_same_translator_type
     def is_superset_of(self, other):
         """
         Check if this digit pattern is a superset of another pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return other.is_digit()
 
     @require_return_translator
@@ -451,14 +469,11 @@ class DigitsTranslator(PatternTranslator):
             root_name='non_wss'
         )
 
+    @require_same_translator_type
     def is_subset_of(self, other):
         """
         Determine whether this digit pattern is a subset of another translated pattern.
         """
-
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return any([
             other.is_digits(),
             other.is_number(),
@@ -471,13 +486,11 @@ class DigitsTranslator(PatternTranslator):
             other.is_non_wss_group(),
         ])
 
+    @require_same_translator_type
     def is_superset_of(self, other):
         """
         Determine whether this digit pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return any([
             other.is_digit(),
             other.is_digits()
@@ -523,13 +536,11 @@ class NumberTranslator(PatternTranslator):
             root_name='non_wss'
         )
 
+    @require_same_translator_type
     def is_subset_of(self, other) -> bool:
         """
         Determine whether this number pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return any([
             other.is_number(),
             other.is_mixed_number(),
@@ -539,13 +550,11 @@ class NumberTranslator(PatternTranslator):
             other.is_non_wss_group(),
         ])
 
+    @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this number pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return any([
             other.is_digit(),
             other.is_digits(),
@@ -592,13 +601,11 @@ class MixedNumberTranslator(PatternTranslator):
             root_name="non_wss",
         )
 
+    @require_same_translator_type
     def is_subset_of(self, other):
         """
         Determine whether this mixed number pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return any([
             other.is_mixed_number(),
             other.is_mixed_word(),
@@ -607,13 +614,11 @@ class MixedNumberTranslator(PatternTranslator):
             other.is_non_wss_group(),
         ])
 
+    @require_same_translator_type
     def is_superset_of(self, other):
         """
         Determine whether this mixed number pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return any([
             other.is_digit(),
             other.is_digits(),
@@ -662,13 +667,11 @@ class LetterTranslator(PatternTranslator):
             root_name="non_ws",
         )
 
+    @require_same_translator_type
     def is_subset_of(self, other):
         """
         Determine whether this letter pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return any([
             other.is_letter(),
             other.is_letters(),
@@ -683,13 +686,11 @@ class LetterTranslator(PatternTranslator):
             other.is_non_wss_group(),
         ])
 
+    @require_same_translator_type
     def is_superset_of(self, other):
         """
         Determine whether this letter pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return other.is_letter()
 
     @require_return_translator
@@ -733,13 +734,11 @@ class LettersTranslator(PatternTranslator):
             root_name="non_wss",
         )
 
+    @require_same_translator_type
     def is_subset_of(self, other) -> bool:
         """
         Determine whether this letters pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return any([
             other.is_letters(),
             other.is_word(),
@@ -750,13 +749,11 @@ class LettersTranslator(PatternTranslator):
             other.is_non_wss_group(),
         ])
 
+    @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this letters pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return any([
             other.is_letter(),
             other.is_letters()
@@ -802,13 +799,11 @@ class AlnumTranslator(PatternTranslator):
             root_name="non_ws",
         )
 
+    @require_same_translator_type
     def is_subset_of(self, other) -> bool:
         """
         Determine whether this alnum pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return any([
             other.is_alnum(),
             other.is_graph(),
@@ -821,13 +816,11 @@ class AlnumTranslator(PatternTranslator):
             other.is_non_wss_group(),
         ])
 
+    @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this alnum pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return any([
             other.is_letter(),
             other.is_digit(),
@@ -877,13 +870,11 @@ class PunctTranslator(PatternTranslator):
             root_name="non_ws",
         )
 
+    @require_same_translator_type
     def is_subset_of(self, other) -> bool:
         """
         Determine whether this punctuation pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return any([
             other.is_punct(),
             other.is_graph(),
@@ -896,12 +887,11 @@ class PunctTranslator(PatternTranslator):
             other.is_non_wss_group(),
         ])
 
+    @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this punctuation pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
         return other.is_punct()
 
     @require_return_translator
@@ -942,13 +932,11 @@ class PunctsTranslator(PatternTranslator):
             root_name="non_wss",
         )
 
+    @require_same_translator_type
     def is_subset_of(self, other) -> bool:
         """
         Determine whether this punctuation sequence is a subset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return any([
             other.is_puncts(),
             other.is_puncts_group(),
@@ -958,13 +946,11 @@ class PunctsTranslator(PatternTranslator):
             other.is_non_wss_group(),
         ])
 
+    @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this punctuation sequence is a superset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return any([
             other.is_punct(),
             other.is_puncts()
@@ -1026,24 +1012,21 @@ class PunctsGroupTranslator(PatternTranslator):
             root_name="non_wss_group",
         )
 
+    @require_same_translator_type
     def is_subset_of(self, other) -> bool:
         """
         Determine whether this punctuation group is a subset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return any([
             other.is_puncts_group(),
             other.is_mixed_words(),
             other.is_non_wss_group(),
         ])
 
+    @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """Determine whether this punctuation group is a superset of
         another translated pattern."""
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
 
         return any([
             other.is_punct(),
@@ -1095,13 +1078,11 @@ class GraphTranslator(PatternTranslator):
             root_name="non_ws",
         )
 
+    @require_same_translator_type
     def is_subset_of(self, other) -> bool:
         """
         Determine whether this graph pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return any([
             other.is_graph(),
             other.is_mixed_word(),
@@ -1111,12 +1092,11 @@ class GraphTranslator(PatternTranslator):
             other.is_non_wss_group(),
         ])
 
+    @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this graph pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
 
         return any([
             other.is_letter(),
@@ -1161,13 +1141,11 @@ class WordTranslator(PatternTranslator):
             root_name="non_wss",
         )
 
+    @require_same_translator_type
     def is_subset_of(self, other) -> bool:
         """
         Determine whether this word pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return any([
             other.is_word(),
             other.is_words(),
@@ -1177,12 +1155,11 @@ class WordTranslator(PatternTranslator):
             other.is_non_wss_group(),
         ])
 
+    @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this word pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
 
         return any([
             other.is_letter(),
@@ -1246,25 +1223,22 @@ class WordsTranslator(PatternTranslator):
             root_name="non_wss_group",
         )
 
+    @require_same_translator_type
     def is_subset_of(self, other) -> bool:
         """
         Determine whether this words pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return any([
             other.is_words(),
             other.is_mixed_words(),
             other.is_non_wss_group(),
         ])
 
+    @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this words pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
 
         return any([
             other.is_letter(),
@@ -1316,13 +1290,11 @@ class MixedWordTranslator(PatternTranslator):
             root_name="non_wss",
         )
 
+    @require_same_translator_type
     def is_subset_of(self, other) -> bool:
         """
         Determine whether this mixed word pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return any([
             other.is_mixed_word(),
             other.is_mixed_words(),
@@ -1330,12 +1302,11 @@ class MixedWordTranslator(PatternTranslator):
             other.is_non_wss_group(),
         ])
 
+    @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this mixed word pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
 
         return any([
             other.is_letter(),
@@ -1403,24 +1374,21 @@ class MixedWordsTranslator(PatternTranslator):
             root_name="non_wss_group",
         )
 
+    @require_same_translator_type
     def is_subset_of(self, other) -> bool:
         """
         Determine whether this mixed words pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return any([
             other.is_mixed_words(),
             other.is_non_wss_group(),
         ])
 
+    @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this mixed words pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
 
         return any([
             other.is_letter(),
@@ -1474,25 +1442,22 @@ class NonWSTranslator(PatternTranslator):
             root_name="non_ws",
         )
 
+    @require_same_translator_type
     def is_subset_of(self, other) -> bool:
         """
         Determine whether this non-whitespace pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return any([
             other.is_non_ws(),
             other.is_non_wss(),
             other.is_non_wss_group(),
         ])
 
+    @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this non-whitespace pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
 
         return any([
             other.is_letter(),
@@ -1549,24 +1514,21 @@ class NonWSSTranslator(PatternTranslator):
             root_name="non_wss",
         )
 
+    @require_same_translator_type
     def is_subset_of(self, other) -> bool:
         """
         Determine whether this non-whitespaces pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return any([
             other.is_non_wss(),
             other.is_non_wss_group(),
         ])
 
+    @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this non-whitespaces pattern is a superset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
 
         return any([
             other.is_digit(),
@@ -1633,22 +1595,21 @@ class NonWSSGroupTranslator(PatternTranslator):
             root_name="non_wss_group",
         )
 
+    @require_same_translator_type
     def is_subset_of(self, other) -> bool:
         """
         Determine whether this non-whitespaces group pattern is a subset of another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
-
         return other.is_non_wss_group()
 
+    @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this non-whitespaces group pattern is a superset of
         another translated pattern.
         """
-        if not isinstance(other, PatternTranslator):
-            self.raise_recommend_exception(other)
+        # if not isinstance(other, PatternTranslator):
+        #     self.raise_recommend_exception(other)
 
         return any([
             other.is_digit(),
