@@ -62,23 +62,15 @@ class DotObject(dict):
 class StatusString(str):
     def __new__(cls, *args, **kwargs):
         """String subclass that carries a boolean status affecting truthiness and length."""
-        value_ = kwargs.pop("value", "")
-        status_ = kwargs.pop("status", False)
+        allowed = ["true", "pass", "passed", "good", "success"]
 
-        if not args:
-            txt = str.__new__(cls, value_, **kwargs)
-            txt.status = status_
-            return txt
+        txt = args[0] if args else kwargs.pop("text", "")
+        status = args[1] if len(args) > 1 else kwargs.pop("status", False)
 
-        txt = str.__new__(cls, args[0], **kwargs)
-        if len(args) > 1:
-            txt.status = (
-                arg1 if isinstance(args[0], bool) else
-                str(args[1]).strip().lower() == "true"
-            )
-            return txt
-        txt.status = status_
-        return txt
+        result = str.__new__(cls, txt, **kwargs)
+        result.status = str(status).strip().lower() in allowed
+
+        return result
 
     def __bool__(self): return self.status
 
