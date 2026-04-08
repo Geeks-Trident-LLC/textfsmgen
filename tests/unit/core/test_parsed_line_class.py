@@ -25,16 +25,7 @@ from textfsmgen.core.template import LineParser
     ],
 )
 def test_is_empty(line, expected):
-    """
-    Unit tests for the `LineParser.is_empty` property.
-    Test Coverage
-    -------------
-    - Empty string: should be considered empty.
-    - Whitespace-only string: may be treated as empty depending on
-      implementation (here expected as empty).
-    - Non-empty string: should not be considered empty.
-    - String with spaces and text: should not be considered empty.
-    """
+    """Unit tests for the `LineParser.is_empty` property."""
     parsed_line = LineParser(line)
     assert parsed_line.is_empty is expected
 
@@ -57,22 +48,7 @@ def test_is_empty(line, expected):
     ],
 )
 def test_is_a_word(line, expected):
-    """
-    Unit tests for the `LineParser.is_a_word` property.
-
-    Test Coverage
-    -------------
-    - Simple words (lowercase, capitalized, uppercase).
-    - Alphanumeric words (letters + digits).
-    - Words containing underscores (allowed inside, not at start).
-    - Invalid cases:
-        * Multiple words separated by spaces.
-        * Hyphenated words (hyphen not matched by `\\w`).
-        * Leading underscore.
-        * Digits only.
-        * Empty string.
-        * Whitespace-only string.
-    """
+    """Unit tests for the `LineParser.is_a_word` property."""
     parsed_line = LineParser(line)
     assert parsed_line.is_word is expected
 
@@ -91,18 +67,7 @@ def test_is_a_word(line, expected):
     ],
 )
 def test_is_not_containing_letter(line, expected):
-    """
-    Unit tests for the `LineParser.is_not_containing_letter` property.
-
-    Test Coverage
-    -------------
-    - Symbols only: should be True.
-    - Digits only: should be False.
-    - Mixed letters and digits: should be False.
-    - Pure letters: should be False.
-    - Empty string: should be False (excluded explicitly).
-    - Whitespace-only string: should be False.
-    """
+    """Unit tests for the `LineParser.is_not_containing_letter` property."""
     parsed_line = LineParser(line)
     assert parsed_line.no_letters is expected
 
@@ -155,10 +120,6 @@ def test_is_not_containing_letter(line, expected):
 def test_get_statement(line, expected):
     """
     Verify that `LineParser.get_statement` generates normalized template statements.
-
-    This test ensures that raw user data lines are correctly converted into
-    TextFSM template statements, including normalization of special symbols,
-    substitution of variables, and handling of template operators.
     """
     parsed_line = LineParser(line)
     statement = parsed_line.statement()
@@ -194,15 +155,6 @@ def test_get_statement_with_flag(line, expected):
     This test ensures that special flags (`comment__`, `keep__`, `ignore_case__`)
     applied to input lines are properly converted into normalized TextFSM
     template statements.
-
-    Test Coverage
-    -------------
-    - `comment__` flag:
-        Converts the line into a comment (`# ...`) in the template.
-    - `keep__` flag:
-        Preserves the line as a regex statement (`^...`) without variable substitution.
-    - `ignore_case__` flag:
-        Adds a case-insensitive modifier (`(?i)`) to the regex statement.
     """
     parsed_line = LineParser(line)
     statement = parsed_line.statement()
@@ -279,30 +231,6 @@ def test_get_statement_with_textfsm_op(line, expected, template_op):
     are normalized into valid TextFSM statements and that the operator
     is stored in the `template_op` attribute.
 
-    Parameters
-    ----------
-    line : str
-        Raw input line containing variable definitions and optional template operator.
-    expected : str
-        The expected normalized statement output after parsing.
-    template_op : str
-        The expected operator extracted from the line (empty string if none).
-
-    Test Coverage
-    -------------
-    - No operator: basic variable substitution only.
-    - Right operators:
-        * Record
-        * NoRecord
-        * Clear
-        * ClearAll
-    - Left operators:
-        * Next
-        * Continue
-        * Error
-    - Combined operators:
-        * Next.Record
-        * Continue.Record
     """
     parsed_line = LineParser(line)
     statement = parsed_line.statement()
@@ -349,19 +277,6 @@ def test_get_statement_that_understand_textfsm_option(line, expected):
     into valid TextFSM template statements. The metadata is recognized but
     does not alter the final regex pattern in the generated statement.
 
-    Test Coverage
-    -------------
-    - `meta_data_Filldown` → variable marked for filldown behavior.
-    - `meta_data_Fillup` → variable marked for fillup behavior.
-    - `meta_data_Key` → variable designated as a key field.
-    - `meta_data_List` → variable designated as a list field.
-    - `meta_data_Required` → variable marked as required.
-    - `meta_data_Required_Filldown` → variable marked as required with filldown.
-
-    Notes
-    -----
-    - All metadata options are parsed and stored internally but do not
-      change the normalized regex in the statement.
     """
     parsed_line = LineParser(line)
     statement = parsed_line.statement()
