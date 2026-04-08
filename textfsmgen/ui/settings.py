@@ -49,8 +49,8 @@ def create_window(parent: Optional[Union[ui.Tk, ui.Toplevel]]) -> ui.Toplevel:
 
     ui.set_window_icon(window)
 
-    width = 830 if ui.is_macos else 880 if ui.is_linux else 680
-    height = 588 if ui.is_macos else 615 if ui.is_linux else 564
+    width = 982 if ui.is_macos else 880 if ui.is_linux else 680
+    height = 604 if ui.is_macos else 615 if ui.is_linux else 564
 
     center_window(parent, window, width, height)
     return window
@@ -184,7 +184,11 @@ def add_tabular_translator_arguments(app, parent: ui.Frame) -> None:
 def add_running_test_options(app, parent: ui.Frame) -> None:
 
     def open_():
-        filetypes = (('Execute Files', '.exe'), ('All Files', '*'))
+        filetypes = (
+            (('Execute Files', '.exe'), ('All Files', '*'))
+            if ui.is_window else
+            (('All Files', '*'), ('Execute Files', '.exe'))
+        )
         filename = filedialog.askopenfilename(filetypes=filetypes)
         if filename:
             app.settings.python_interpreter.set(filename)
@@ -202,7 +206,10 @@ def add_running_test_options(app, parent: ui.Frame) -> None:
     entry = ui.TextBox(group, width=88, textvariable=app.settings.python_interpreter)
     entry.grid(row=0, column=1, columnspan=5, padx=2, pady=pad_y, sticky="nw")
 
-    button = ui.Button(group, text="...", width=3, command=open_)
+    button = ui.Button(
+        group, text="...", command=open_,
+        width = 1 if ui.is_macos else 3,
+    )
     button.grid(row=0, column=6, padx=2, pady=pad_y, sticky="nw")
 
     settings = [
