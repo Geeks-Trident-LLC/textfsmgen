@@ -8,7 +8,7 @@ This module provides the foundational logic for building and validating
 TextFSM templates. It defines the primary classes and functions that
 transform user-provided snippets into structured parsing templates,
 support test execution, and integrate with configuration options.
-"""
+"""     # noqa
 
 from typing import Optional
 

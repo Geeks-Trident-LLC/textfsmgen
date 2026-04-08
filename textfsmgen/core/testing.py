@@ -3,7 +3,7 @@ textfsmgen.core.testing
 =======================
 
 Utilities for testing pattern resolution and keyword mappings.
-"""
+"""     # noqa
 
 import re
 import tempfile

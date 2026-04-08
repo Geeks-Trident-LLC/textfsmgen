@@ -3,7 +3,7 @@ textfsmgen.core.registry
 ========================
 
 Registry for keyword-to-pattern mappings used by the TextFSM generator.
-"""
+"""     # noqa
 
 import re
 
