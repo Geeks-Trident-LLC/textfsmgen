@@ -248,7 +248,7 @@ def clear_text(widget) -> None:
     if not isinstance(widget, ui.TextArea):
         return
     original_state = widget["state"]
-    widget.configure(state=tk.NORMAL)
+    widget.configure(state="normal")
     widget.delete("1.0", "end")
     widget.configure(state=original_state)
 
@@ -259,7 +259,7 @@ def set_text(widget, text: str) -> None:
         return
 
     original_state = widget["state"]
-    widget.configure(state=tk.NORMAL)
+    widget.configure(state="normal")
 
     widget.delete("1.0", "end")
     widget.insert("1.0", text)
