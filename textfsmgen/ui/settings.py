@@ -11,13 +11,13 @@ from tkinter import filedialog
 
 from textfsmgen import ui
 from textfsmgen.ui.common import (
-center_window,
-make_modal,
+    center_window,
+    make_modal,
 )
 
 
 def show_dialog(app):
-    """Handle the "Preferences > Settings" menu action."""
+    """Handle the "Preferences > Settings" menu action."""  # noqa
 
     parent = app.root
 
@@ -52,10 +52,11 @@ def create_window(parent: Optional[Union[ui.Tk, ui.Toplevel]]) -> ui.Toplevel:
     width = 982 if ui.is_macos else 880 if ui.is_linux else 680
     height = 604 if ui.is_macos else 615 if ui.is_linux else 564
 
-    center_window(parent, window, width, height)
+    if parent:
+        center_window(parent, window, width, height)
     return window
 
-def add_general_arguments_fields(app, parent: ui.Frame) -> None:
+def add_general_arguments_fields(app, parent: ui.Frame) -> None:    # noqa
     """Add author, email, company, and description fields to the parent frame."""
     group = ui.LabelFrame(parent, height=100, width=780, text="General Arguments")
     group.grid(row=0, column=0, padx=10, pady=(5, 0), sticky="nw")
