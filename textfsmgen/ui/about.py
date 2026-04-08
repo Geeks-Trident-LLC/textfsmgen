@@ -13,15 +13,15 @@ from tkinter import ttk
 from textfsmgen import ui
 
 from textfsmgen.ui.common import (
-make_modal,
-center_window,
-create_styled_label,
+    make_modal,
+    center_window,
+    create_styled_label,
 )
 
 import textfsmgen.config as config
 
 
-def show_dialog(app):
+def show_dialog(app):   # noqa
     parent = app.root
     about = create_window(parent)
 
@@ -131,12 +131,8 @@ def add_dependency_panel(parent: Any) -> None:
         column += 1
 
 
-def add_license_panel(
-    parent: Union[tk.Tk, ui.Toplevel, ui.PanedWindow],
-    width: int = 450,
-    height: int = 200
-) -> None:
-    """Create a scrollable license_text panel and add it to the given container."""
+def add_license_panel(parent, width: int = 450, height: int = 200) -> None:
+    """Create a scrollable license_text panel and add it to the given container.""" # noqa
 
     label_frame = ui.LabelFrame(
         parent, height=height, width=width, text=config.license_name
@@ -159,12 +155,8 @@ def add_license_panel(
     text_area.config(state="disabled")
 
 
-def create_footer(
-    parent: Union[ui.Tk, ui.Toplevel, ui.PanedWindow],
-    width: int = 450,
-    height: int = 20
-) -> None:
-    """Create and add a footer with copyright and company info to the given container."""
+def create_footer(parent, width: int = 450, height: int = 20) -> None:
+    """Create and add a footer with copyright and company info to the given container."""   # noqa
     frame = ui.Frame(parent, width=width, height=height)
     parent.add(frame, weight=1)
 

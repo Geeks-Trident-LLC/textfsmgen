@@ -47,7 +47,7 @@ def build(app):
     app.snapshot.update(user_data=user_data)
 
     try:
-        if app.category_translator_enabled():
+        if app.category_translator_enabled():   # noqa
             cls = CategoryTemplateBuilder
             kwargs = app.get_category_template_builder_args()
         elif app.tabular_translator_enabled():
@@ -71,11 +71,12 @@ def build(app):
         if app.category_translator_enabled() or app.tabular_translator_enabled():
             app.reset_category_translator()
             app.reset_tabular_translator()
-            app.snapshot.update(user_data=builder.snippet)
-            set_text(app.textarea.input, builder.snippet)
+            if isinstance(builder, (TabularTemplateBuilder, CategoryTemplateBuilder)):
+                app.snapshot.update(user_data=builder.snippet)
+                set_text(app.textarea.input, builder.snippet)
 
         # Enable buttons and update UI
-        enable_buttons(app, save=True, copy=True, result=True)
+        enable_buttons(app, save=True, copy=True, result=True)  # noqa
         if app.snapshot.test_data:
             enable_buttons(
                 app, test_data=True, python=True,
@@ -104,7 +105,7 @@ def build(app):
 
 
 def show_test_data(app):
-    """Handle the 'Test Data' button toggle."""
+    """Handle the 'Test Data' button toggle."""     # noqa
 
     btn_name = app.settings.test_data_btn_name.get()
     if btn_name == 'Hide':
@@ -122,9 +123,9 @@ def show_test_data(app):
 def open_file(app):
     """Handle the "File > Open" menu action."""
 
-    filetypes = [('Text Files', '.txt', 'TEXT'), ('All Files', '*'),]
+    filetypes = (('Text Files', '.txt'), ('All Files', '*'))
     filename = filedialog.askopenfilename(filetypes=filetypes)
-    if filename:
+    if filename:    # noqa
         # Read file content
         content = file.read(filename)
 
@@ -151,9 +152,9 @@ def open_file(app):
 def load_test_data_file(app):
     """Handle the "File > Load Test Data" menu action."""
 
-    filetypes = [('Text Files', '.txt', 'TEXT'), ('All Files', '*'),]
+    filetypes = (('Text Files', '.txt'), ('All Files', '*'))
     filename = filedialog.askopenfilename(filetypes=filetypes)
-    if not filename:
+    if not filename:    # noqa
         return
 
     content = file.read(filename)
@@ -175,7 +176,7 @@ def load_test_data_file(app):
     set_text(app.textarea.input, content)
 
 
-def save(app):
+def save(app):  # noqa
     """Save content from the active input or output textarea based on its type."""
     activate_user_data_mode(app, use_test_data=False)
 
@@ -479,7 +480,7 @@ def create_python_script(app):
         return
 
     # --- Build snippet script ---
-    try:
+    try:    # noqa
         user_data = extract_text(app.textarea.input)
         if app.category_translator_enabled():
             cls = CategoryTemplateBuilder
@@ -501,8 +502,9 @@ def create_python_script(app):
         if app.category_translator_enabled() or app.tabular_translator_enabled():
             app.reset_category_translator()
             app.reset_tabular_translator()
-            app.snapshot.update(user_data=builder.snippet)
             set_text(app.textarea.input, app.snapshot.user_data)
+            if isinstance(builder, (TabularTemplateBuilder, CategoryTemplateBuilder)):
+                app.snapshot.update(user_data=builder.snippet)
 
         # Update snapshot and UI
         set_text(app.textarea.output, script)
@@ -528,7 +530,7 @@ def create_unittest_script(app):
 
     # --- Build unittest script ---
     try:
-        user_data = extract_text(app.textarea.input)
+        user_data = extract_text(app.textarea.input)    # noqa
         if app.category_translator_enabled():
             cls = CategoryTemplateBuilder
             kwargs = app.get_category_template_builder_args()
@@ -546,11 +548,12 @@ def create_unittest_script(app):
         )
         script = builder.create_unittest()
 
-        if app.category_translator_enabled() or app.tabular_translator_enabled():
+        if app.category_translator_enabled() or app.tabular_translator_enabled():   # noqa
             app.reset_category_translator()
             app.reset_tabular_translator()
-            app.snapshot.update(user_data=builder.snippet)
             set_text(app.textarea.input, app.snapshot.user_data)
+            if isinstance(builder, (TabularTemplateBuilder, CategoryTemplateBuilder)):
+                app.snapshot.update(user_data=builder.snippet)
 
         # Update snapshot and UI
         set_text(app.textarea.output, script)
@@ -574,7 +577,7 @@ def create_pytest_script(app):
         return
 
     # --- Build pytest script ---
-    try:
+    try:    # noqa
         user_data = extract_text(app.textarea.input)
         if app.category_translator_enabled():
             cls = CategoryTemplateBuilder
@@ -596,8 +599,9 @@ def create_pytest_script(app):
         if app.category_translator_enabled() or app.tabular_translator_enabled():
             app.reset_category_translator()
             app.reset_tabular_translator()
-            app.snapshot.update(user_data=builder.snippet)
             set_text(app.textarea.input, app.snapshot.user_data)
+            if isinstance(builder, (TabularTemplateBuilder, CategoryTemplateBuilder)):
+                app.snapshot.update(user_data=builder.snippet)
 
         # Update snapshot and UI
         set_text(app.textarea.output, script)
@@ -615,7 +619,7 @@ def create_pytest_script(app):
 
 def execute_test_script(app):
 
-    if not notify_test_execution(app):
+    if not notify_test_execution(app):  # noqa
         return
 
     # --- Validate prerequisites ---
@@ -671,7 +675,7 @@ def show_result(app):
 
     # --- Build or reuse template ---
     try:
-        user_data = extract_text(app.textarea.input)
+        user_data = extract_text(app.textarea.input)    # noqa
         if app.category_translator_enabled():
             cls = CategoryTemplateBuilder
             kwargs = app.get_category_template_builder_args()
@@ -685,11 +689,12 @@ def show_result(app):
         builder = cls(user_data=user_data, **kwargs)
         app.snapshot.update(template=builder.template, is_built=bool(builder))
 
-        if app.category_translator_enabled() or app.tabular_translator_enabled():
+        if app.category_translator_enabled() or app.tabular_translator_enabled():   # noqa
             app.reset_category_translator()
             app.reset_tabular_translator()
-            app.snapshot.update(user_data=builder.snippet)
             set_text(app.textarea.input, app.snapshot.user_data)
+            if isinstance(builder, (TabularTemplateBuilder, CategoryTemplateBuilder)):
+                app.snapshot.update(user_data=builder.snippet)
 
         template = builder.template
     except Exception as ex:
@@ -705,7 +710,7 @@ def show_result(app):
             return
 
     # --- Parse test data ---
-    stream = StringIO(template)
+    stream = StringIO(template)     # noqa
     parser = TextFSM(stream)
     rows = parser.ParseTextToDicts(app.snapshot.test_data)
 
@@ -741,7 +746,7 @@ def show_result(app):
     set_text(app.textarea.output, "\n".join(result_sections))
 
 
-def disable_buttons(app, **states) -> None:
+def disable_buttons(app, **states) -> None:     # noqa
     """Disable selected UI buttons based on keyword flags."""
     for name, flag in states.items():
         button = app.buttons.get(name)

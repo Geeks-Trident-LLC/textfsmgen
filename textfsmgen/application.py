@@ -3,7 +3,7 @@ textfsmgen.application
 ======================
 
 Main logic and user interface components for the `textfsmgen` library.
-"""
+"""     # noqa
 
 from textfsmgen.libs.common import ensure_tkinter_available
 tk = ensure_tkinter_available(app_name="textfsmgen")

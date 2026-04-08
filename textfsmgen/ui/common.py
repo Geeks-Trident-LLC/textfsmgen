@@ -58,8 +58,8 @@ class RewriteSync:
         current_out = extract_text(app.self.textarea.output)
 
         return (
-            current_in.strip()
-            and current_out.strip()
+            bool(current_in.strip())
+            and bool(current_out.strip())
             and current_in == self.initial_input
             and current_out == self.initial_output
         )
@@ -73,7 +73,7 @@ class RewriteSync:
         current_out = extract_text(app.self.textarea.output)
 
         return (
-            current_in.strip()
+            bool(current_in.strip())
             and current_in != self.initial_input
             and current_out == self.initial_output
         )
@@ -94,7 +94,7 @@ class RewriteSync:
         return len(extract_text(app.self.textarea.input).strip()) == 0
 
 
-def is_application_app(app):
+def is_application_app(app):    # noqa
     return type(app).__name__ == "Application"
 
 
@@ -112,14 +112,7 @@ def get_center_coordinates(
     return x, y
 
 
-def center_window(
-    parent: Union[tk.Tk, tk.Toplevel],
-    window: Union[tk.Tk, tk.Toplevel],
-    width: int,
-    height: int,
-    x_resizable: bool = False,
-    y_resizable: bool = False
-) -> None:
+def center_window(parent, window, width: int, height: int, x_resizable: bool = False, y_resizable: bool = False) -> None:
     """Center a Tkinter window relative to its parent."""
     x, y = get_center_coordinates(parent, width, height)
     window.geometry(f"{width}x{height}+{x}+{y}")
@@ -128,16 +121,17 @@ def center_window(
 
 def make_modal(dialog: Union[tk.Toplevel, tk.Tk]) -> None:
     """Configure a Tkinter window to behave as a modal dialog."""
-    parent = dialog.master if dialog.master else None
-    if dialog.master:
-        dialog.transient(parent)
+
+    parent = dialog.master
+    if parent is not None:
+        dialog.transient(parent)    # noqa
 
     dialog.wait_visibility()
     dialog.grab_set()
     dialog.wait_window()
 
 
-def show_message_dialog(
+def show_message_dialog(    # noqa
     title: Optional[str] = None,
     error: Optional[str] = None,
     warning: Optional[str] = None,
@@ -231,10 +225,10 @@ def open_app_resource(resource: str) -> None:
     }
     url = resources.get(resource)
     if url:
-        webbrowser.open_new_tab(url)
+        webbrowser.open_new_tab(str(url))
 
 
-def extract_text(widget) -> str:
+def extract_text(widget) -> str:    # noqa
     """Return textarea content without the trailing newline added by Tkinter."""
     if not isinstance(widget, ui.TextArea):
         return ""

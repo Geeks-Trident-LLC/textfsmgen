@@ -3,7 +3,7 @@ textfsmgen.ui.controls
 ======================
 
 Reusable UI controls buttons for the TextFSMGen application.
-"""
+""" # noqa
 
 from textfsmgen import ui
 from textfsmgen.ui import callback

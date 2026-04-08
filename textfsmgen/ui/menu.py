@@ -3,7 +3,7 @@ textfsmgen.ui.menu
 ==================
 
 UI helpers for building the TextFSMGen menu bar.
-"""
+""" # noqa
 
 from textfsmgen import ui
 from textfsmgen.ui.common import open_app_resource

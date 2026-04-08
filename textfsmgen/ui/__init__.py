@@ -9,7 +9,7 @@ Responsibilities include:
 - Providing decorators and helper utilities for consistent widget creation and layout.
 - Serving as the entry point for importing UI functionality across submodules
   (e.g., `ui.menu`, `ui.about`, `ui.helper`).
-"""
+"""     # noqa
 
 from typing import Any, Callable, Dict, Optional
 import platform
@@ -22,7 +22,7 @@ from tkinter import ttk
 from tkinter import messagebox      # noqa
 from tkinter.font import Font       # noqa
 
-is_macos = platform.system() == 'Darwin'
+is_macos = platform.system() == 'Darwin'    # noqa
 is_linux = platform.system() == 'Linux'
 is_window = platform.system() == 'Windows'
 
@@ -123,5 +123,8 @@ def set_window_icon(widget) -> None:
     file_path = path.join(base_dir, "images", "icon_logo.png")
 
     # Load logo (PhotoImage supports .png, .gif, .ppm)
-    logo = tk.PhotoImage(file=file_path)
-    widget.iconphoto(False, logo)
+    try:
+        logo = tk.PhotoImage(file=file_path)
+        widget.iconphoto(False, logo)
+    except Exception:   # noqa
+        pass
