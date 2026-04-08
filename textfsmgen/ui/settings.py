@@ -49,8 +49,8 @@ def create_window(parent: Optional[ui.Tk | ui.Toplevel]) -> ui.Toplevel:
 
     ui.set_window_icon(window)
 
-    width = 830 if ui.is_macos else 784 if ui.is_linux else 680
-    height = 588 if ui.is_macos else 572 if ui.is_linux else 564
+    width = 830 if ui.is_macos else 880 if ui.is_linux else 680
+    height = 588 if ui.is_macos else 615 if ui.is_linux else 564
 
     center_window(parent, window, width, height)
     return window
