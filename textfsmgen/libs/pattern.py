@@ -435,11 +435,7 @@ def resolve_keyword(name):
     return mapping.keyword
 
 
-def validate_pattern(
-    pattern: str,
-    flags: int = 0,
-    exception_cls: Optional[Type[Exception]] = None
-) -> Optional[re.error | None]:
+def validate_pattern(pattern: str, flags: int = 0, exception_cls=None):
     """Compile a regex pattern or raise a custom exception."""
     exception_cls = exception_cls or Exception
     try:
