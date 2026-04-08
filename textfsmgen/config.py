@@ -15,7 +15,7 @@ import yaml
 
 from textfsmgen.libs.common import dedent_and_strip
 
-__version__ = '0.4.6'
+__version__ = '0.4.6.1'
 version = __version__
 
 __all__ = [
