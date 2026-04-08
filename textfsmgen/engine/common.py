@@ -6,7 +6,7 @@ Common grammar pattern utilities for the TextFSM Generator framework.
 """
 
 import re
-from typing import Optional
+from typing import Optional, Union
 
 import yaml
 
@@ -22,8 +22,8 @@ from textfsmgen.exceptions import raise_exception
 
 def get_line_position_by(
     lines: list[str],
-    item: Optional[str | int | None]
-) -> Optional[int | None]:
+    item: Optional[Union[str, int, None]]
+) -> Optional[int]:
     """
     Determine the position of a line in `lines` based on a string
     pattern or numeric index.
@@ -52,7 +52,7 @@ def get_line_position_by(
 def get_fixed_line_snippet(
     lines: list[str],
     line: str = "",
-    index: Optional[int | None] = None
+    index: Optional[int] = None
 ) -> str:
     """
     Generate a normalized snippet representation of a line.

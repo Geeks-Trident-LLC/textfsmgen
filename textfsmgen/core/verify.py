@@ -18,8 +18,8 @@ from textfsmgen import TemplateBuilder
 def verify(
     template_snippet: str,
     test_data: str,
-    expected_rows_count: Optional[int | None] = None,
-    expected_result: Optional[list[dict] | None] = None,
+    expected_rows_count: Optional[int] = None,
+    expected_result: Optional[list[dict]] = None,
     ignore_space: bool = True,
 ) -> bool:
     """

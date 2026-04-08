@@ -5,7 +5,7 @@ textfsmgen.ui.settings
 UI components for the Settings dialog in TextFSMGen.
 """
 
-from typing import Optional
+from typing import Optional, Union
 
 from tkinter import filedialog
 
@@ -42,7 +42,7 @@ def show_dialog(app):
     make_modal(dialog)
 
 
-def create_window(parent: Optional[ui.Tk | ui.Toplevel]) -> ui.Toplevel:
+def create_window(parent: Optional[Union[ui.Tk, ui.Toplevel]]) -> ui.Toplevel:
     """Create and center the Settings window."""
     window = ui.Toplevel(parent)
     window.title("Settings - TextFSMGen CE")

@@ -5,6 +5,8 @@ textfsmgen.libs.datatype
 Utility functions for runtime type checking and data handling.
 """
 
+from typing import Optional
+
 from collections import abc
 import copy as _copy
 
@@ -74,7 +76,7 @@ def copy_obj(obj: object, deep: bool = True) -> object:
     return _copy.deepcopy(obj) if deep else _copy.copy(obj)
 
 
-def clean_list_of_dicts(items: list, chars: str | None = None) -> list:
+def clean_list_of_dicts(items: list, chars: Optional[str] = None) -> list:
     """Return a cleaned copy of a list of dicts, stripping strings and copying other values."""
     if not isinstance(items, list):
         return items

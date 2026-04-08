@@ -9,7 +9,7 @@ across parsing, translation, and validation workflows.
 """
 
 import re
-from typing import Optional
+from typing import Optional, Union
 
 from textfsmgen.core.patterns import TextPattern
 from textfsmgen.libs import PATTERN
@@ -478,12 +478,12 @@ class CategoryLinesTranslator(RuntimeException):
     def __init__(
         self,
         *lines,
-        options: Optional[dict | None] = None,
+        options: Optional[dict] = None,
         count: int = 1,
         separator: str = ":",
-        starting_from: Optional[str | int | None] = None,
-        ending_at: Optional[str | int | None] = None,
-        replacing_rules: Optional[str | list | tuple | dict | None] = None,
+        starting_from: Optional[Union[str, int]] = None,
+        ending_at: Optional[Union[str, int]] = None,
+        replacing_rules: Optional[Union[str, list, tuple, dict]] = None,
     ):
         # Normalized input
         self.lines = text.get_list_of_lines(*lines)
@@ -497,8 +497,8 @@ class CategoryLinesTranslator(RuntimeException):
         # Range selection
         self.starting_from = starting_from
         self.ending_at = ending_at
-        self.start_index: Optional[int | None] = None
-        self.end_index: Optional[int | None] = None
+        self.start_index: Optional[int] = None
+        self.end_index: Optional[int] = None
 
         # replacing rules
         self.replacing_rules = replacing_rules

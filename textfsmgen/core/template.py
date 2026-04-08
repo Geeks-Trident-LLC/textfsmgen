@@ -267,7 +267,7 @@ class TemplateBuilder:
         lines.append("#" * 80)
         return "\n".join(lines)
 
-    def reformat(self, template: str) -> str | None:    # noqa
+    def reformat(self, template: str) -> Optional[str]:    # noqa
         """
         Reformat a TextFSM template for readability.
         """
@@ -343,8 +343,8 @@ class TemplateBuilder:
 
     def show_debug_report(
             self,
-            test_result: Optional[list[dict] | None] = None,
-            expected_result: Optional[list[dict] | None] = None,
+            test_result: Optional[list[dict]] = None,
+            expected_result: Optional[list[dict]] = None,
             tabular: bool = False,
     ) -> None:
         """

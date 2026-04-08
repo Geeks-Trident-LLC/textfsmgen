@@ -5,6 +5,8 @@ textfsmgen.libs.shell
 General-purpose shell (CLI interaction) functions used across TextFSMGen.
 """
 
+from typing import Optional
+
 import subprocess
 import re
 
@@ -21,8 +23,8 @@ class PackageInfo:
         self._installed: bool = False
         self._version: str = ""
         self._name: str = ""
-        self._pip_freeze_result: DotObject | None = None
-        self._pip_show_result: DotObject | None = None
+        self._pip_freeze_result: Optional[DotObject] = None
+        self._pip_show_result: Optional[DotObject] = None
         self._process()
 
     @property
