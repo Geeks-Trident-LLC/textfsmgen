@@ -477,7 +477,7 @@ class CategoryLinesTranslator(RuntimeException):
 
     def __init__(
         self,
-        *lines: list[str],
+        *lines,
         options: Optional[dict | None] = None,
         count: int = 1,
         separator: str = ":",

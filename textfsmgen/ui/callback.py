@@ -392,10 +392,13 @@ def paste(app) -> None:
 
     try:
         data = app.root.clipboard_get()
-    except Exception:
+    except Exception as ex:
         show_message_dialog(
             title="Clipboard Empty",
-            info="There is no text available to paste from the clipboard."
+            info=(f"There is no text available to paste from the clipboard.\n"
+                  f"{'-' * 70}\n"
+                  f"{type(ex).__name__}: {ex}"
+            )
         )
         return
 

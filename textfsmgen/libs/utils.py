@@ -133,7 +133,7 @@ class Tabular:
 
         return widths
 
-    def infer_column_alignments(self) -> list[str]:
+    def infer_column_alignments(self) -> dict:
         """Infer text alignment for each column based on cell content."""
 
         # Build column-wise lists
