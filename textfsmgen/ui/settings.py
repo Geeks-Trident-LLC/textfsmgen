@@ -3,7 +3,7 @@ textfsmgen.ui.settings
 ======================
 
 UI components for the Settings dialog in TextFSMGen.
-"""
+"""     # noqa
 
 from typing import Optional, Union
 
@@ -53,7 +53,7 @@ def create_window(parent: Optional[Union[ui.Tk, ui.Toplevel]]) -> ui.Toplevel:
     height = 604 if ui.is_macos else 615 if ui.is_linux else 564
 
     if parent:
-        center_window(parent, window, width, height)
+        center_window(parent, window, width, height, x_resizable=True, y_resizable=True)
     return window
 
 def add_general_arguments_fields(app, parent: ui.Frame) -> None:    # noqa
@@ -71,8 +71,8 @@ def add_general_arguments_fields(app, parent: ui.Frame) -> None:    # noqa
     for label_text, var, pos in fields:
         lbl = ui.Label(group, text=label_text)
         lbl.grid(row=0, column=pos * 2, padx=2, pady=pad_y, sticky="nw")
-
-        entry = ui.TextBox(group, width=25, textvariable=var)
+        w = 30 if ui.is_macos and pos == 2 else 25
+        entry = ui.TextBox(group, width=w, textvariable=var)
         entry.grid(row=0, column=pos * 2 + 1, padx=2, pady=pad_y, sticky="nw")
 
     lbl = ui.Label(group, text="Description")
