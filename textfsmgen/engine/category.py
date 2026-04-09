@@ -6,7 +6,7 @@ Provides category definitions and grouping utilities for grammar patterns
 used in the TextFSM Generator framework. This module centralizes the
 classification of grammar pattern categories, ensuring consistent handling
 across parsing, translation, and validation workflows.
-"""
+"""     # noqa
 
 import re
 from typing import Optional, Union

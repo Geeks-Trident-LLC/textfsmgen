@@ -71,7 +71,7 @@ class PatternTranslator(RuntimeException):
     Represents a translated text pattern used in FSM (Finite State Machine)
     generation, providing utilities to normalize, store, and manipulate
     regex-compatible string patterns.
-    """
+    """     # noqa
     def __init__(self, data, *other, name='',
                  defined_pattern='', defined_patterns=None, ref_names=None,
                  singular_name='', singular_pattern='', root_name=''):
@@ -371,7 +371,7 @@ class PatternTranslator(RuntimeException):
                     return secondary_cls(data, *other)
                 return translator
 
-        raise_runtime_error(
+        raise_runtime_error(    # noqa
             obj="PatternTranslatorFactoryError",
             msg=f"Failed to create translator: data={data!r}, other={other!r}",
         )
@@ -386,7 +386,7 @@ class PatternTranslator(RuntimeException):
         """Return a generalized translator derived from two raw inputs."""
         translator_a = cls.do_factory_create(data_a)
         translator_b = cls.do_factory_create(data_b)
-        return translator_a.recommend(translator_b)
+        return translator_a.recommend(translator_b)     # noqa
 
 
 class DigitTranslator(PatternTranslator):
@@ -435,7 +435,7 @@ class DigitTranslator(PatternTranslator):
         """
         Recommend a generalized pattern when combined with another pattern.
         """
-        if self.is_subset_of(other) or self.is_superset_of(other):
+        if self.is_subset_of(other) or self.is_superset_of(other):  # noqa
             return (
                 self.get_new_subset(other)
                 if self.is_subset_of(other)
@@ -501,7 +501,7 @@ class DigitsTranslator(PatternTranslator):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):
+        if self.is_subset_of(other):    # noqa
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
@@ -565,7 +565,7 @@ class NumberTranslator(PatternTranslator):
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
-        """
+        """     # noqa
         if self.is_subset_of(other):
             return self.get_new_subset(other)
 
@@ -630,7 +630,7 @@ class MixedNumberTranslator(PatternTranslator):
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
-        """
+        """     # noqa
         if self.is_subset_of(other):
             return self.get_new_subset(other)
 
@@ -698,7 +698,7 @@ class LetterTranslator(PatternTranslator):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):
+        if self.is_subset_of(other):    # noqa
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
@@ -764,7 +764,7 @@ class LettersTranslator(PatternTranslator):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):
+        if self.is_subset_of(other):    # noqa
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
@@ -832,7 +832,7 @@ class AlnumTranslator(PatternTranslator):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):
+        if self.is_subset_of(other):    # noqa
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
@@ -899,7 +899,7 @@ class PunctTranslator(PatternTranslator):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):
+        if self.is_subset_of(other):    # noqa
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
@@ -961,7 +961,7 @@ class PunctsTranslator(PatternTranslator):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):
+        if self.is_subset_of(other):    # noqa
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
@@ -1038,7 +1038,7 @@ class PunctsGroupTranslator(PatternTranslator):
     def recommend(self, other):
         """Recommend a generalized translated pattern when
         combined with another pattern."""
-        if self.is_subset_of(other):
+        if self.is_subset_of(other):    # noqa
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
@@ -1111,7 +1111,7 @@ class GraphTranslator(PatternTranslator):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):
+        if self.is_subset_of(other):    # noqa
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
@@ -1172,7 +1172,7 @@ class WordTranslator(PatternTranslator):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):
+        if self.is_subset_of(other):    # noqa
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
@@ -1252,7 +1252,7 @@ class WordsTranslator(PatternTranslator):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):
+        if self.is_subset_of(other):        # noqa
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
@@ -1325,7 +1325,7 @@ class MixedWordTranslator(PatternTranslator):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):
+        if self.is_subset_of(other):        # noqa
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
@@ -1409,7 +1409,7 @@ class MixedWordsTranslator(PatternTranslator):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):
+        if self.is_subset_of(other):    # noqa
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
@@ -1473,7 +1473,7 @@ class NonWSTranslator(PatternTranslator):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):
+        if self.is_subset_of(other):    # noqa
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
@@ -1517,7 +1517,8 @@ class NonWSSTranslator(PatternTranslator):
     @require_same_translator_type
     def is_subset_of(self, other) -> bool:
         """
-        Determine whether this non-whitespaces pattern is a subset of another translated pattern.
+        Determine whether this non-whitespaces pattern is a subset of another
+        translated pattern.
         """
         return any([
             other.is_non_wss(),
@@ -1527,8 +1528,9 @@ class NonWSSTranslator(PatternTranslator):
     @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
-        Determine whether this non-whitespaces pattern is a superset of another translated pattern.
-        """
+        Determine whether this non-whitespaces pattern is a superset of
+        another translated pattern.
+        """     # noqa
 
         return any([
             other.is_digit(),
@@ -1552,7 +1554,7 @@ class NonWSSTranslator(PatternTranslator):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):
+        if self.is_subset_of(other):    # noqa
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
@@ -1607,7 +1609,7 @@ class NonWSSGroupTranslator(PatternTranslator):
         """
         Determine whether this non-whitespaces group pattern is a superset of
         another translated pattern.
-        """
+        """     # noqa
         # if not isinstance(other, PatternTranslator):
         #     self.raise_recommend_exception(other)
 

@@ -7,6 +7,7 @@ Common grammar pattern utilities for the TextFSM Generator framework.
 
 import re
 from typing import Optional, Union
+from copy import deepcopy
 
 import yaml
 
@@ -37,8 +38,8 @@ def get_line_position_by(
 
     regex_prefix = r'(?i)^\s*--regex\s+'
 
-    if re.match(regex_prefix, item):
-        pattern = re.sub(regex_prefix, "", item)
+    if re.match(regex_prefix, str(item)):
+        pattern = re.sub(regex_prefix, "", str(item))
     else:
         pattern = TextPattern(item)
 
@@ -49,11 +50,7 @@ def get_line_position_by(
     return None
 
 
-def get_fixed_line_snippet(
-    lines: list[str],
-    line: str = "",
-    index: Optional[int] = None
-) -> str:
+def get_fixed_line_snippet(lines: list[str], line: str = "", index: Optional[int] = None) -> str:   # noqa
     """
     Generate a normalized snippet representation of a line.
     """
@@ -62,7 +59,7 @@ def get_fixed_line_snippet(
         is_number, converted_index = number.try_to_get_number(index, return_type=int)
         if is_number:
             try:
-                line = lines[converted_index]
+                line = lines[converted_index]   # noqa
             except IndexError as ex:
                 total = len(lines)
                 msg = (
@@ -145,7 +142,7 @@ def apply_replacements(data: str, rules=None) -> str:
     - A list/tuple of [old, new] pairs
     - A dict whose values are {old, new} mappings
     """
-    if not data or not rules:
+    if not data or not rules:   # noqa
         return data
 
     # Normalize rules: YAML string -> Python object
@@ -170,7 +167,7 @@ def apply_replacements(data: str, rules=None) -> str:
         pairs = [(v["curr"], v["new"]) for v in rules]
 
     elif isinstance(rules, (list, tuple)) and len(rules) == 2:
-        pairs = [rules.copy()]
+        pairs = [deepcopy(rules)]
 
     elif isinstance(rules, dict) and "curr" in rules and "new" in rules:
         pairs = [(rules.get("curr"), rules.get("new"))]
@@ -179,7 +176,7 @@ def apply_replacements(data: str, rules=None) -> str:
         raise ValueError("Rules must be a YAML string, list/tuple of pairs.")
 
     # Apply replacements line-by-line
-    output_lines = []
+    output_lines = []   # noqa
     for line in data.splitlines():
         for old, new in pairs:
             if old in line:

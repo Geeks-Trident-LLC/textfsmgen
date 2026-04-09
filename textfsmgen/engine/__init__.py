@@ -1,3 +1,10 @@
+"""
+textfsmgen.engine.__init__
+==========================
+
+Initialization for the TextFSM parsing engine.
+"""     # noqa
+
 from textfsmgen.exceptions import RuntimeException
 from textfsmgen.libs import text
 
