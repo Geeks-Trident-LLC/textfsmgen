@@ -3,13 +3,13 @@ textfsmgen.libs.common
 =====================
 
 General-purpose generic classes used across TextFSMGen.
-"""
+"""     # noqa
 
 import re
 
 
 class DotObject(dict):
-    """Dictionary with dot-access for valid keys and recursive wrapping."""
+    """Dictionary with dot-access for valid keys and recursive wrapping."""     # noqa
 
     _valid_key = re.compile(r"_{,2}[A-Za-z][A-Za-z0-9_]*")
     _dict_members = dir(dict) + ["_valid_key", "_dict_members", "_wrap", "__getattr__"]
@@ -67,7 +67,7 @@ class StatusString(str):
         txt = args[0] if args else kwargs.pop("text", "")
         status = args[1] if len(args) > 1 else kwargs.pop("status", False)
 
-        result = str.__new__(cls, txt, **kwargs)
+        result = super().__new__(cls, txt, **kwargs)    # noqa
         result.status = str(status).strip().lower() in allowed
 
         return result

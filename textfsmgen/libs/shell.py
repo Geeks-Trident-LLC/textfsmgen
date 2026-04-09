@@ -3,7 +3,7 @@ textfsmgen.libs.shell
 =====================
 
 General-purpose shell (CLI interaction) functions used across TextFSMGen.
-"""
+"""     # noqa
 
 from typing import Optional
 

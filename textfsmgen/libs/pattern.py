@@ -3,7 +3,7 @@ textfsmgen.libs.pattern
 =======================
 
 General-purpose Patter class and functions used across TextFSMGen.
-"""
+"""     # noqa
 
 
 import re
@@ -292,7 +292,7 @@ class ParsedKeywordMappingName:
 
         # group 1 → plural patterns ending with '+'
         if self.in_group(base, index=1):
-            self._apply(rf"{pattern[:-1]}*")
+            self._apply(rf"{pattern[:-1]}*")    # noqa
             return
 
         # group 2 or 3 → grouped patterns

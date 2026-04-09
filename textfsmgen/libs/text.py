@@ -3,7 +3,6 @@ textfsmgen.libs.text
 ====================
 
 Enhanced string and text-processing utilities.
-
 """
 
 import typing

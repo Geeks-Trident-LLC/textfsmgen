@@ -3,7 +3,8 @@ textfsmgen.libs.file
 =====================
 
 General-purpose file functions used across TextFSMGen.
-"""
+"""     # noqa
+
 import yaml
 
 from .common import sys_exit

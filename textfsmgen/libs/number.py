@@ -4,7 +4,7 @@ textfsmgen.libs.number
 
 Utility functions for identifying and safely converting objects into numeric
 types (boolean, integer, float).
-"""
+"""     # noqa
 
 from copy import deepcopy
 from typing import Any, Optional, Tuple, Type

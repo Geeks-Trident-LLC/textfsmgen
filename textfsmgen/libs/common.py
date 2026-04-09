@@ -3,7 +3,7 @@ textfsmgen.libs.common
 ======================
 
 General-purpose common functions used across TextFSMGen.
-"""
+"""     # noqa
 
 import sys
 import textwrap

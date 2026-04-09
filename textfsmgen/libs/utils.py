@@ -3,7 +3,7 @@ textfsmgen.libs.utils
 =====================
 
 General-purpose utility functions used across TextFSMGen.
-"""
+"""     # noqa
 
 import re
 from collections import defaultdict

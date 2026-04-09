@@ -4,7 +4,7 @@ textfsmgen.libs.decorators
 
 This module provides reusable decorators that simplify common text‑processing
 tasks across the codebase.
-"""
+"""     # noqa
 
 import functools
 from textwrap import dedent

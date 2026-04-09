@@ -3,7 +3,7 @@ textfsmgen.libs
 ===============
 
 General-purpose functions used across TextFSMGen.
-"""
+"""     # noqa
 
 import platform
 from enum import IntFlag
