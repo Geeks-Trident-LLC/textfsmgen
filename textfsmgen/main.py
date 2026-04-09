@@ -404,14 +404,14 @@ class Cli:
         run_gui_application(self.options)
         self.validate_cli_flags()
         tb = self.create_builder()
-        self.save_outputs(tb)
-        self.execute_test(tb)
+        self.save_outputs(tb)   # noqa
+        self.execute_test(tb)   # noqa
         self.display_test_script(tb)
 
         if self.category_translator_enabled or self.tabular_translator_enabled:
-            msg = f"{tb.snippet}\n\n\n{tb.template}"
+            msg = f"{tb.snippet}\n\n\n{tb.template}"    # noqa
         else:
-            msg = tb.template
+            msg = tb.template   # noqa
         sys_exit(success=True, msg=msg)
 
 
