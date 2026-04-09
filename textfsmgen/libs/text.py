@@ -19,23 +19,19 @@ from textfsmgen.exceptions import EscapePatternError
 
 
 class BaseText(str):
-    """
-    A string subclass that provides enhanced text representation.
-    """
+    """A string subclass that provides enhanced text representation."""
     def __new__(cls, *args, **kwargs):
         arg0 = args[0] if args else None
         if args and isinstance(arg0, BaseException):
-            txt = str.__new__(cls, '{}: {}'.format(type(arg0).__name__, arg0))
+            txt = super().__new__(cls, f'{type(arg0).__name__}: {arg0}')    # noqa
             return txt
         else:
-            txt = str.__new__(cls, *args, **kwargs)
+            txt = super().__new__(cls, *args, **kwargs)     # noqa
             return txt
 
 
 class Text(BaseText):
-    """
-    A string subclass with extended text formatting and utility methods.
-    """
+    """A string subclass with extended text formatting and utility methods."""  # noqa
     @classmethod
     def format(cls, *args, **kwargs):
         """
@@ -126,20 +122,24 @@ class BaseLine(str):
     A string subclass representing a single line of text with preserved metadata.
     """
     def __new__(cls, data, *args):
-        new_base_line_obj = str.__new__(cls, data)
-        lines = new_base_line_obj.splitlines(keepends=True)
-        if len(lines) == 1:
-            __line = lines[0] if lines else ''
-            new_base_line_obj._raw_data = __line
-            new_base_line_obj._data = re.match(r"([^\r\n]+)?", __line).group()
-            new_base_line_obj._joiner = re.search(r"([\r\n]+)?$", __line).group()
-            return new_base_line_obj
-        else:
-            error = "The 'data' argument contains multiple lines; it must be a single line."
-            raise LineArgumentError(error)
+        line_obj = super().__new__(cls, data)  # noqa
+        lines = line_obj.splitlines(keepends=True)
+        if len(lines) != 1:
+            raise LineArgumentError(
+                "The 'data' argument contains multiple lines; expected a single line."
+            )
+        line = lines[0] if lines else ""
+        line_obj._raw_data = line
+
+        match_data = re.match(r"([^\r\n]+)?", line)
+        line_obj._data = match_data.group() if match_data else ""
+
+        match_joiner = re.search(r"([\r\n]+)?$", line)
+        line_obj._joiner = match_joiner.group() if match_joiner else ""
+        return line_obj
 
 
-class Line(BaseLine):
+class Line(BaseLine):   # noqa
     """
     A specialized string subclass representing a single line of text with
     additional utilities for whitespace handling, validation, and regex-based
@@ -147,9 +147,9 @@ class Line(BaseLine):
     """
     @property
     def joiner(self):
-        """
-        Get the trailing newline characters (e.g., "\n", "\r\n") associated with the line.
-        """
+        """Get the trailing newline characters (e.g., "\n", "\r\n")
+        associated with the line.
+        """     # noqa
         return self._joiner
 
     @property
@@ -175,14 +175,14 @@ class Line(BaseLine):
     @property
     def leading(self):
         """Extract leading whitespace characters from the given line."""
-        leading_chars = re.match(r'(\s+)?', self).group()
-        return leading_chars
-
+        match = re.match(r'(\s+)?', self)
+        return re.sub(r"[\r\n]+", "", match.group()) if match else ""
     @property
     def trailing(self):
         """Extract trailing whitespace characters from the given line."""
-        trailing_chars = re.search(r'(\s+)?$', self).group().rstrip('\r\n')
-        return trailing_chars
+        match = re.search(r'(\s+)?$', self)
+        return re.sub(r"[\r\n]+", "", match.group()) if match else ""
+
 
     @property
     def is_leading(self) -> bool:
@@ -254,7 +254,7 @@ class Line(BaseLine):
         return False
 
     def convert_to_regex_pattern(self) -> str:
-        """Convert the line into a regex-compatible pattern string."""
+        """Convert the line into a regex-compatible pattern string."""  # noqa
         result = []
         punct_pat = BaseMatchedObject.punctuation_pattern
         pat = f'({punct_pat}+ +)\\1+'
@@ -275,9 +275,8 @@ class Line(BaseLine):
         return text_pattern
 
     def do_finditer_split(self, data, pattern=r'\s+'):  # noqa
-        """
-        Split a string into matched and unmatched segments using regex finditer.
-        """
+        """Split a string into matched and unmatched segments
+        using regex finditer."""    # noqa
         result = []
         start = 0
         match = None
@@ -297,7 +296,7 @@ class Line(BaseLine):
         return result
 
 
-class BaseMatchedObject:
+class BaseMatchedObject:    # noqa
     """
     Represents a fragment of matched text and converts it into the most
     appropriate regular‑expression pattern.
@@ -330,7 +329,7 @@ class BaseMatchedObject:
         object.
         """
         result = dict()
-        result.update(self.get_whitespace_pattern())
+        result.update(self.get_whitespace_pattern())    # noqa
         result.update(self.get_repeated_puncts_space_pattern())
         result.update(self.get_repeated_puncts_pattern())
         result.update(self.get_text_pattern())
