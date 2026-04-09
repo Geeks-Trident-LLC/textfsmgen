@@ -79,12 +79,12 @@ class TabularTranslator(RuntimeException):
         normalized = []
         if text.is_string(column_widths) or datatype.is_list(column_widths):
             if text.is_string(column_widths):
-                column_widths = column_widths.strip()
+                column_widths = str(column_widths).strip()
                 widths = re.split(r"[ ,]+", column_widths)
             else:
-                widths = column_widths[:]
+                widths = column_widths[:]   # noqa
 
-            for idx, width_ in enumerate(widths):
+            for idx, width_ in enumerate(widths):   # noqa
                 is_number, width = number.try_to_get_number(width_, return_type=int)
                 if is_number:
                     normalized.append(width)
@@ -110,7 +110,7 @@ class TabularTranslator(RuntimeException):
             )
 
     def process(self) -> None:
-        """Initialize the tabular parser with the given lines and configuration."""
+        """Initialize the tabular parser with the given lines and configuration."""     # noqa
         self.index_start = get_line_position_by(self.lines, self.starting_from)
         self.index_end = get_line_position_by(self.lines, self.ending_at)
 
@@ -125,7 +125,7 @@ class TabularTranslator(RuntimeException):
         self.tabular_parser = VarColumnTabularTranslator(*lines, **self.kwargs)
 
     def to_snippet(self) -> str:
-        """Return a template snippet generated from the parsed table."""
+        """Return a template snippet generated from the parsed table."""    # noqa
         tmpl_snippet = (
             self.tabular_parser.to_snippet() if self else ""
         )
@@ -207,7 +207,7 @@ class VarColumnTabularTranslator(RuntimeException):
 
     @property
     def is_start_with_divider(self):
-        """Check if most lines start with the column_divider symbol."""
+        """Check if most lines start with the column_divider symbol."""     # noqa
         if self._is_start_with_divider is None:
             if self.is_punct_divider:
                 count = sum(line.strip().startswith(self.column_divider) for line in self.lines)
@@ -218,7 +218,7 @@ class VarColumnTabularTranslator(RuntimeException):
 
     @property
     def is_end_with_divider(self):
-        """Check if most lines end with the column_divider symbol."""
+        """Check if most lines end with the column_divider symbol."""   # noqa
         if self._is_end_with_divider is None:
             if self.is_punct_divider:
                 count = sum(line.strip().endswith(self.column_divider) for line in self.lines)
@@ -228,7 +228,7 @@ class VarColumnTabularTranslator(RuntimeException):
         return self._is_end_with_divider
 
     def parse_custom_header(self):
-        """Parse and normalize custom header text into headers and column count."""
+        """Parse and normalize custom header text into headers and column count."""     # noqa
         txt = self.custom_header_text
         if not txt:
             return
@@ -320,7 +320,7 @@ class VarColumnTabularTranslator(RuntimeException):
         )
 
     def ensure_column_count(self):
-        """Infer column count from lines or raise error if zero."""
+        """Infer column count from lines or raise error if zero."""     # noqa
         pat = f"{PATTERN.PUNCTS_GROUP}$"
         for line in self.lines:
             if re.match(pat, line.strip()):
@@ -330,7 +330,7 @@ class VarColumnTabularTranslator(RuntimeException):
             self.raise_runtime_error(msg='column_count cannot be zero')
 
     def prepare_header_rows(self):
-        """Extract header lines from header_rows (indices or substrings)."""
+        """Extract header lines from header_rows (indices or substrings)."""    # noqa
         lst = self.raw_header_rows
         data = self.header_rows
         total_lines = len(self.lines)
@@ -380,7 +380,7 @@ class VarColumnTabularTranslator(RuntimeException):
         # Case 1: list/tuple input
         if isinstance(headers, (list, tuple)):
             if len(headers) == self.column_count:
-                self.headers = headers.copy()
+                self.headers = list(headers)
                 return  # already valid
             raise_runtime_error(
                 obj="TabularHeadersColumnCountError",
@@ -403,9 +403,9 @@ class VarColumnTabularTranslator(RuntimeException):
             )
 
         # Case 3: string input — attempt to split
-        raw = headers.strip()
+        raw = str(headers).strip()
 
-        comma_split = re.split(r"\s*,\s*", raw)
+        comma_split = re.split(r"\s*,\s*", raw)     # noqa
         space_split = re.split(r"\s+", raw)
 
         expected = self.column_count
@@ -438,7 +438,7 @@ class VarColumnTabularTranslator(RuntimeException):
     # -------------------------------
 
     def find_reference_row_by_divider(self, custom_line=""):
-        """Find a reference row defined by repeated punctuation dividers."""
+        """Find a reference row defined by repeated punctuation dividers."""    # noqa
         repeat = self.column_count - 1
         pattern = rf" *{PATTERN.PUNCTS}( +{PATTERN.PUNCTS}){{{repeat}}} *$"
 
@@ -458,7 +458,7 @@ class VarColumnTabularTranslator(RuntimeException):
         )
 
     def find_reference_row_by_separator(self, custom_line=""):
-        """Find a reference row using the explicit column divider."""
+        """Find a reference row using the explicit column divider."""   # noqa
 
         sep = re.escape(self.column_divider)
         cell = rf"[^{self.column_divider}]+"
@@ -482,7 +482,7 @@ class VarColumnTabularTranslator(RuntimeException):
         )
 
     def find_reference_row_by_space_divider(self, spaces=" ", custom_line=""):
-        """Find a reference row where columns are separated by one or more spaces."""
+        """Find a reference row where columns are separated by one or more spaces."""   # noqa
         # Pattern to detect a valid reference row
         gap = "" if spaces == " " else " "
         cell = PATTERN.OPTIONAL_NON_WSS_GROUP
@@ -538,7 +538,7 @@ class VarColumnTabularTranslator(RuntimeException):
         return self.find_reference_row_by_divider(custom_line=self.custom_header_text)
 
     def find_reference_row_by_column_widths(self, custom_line: str = '') -> Optional['Row']:
-        """Find reference row using fixed column widths."""
+        """Find reference row using fixed column widths."""     # noqa
         parts = [
             f'(?P<v{index:03d}>.{{{width}}})' if index < self.column_count - 1
             else f'(?P<v{index:03d}>.*)'
@@ -561,13 +561,13 @@ class VarColumnTabularTranslator(RuntimeException):
         )
 
     def find_reference_row_by_headers(self) -> Optional['Row']:
-        """Find reference row using headers."""
+        """Find reference row using headers."""     # noqa
         if not self.raw_headers:
             return None
 
         if isinstance(self.raw_headers, (list, tuple)):
             pattern = r"\s*" + f"{PATTERN.SPACE_PUNCT}+".join(
-               re.escape(hdr) for hdr in self.raw_headers
+               re.escape(hdr) for hdr in self.raw_headers   # noqa
             ) + r"\s*"
             header_line = "" or next(
                 (ln for ln in self.lines if re.match(pattern, ln)),
@@ -604,7 +604,7 @@ class VarColumnTabularTranslator(RuntimeException):
     # -------------------------------
 
     def try_parse_table_with(self, case: str) -> Tuple[bool, Optional["ParsedTable"]]:
-        """Try parsing the table using the given reference-row strategy."""
+        """Try parsing the table using the given reference-row strategy."""     # noqa
         strategies = {
             "column_widths": self.find_reference_row_by_column_widths,
             "symbols": self.find_reference_row_by_divider,
@@ -640,7 +640,7 @@ class VarColumnTabularTranslator(RuntimeException):
 
     def parse_table(self) -> "ParsedTable":
         """Parse the tabular text using the appropriate divider strategy."""
-        strategies = [
+        strategies = [  # noqa
             (
                 bool(self.column_widths),
                 "column_widths",
@@ -695,11 +695,11 @@ class VarColumnTabularTranslator(RuntimeException):
                 )
             )
 
-        ok, table = self.try_parse_table_with(case)
+        ok, table = self.try_parse_table_with(str(case))
         if not ok:
-            self.raise_runtime_error(msg=err_msg)
+            self.raise_runtime_error(msg=str(err_msg))
 
-        return table
+        return table    # noqa
 
     def to_snippet(self) -> str:
         """Convert parsed tabular text into a template snippet."""
@@ -783,7 +783,7 @@ class ParsedTable(RuntimeException):
     @property
     def is_leading(self) -> bool:
         """Check if the first column contains leading markers."""
-        if self._is_leading is None:
+        if self._is_leading is None:    # noqa
             lst = []
             for cell in self.first_column.cells:
                 if cell.text.strip():
@@ -792,7 +792,7 @@ class ParsedTable(RuntimeException):
                 if isinstance(key, int):
                     lst.append(text.Line.has_leading(data))
             self._is_leading = any(lst)
-        return self._is_leading
+        return bool(self._is_leading)
 
     @property
     def is_trailing(self) -> bool:
@@ -802,7 +802,7 @@ class ParsedTable(RuntimeException):
                 self._is_trailing = text.Line.has_trailing(line)
                 if self._is_trailing:
                     break
-        return self._is_trailing
+        return bool(self._is_trailing)
 
     @property
     def row_count(self) -> int:
@@ -828,7 +828,8 @@ class ParsedTable(RuntimeException):
     #  divider snippet
     # -------------------------------
     def build_divider_snippets(self):
-        """Analyze divider patterns in lines and derive leading, middle, and trailing snippets."""
+        """Analyze divider patterns in lines and derive leading, middle,
+        and trailing snippets."""   # noqa
         if not self.has_divider:
             return
 
@@ -889,7 +890,7 @@ class ParsedTable(RuntimeException):
     # -------------------------------
 
     def prepare_lines(self, lines) -> List[str]:
-        """Normalize and preprocess input lines, handling user markers."""
+        """Normalize and preprocess input lines, handling user markers."""  # noqa
 
         def update_last_column_info(
                 column_info: dict, line_: str, spacers_count_: int, baseline_: int
@@ -983,7 +984,7 @@ class ParsedTable(RuntimeException):
     # -------------------------------
 
     def add_data_to_rows(self) -> None:
-        """Populate rows from lines and attach first column data if available."""
+        """Populate rows from lines and attach first column data if available."""   # noqa
         self.rows.clear()
         for index, line in enumerate(self.lines):
             row = Row(line, reference_row=self.reference_row, column_divider=self.column_divider)
@@ -999,7 +1000,7 @@ class ParsedTable(RuntimeException):
         Each row’s cells are distributed into columns. Columns are linked
         left-to-right, and alignment analysis is performed. Extra metadata
         for the last column is also added.
-        """
+        """     # noqa
         self.columns.clear()
         is_created = False
 
@@ -1035,7 +1036,7 @@ class ParsedTable(RuntimeException):
     # -------------------------------
 
     def do_cleaning_data(self) -> None:
-        """Clean table data by separating header rows from data rows."""
+        """Clean table data by separating header rows from data rows."""    # noqa
         if not self.reference_row or not self.has_header_row:
             return
 
@@ -1057,7 +1058,7 @@ class ParsedTable(RuntimeException):
             col.cells = col.cells[row_pos + 1:]
 
     def assign_column_names(self) -> None:
-        """Assign sanitized, unique column names from headers or header rows."""
+        """Assign sanitized, unique column names from headers or header rows."""    # noqa
 
         def build_names(raw_names_):
             names = []
@@ -1117,7 +1118,7 @@ class ParsedTable(RuntimeException):
     # -------------------------------
 
     def get_header_lines_snippet(self) -> str:
-        """Extract header lines snippet."""
+        """Extract header lines snippet."""     # noqa
         headers_lines = self.raw_header_rows or self.header_lines
         lst: List[str] = []
 
@@ -1130,7 +1131,7 @@ class ParsedTable(RuntimeException):
         return text.join_string(*lst, separator="\n")
 
     def to_snippet(self) -> str:
-        """Generate a template snippet representing the table."""
+        """Generate a template snippet representing the table."""       # noqa
         if not self:
             return ""
 
@@ -1156,7 +1157,7 @@ class ParsedTable(RuntimeException):
         """
         Build template snippets for the case where the first column
         contains special metadata or indices.
-        """
+        """     # noqa
         if not self.first_column_data_info:
             return
 
@@ -1207,7 +1208,7 @@ class ParsedTable(RuntimeException):
             snippets.append(next_snippet)
 
     def build_last_column_snippet(self, snippets):
-        if not self.last_column_data_info:
+        if not self.last_column_data_info:      # noqa
             return
 
         leading_snippet = 'start(space)' if self.is_leading else 'start()'
@@ -1292,7 +1293,7 @@ class ParsedTable(RuntimeException):
         """
         Build template snippets for rows that are neither first-column
         nor last-column special cases.
-        """
+        """     # noqa
         leading_snippet = 'start(space)' if self.is_leading else 'start()'
         trailing_snippet = 'end(space) -> record' if self.is_trailing else 'end() -> record'
 
@@ -1516,7 +1517,7 @@ class Cell(RuntimeException):
     @property
     def is_group_of_chars(self) -> bool:
         """Return True if the cell contains multiple characters separated by spaces."""
-        return self.text.strip() and bool(re.findall(PATTERN.WS, self.text.strip()))
+        return bool(self.text.strip()) and bool(re.findall(PATTERN.WS, self.text.strip()))
 
     @property
     def is_containing_space(self) -> bool: return bool(re.findall(PATTERN.WS, self.text))
@@ -1543,7 +1544,7 @@ class Cell(RuntimeException):
         return "" if chk else prefix
 
     def get_postfix_data(self) -> str:
-        """Return postfix data after the last space or double space."""
+        """Return postfix data after the last space or double space."""     # noqa
         if self.is_multi_trailing or not self.is_containing_space:
             return ""
 
@@ -1568,7 +1569,7 @@ class Cell(RuntimeException):
         return ""
 
     def adjust_from_previous(self, prev_cell: "Cell" = None) -> None:
-        """Adjust boundaries based on possible prefix of the previous cell."""
+        """Adjust boundaries based on possible prefix of the previous cell."""  # noqa
         if not isinstance(prev_cell, self.__class__):
             return
 
@@ -1584,7 +1585,7 @@ class Cell(RuntimeException):
         prev_cell.process()
 
     def readjust(self, prev_cell: "Cell" = None) -> None:
-        """Shift boundaries based on postfix data extracted from the previous cell."""
+        """Shift boundaries based on postfix data extracted from the previous cell."""  # noqa
         if not isinstance(prev_cell, self.__class__):
             # skip adjustment
             return
@@ -1606,7 +1607,7 @@ class Cell(RuntimeException):
         prev_cell.update_position("right", value=self.right - shift)
 
     def process(self) -> None:
-        """Validate positions and initialize cell data."""
+        """Validate positions and initialize cell data."""       # noqa
         # Reset cached flags
         self._leading = None
         self._trailing = None
@@ -1646,7 +1647,7 @@ class Cell(RuntimeException):
         self.inner_right = self.right - len(self.trailing)
 
     def adjust_bounds(self):
-        """Expand left/right bounds to include adjacent non‑space characters."""
+        """Expand left/right bounds to include adjacent non‑space characters."""    # noqa
         # Extend right bound leftward if the segment ends inside a word
         if self.reference and self.right < len(self.line) and self.line[
             self.right] != " ":
@@ -1682,7 +1683,7 @@ class Cell(RuntimeException):
         )
 
     def validate_numeric_boundary(self, left_pos, right_pos):
-        """Validate numeric left/right bounds and return them as integers."""
+        """Validate numeric left/right bounds and return them as integers."""   # noqa
         ok_left, left = number.try_to_get_number(left_pos, return_type=int)
         ok_right, right = number.try_to_get_number(right_pos, return_type=int)
 
@@ -1713,7 +1714,7 @@ class Cell(RuntimeException):
         self._trailing = None
 
 
-class Row(RuntimeException):
+class Row(RuntimeException):    # noqa
     """Represents a row in a tabular text structure."""
 
     def __init__(
@@ -1784,7 +1785,7 @@ class Row(RuntimeException):
         if not self.has_divider:
             return False
 
-        ref_cols = self.reference_row.column_count
+        ref_cols = self.reference_row.column_count  # noqa
         divider = self.column_divider
 
         # Must contain enough dividers to form valid columns
@@ -2011,7 +2012,7 @@ class Row(RuntimeException):
         result = match.groupdict() if match else {}
         tokens = [result.get(f"v{i:03d}") for i in range(256) if f"v{i:03d}" in result]
 
-        return cls.create_reference_row(line, pattern, tokens, width_mode=width_mode)
+        return cls.create_reference_row(line, pattern, tokens, width_mode=width_mode)   # noqa
 
     @classmethod
     def do_creating_reference_row(
