@@ -73,7 +73,7 @@ class VarRegistry:
         """Store a duplicate-name group, including the base name and any existing variants."""
         group = {base_name: value}
         for name in existing_names:
-            existing_value = self._registry.get(name)
+            existing_value = self._registry.get(name, "")
             if existing_value:
                 group[name] = existing_value
 
@@ -417,7 +417,7 @@ class CategoryLineTranslator(LineData):
 
             pattern = spaces_pat.join(parts)
             match = re.search(pattern, self.right_data)
-            left_chunk = match.group()
+            left_chunk = match.group() if match else ""
             remaining = self.right_data[len(left_chunk):]
 
             if double_spaces in left_chunk:
@@ -433,7 +433,7 @@ class CategoryLineTranslator(LineData):
 
             pattern = spaces_pat.join(parts)
             match = re.search(pattern, self.right_data)
-            left_chunk = match.group()
+            left_chunk = match.group() if match else ""
             remaining = self.right_data[len(left_chunk):]
             return left_chunk, remaining
 
