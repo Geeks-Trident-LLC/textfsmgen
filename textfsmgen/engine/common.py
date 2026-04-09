@@ -147,6 +147,9 @@ def apply_replacements(data: str, rules=None) -> str:
 
     # Normalize rules: YAML string -> Python object
     if isinstance(rules, str):
+        if "fallback(" in rules.lower():
+            return apply_fallback_replacements(data, rules)
+
         parsed = yaml.safe_load(rules)
         if not parsed:
             return data
@@ -184,4 +187,55 @@ def apply_replacements(data: str, rules=None) -> str:
         if line.strip():
             output_lines.append(line)
 
-    return "\n".join(output_lines)
+    return "\n".join(output_lines) if output_lines else data
+
+
+def apply_fallback_replacements(data: str, rules=None) -> str:
+    """
+    Apply fallback(var_name, keyword) replacements to the given text.
+
+    Extracts fallback(...) patterns from the provided rules (YAML string,
+    list, or tuple), builds unique (var_name, keyword) pairs, and rewrites
+    matching segments in the input text.
+    """
+    parsed = yaml.safe_load(rules)
+    if not parsed:
+        return data
+
+    pattern = r"(?i)fallback[(]\s*var_\w+\s*,\s*\w+\s*[)]"
+    matches = []
+
+    # Collect fallback(...) expressions from rules
+    if isinstance(parsed, str):
+        matches.extend(re.findall(pattern, parsed))
+    elif isinstance(parsed, (list, tuple)):
+        for item in parsed:
+            matches.extend(re.findall(pattern, str(item)))
+
+    if not matches:
+        return data
+
+    # Build unique (var_name, keyword) pairs
+    pairs = []
+    for expr in matches:
+        _, var_name, keyword, _ = re.split(r"[)(,]+", expr)
+        pair = (var_name, keyword)
+        if pair not in pairs:
+            pairs.append(pair)
+
+    output = []
+    for line in data.splitlines():
+        cursor = 0
+        for var_name, keyword in pairs:
+            pat = rf"(?i)\w+(?P<body>[(]\s*{var_name}\s*[^)]*[)])"
+            match = re.search(pat, line[cursor:])
+            if match:
+                cursor = match.end()
+                original = match.group()
+                replacement = keyword + match.group("body")
+                line = line.replace(original, replacement)
+
+        if line.strip():
+            output.append(line)
+
+    return "\n".join(output) if output else data
