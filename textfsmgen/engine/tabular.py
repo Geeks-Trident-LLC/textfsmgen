@@ -1173,7 +1173,7 @@ class ParsedTable(RuntimeException):
         for layout in sorted(set(layouts), reverse=True):
             parts = []
             for index, bit in enumerate(layout):
-                column = self.columns[index]
+                column = self.columns[index]    # noqa
                 m, n = column.width, column.max_width
                 if m == n:
                     m = n - 4 if (n - 4) > 2 else abs(n - 2)
@@ -1227,7 +1227,7 @@ class ParsedTable(RuntimeException):
         for layout in sorted(layouts, reverse=True):
             parts = []
             for index, bit in enumerate(list(layout)):
-                column = self.columns[index]
+                column = self.columns[index]    # noqa
                 m, n = column.width, column.max_width
                 if m == n:
                     m = n - 4 if (n - 4) > 2 else abs(n - 2)
@@ -1236,7 +1236,7 @@ class ParsedTable(RuntimeException):
                 kwargs = dict()
                 if index == self.column_count - 1:
                     kwargs.update(added_list_meta_data=True)
-                col_snippet = column.to_snippet(**kwargs)
+                col_snippet = column.to_snippet(**kwargs)   # noqa
 
                 if int(bit) or self.has_divider:
                     parts.append(col_snippet if int(bit) else space_snippet)
@@ -1327,7 +1327,7 @@ class ParsedTable(RuntimeException):
                 col_snippet = column.to_snippet(**kwargs)
 
                 # If bit is 1 or divider is present → direct append
-                if int(bit) or self.has_divider:
+                if int(bit) or self.has_divider:    # noqa
                     parts.append(col_snippet if int(bit) else space_snippet)
                     continue
 

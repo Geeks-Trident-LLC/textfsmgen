@@ -66,7 +66,7 @@ def test_parses_with_empty_cell():
         start() word(var_fruits)optional_spaces()|optional_spaces()word(var_meat, or_empty)optional_spaces()|optional_spaces()words(var_drinks) end() -> record
     """).strip()
 
-    expected_result = [
+    expected_result = [     # noqa
         {'fruits': 'orange', 'meat': 'pork', 'drinks': 'water'},
         {'fruits': 'peach', 'meat': '', 'drinks': 'pepsi soda'}
     ]
@@ -101,7 +101,7 @@ def test_parses_with_full_enclosing_divider():
         start() |optional_spaces()word(var_fruits)optional_spaces()|optional_spaces()word(var_meat, or_empty)optional_spaces()|optional_spaces()words(var_drinks)optional_spaces()| end() -> record
     """).strip()
 
-    expected_result = [
+    expected_result = [     # noqa
         {'fruits': 'orange', 'meat': 'pork', 'drinks': 'water'},
         {'fruits': 'peach', 'meat': '', 'drinks': 'pepsi soda'}
     ]
@@ -136,7 +136,7 @@ def test_parses_with_left_enclosing_divider():
         start() |optional_spaces()word(var_fruits)optional_spaces()|optional_spaces()word(var_meat, or_empty)optional_spaces()|optional_spaces()words(var_drinks) end(space) -> record
     """).strip()
 
-    expected_result = [
+    expected_result = [     # noqa
         {'fruits': 'orange', 'meat': 'pork', 'drinks': 'water'},
         {'fruits': 'peach', 'meat': '', 'drinks': 'pepsi soda'}
     ]
@@ -171,7 +171,7 @@ def test_parses_with_right_enclosing_divider():
         start() word(var_fruits)optional_spaces()|optional_spaces()word(var_meat, or_empty)optional_spaces()|optional_spaces()words(var_drinks)optional_spaces()| end() -> record
     """).strip()
 
-    expected_result = [
+    expected_result = [     # noqa
         {'fruits': 'orange', 'meat': 'pork', 'drinks': 'water'},
         {'fruits': 'peach', 'meat': '', 'drinks': 'pepsi soda'}
     ]
@@ -237,7 +237,7 @@ def test_parses_with_left_purge_divider():
         start() |word(var_fruits)|word(var_meat)|words(var_drinks) end() -> record
     """).strip()
 
-    expected_result = [
+    expected_result = [     # noqa
         {'fruits': 'orange', 'meat': 'pork', 'drinks': 'water'},
         {'fruits': 'peach', 'meat': 'beef', 'drinks': 'pepsi soda'}
     ]
@@ -271,7 +271,7 @@ def test_parses_with_right_purge_divider():
         start() word(var_fruits)|word(var_meat)|words(var_drinks)| end() -> record
     """).strip()
 
-    expected_result = [
+    expected_result = [     # noqa
         {'fruits': 'orange', 'meat': 'pork', 'drinks': 'water'},
         {'fruits': 'peach', 'meat': 'beef', 'drinks': 'pepsi soda'}
     ]
@@ -305,7 +305,7 @@ def test_parses_with_full_purge_divider():
         start() |word(var_fruits)|word(var_meat)|words(var_drinks)| end() -> record
     """).strip()
 
-    expected_result = [
+    expected_result = [     # noqa
         {'fruits': 'orange', 'meat': 'pork', 'drinks': 'water'},
         {'fruits': 'peach', 'meat': 'beef', 'drinks': 'pepsi soda'}
     ]

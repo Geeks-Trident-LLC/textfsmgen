@@ -95,7 +95,7 @@ def add_category_translator_arguments(app, parent: ui.Frame) -> None:
     lbl.grid(row=0, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
     entry = ui.TextBox(group, width=12, justify="center",
                        textvariable=app.settings.category_arg_separator)
-    entry.grid(row=0, column=1, padx=2, pady=pad_y, sticky="nw")
+    entry.grid(row=0, column=1, padx=2, pady=pad_y, sticky="nw")    # noqa
 
     lbl = ui.Label(group, text="Count")
     lbl.grid(row=0, column=2, padx=2, pady=pad_y, sticky="se")
@@ -104,17 +104,17 @@ def add_category_translator_arguments(app, parent: ui.Frame) -> None:
     entry.grid(row=0, column=3, padx=2, pady=pad_y, sticky="nw")
 
     lbl = ui.Label(group, text="Starting From")
-    lbl.grid(row=1, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
+    lbl.grid(row=1, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")    # noqa
     entry = ui.TextBox(group, width=94, textvariable=app.settings.category_arg_starting_from)
     entry.grid(row=1, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
 
     lbl = ui.Label(group, text="Ending At")
-    lbl.grid(row=2, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
+    lbl.grid(row=2, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")    # noqa
     entry = ui.TextBox(group, width=94, textvariable=app.settings.category_arg_ending_at)
     entry.grid(row=2, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
 
     lbl = ui.Label(group, text="Replacing")
-    lbl.grid(row=3, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
+    lbl.grid(row=3, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")    # noqa
     entry = ui.TextBox(group, width=94, textvariable=app.settings.category_arg_replacing_rules)
     entry.grid(row=3, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
 
@@ -132,7 +132,7 @@ def add_tabular_translator_arguments(app, parent: ui.Frame) -> None:
     lbl.grid(row=0, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
     entry = ui.TextBox(group, width=8, justify="center",
                        textvariable=app.settings.tabular_arg_divider)
-    entry.grid(row=0, column=1, padx=2, pady=pad_y, sticky="nw")
+    entry.grid(row=0, column=1, padx=2, pady=pad_y, sticky="nw")    # noqa
 
     lbl = ui.Label(group, text="Count")
     lbl.grid(row=0, column=2, padx=2, pady=pad_y, sticky="se")
@@ -152,17 +152,17 @@ def add_tabular_translator_arguments(app, parent: ui.Frame) -> None:
     checkbox.grid(row=0, column=6, sticky="nw")
 
     lbl = ui.Label(group, text="Headers")
-    lbl.grid(row=1, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
+    lbl.grid(row=1, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")    # noqa
     entry = ui.TextBox(group, width=94, textvariable=app.settings.tabular_arg_headers)
     entry.grid(row=1, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
 
     lbl = ui.Label(group, text="Custom Hdr")
-    lbl.grid(row=2, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
+    lbl.grid(row=2, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")    # noqa
     entry = ui.TextBox(group, width=94, textvariable=app.settings.tabular_arg_custom_header)
     entry.grid(row=2, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
 
     lbl = ui.Label(group, text="Header Rows")
-    lbl.grid(row=3, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
+    lbl.grid(row=3, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")    # noqa
     entry = ui.TextBox(group, width=94, textvariable=app.settings.tabular_arg_header_rows)
     entry.grid(row=3, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
 

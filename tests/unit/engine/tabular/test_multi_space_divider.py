@@ -22,7 +22,7 @@ def test_parses_rows_with_full_cells_per_column():
         10/5/2021 9:13:50 PM   dsc
         11/2/2021 11:58:45 PM  README.md
         12/16/2021 12:30:59 PM CONTRIBUTING.md
-                """).strip()
+        """).strip()
 
     exp_snippet = dedent("""
         LastWriteTime          Name

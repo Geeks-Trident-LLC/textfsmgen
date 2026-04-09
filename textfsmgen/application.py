@@ -286,7 +286,7 @@ class Application:
             self.frames.input, width=20, height=5, wrap='none',
             name='input_textarea',
         )
-        self.textarea.input.grid(row=0, column=0, sticky='nswe')
+        self.textarea.input.grid(row=0, column=0, sticky='nswe')    # noqa
 
         # Add vertical scrollbar
         vscrollbar = ttk.Scrollbar(
@@ -323,7 +323,7 @@ class Application:
             state=tk.DISABLED,
             name='output_textarea'
         )
-        self.textarea.output.grid(row=0, column=0, sticky='nswe')
+        self.textarea.output.grid(row=0, column=0, sticky='nswe')   # noqa
 
         # Attach scrollbars
         vscrollbar = ttk.Scrollbar(

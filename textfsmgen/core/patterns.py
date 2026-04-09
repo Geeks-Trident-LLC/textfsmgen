@@ -289,7 +289,7 @@ class ElementPattern(str):
         head = ''
         tail = ''
         is_or_either = False
-        spaces_occurrence_pat = ''
+        spaces_occurrence_pat = ''      # noqa
 
         for arg in arguments:
             match = re.match(vpat, arg, flags=re.I)
@@ -367,7 +367,7 @@ class ElementPattern(str):
         val = SYMBOL.get(symbol_name, soft_escape(symbol_name))     # noqa
         lst = [val]
 
-        name, vpat = '', r'var_(?P<name>\w+)$'
+        name, vpat = '', r'var_(?P<name>\w+)$'      # noqa
         or_pat = r'or_(?P<case>[^,]+)'
         is_empty = False
         word_bound = ''
@@ -429,7 +429,7 @@ class ElementPattern(str):
         if keyword != 'choice':     # noqa
             return False, ''
 
-        arguments = re.split(r' *, *', params) if params else []
+        arguments = re.split(r' *, *', params) if params else []    # noqa
         lst = []
 
         name, vpat = '', r'var_(?P<name>\w+)$'
@@ -491,7 +491,7 @@ class ElementPattern(str):
         if keyword != 'data':       # noqa
             return False, ''
 
-        arguments = re.split(r' *, *', params) if params else []
+        arguments = re.split(r' *, *', params) if params else []    # noqa
         lst = []
 
         name, vpat = '', r'var_(?P<name>\w+)$'

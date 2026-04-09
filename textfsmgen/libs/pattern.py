@@ -277,7 +277,7 @@ class ParsedKeywordMappingName:
             return
 
         m = re.fullmatch(r"(?i)optional_(?P<name>\w+)", key)
-        if not m:
+        if not m:   # noqa
             return
 
         base = m.group("name").lower()
@@ -305,7 +305,7 @@ class ParsedKeywordMappingName:
             return
 
         m = re.fullmatch(r"(?i)some_(?P<name>\w+)", self._name)
-        if not m:
+        if not m:   # noqa
             return
 
         base = m.group("name").lower()
