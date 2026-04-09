@@ -151,6 +151,9 @@ class Tabular:
 
             for cell in cells:
                 text = str(cell).strip()
+                if not text:
+                    continue
+
                 widths.append(len(text))
 
                 if isinstance(cell, (int, float, bool)):
