@@ -52,7 +52,7 @@ setup(
     },
     classifiers=[
         # development status
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         # natural language
         "Natural Language :: English",
         # intended audience

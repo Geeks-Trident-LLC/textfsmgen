@@ -31,10 +31,11 @@ user_keyword_mapping_file = str(
 app_version = version
 
 # main app
-main_app_text = 'TextFSM Generator v{}'.format(version)
+main_app_text = f'TextFSM Generator v{version}'
+software_release = f"TextFSM Generator v{version} - Beta"
 
 # company
-company = 'Geeks Trident LLC'
+company = 'Geeks Trident LLC'   # noqa
 company_full_name = company
 company_name = "Geeks Trident"
 company_url = 'https://www.geekstrident.com/'

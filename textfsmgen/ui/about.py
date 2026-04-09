@@ -83,7 +83,7 @@ def add_main_panel(parent: ui.PanedWindow, width: int = 450, height: int = 20) -
     parent.add(frame, weight=4)
 
     create_styled_label(
-        frame, text=config.main_app_text + " " * 30,
+        frame, text=config.software_release + " " * 30,
         options=dict(foreground="navy", background="lightgray"),
         increased_size=8, bold=True, italic=True,
         layout=("grid", dict(row=0, column=0, columnspan=2, sticky="nwe"))
