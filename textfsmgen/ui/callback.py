@@ -104,17 +104,19 @@ def build(app):
         return
 
 
-def show_test_data(app):
+def toggle_test_data_mode(app):
     """Handle the 'Test Data' button toggle."""     # noqa
 
     btn_name = app.settings.test_data_btn_name.get()
     if btn_name == 'Hide':
         # Show user snippet
+        app.root.title('TextFSM Generator CE')
         app.settings.test_data_btn_name.set('Test Data')
         app.snapshot.update(test_data=extract_text(app.textarea.input))
         set_text(app.textarea.input, app.snapshot.user_data)
     else:
         # Show test data
+        app.root.title('TextFSM Generator CE (Test Data Mode)')
         app.settings.test_data_btn_name.set('Hide')
         app.snapshot.update(user_data=extract_text(app.textarea.input))
         set_text(app.textarea.input, app.snapshot.test_data)
