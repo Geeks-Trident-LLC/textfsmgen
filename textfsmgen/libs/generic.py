@@ -52,6 +52,36 @@ class DotObject(dict):
             f"Invalid attribute name {name!r}."
         )
 
+    def __setattr__(self, name, value):
+        """Block overriding dict-backed keys; require update() instead."""
+        # Built‑in DotObject attributes cannot be overridden
+        if name in self._dict_members:
+            raise AttributeError(
+                f"Cannot override DotObject attribute {name!r}.")
+
+        # Direct key match
+        if name in self:
+            self.update({name: value})
+            return
+
+        # Shadowing via trailing underscore (e.g., "key_")
+        base = name[:-1]
+        if name.endswith("_") and base in self._dict_members and base in self:
+            self.update({base: value})
+            return
+
+        # Alternate key forms (space, dot, dash)
+        for transformed in (
+                name.replace("_", " ").strip(),
+                name.replace("_", ".").strip("."),
+                name.replace("_", "-").strip("-"),
+        ):
+            if transformed in self:
+                self.update({transformed: value})
+                return
+
+        super().__setattr__(name, value)
+
     def _wrap(self, value):
         """Wrap nested dictionaries into DotDict."""
         if isinstance(value, dict) and not isinstance(value, self.__class__):

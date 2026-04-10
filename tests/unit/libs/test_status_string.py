@@ -1,12 +1,12 @@
 """
-Unit tests for the `textfsmgen.libs.generic` module.
+Unit tests for the `textfsmgen.libs.generic.StatusString` class.
 
 Usage
 -----
 Run pytest in the project root to execute these tests:
-    $ pytest tests/unit/libs/test_generic.py
+    $ pytest tests/unit/libs/test_status_string.py
     or
-    $ python -m pytest tests/unit/libs/test_generic.py
+    $ python -m pytest tests/unit/libs/test_status_string.py
 """
 
 import pytest       # noqa
@@ -30,7 +30,7 @@ from textfsmgen.libs.generic import StatusString
         (["dummy success string", "success"],   True,   "dummy success string"),
     ],
 )
-def test_status_string_using_positional_arguments(args, exp_status, exp_text):
+def test_using_positional_arguments(args, exp_status, exp_text):
     """Verify StatusString correctly interprets positional value and status arguments."""
 
     result = StatusString(*args)
@@ -54,7 +54,7 @@ def test_status_string_using_positional_arguments(args, exp_status, exp_text):
         ({"text": "dummy success string", "status": "success"}, True,   "dummy success string"),
     ],
 )
-def test_status_string_using_kwargs_arguments(kwargs, exp_status, exp_text):
+def test_using_kwargs_arguments(kwargs, exp_status, exp_text):
     """Verify StatusString passing keyword arguments."""
 
     result = StatusString(**kwargs)
@@ -76,7 +76,7 @@ def test_status_string_using_kwargs_arguments(kwargs, exp_status, exp_text):
         ("dummy success string",    "success",  True,   "dummy success string"),
     ],
 )
-def test_status_string_mixing_positional_and_keyword_args(text, status, exp_status, exp_text):
+def test_mixing_positional_and_keyword_args(text, status, exp_status, exp_text):
     """Verify StatusString passing positional and keyword arguments."""
 
     result = StatusString(text, status=status)
