@@ -116,6 +116,8 @@ class PATTERN:  # noqa
     NON_WHITESPACES_GROUP = r'%s(\s+%s)+' % (NON_WSS, NON_WSS)
     NON_WHITESPACES_GRP = NON_WHITESPACES_GROUP
 
+    ZERO_OR_MORE_NON_WSS = r'(\S+(\s+\S+)*)?'
+
     @classmethod
     def resolve_subset(cls, key):
         """Return the subset name associated with the given key."""

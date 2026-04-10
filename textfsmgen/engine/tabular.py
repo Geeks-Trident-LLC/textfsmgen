@@ -1171,6 +1171,9 @@ class ParsedTable(RuntimeException):
         layouts = [row.row_layout for row in self.rows if row.line in indices]
 
         for layout in sorted(set(layouts), reverse=True):
+            if layout == "0" * len(layout):
+                continue
+
             parts = []
             for index, bit in enumerate(layout):
                 column = self.columns[index]    # noqa
@@ -1184,6 +1187,11 @@ class ParsedTable(RuntimeException):
                     kwargs.update(added_list_meta_data=True)
 
                 col_snippet = column.to_snippet(**kwargs)
+
+                if column.has_all_empty_cell:
+                    parts.append(col_snippet)
+                    continue
+
                 parts.append(col_snippet if int(bit) else space_snippet)
 
             sep = self.divider_snippet if self.has_divider else "  "
@@ -1225,6 +1233,9 @@ class ParsedTable(RuntimeException):
                 row.row_layout not in layouts and layouts.append(row.row_layout)
 
         for layout in sorted(layouts, reverse=True):
+            if layout == "0" * len(layout):
+                continue
+
             parts = []
             for index, bit in enumerate(list(layout)):
                 column = self.columns[index]    # noqa
@@ -1236,7 +1247,12 @@ class ParsedTable(RuntimeException):
                 kwargs = dict()
                 if index == self.column_count - 1:
                     kwargs.update(added_list_meta_data=True)
+
                 col_snippet = column.to_snippet(**kwargs)   # noqa
+
+                if column.has_all_empty_cell:
+                    parts.append(col_snippet)
+                    continue
 
                 if int(bit) or self.has_divider:
                     parts.append(col_snippet if int(bit) else space_snippet)
@@ -1311,6 +1327,9 @@ class ParsedTable(RuntimeException):
             layouts.append(row.row_layout)
 
         for layout in sorted(layouts, reverse=True):
+            if layout == "0" * len(layout):
+                continue
+
             parts = []
             for index, bit in enumerate(list(layout)):
                 column = self.columns[index]
@@ -1324,7 +1343,12 @@ class ParsedTable(RuntimeException):
                 kwargs = dict()
                 if self.last_column_data_info and index == self.column_count - 1:
                     kwargs.update(added_list_meta_data=True)
+
                 col_snippet = column.to_snippet(**kwargs)
+
+                if column.has_all_empty_cell:
+                    parts.append(col_snippet)
+                    continue
 
                 # If bit is 1 or divider is present → direct append
                 if int(bit) or self.has_divider:    # noqa
@@ -2210,6 +2234,10 @@ class Column:
                 return True
         return False
 
+    @property
+    def has_all_empty_cell(self):
+        return not bool(self.cell_texts)
+
     def add_extra_data(self, extra_data) -> None:
         """Attach extra metadata to the column."""
         self.extra_data = extra_data
@@ -2244,8 +2272,10 @@ class Column:
         if self.extra_data:
             texts.extend(self.extra_data)
 
-        if not texts:
-            return ""
+        if self.has_all_empty_cell:
+            if self.is_last:
+                return f"zero_or_more_non_wss(var_{self.name}, or_empty)"
+            return f"non_wss(var_{self.name}, or_empty)"
 
         node = PatternTranslator.do_factory_create(*texts, multiple=True)
         kwargs = {} if to_bared_snippet else {"var": self.name}
