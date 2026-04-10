@@ -111,12 +111,12 @@ def show_test_data(app):
     if btn_name == 'Hide':
         # Show user snippet
         app.settings.test_data_btn_name.set('Test Data')
-        app.snapshot.test_data = extract_text(app.textarea.input)
+        app.snapshot.update(test_data=extract_text(app.textarea.input))
         set_text(app.textarea.input, app.snapshot.user_data)
     else:
         # Show test data
         app.settings.test_data_btn_name.set('Hide')
-        app.snapshot.user_data = extract_text(app.textarea.input)
+        app.snapshot.update(user_data=extract_text(app.textarea.input))
         set_text(app.textarea.input, app.snapshot.test_data)
 
 
