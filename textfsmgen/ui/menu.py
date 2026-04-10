@@ -25,7 +25,6 @@ def create(app) -> None:
     items = (
         # File
         (file_menu, {"label": "Open",           "command": lambda: callback.open_file(app)}),
-        (file_menu, {"label": "Load Test Data", "command": lambda: callback.load_test_data_file(app)}),
         (file_menu, None),
         (file_menu, {"label": "Quit",           "command": app.root.destroy}),
 

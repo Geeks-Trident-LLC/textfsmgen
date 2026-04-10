@@ -149,33 +149,6 @@ def open_file(app):
         app.textarea.input.focus()
 
 
-def load_test_data_file(app):
-    """Handle the "File > Load Test Data" menu action."""
-
-    filetypes = (('Text Files', '.txt'), ('All Files', '*'))
-    filename = filedialog.askopenfilename(filetypes=filetypes)
-    if not filename:    # noqa
-        return
-
-    content = file.read(filename)
-    app.snapshot.update(test_data=content)
-
-    # Reset and enable test data button
-    enable_buttons(app, test_data=True, save=True, copy=True)
-    if app.snapshot.is_built:
-        enable_buttons(app, result=True, python=True, unittest=True, pytest=True, execute=True)
-
-    btn_name = app.settings.test_data_btn_name.get()
-    if btn_name == "Hide":
-        set_text(app.textarea.input, content)
-        return
-
-    app.settings.test_data_btn_name.set('Hide')
-    input_data = extract_text(app.textarea.input)
-    app.snapshot.update(user_data=input_data)
-    set_text(app.textarea.input, content)
-
-
 def save(app):  # noqa
     """Save content from the active input or output textarea based on its type."""
     activate_user_data_mode(app, use_test_data=False)
@@ -291,11 +264,14 @@ def clear(app):
     clear_text(app.textarea.output)
 
     # enable buttons
-    enable_buttons(app, open=True, paste=True, clear=True, build=True)
+    enable_buttons(
+        app, test_data=True, open=True, paste=True,
+        clear=True, build=True
+    )
 
     # Disable related buttons
     disable_buttons(
-        app, test_data=True, save=True, copy=True,
+        app, save=True, copy=True,
         result=True, python=True, unittest=True,
         pytest=True, execute=True
     )

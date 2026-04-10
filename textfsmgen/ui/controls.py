@@ -21,7 +21,7 @@ def build_primary_buttons(app) -> None:
     btn_width = 6 if ui.is_macos else 8
     parent = app.frames.buttons
     button_lst = (
-        (app.settings.test_data_btn_name, "disabled", lambda: callback.show_test_data(app),),
+        (app.settings.test_data_btn_name, "normal", lambda: callback.show_test_data(app),),
         ("open", "normal", lambda: callback.open_file(app)),
         ("save", "disabled", lambda: callback.save(app)),
         ("copy", "disabled", lambda: callback.copy(app)),
