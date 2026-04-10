@@ -64,14 +64,13 @@ def add_general_arguments_fields(app, parent: ui.Frame) -> None:    # noqa
     pad_y = 0 if ui.is_macos else 1
 
     fields = [
-        ("Author",  app.settings.author,    0),
-        ("Email",   app.settings.email,     1),
-        ("Company", app.settings.company,   2),
+        ("Author",  app.settings.author,    0, 25),
+        ("Email",   app.settings.email,     1, 25),
+        ("Company", app.settings.company,   2, 26 if ui.is_window else 30),
     ]
-    for label_text, var, pos in fields:
+    for label_text, var, pos, w in fields:
         lbl = ui.Label(group, text=label_text)
         lbl.grid(row=0, column=pos * 2, padx=2, pady=pad_y, sticky="nw")
-        w = 30 if ui.is_macos and pos == 2 else 25
         entry = ui.TextBox(group, width=w, textvariable=var)
         entry.grid(row=0, column=pos * 2 + 1, padx=2, pady=pad_y, sticky="nw")
 
