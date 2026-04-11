@@ -10,12 +10,15 @@ from typing import Optional, Union
 from textfsmgen.libs.generic import Position
 
 from textfsmgen import ui
+
 from textfsmgen.ui.common import (
+    show_message_dialog,
     center_window,
     make_modal,
+    clear_text,
 )
 
-window_width = 982 if ui.is_macos else 880 if ui.is_linux else 760
+window_width = 920 if ui.is_macos else 820 if ui.is_linux else 760
 window_height = 770 if ui.is_macos else 785 if ui.is_linux else 720
 
 def show_dialog(app):
@@ -26,11 +29,13 @@ def show_dialog(app):
 
     paned_window = build_pane_window(dialog)
 
-    build_input_frame(paned_window)
+    build_input_frame(paned_window, app)
     build_controls_frame(paned_window, app)
-    build_output_frame(paned_window)
-    build_python_code_frame(paned_window)
-    build_test_result_frame(paned_window)
+    build_output_frame(paned_window, app)
+    build_python_code_frame(paned_window, app)
+    build_test_result_frame(paned_window, app)
+
+    dialog.bind("<Button-1>", lambda e: app.callback_focus(e))
 
     # Make dialog modal
     make_modal(dialog)
@@ -58,7 +63,7 @@ def build_pane_window(parent):
     return paned_window
 
 
-def build_input_frame(parent):
+def build_input_frame(parent, app):
     frame = ui.Frame(
         parent, width=window_width,
         height=int(window_height / 5),
@@ -72,7 +77,7 @@ def build_input_frame(parent):
 
     textarea = ui.TextArea(
         frame, width=20, height=3, wrap='none',
-        name='input_text',
+        name='translator_input_text',
     )
 
     textarea.grid(row=0, column=0, sticky='nswe')  # noqa
@@ -96,6 +101,8 @@ def build_input_frame(parent):
         yscrollcommand=vscrollbar.set,
         xscrollcommand=hscrollbar.set
     )
+
+    app.tools.translator.in_textarea = textarea
 
 
 def build_controls_frame(parent, app):
@@ -111,23 +118,34 @@ def build_controls_frame(parent, app):
     buttons = [
         ("Translate", lambda: "Implement later"),
         ("Test", lambda: "Implement later"),
-        ("Reset", lambda: reset_default(app)),
+        ("Default", lambda: reset_default(app)),
         ("Copy", lambda: "Implement later"),
-        ("Paste", lambda: "Implement later")
+        ("Paste", lambda: "Implement later"),
+        ("Clear", lambda: clear(app)),
     ]
 
     for text_ , func in buttons:
         name = f"{text_.lower()}_button"
-        btn = ui.Button(frame, text=text_, name=name, width=btn_width, command=func)
+        btn = ui.Button(
+            frame, text=text_, name=name,
+            width=btn_width + 2 if text_ == "Translate" else btn_width,
+            command=func
+        )
         btn.grid(row=0, column=position.next(), **pad)
+        if position.value == 2:
+            sep = ui.ttk.Separator(frame, orient="vertical")
+            sep.grid(row=0, column=position.next(), sticky="ns", padx=(4, 2), pady=2)
 
     checkboxes = [
         ("Variable",    app.tools.translator.variable_flag),
+        ("Notation", app.tools.translator.notation_flag),
         ("Group",       app.tools.translator.group_flag),
         ("Exact",       app.tools.translator.exact_flag),
-        ("Notation",    app.tools.translator.notation_flag),
-        ("Split",       app.tools.translator.split_flag),
+        # ("Split",       app.tools.translator.split_flag),
     ]
+
+    sep = ui.ttk.Separator(frame, orient="vertical")
+    sep.grid(row=0, column=position.next(), sticky="ns", padx=(4, 2), pady=2)
 
     for text_, var_ in checkboxes:
         checkbox = ui.CheckBox(
@@ -136,10 +154,14 @@ def build_controls_frame(parent, app):
             onvalue=True, offvalue=False,
         )
         checkbox.grid(row=0, column=position.next(), sticky="ns", **pad)
+        if position.value == 9:
+            sep = ui.ttk.Separator(frame, orient="vertical")
+            sep.grid(row=0, column=position.next(), sticky="ns", padx=(4, 2), pady=2)
+
     return frame
 
 
-def build_output_frame(parent):
+def build_output_frame(parent, app):
     frame = ui.Frame(
         parent, width=window_width,
         height=int(window_height / 5),
@@ -153,7 +175,7 @@ def build_output_frame(parent):
 
     textarea = ui.TextArea(
         frame, width=20, height=3, wrap='none',
-        name='output_text',
+        name='translator_output_text',
     )
 
     textarea.grid(row=0, column=0, sticky='nswe')  # noqa
@@ -178,8 +200,10 @@ def build_output_frame(parent):
         xscrollcommand=hscrollbar.set
     )
 
+    app.tools.translator.out_textarea = textarea
 
-def build_python_code_frame(parent):
+
+def build_python_code_frame(parent, app):
     frame = ui.Frame(
         parent, width=window_width,
         height=int(window_height / 2),
@@ -193,7 +217,7 @@ def build_python_code_frame(parent):
 
     textarea = ui.TextArea(
         frame, width=20, height=3, wrap='none',
-        name='python_code_text',
+        name='translator_code_text',
     )
 
     textarea.grid(row=0, column=0, sticky='nswe')  # noqa
@@ -217,9 +241,12 @@ def build_python_code_frame(parent):
         yscrollcommand=vscrollbar.set,
         xscrollcommand=hscrollbar.set
     )
+    textarea.config(state="disabled")
+
+    app.tools.translator.code_textarea = textarea
 
 
-def build_test_result_frame(parent):
+def build_test_result_frame(parent, app):
     frame = ui.Frame(
         parent, width=window_width,
         height=int(window_height / 10),
@@ -233,7 +260,7 @@ def build_test_result_frame(parent):
 
     textarea = ui.TextArea(
         frame, width=20, height=3, wrap='none',
-        name='result_text',
+        name='translator_result_text',
     )
 
     textarea.grid(row=0, column=0, sticky='nswe')  # noqa
@@ -257,13 +284,65 @@ def build_test_result_frame(parent):
         yscrollcommand=vscrollbar.set,
         xscrollcommand=hscrollbar.set
     )
+    textarea.config(state="disabled")
+
+    app.tools.translator.result_textarea = textarea
 
 
 def reset_default(app):
     """Reset all application metadata and checkbox settings to defaults."""
-
     app.tools.translator.variable_flag.set(True)
     app.tools.translator.group_flag.set(False)
     app.tools.translator.exact_flag.set(False)
     app.tools.translator.notation_flag.set(False)
     app.tools.translator.split_flag.set(False)
+
+
+def clear(app):
+    """Clear selected text in editable areas; warn or clear readonly ones based on last focus."""
+    t = app.tools.translator
+
+    editable = [t.in_textarea, t.out_textarea]
+    readonly = [
+        (t.code_textarea,  "Readonly Code Window",   "Cannot clear readonly Python code window"),
+        (t.result_textarea, "Readonly Result Window", "Cannot clear readonly result window"),
+    ]
+
+    # 1. Clear selected text in editable widgets
+    for widget in editable:
+        if widget.tag_ranges(ui.tk.SEL):
+            widget.delete(ui.tk.SEL_FIRST, ui.tk.SEL_LAST)
+            return
+
+    # 2. Warn if selection is in readonly widgets
+    for widget, title, info in readonly:
+        if widget.tag_ranges(ui.tk.SEL):
+            show_message_dialog(title=title, info=info)
+            return
+
+    # 3. No selection → fallback to previous focused widget
+    prev = app.prev_widget
+
+    if prev is t.in_textarea:
+        # Clear everything (input + output + readonly)
+        for widget in editable + [t.result_textarea, t.code_textarea]:
+            clear_text(widget)
+        return
+
+    if prev is t.out_textarea:
+        # Clear output + readonly
+        for widget in [t.out_textarea] + [t.result_textarea, t.code_textarea]:
+            clear_text(widget)
+        return
+
+    if prev in (t.result_textarea, t.code_textarea):
+        # Clear readonly only
+        for widget in [t.result_textarea, t.code_textarea]:
+            clear_text(widget)
+        return
+
+    # 4. No idea what to clear
+    show_message_dialog(
+        title="Ambiguous Clear Action",
+        info="Please select the specific area you want to clear.",
+    )

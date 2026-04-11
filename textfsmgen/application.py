@@ -143,6 +143,11 @@ class Application:
                 exact_flag=tk.BooleanVar(),
                 notation_flag=tk.BooleanVar(),
                 split_flag=tk.BooleanVar(),
+
+                in_textarea=None,
+                out_textarea=None,
+                code_textarea=None,
+                result_textarea=None,
             )
         )
 
