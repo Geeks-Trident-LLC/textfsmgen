@@ -7,6 +7,8 @@ UI components for the Snippet Translator dialog in TextFSMGen.
 
 from typing import Optional, Union
 
+import re
+
 from textfsmgen.libs.generic import Position
 
 from textfsmgen import ui
@@ -120,7 +122,7 @@ def build_controls_frame(parent, app):
         ("Translate", lambda: "Implement later"),
         ("Test", lambda: "Implement later"),
         ("Default", lambda: reset_default(app)),
-        ("Copy", lambda: "Implement later"),
+        ("Copy", lambda: copy(app)),
         ("Paste", lambda: paste(app)),
         ("Clear", lambda: clear(app)),
     ]
@@ -352,6 +354,15 @@ def paste(app):
     """Paste clipboard text into editable areas; warn on readonly ones."""
     try:
         data = app.root.clipboard_get()
+
+        if re.fullmatch(r"\s*", data):
+            show_message_dialog(
+                title="Paste Action",
+                info="Your clipboard contains only whitespace. "
+                     "The paste action will still run, but the "
+                     "result is not visually noticeable."
+            )
+
     except Exception as ex:
         show_message_dialog(
             title="Clipboard Empty",
@@ -394,4 +405,40 @@ def paste(app):
     show_message_dialog(
         title="Ambiguous Paste Action",
         info="Please select the specific area you want to paste from the clipboard.",
+    )
+
+
+def copy(app):
+    """Copy clipboard text into editable areas; warn on readonly ones."""
+
+    t = app.tools.translator
+    prev = app.prev_widget
+
+    widgets = [t.in_textarea, t.out_textarea, t.code_textarea, t.result_textarea]
+
+    for widget in widgets:
+        if widget is prev:
+            widget.update_idletasks()
+            content = (
+                widget.selection_get()
+                if widget.tag_ranges(ui.tk.SEL) else
+                extract_text(widget)
+            )
+
+            if not content:
+                show_message_dialog(
+                    title="Copy Action",
+                    warning="There is no text in the your selected area to copy.",
+                )
+                return
+
+            # Update UI and clipboard
+            app.root.clipboard_clear()
+            app.root.clipboard_append(content)
+            app.root.update()
+            return
+
+    show_message_dialog(
+        title="Ambiguous Copy Action",
+        info="Please select the specific area you want to copy.",
     )
