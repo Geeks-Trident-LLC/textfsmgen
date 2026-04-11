@@ -113,3 +113,29 @@ class StatusString(str):
     def is_success(self): return self.status == True
 
     def is_failure(self): return self.status == False
+
+
+class Position:
+    """Simple counter that tracks a numeric position."""
+
+    def __init__(self, value: int = 0):
+        self.value = int(value)
+
+    def increment(self) -> int:
+        """Increase the position by one and return the new value."""
+        self.value += 1
+        return self.value
+
+    def current(self):
+        """Get the current position."""
+        return self.value
+
+    def next(self):
+        """Increase the position by one and return the new value."""
+        self.value += 1
+        return self.value
+
+    def reset(self):
+        """Reset the position."""
+        self.value = 0
+        return self.value

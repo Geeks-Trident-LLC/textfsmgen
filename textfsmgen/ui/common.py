@@ -19,18 +19,6 @@ import textfsmgen.ui as ui
 import textfsmgen.config as config
 
 
-class Position:
-    """Simple counter that tracks a numeric position."""
-
-    def __init__(self, value: int = 0):
-        self.value = value
-
-    def increment(self) -> int:
-        """Increase the position by one and return the new value."""
-        self.value += 1
-        return self.value
-
-
 class RewriteSync:
     """Track and validate whether user text and rewritten text are in sync."""
 
