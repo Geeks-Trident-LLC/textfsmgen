@@ -21,7 +21,7 @@ from textfsmgen.ui.common import (
     extract_text,
 )
 
-window_width = 950 if ui.is_macos else 850 if ui.is_linux else 810
+window_width = 960 if ui.is_macos else 840 if ui.is_linux else 810
 window_height = 770 if ui.is_macos else 785 if ui.is_linux else 720
 
 def show_dialog(app):
@@ -113,7 +113,7 @@ def build_controls_frame(parent, app):
     frame = ui.Frame(parent, width=window_width, height=10, relief="ridge")
     parent.add(frame)
 
-    btn_width = 6 if ui.is_macos else 8
+    btn_width = 5 if ui.is_macos else 6 if ui.is_linux else 8
     pad = dict(padx=(2, 0), pady=(2, 2))
 
     position = Position(value=-1)
@@ -398,11 +398,13 @@ def paste(app):
     for widget in editable:
         widget.update_idletasks()
         if widget is prev:
-            insert_pos = widget.index(ui.tk.INSERT)
+
             if widget.tag_ranges(ui.tk.SEL):
                 widget.delete(ui.tk.SEL_FIRST, ui.tk.SEL_LAST)
+                insert_pos = widget.index(ui.tk.INSERT)
                 widget.insert(ui.tk.INSERT, data)
-                widget.tag_add(ui.tk.SEL, insert_pos, f"{insert_pos}+{len(data)}")
+                widget.tag_add(ui.tk.SEL, insert_pos, f"{insert_pos}+{len(data)}c")
+                widget.focus()
                 return
             widget.insert(ui.tk.INSERT, data)
             return
