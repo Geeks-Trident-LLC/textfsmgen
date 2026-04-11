@@ -303,42 +303,39 @@ def clear(app):
     """Clear selected text in editable areas; warn or clear readonly ones based on last focus."""
     t = app.tools.translator
 
-    editable = [t.in_textarea, t.out_textarea]
     readonly = [
         (t.code_textarea,  "Readonly Code Window",   "Cannot clear readonly Python code window"),
         (t.result_textarea, "Readonly Result Window", "Cannot clear readonly result window"),
     ]
 
-    # 1. Clear selected text in editable widgets
-    for widget in editable:
-        widget.update_idletasks()
-        if widget.tag_ranges(ui.tk.SEL):
-            widget.delete(ui.tk.SEL_FIRST, ui.tk.SEL_LAST)
-            return
-
-    # 2. Warn if selection is in readonly widgets
-    for widget, title, info in readonly:
-        widget.update_idletasks()
-        if widget.tag_ranges(ui.tk.SEL):
-            show_message_dialog(title=title, info=info)
-            return
-
-    # 3. No selection → fallback to previous focused widget
     prev = app.prev_widget
 
     if prev is t.in_textarea:
-        # Clear everything (input + output + readonly)
-        for widget in editable + [t.result_textarea, t.code_textarea]:
-            clear_text(widget)
-        return
+        prev.update_idletasks()
+        if prev.tag_ranges(ui.tk.SEL):
+            prev.delete(ui.tk.SEL_FIRST, ui.tk.SEL_LAST)
+            return
+
+        clear_text(prev)
 
     if prev is t.out_textarea:
+        prev.update_idletasks()
+        if prev.tag_ranges(ui.tk.SEL):
+            prev.delete(ui.tk.SEL_FIRST, ui.tk.SEL_LAST)
+            return
+
         # Clear output + readonly
-        for widget in [t.out_textarea] + [t.result_textarea, t.code_textarea]:
+        for widget in [t.out_textarea, t.result_textarea, t.code_textarea]:
             clear_text(widget)
         return
 
     if prev in (t.result_textarea, t.code_textarea):
+        prev.update_idletasks()
+        if prev.tag_ranges(ui.tk.SEL):
+            for widget, title, info in readonly:
+                if widget is prev:
+                    show_message_dialog(title=title, info=info)
+                    return
         # Clear readonly only
         for widget in [t.result_textarea, t.code_textarea]:
             clear_text(widget)
@@ -349,6 +346,7 @@ def clear(app):
         title="Ambiguous Clear Action",
         info="Please select the specific area you want to clear.",
     )
+
 
 def paste(app):
     """Paste clipboard text into editable areas; warn on readonly ones."""
