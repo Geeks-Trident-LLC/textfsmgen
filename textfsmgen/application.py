@@ -42,8 +42,11 @@ class Application:
         # datastore
         self.snapshot = None
 
-        # settings var
+        # settings variable
         self.settings = None
+
+        # tools variables
+        self.tools = None
 
         # method call
         self.build_main_window()
@@ -131,6 +134,16 @@ class Application:
             result="",
             template="",
             is_built=False,
+        )
+
+        self.tools = DotObject(
+            translator = DotObject(
+                variable_flag=tk.BooleanVar(value=True),
+                group_flag=tk.BooleanVar(),
+                exact_flag=tk.BooleanVar(),
+                notation_flag=tk.BooleanVar(),
+                split_flag=tk.BooleanVar(),
+            )
         )
 
     def category_translator_enabled(self):
