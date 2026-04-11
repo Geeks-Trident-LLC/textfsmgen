@@ -53,7 +53,7 @@ class Application:
         controls.build_action_buttons(self)
         self.build_output_textarea()
 
-    def _init(self):
+    def init_app_variables(self):
         self.frames = DotObject(
             input=None,
             buttons=None,
@@ -84,7 +84,7 @@ class Application:
         )
 
         self.settings = DotObject(
-            test_data_btn_name=tk.StringVar(),
+            test_data_btn_name=tk.StringVar(value="Test Data"),
 
             # general arguments for TemplateBuilder
             author=tk.StringVar(),
@@ -94,15 +94,15 @@ class Application:
 
             # Category translator arguments
             use_category_translator_flag=tk.BooleanVar(),
-            category_arg_count=tk.IntVar(),
-            category_arg_separator=tk.StringVar(),
+            category_arg_count=tk.IntVar(value=1),
+            category_arg_separator=tk.StringVar(value=":"),
             category_arg_starting_from=tk.StringVar(),
             category_arg_ending_at=tk.StringVar(),
             category_arg_replacing_rules=tk.StringVar(),
 
             # Tabular Translator arguments
             use_tabular_translator_flag=tk.BooleanVar(),
-            tabular_arg_has_header_row_flag=tk.BooleanVar(),
+            tabular_arg_has_header_row_flag=tk.BooleanVar(value=True),
             tabular_arg_divider=tk.StringVar(),
             tabular_arg_count=tk.IntVar(),
             tabular_arg_widths=tk.StringVar(),
@@ -114,33 +114,16 @@ class Application:
             tabular_arg_replacing_rules=tk.StringVar(),
 
             # Test execution settings
-            always_ask_flag=tk.BooleanVar(),
-            delete_file_after_run_flag=tk.BooleanVar(),
+            always_ask_flag=tk.BooleanVar(value=True),
+            delete_file_after_run_flag=tk.BooleanVar(value=True),
             python_interpreter=tk.StringVar(),
 
             # Output Display Options
             test_data_flag=tk.BooleanVar(),
             template_flag=tk.BooleanVar(),
-            tabular_flag=tk.BooleanVar(),
+            tabular_flag=tk.BooleanVar(value=True),
             index_flag=tk.BooleanVar()
         )
-
-        # General arguments
-        self.settings.test_data_btn_name.set("Test Data")
-
-        # Category translator arguments
-        self.settings.category_arg_count.set(1)
-        self.settings.category_arg_separator.set(":")
-
-        # Tabular Translator arguments
-        self.settings.tabular_arg_has_header_row_flag.set(True)
-
-        # Test execution settings
-        self.settings.delete_file_after_run_flag.set(True)
-        self.settings.always_ask_flag.set(True)
-
-        # Output Display Options
-        self.settings.tabular_flag.set(True)
 
         self.snapshot = DotObject(
             user_data="",
@@ -247,7 +230,7 @@ class Application:
         ui.set_window_icon(self.root)
         self.root.bind("<Button-1>", lambda e: self.callback_focus(e))
 
-        self._init()
+        self.init_app_variables()
 
     def build_main_layout(self) -> None:
         """Create the primary layout frames and attach them to the main paned window."""
