@@ -16,6 +16,7 @@ from textfsmgen.ui.common import (
     center_window,
     make_modal,
     clear_text,
+    extract_text,
 )
 
 window_width = 920 if ui.is_macos else 820 if ui.is_linux else 760
@@ -120,7 +121,7 @@ def build_controls_frame(parent, app):
         ("Test", lambda: "Implement later"),
         ("Default", lambda: reset_default(app)),
         ("Copy", lambda: "Implement later"),
-        ("Paste", lambda: "Implement later"),
+        ("Paste", lambda: paste(app)),
         ("Clear", lambda: clear(app)),
     ]
 
@@ -310,12 +311,14 @@ def clear(app):
 
     # 1. Clear selected text in editable widgets
     for widget in editable:
+        widget.update_idletasks()
         if widget.tag_ranges(ui.tk.SEL):
             widget.delete(ui.tk.SEL_FIRST, ui.tk.SEL_LAST)
             return
 
     # 2. Warn if selection is in readonly widgets
     for widget, title, info in readonly:
+        widget.update_idletasks()
         if widget.tag_ranges(ui.tk.SEL):
             show_message_dialog(title=title, info=info)
             return
@@ -345,4 +348,52 @@ def clear(app):
     show_message_dialog(
         title="Ambiguous Clear Action",
         info="Please select the specific area you want to clear.",
+    )
+
+def paste(app):
+    """Paste clipboard text into editable areas; warn on readonly ones."""
+    try:
+        data = app.root.clipboard_get()
+    except Exception as ex:
+        show_message_dialog(
+            title="Clipboard Empty",
+            info=(
+                f"There is no text available to paste from the clipboard.\n"
+                f"{'-' * 70}\n"
+                f"{type(ex).__name__}: {ex}"
+                )
+        )
+        return
+
+    t = app.tools.translator
+
+    editable = [t.in_textarea, t.out_textarea]
+    readonly = [
+        (t.code_textarea, "Readonly Code Window", "Cannot paste readonly Python code window"),
+        (t.result_textarea, "Readonly Result Window", "Cannot paste readonly result window"),
+    ]
+
+    prev = app.prev_widget
+
+    for widget in editable:
+        widget.update_idletasks()
+        if widget is prev:
+            insert_pos = widget.index(ui.tk.INSERT)
+            if widget.tag_ranges(ui.tk.SEL):
+                widget.delete(ui.tk.SEL_FIRST, ui.tk.SEL_LAST)
+                widget.insert(ui.tk.INSERT, data)
+                widget.tag_add(ui.tk.SEL, insert_pos, f"{insert_pos}+{len(data)}")
+                return
+            widget.insert(ui.tk.INSERT, data)
+            return
+
+    for widget, title, info in readonly:
+        widget.update_idletasks()
+        if widget is prev:
+            show_message_dialog(title=title, info=info)
+            return
+
+    show_message_dialog(
+        title="Ambiguous Paste Action",
+        info="Please select the specific area you want to paste from the clipboard.",
     )
