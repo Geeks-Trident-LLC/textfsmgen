@@ -21,7 +21,7 @@ from textfsmgen.ui.common import (
     extract_text,
 )
 
-window_width = 920 if ui.is_macos else 820 if ui.is_linux else 760
+window_width = 950 if ui.is_macos else 850 if ui.is_linux else 810
 window_height = 770 if ui.is_macos else 785 if ui.is_linux else 720
 
 def show_dialog(app):
@@ -144,7 +144,6 @@ def build_controls_frame(parent, app):
         ("Notation", app.tools.translator.notation_flag),
         ("Group",       app.tools.translator.group_flag),
         ("Exact",       app.tools.translator.exact_flag),
-        # ("Split",       app.tools.translator.split_flag),
     ]
 
     sep = ui.ttk.Separator(frame, orient="vertical")
@@ -160,6 +159,18 @@ def build_controls_frame(parent, app):
         if position.value == 9:
             sep = ui.ttk.Separator(frame, orient="vertical")
             sep.grid(row=0, column=position.next(), sticky="ns", padx=(4, 2), pady=2)
+
+    sep = ui.ttk.Separator(frame, orient="vertical")
+    sep.grid(row=0, column=position.next(), sticky="ns", padx=(4, 2), pady=2)
+
+    lbl = ui.Label(frame, text="Split")
+    lbl.grid(row=0, column=position.next(), sticky="ns", **pad)
+
+    entry = ui.TextBox(
+        frame, width=6, justify="center",
+        textvariable=app.tools.translator.split_arg
+    )
+    entry.grid(row=0, column=position.next(), sticky="ns", padx=2, pady=4)
 
     return frame
 
@@ -298,7 +309,7 @@ def reset_default(app):
     app.tools.translator.group_flag.set(False)
     app.tools.translator.exact_flag.set(False)
     app.tools.translator.notation_flag.set(False)
-    app.tools.translator.split_flag.set(False)
+    app.tools.translator.split_arg.set("/")
 
 
 def clear(app):

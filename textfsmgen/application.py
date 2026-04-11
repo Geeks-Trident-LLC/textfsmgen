@@ -142,7 +142,7 @@ class Application:
                 group_flag=tk.BooleanVar(),
                 exact_flag=tk.BooleanVar(),
                 notation_flag=tk.BooleanVar(),
-                split_flag=tk.BooleanVar(),
+                split_arg=tk.StringVar(value="/"),
 
                 in_textarea=None,
                 out_textarea=None,
