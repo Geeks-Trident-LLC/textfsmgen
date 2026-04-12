@@ -124,7 +124,7 @@ class BaseLine(str):
     def __new__(cls, data, *args):
         line_obj = super().__new__(cls, data)  # noqa
         lines = line_obj.splitlines(keepends=True)
-        if len(lines) != 1:
+        if len(lines) > 1:
             raise LineArgumentError(
                 "The 'data' argument contains multiple lines; expected a single line."
             )
@@ -146,112 +146,117 @@ class Line(BaseLine):   # noqa
     pattern conversion.
     """
     @property
-    def joiner(self):
-        """Get the trailing newline characters (e.g., "\n", "\r\n")
-        associated with the line.
-        """     # noqa
-        return self._joiner
+    def joiner(self): return self._joiner
 
     @property
-    def raw_data(self):
-        """Get the original, unmodified line string."""
-        return self._raw_data
+    def raw_data(self): return self._raw_data
 
     @property
-    def clean_line(self):
-        """Get the line content with leading and trailing whitespace removed."""
-        return self.strip()
+    def raw(self): return self._raw_data
 
     @property
-    def is_empty(self):
-        """Check whether the line is completely empty."""
-        return self == ""
+    def data(self): return self.strip()
 
     @property
-    def is_optional_empty(self):
-        """Check whether the line consists only of whitespace characters."""
-        return bool(re.match(r"\s+$", self))
+    def clean_line(self): return self.strip()
 
     @property
-    def leading(self):
-        """Extract leading whitespace characters from the given line."""
-        match = re.match(r'(\s+)?', self)
-        return re.sub(r"[\r\n]+", "", match.group()) if match else ""
-    @property
-    def trailing(self):
-        """Extract trailing whitespace characters from the given line."""
-        match = re.search(r'(\s+)?$', self)
-        return re.sub(r"[\r\n]+", "", match.group()) if match else ""
-
+    def is_empty(self): return self == ""
 
     @property
-    def is_leading(self) -> bool:
-        """Check if the given line contains leading whitespace."""
-        return len(self.leading) > 0
+    def is_optional_empty(self): return bool(re.fullmatch(r"\s+", self))
 
     @property
-    def is_trailing(self) -> bool:
-        """Check if the given line contains trailing whitespace."""
-        return len(self.trailing) > 0
+    def leading(self): return self[:len(self) - len(self.lstrip())]
+
+    @property
+    def trailing(self): return self[len(self.rstrip()):] if self.clean_line else ""
+
+    @property
+    def is_leading(self) -> bool: return len(self.leading) > 0
+
+    @property
+    def is_trailing(self) -> bool: return len(self.trailing) > 0
+
+    @property
+    def is_whitespace_leading(self):
+        return bool(re.search(r"\s+", self.leading))
+
+    @property
+    def is_ws_leading(self): return self.is_whitespace_leading
+
+    @property
+    def is_whitespace_trailing(self):
+        return bool(re.search(r"\s+", self.trailing))
+
+    @property
+    def is_ws_trailing(self): return self.is_whitespace_trailing
 
     @classmethod
     def is_line(cls, data, on_failure=False):
         """Validate whether the given data represents a single line of text."""
         lines = str(data).splitlines(keepends=True)
-        if len(lines) == 1:
+        if len(lines) == 1 or len(lines) == 0:
             return True
 
         if on_failure:
-            error = "The 'data' argument contains multiple lines; it must be a single line."
+            error = ("The 'data' argument contains multiple lines; "
+                     "it must be a single line.")
             raise LineArgumentError(error)
-        else:
-            return False
+
+        return False
 
     @classmethod
-    def has_leading(cls, line: str, start: Optional[int] = None, end: Optional[int] = None) -> bool:
+    def has_leading(
+        cls, line: str,
+        start: Optional[int] = None,
+        end: Optional[int] = None
+    ) -> bool:
         """Return True if line has leading whitespace."""
-        return len(cls.get_leading(line, start=start, end=end)) > 0
+        return cls.get_leading(line, start=start, end=end) != ""
 
     @classmethod
-    def has_trailing(cls, line: str, start: Optional[int] = None, end: Optional[int] = None) -> bool:
+    def has_trailing(
+        cls, line: str,
+        start: Optional[int] = None,
+        end: Optional[int] = None
+    ) -> bool:
         """Return True if line has trailing whitespace."""
-        return len(cls.get_trailing(line, start=start, end=end)) > 0
+        return cls.get_trailing(line, start=start, end=end) != ""
 
     @classmethod
-    def get_leading(cls, line: str, start: Optional[int] = None, end: Optional[int] = None) -> str:
+    def get_leading(
+        cls, line: str,
+        start: Optional[int] = None,
+        end: Optional[int] = None
+    ) -> str:
         """Extract leading whitespace from line."""
-        _, value = try_to_str(line, allow_none=True)
-        match = re.match(r'([^\S\r\n]+)?', str(value)[start:end])
-        return match.group() if match else ""
+        _, line_ = try_to_str(line, allow_none=True)
+        line = cls(str(line_)[start:end])
+        return line.leading
 
     @classmethod
-    def get_trailing(cls, line: str, start: Optional[int] = None, end: Optional[int] = None) -> str:
+    def get_trailing(
+        cls, line: str,
+        start: Optional[int] = None,
+        end: Optional[int] = None
+    ) -> str:
         """Extract trailing whitespace from line."""
-        _, value = try_to_str(line, allow_none=True)
-        match = re.search(r'([^\S\r\n]+)?$', str(value)[start:end])
-        return match.group() if match else ""
+        _, line_ = try_to_str(line, allow_none=True)
+        line = cls(str(line_[start:end]))
+        return line.trailing
 
     @classmethod
     def has_data(cls, line):
-        """
-        Check whether a line of text contains non-whitespace characters.
-        """
-        _, value = try_to_str(line, allow_none=True)
-        chk = bool(re.search(r'\S+', str(value)))
-        return chk
+        """Check whether a line of text contains non-whitespace characters."""
+        _, line_ = try_to_str(line, allow_none=True)
+        return bool(re.search(r'\S+', str(line_)))
 
     @classmethod
     def has_whitespace_in_line(cls, line):
-        """
-        Check whether a line of text contains internal whitespace sequences.
-        """
-        if not is_string(line):
-            return False
-
-        ws_matches = re.findall(r'\s+', line)
-        if ws_matches:
-            return any(bool(re.search(r'[^ \r\n]+', ws)) for ws in ws_matches)
-        return False
+        """Check whether a line of text contains internal whitespace sequences."""
+        _, line_ = try_to_str(line, allow_none=True)
+        return any(re.findall(r"[^ \S\r\n]+", str(line_)))
 
     def convert_to_regex_pattern(self) -> str:
         """Convert the line into a regex-compatible pattern string."""  # noqa
