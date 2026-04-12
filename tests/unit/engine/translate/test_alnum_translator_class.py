@@ -12,7 +12,8 @@ Run pytest in the project root to execute these tests:
 import pytest   # noqa
 
 from textfsmgen.engine.translate import (
-    PatternTranslator,
+    make_translator,
+
     AlnumTranslator,
     WordTranslator,
     WordsTranslator,
@@ -53,7 +54,7 @@ class TestAlnumTranslatorClass:
         mixed-word(s), non-whitespace(s), non-whitespace-group)
         """
         args = to_list(other)
-        other_instance = PatternTranslator.do_factory_create(*args)
+        other_instance = make_translator(*args)
         assert self.translator.is_subset_of(other_instance) is True
 
     @pytest.mark.parametrize(
@@ -72,7 +73,7 @@ class TestAlnumTranslatorClass:
         mixed-number, punctuation(s), non-whitespace(s), non-whitespace-group)
         """
         args = to_list(other)
-        other_instance = PatternTranslator.do_factory_create(*args)
+        other_instance = make_translator(*args)
         assert self.translator.is_subset_of(other_instance) is False
 
     @pytest.mark.parametrize(
@@ -87,7 +88,7 @@ class TestAlnumTranslatorClass:
         Verify that alpha-num data is a subset of (letter, digit).
         """
         args = to_list(other)
-        other_instance = PatternTranslator.do_factory_create(*args)
+        other_instance = make_translator(*args)
         assert self.translator.is_superset_of(other_instance) is True
 
     @pytest.mark.parametrize(
@@ -133,7 +134,7 @@ class TestAlnumTranslatorClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = PatternTranslator.do_factory_create(*args)
+        other = make_translator(*args)
         recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
@@ -156,7 +157,7 @@ class TestAlnumTranslatorClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = PatternTranslator.do_factory_create(*args)
+        other = make_translator(*args)
         recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
@@ -195,6 +196,6 @@ class TestAlnumTranslatorClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = PatternTranslator.do_factory_create(*args)
+        other = make_translator(*args)
         recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class)

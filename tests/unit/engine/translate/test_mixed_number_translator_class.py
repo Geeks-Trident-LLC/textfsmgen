@@ -12,7 +12,7 @@ Run pytest in the project root to execute these tests:
 import pytest   # noqa
 
 from textfsmgen.engine.translate import (
-    PatternTranslator,
+    make_translator,
 
     MixedNumberTranslator,
 
@@ -49,7 +49,7 @@ class TestMixedNumberTranslatorClass:
         mixed-word(s), non-whitespaces, non-whitespace-group)
         """
         args = to_list(other)
-        other_instance = PatternTranslator.do_factory_create(*args)
+        other_instance = make_translator(*args)
         assert self.translator.is_subset_of(other_instance) is True
 
     @pytest.mark.parametrize(
@@ -72,7 +72,7 @@ class TestMixedNumberTranslatorClass:
         punctuation(s), punctuation group, non-whitespace)
         """
         args = to_list(other)
-        other_instance = PatternTranslator.do_factory_create(*args)
+        other_instance = make_translator(*args)
         assert self.translator.is_subset_of(other_instance) is False
 
     @pytest.mark.parametrize(
@@ -88,7 +88,7 @@ class TestMixedNumberTranslatorClass:
         Verify that number is a superset of (digit, digits, number).
         """
         args = to_list(other)
-        other_instance = PatternTranslator.do_factory_create(*args)
+        other_instance = make_translator(*args)
         assert self.translator.is_superset_of(other_instance) is True
 
     @pytest.mark.parametrize(
@@ -122,7 +122,7 @@ class TestMixedNumberTranslatorClass:
         when combined with compatible number.
         """
         args = to_list(number)
-        other = PatternTranslator.do_factory_create(*args)
+        other = make_translator(*args)
         recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class)
 
@@ -149,7 +149,7 @@ class TestMixedNumberTranslatorClass:
         when combined with compatible number.
         """
         args = to_list(number)
-        other = PatternTranslator.do_factory_create(*args)
+        other = make_translator(*args)
         recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class)
 
@@ -209,6 +209,6 @@ class TestMixedNumberTranslatorClass:
         when combined with compatible mixed-number.
         """
         args = to_list(number)
-        other = PatternTranslator.do_factory_create(*args)
+        other = make_translator(*args)
         recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class)

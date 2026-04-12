@@ -21,7 +21,8 @@ from textfsmgen.libs import datatype
 from textfsmgen.libs import text
 from textfsmgen.libs import number
 
-from textfsmgen.engine.translate import PatternTranslator
+from textfsmgen.engine.translate import make_translator
+
 from textfsmgen.exceptions import RuntimeException
 from textfsmgen.exceptions import raise_runtime_error
 
@@ -2277,7 +2278,7 @@ class Column:
                 return f"zero_or_more_non_wss(var_{self.name}, or_empty)"
             return f"non_wss(var_{self.name}, or_empty)"
 
-        node = PatternTranslator.do_factory_create(*texts, multiple=True)
+        node = make_translator(*texts, multiple=True)
         kwargs = {} if to_bared_snippet else {"var": self.name}
         if not self.is_last:
             kwargs.update(generic=False)

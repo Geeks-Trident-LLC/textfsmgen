@@ -329,7 +329,7 @@ class ParsedKeywordMappingName:
             self._apply(pattern)
 
     def _apply_exact(self):
-        """Apply an generic-count pattern form if the name matches."""
+        """Apply a generic-count pattern form if the name matches."""
         if self._is_parsed:
             return
 

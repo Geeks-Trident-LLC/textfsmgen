@@ -12,7 +12,7 @@ Run pytest in the project root to execute these tests:
 import pytest   # noqa
 
 from textfsmgen.engine.translate import (
-    PatternTranslator,
+    make_translator,
 
     MixedWordsTranslator,
 
@@ -41,7 +41,7 @@ class TestMixedWordsTranslatorClass:
         Verify that mixed-words data is a subset of (mixed-words, non-whitespaces-group)
         """
         args = to_list(other)
-        other_instance = PatternTranslator.do_factory_create(*args)
+        other_instance = make_translator(*args)
         assert self.translator.is_subset_of(other_instance) is True
 
     @pytest.mark.parametrize(
@@ -58,7 +58,7 @@ class TestMixedWordsTranslatorClass:
         mixed-number, graph)
         """
         args = to_list(other)
-        other_instance = PatternTranslator.do_factory_create(*args)
+        other_instance = make_translator(*args)
         assert self.translator.is_subset_of(other_instance) is False
 
     @pytest.mark.parametrize(
@@ -82,7 +82,7 @@ class TestMixedWordsTranslatorClass:
         number, mixed-number, alpha-num, word).
         """
         args = to_list(other)
-        other_instance = PatternTranslator.do_factory_create(*args)
+        other_instance = make_translator(*args)
         assert self.translator.is_superset_of(other_instance) is True
 
     @pytest.mark.parametrize(
@@ -104,7 +104,7 @@ class TestMixedWordsTranslatorClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = PatternTranslator.do_factory_create(*args)
+        other = make_translator(*args)
         recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
@@ -159,7 +159,7 @@ class TestMixedWordsTranslatorClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = PatternTranslator.do_factory_create(*args)
+        other = make_translator(*args)
         recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
@@ -198,6 +198,6 @@ class TestMixedWordsTranslatorClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = PatternTranslator.do_factory_create(*args)
+        other = make_translator(*args)
         recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class)

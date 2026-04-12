@@ -12,7 +12,7 @@ Run pytest in the project root to execute these tests:
 import pytest   # noqa
 
 from textfsmgen.engine.translate import (
-    PatternTranslator,
+    make_translator,
 
     PunctTranslator,
     PunctsTranslator,
@@ -56,7 +56,7 @@ class TestPunctTranslatorClass:
         graph, mixed-word(s), non-whitespace(s)(-group))
         """
         args = to_list(other)
-        other_instance = PatternTranslator.do_factory_create(*args)
+        other_instance = make_translator(*args)
         assert self.translator.is_subset_of(other_instance) is True
 
     @pytest.mark.parametrize(
@@ -78,7 +78,7 @@ class TestPunctTranslatorClass:
         mixed-number, letter(s), word(s))
         """
         args = to_list(other)
-        other_instance = PatternTranslator.do_factory_create(*args)
+        other_instance = make_translator(*args)
         assert self.translator.is_subset_of(other_instance) is False
 
     @pytest.mark.parametrize(
@@ -94,7 +94,7 @@ class TestPunctTranslatorClass:
         Verify that punctuation data does not have any superset.
         """
         args = to_list(other)
-        other_instance = PatternTranslator.do_factory_create(*args)
+        other_instance = make_translator(*args)
         assert self.translator.is_superset_of(other_instance) is False
 
     @pytest.mark.parametrize(
@@ -144,7 +144,7 @@ class TestPunctTranslatorClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = PatternTranslator.do_factory_create(*args)
+        other = make_translator(*args)
         recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
@@ -196,6 +196,6 @@ class TestPunctTranslatorClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = PatternTranslator.do_factory_create(*args)
+        other = make_translator(*args)
         recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class)

@@ -12,7 +12,7 @@ Run pytest in the project root to execute these tests:
 import pytest   # noqa
 
 from textfsmgen.engine.translate import (
-    PatternTranslator,
+    make_translator,
 
     DigitsTranslator,
     NumberTranslator,
@@ -57,7 +57,7 @@ class TestDigitsTranslatorClass:
         word(s), mixed word(s), non‑whitespaces, non-whitespace-group).
         """
         args = to_list(other)
-        other_instance = PatternTranslator.do_factory_create(*args)
+        other_instance = make_translator(*args)
         assert self.translator.is_subset_of(other_instance) is True
 
     @pytest.mark.parametrize(
@@ -77,7 +77,7 @@ class TestDigitsTranslatorClass:
         punctuation(s), punctuation-group)
         """
         args = to_list(other)
-        other_instance = PatternTranslator.do_factory_create(*args)
+        other_instance = make_translator(*args)
         assert self.translator.is_subset_of(other_instance) is False
 
     @pytest.mark.parametrize(
@@ -91,7 +91,7 @@ class TestDigitsTranslatorClass:
         Verify that digits data is correctly identified as a superset of digit.
         """
         args = to_list(other)
-        other_instance = PatternTranslator.do_factory_create(*args)
+        other_instance = make_translator(*args)
         assert self.translator.is_superset_of(other_instance) is True
 
     @pytest.mark.parametrize(
@@ -141,7 +141,7 @@ class TestDigitsTranslatorClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = PatternTranslator.do_factory_create(*args)
+        other = make_translator(*args)
         recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class)
 
@@ -160,7 +160,7 @@ class TestDigitsTranslatorClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = PatternTranslator.do_factory_create(*args)
+        other = make_translator(*args)
         recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class)
 
@@ -191,6 +191,6 @@ class TestDigitsTranslatorClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = PatternTranslator.do_factory_create(*args)
+        other = make_translator(*args)
         recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class)

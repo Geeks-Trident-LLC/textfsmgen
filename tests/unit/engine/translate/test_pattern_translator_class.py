@@ -11,7 +11,7 @@ Run pytest in the project root to execute these tests:
 
 import pytest   # noqa
 
-from textfsmgen.engine.translate import PatternTranslator
+from textfsmgen.engine.translate import make_translator
 
 
 to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
@@ -37,7 +37,7 @@ class TestGetReadableSnippetMethod:
     )
     def test_digits(self, digits, var_name, expected_snippet, expected_pattern):
         args = to_list(digits)
-        node = PatternTranslator.do_factory_create(*args)
+        node = make_translator(*args)
         snippet = node.to_readable_snippet(var=var_name)
         assert snippet == expected_snippet
         assert node.pattern == expected_pattern
@@ -82,7 +82,7 @@ class TestGetReadableSnippetMethod:
     )
     def test_number(self, number, var_name, expected_snippet, expected_pattern):
         args = to_list(number)
-        node = PatternTranslator.do_factory_create(*args)
+        node = make_translator(*args)
         snippet = node.to_readable_snippet(var=var_name)
         assert snippet == expected_snippet
         assert node.pattern == expected_pattern
@@ -142,7 +142,7 @@ class TestGetReadableSnippetMethod:
     )
     def test_punctuations(self, puncts, var_name, expected_snippet, expected_pattern):
         args = to_list(puncts)
-        node = PatternTranslator.do_factory_create(*args)
+        node = make_translator(*args)
         snippet = node.to_readable_snippet(var=var_name)
         assert snippet == expected_snippet
         assert node.pattern == expected_pattern
@@ -205,7 +205,7 @@ class TestGetReadableSnippetMethod:
     )
     def test_creating_text_snippet(self, text, var_name, expected_snippet, expected_pattern):
         args = to_list(text)
-        node = PatternTranslator.do_factory_create(*args)
+        node = make_translator(*args)
         snippet = node.to_readable_snippet(var=var_name)
         assert snippet == expected_snippet
         assert node.pattern == expected_pattern
@@ -223,7 +223,7 @@ class TestGetReadableSnippetMethod:
     )
     def test_creating_graph_snippet(self, data, var_name, expected_snippet, expected_pattern):
         args = to_list(data)
-        node = PatternTranslator.do_factory_create(*args)
+        node = make_translator(*args)
         snippet = node.to_readable_snippet(var=var_name)
         assert snippet == expected_snippet
         assert node.pattern == expected_pattern
@@ -259,7 +259,7 @@ class TestGetReadableSnippetMethod:
     )
     def test_creating_non_white_space_snippet(self, data, var_name, expected_snippet, expected_pattern):
         args = to_list(data)
-        node = PatternTranslator.do_factory_create(*args)
+        node = make_translator(*args)
         snippet = node.to_readable_snippet(var=var_name)
         assert snippet == expected_snippet
         assert node.pattern == expected_pattern

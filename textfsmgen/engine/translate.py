@@ -1646,3 +1646,33 @@ class NonWSSGroupTranslator(PatternTranslator):
             return self.get_new_superset(other)
 
         return None
+
+
+def validate_translator_value(value: str):
+    """Validate a translator input value: must be a non-empty, trimmed string."""
+    if not isinstance(value, str):
+        raise_runtime_error(
+            obj="TranslatorValueTypeError",
+            msg="Translator value must be a string."
+        )
+
+    if not value.strip():
+        raise_runtime_error(
+            obj="TranslatorValueEmptyError",
+            msg="Translator value must contain at least one non-whitespace character."
+        )
+
+    if value != value.strip():
+        raise_runtime_error(
+            obj="TranslatorValueSurroundingWhitespaceError",
+            msg="Translator value must not have leading or trailing whitespace."
+        )
+
+
+def make_translator(data: str, *extra: str, multiple: bool = False):
+    """Create and return a pattern-translator node."""
+    validate_translator_value(data)
+    for val in extra:
+        validate_translator_value(val)
+
+    return PatternTranslator.do_factory_create(data, *extra, multiple=multiple)

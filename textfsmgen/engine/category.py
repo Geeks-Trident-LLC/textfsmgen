@@ -16,7 +16,7 @@ from textfsmgen.libs import PATTERN
 from textfsmgen.libs import text
 from textfsmgen.libs import utils
 
-from textfsmgen.engine.translate import PatternTranslator
+from textfsmgen.engine.translate import make_translator
 from textfsmgen.engine import LineData
 from textfsmgen.exceptions import RuntimeException
 
@@ -58,12 +58,10 @@ class VarRegistry:
         group = self._duplicates[name].copy()
         base_value = group.pop(name)
 
-        func = PatternTranslator.do_factory_create
-
-        translator_a = func(base_value.strip(), multiple=True)
+        translator_a = make_translator(base_value.strip(), multiple=True)
 
         for other_value in group.values():
-            translator_b = func(other_value.strip(), multiple=True)
+            translator_b = make_translator(other_value.strip(), multiple=True)
             if type(translator_a) is type(translator_b):
                 return True
 
@@ -177,7 +175,7 @@ class RightDataNode(LineData):
 
     def to_snippet(self):
         if self.data:
-            translator = PatternTranslator.do_factory_create(self.data, multiple=True)
+            translator = make_translator(self.data, multiple=True)
             snippet = translator.to_snippet(var=self.var_name)
             if re.sub(r"[ \r\n]+", "", self.leading):
                 snippet = f"wss(){snippet}"

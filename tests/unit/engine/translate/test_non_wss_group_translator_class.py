@@ -12,7 +12,7 @@ Run pytest in the project root to execute these tests:
 import pytest   # noqa
 
 from textfsmgen.engine.translate import (
-    PatternTranslator,
+    make_translator,
 
     NonWSSGroupTranslator
 )
@@ -38,7 +38,7 @@ class TestNonWSSGroupTranslatorClass:
         Verify that word data is a subset of (non-whitespaces(-group))
         """
         args = to_list(other)
-        other_instance = PatternTranslator.do_factory_create(*args)
+        other_instance = make_translator(*args)
         assert self.translator.is_subset_of(other_instance) is True
 
     @pytest.mark.parametrize(
@@ -55,7 +55,7 @@ class TestNonWSSGroupTranslatorClass:
         mixed-words, non-whitespaces-group)
         """
         args = to_list(other)
-        other_instance = PatternTranslator.do_factory_create(*args)
+        other_instance = make_translator(*args)
         assert self.translator.is_subset_of(other_instance) is False
 
     @pytest.mark.parametrize(
@@ -85,7 +85,7 @@ class TestNonWSSGroupTranslatorClass:
         Verify that word data is a superset of (letter(s)).
         """
         args = to_list(other)
-        other_instance = PatternTranslator.do_factory_create(*args)
+        other_instance = make_translator(*args)
         assert self.translator.is_superset_of(other_instance) is True
 
     @pytest.mark.parametrize(
@@ -103,7 +103,7 @@ class TestNonWSSGroupTranslatorClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = PatternTranslator.do_factory_create(*args)
+        other = make_translator(*args)
         recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
 
@@ -186,6 +186,6 @@ class TestNonWSSGroupTranslatorClass:
         when combined with compatible data.
         """
         args = to_list(data)
-        other = PatternTranslator.do_factory_create(*args)
+        other = make_translator(*args)
         recommend_instance = self.translator.recommend(other)
         assert isinstance(recommend_instance, expected_class) is True
