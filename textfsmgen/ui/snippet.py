@@ -154,7 +154,7 @@ def build_controls_frame(parent, app):
         ("SEPARATOR",   ""),
 
         ("Group",       app.tools.translator.group_flag),
-        ("Exact",       app.tools.translator.exact_flag),
+        ("Generic",     app.tools.translator.generic_flag),
     ]
 
     sep = ui.ttk.Separator(frame, orient="vertical")
@@ -320,7 +320,7 @@ def reset_default(app):
     """Reset all application metadata and checkbox settings to defaults."""
     app.tools.translator.variable_flag.set(True)
     app.tools.translator.group_flag.set(False)
-    app.tools.translator.exact_flag.set(False)
+    app.tools.translator.generic_flag.set(True)
     app.tools.translator.notation_flag.set(False)
     app.tools.translator.split_arg.set("/")
 
@@ -478,7 +478,7 @@ def translate(app):
         variable_flag=t.variable_flag,
         notation_flag=t.notation_flag,
         group_flag=t.group_flag,
-        exact_flag=t.exact_flag,
+        generic_flag=t.generic_flag,
     )
 
     set_text(t.out_textarea, translator.snippet)

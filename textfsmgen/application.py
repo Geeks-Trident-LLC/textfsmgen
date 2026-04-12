@@ -140,7 +140,7 @@ class Application:
             translator = DotObject(
                 variable_flag=tk.BooleanVar(value=True),
                 group_flag=tk.BooleanVar(),
-                exact_flag=tk.BooleanVar(),
+                generic_flag=tk.BooleanVar(value=True),
                 notation_flag=tk.BooleanVar(),
                 split_arg=tk.StringVar(value="/"),
 
