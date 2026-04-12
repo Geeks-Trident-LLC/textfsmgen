@@ -240,7 +240,9 @@ class Application:
 
     def build_main_window(self):
         self.root = tk.Tk()
-        self.root.geometry('1000x750+100+100' if ui.is_macos else '900x600+100+100')
+        width, height = (1200, 750) if ui.is_macos else (1100, 650) if ui.is_linux else (900, 600)
+        # self.root.geometry('1000x750+100+100' if ui.is_macos else '900x600+100+100')
+        self.root.geometry(f"{width}x{height}+100+100")
         self.root.minsize(200, 200)
         self.root.option_add('*tearOff', False)
 

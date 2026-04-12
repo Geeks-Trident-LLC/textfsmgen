@@ -21,7 +21,7 @@ from textfsmgen.ui.common import (
     extract_text,
 )
 
-window_width = 960 if ui.is_macos else 840 if ui.is_linux else 810
+window_width = 1060 if ui.is_macos else 900 if ui.is_linux else 810
 window_height = 770 if ui.is_macos else 785 if ui.is_linux else 720
 
 def show_dialog(app):
@@ -69,7 +69,7 @@ def build_pane_window(parent):
 def build_input_frame(parent, app):
     frame = ui.Frame(
         parent, width=window_width,
-        height=int(window_height / 5),
+        height=int(window_height / 20) * 2,
         relief="ridge"
     )
     parent.add(frame, weight=2)
@@ -119,15 +119,23 @@ def build_controls_frame(parent, app):
     position = Position(value=-1)
 
     buttons = [
-        ("Translate", lambda: "Implement later"),
-        ("Test", lambda: "Implement later"),
-        ("Default", lambda: reset_default(app)),
-        ("Copy", lambda: copy(app)),
-        ("Paste", lambda: paste(app)),
-        ("Clear", lambda: clear(app)),
+        ("Translate",   lambda: "Implement later"),
+        ("Iterate",     lambda: "Implement later"),
+        ("Test",        lambda: "Implement later"),
+        ("Default",     lambda: reset_default(app)),
+
+        ("SEPARATOR",   ""),
+
+        ("Copy",        lambda: copy(app)),
+        ("Paste",       lambda: paste(app)),
+        ("Clear",       lambda: clear(app)),
     ]
 
     for text_ , func in buttons:
+        if text_ == "SEPARATOR":
+            sep = ui.ttk.Separator(frame, orient="vertical")
+            sep.grid(row=0, column=position.next(), sticky="ns", padx=(4, 2), pady=2)
+            continue
         name = f"{text_.lower()}_button"
         btn = ui.Button(
             frame, text=text_, name=name,
@@ -135,13 +143,13 @@ def build_controls_frame(parent, app):
             command=func
         )
         btn.grid(row=0, column=position.next(), **pad)
-        if position.value == 2:
-            sep = ui.ttk.Separator(frame, orient="vertical")
-            sep.grid(row=0, column=position.next(), sticky="ns", padx=(4, 2), pady=2)
 
     checkboxes = [
         ("Variable",    app.tools.translator.variable_flag),
-        ("Notation", app.tools.translator.notation_flag),
+        ("Notation",    app.tools.translator.notation_flag),
+
+        ("SEPARATOR",   ""),
+
         ("Group",       app.tools.translator.group_flag),
         ("Exact",       app.tools.translator.exact_flag),
     ]
@@ -150,15 +158,17 @@ def build_controls_frame(parent, app):
     sep.grid(row=0, column=position.next(), sticky="ns", padx=(4, 2), pady=2)
 
     for text_, var_ in checkboxes:
+        if text_ == "SEPARATOR":
+            sep = ui.ttk.Separator(frame, orient="vertical")
+            sep.grid(row=0, column=position.next(), sticky="ns", padx=(4, 2), pady=2)
+            continue
+
         checkbox = ui.CheckBox(
             frame, text=text_, name=f"{text_.lower()}_checkbox",
             variable=var_,
             onvalue=True, offvalue=False,
         )
         checkbox.grid(row=0, column=position.next(), sticky="ns", **pad)
-        if position.value == 9:
-            sep = ui.ttk.Separator(frame, orient="vertical")
-            sep.grid(row=0, column=position.next(), sticky="ns", padx=(4, 2), pady=2)
 
     sep = ui.ttk.Separator(frame, orient="vertical")
     sep.grid(row=0, column=position.next(), sticky="ns", padx=(4, 2), pady=2)
@@ -178,10 +188,10 @@ def build_controls_frame(parent, app):
 def build_output_frame(parent, app):
     frame = ui.Frame(
         parent, width=window_width,
-        height=int(window_height / 5),
+        height=int(window_height / 20) * 8,
         relief="ridge"
     )
-    parent.add(frame, weight=2)
+    parent.add(frame, weight=8)
 
     # Configure grid for resizing
     frame.rowconfigure(0, weight=1)
@@ -220,10 +230,10 @@ def build_output_frame(parent, app):
 def build_python_code_frame(parent, app):
     frame = ui.Frame(
         parent, width=window_width,
-        height=int(window_height / 2),
+        height=int(window_height / 20) * 11,
         relief="ridge"
     )
-    parent.add(frame, weight=5)
+    parent.add(frame, weight=11)
 
     # Configure grid for resizing
     frame.rowconfigure(0, weight=1)
@@ -263,7 +273,7 @@ def build_python_code_frame(parent, app):
 def build_test_result_frame(parent, app):
     frame = ui.Frame(
         parent, width=window_width,
-        height=int(window_height / 10),
+        height=int(window_height / 20),
         relief="ridge"
     )
     parent.add(frame, weight=1)
