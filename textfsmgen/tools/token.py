@@ -6,11 +6,11 @@ from textfsmgen.libs.text import get_list_of_lines
 class SnippetBase:
     """Base class for snippet parsers."""
 
-    def __init__(self, *items, var_name="", exact=False):
+    def __init__(self, *items, var_name="", generic=False):
         self._raw = items
         self._items = get_list_of_lines(*items)
         self._var_name = var_name
-        self._exact = exact
+        self._generic = generic
 
         self._data_list = []
         self._leading_list = []
@@ -35,19 +35,46 @@ class SnippetBase:
     def data_list(self): return self._data_list
 
     @property
-    def has_data(self): return any(bool(i) for i in self._data_list)
+    def has_data(self): return any(self._data_list)
 
     @property
     def leading_list(self): return self._leading_list
 
     @property
-    def is_leading(self): return any(bool(i) for i in self._leading_list)
+    def is_leading(self): return any(self._leading_list)
+
+    @property
+    def is_ws_leading(self):
+        return any(bool(re.search(r"[^ \r\n]", i)) for i in self._leading_list)
 
     @property
     def trailing_list(self): return self._trailing_list
 
     @property
-    def is_trailing(self): return any(bool(i) for i in self._trailing_list)
+    def is_trailing(self): return any(self._trailing_list)
+
+    @property
+    def is_ws_trailing(self):
+        return any(bool(re.search(r"[^ \r\n]", i)) for i in self._trailing_list)
+
+    @property
+    def leading_snippet(self):
+        """Return leading snippet representation."""
+        if not self.is_leading:
+            return ""
+
+        base = "wss()" if self.is_ws_leading else "spaces()"
+        return f"optional_{base}" if any(item == "" for item in self._leading_list) else base
+
+    @property
+    def trailing_snippet(self):
+        """Return trailing snippet representation."""
+        if not self.is_leading:
+            return ""
+
+        base = "wss()" if self.is_ws_trailing else "spaces()"
+        return f"optional_{base}" if any(item == "" for item in self._trailing_list) else base
+
 
     @property
     def snippet(self):
@@ -60,6 +87,8 @@ class SnippetBase:
             self._leading_list.append(line.leading)
             self._trailing_list.append(line.trailing)
             self._data_list.append(line.data)
+            if not line.data:
+                self._allow_empty = True
 
     # --- Methods subclasses must implement ---------------------------------
 
@@ -82,8 +111,8 @@ class WhitespaceSnippet(SnippetBase):
             params.append(f"var_{self._var_name}")
         if self._allow_empty:
             params.append("or_empty")
-
-        return f"wss({', '.join(params)})"
+        keyword = "wss" if self.is_ws_leading else "spaces"
+        return f"{keyword}({', '.join(params)})"
 
     def parse(self):
         """Evaluate items and update parsed/empty flags."""
@@ -91,14 +120,11 @@ class WhitespaceSnippet(SnippetBase):
         if not self._items:
             return
 
-        parts = []
-        for item in self._items:
-            if item == "":
-                self._allow_empty = True
-                continue
-            parts.append(bool(re.fullmatch(r"\s+", item)))
+        self._allow_empty = any(item == "" for item in self._items)
 
-        self._parsed = all(parts)
+        self._parsed = all(
+            re.fullmatch(r"\s+", item) for item in self._items if item
+        )
 
 
 class TokenSnippet(SnippetBase):
