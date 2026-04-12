@@ -9,6 +9,8 @@ from typing import Optional, Union
 
 import re
 
+from textfsmgen.tools.translator import SnippetTranslator
+
 from textfsmgen.libs.generic import Position
 
 from textfsmgen import ui
@@ -19,6 +21,7 @@ from textfsmgen.ui.common import (
     make_modal,
     clear_text,
     extract_text,
+    set_text
 )
 
 window_width = 1060 if ui.is_macos else 900 if ui.is_linux else 810
@@ -119,7 +122,7 @@ def build_controls_frame(parent, app):
     position = Position(value=-1)
 
     buttons = [
-        ("Translate",   lambda: "Implement later"),
+        ("Translate",   lambda: translate(app)),
         ("Iterate",     lambda: "Implement later"),
         ("Test",        lambda: "Implement later"),
         ("Default",     lambda: reset_default(app)),
@@ -465,3 +468,17 @@ def copy(app):
         title="Ambiguous Copy Action",
         info="Please select the specific area you want to copy.",
     )
+
+
+def translate(app):
+    t = app.tools.translator
+    data = extract_text(t.in_textarea)
+    translator = SnippetTranslator(
+        data,
+        variable_flag=t.variable_flag,
+        notation_flag=t.notation_flag,
+        group_flag=t.group_flag,
+        exact_flag=t.exact_flag,
+    )
+
+    set_text(t.out_textarea, translator.snippet)
