@@ -72,10 +72,10 @@ def build_pane_window(parent):
 def build_input_frame(parent, app):
     frame = ui.Frame(
         parent, width=window_width,
-        height=int(window_height / 20) * 3,
+        height=int(window_height / 10),
         relief="ridge"
     )
-    parent.add(frame, weight=3)
+    parent.add(frame, weight=1)
 
     # Configure grid for resizing
     frame.rowconfigure(0, weight=1)
@@ -226,10 +226,10 @@ def build_bottom_controls(parent, app):
 def build_output_frame(parent, app):
     frame = ui.Frame(
         parent, width=window_width,
-        height=int(window_height / 20) * 3,
+        height=int(window_height / 10),
         relief="ridge"
     )
-    parent.add(frame, weight=3)
+    parent.add(frame, weight=1)
 
     # Configure grid for resizing
     frame.rowconfigure(0, weight=1)
@@ -268,10 +268,10 @@ def build_output_frame(parent, app):
 def build_python_code_frame(parent, app):
     frame = ui.Frame(
         parent, width=window_width,
-        height=int(window_height / 20) * 12,
+        height=int(window_height / 10) * 7,
         relief="ridge"
     )
-    parent.add(frame, weight=12)
+    parent.add(frame, weight=7)
 
     # Configure grid for resizing
     frame.rowconfigure(0, weight=1)
@@ -312,10 +312,10 @@ def build_python_code_frame(parent, app):
 def build_test_result_frame(parent, app):
     frame = ui.Frame(
         parent, width=window_width,
-        height=int(window_height / 20) * 2,
+        height=int(window_height / 10),
         relief="ridge"
     )
-    parent.add(frame, weight=2)
+    parent.add(frame, weight=1)
 
     # Configure grid for resizing
     frame.rowconfigure(0, weight=1)
@@ -524,6 +524,8 @@ def translate(app):
     )
 
     set_text(t.out_textarea, translator.snippet)
+    set_text(t.result_textarea, translator.pattern_statement)
+    t.result_textarea.config(wrap="char")
 
 
 def iterate(app):

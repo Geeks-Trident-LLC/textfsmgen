@@ -29,7 +29,7 @@ class SnippetTranslator:
         self.explain_flag = explain_flag
 
         self._parsed = False
-        self._snippet = ""
+        self._translator = None
         self.parse()
 
     def __bool__(self): return self._parsed
@@ -43,7 +43,13 @@ class SnippetTranslator:
     def parsed(self): return self._parsed
 
     @property
-    def snippet(self): return self._snippet
+    def snippet(self): return self._translator.snippet if self else ""
+
+    @property
+    def pattern(self): return  self._translator.pattern if self else ""
+
+    @property
+    def pattern_statement(self): return self._translator.pattern_statement if self else ""
 
     def parse(self):
         """Run available parsers and stop at the first successful match."""
@@ -61,7 +67,9 @@ class SnippetTranslator:
         var_name = "v0" if self.variable_flag else ""
         node = WhitespaceSnippet(self._raw, var_name=var_name)
         self._parsed = bool(node)
-        self._snippet = node.snippet
+        if node:
+            self._translator = node
+
         return self._parsed
 
     def _parse_group(self):
@@ -73,7 +81,8 @@ class SnippetTranslator:
         lines = self._raw.splitlines()
         node = TokenSnippet(*lines, var_name=var_name, generic=self.generic_flag)
         self._parsed = bool(node)
-        self._snippet = node.snippet
+        if node:
+            self._translator = node
 
         return self._parsed
 
@@ -95,7 +104,8 @@ class SnippetTranslator:
         )
 
         self._parsed = bool(node)
-        self._snippet = node.snippet
+        if node:
+            self._translator = node
 
         return self._parsed
 

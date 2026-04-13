@@ -9,13 +9,16 @@ Helpers for building and manipulating snippet objects used during parsing.
 import re
 
 from textfsmgen.libs.pattern import PATTERN
-
 from textfsmgen.libs.utils import split_by_matches
-from textfsmgen.libs.text import is_punctuation
+from textfsmgen.libs.text import (
+    Line,
+    is_punctuation,
+    get_list_of_lines,
+)
 
-from textfsmgen.libs.text import Line
-from textfsmgen.libs.text import get_list_of_lines
 from textfsmgen.engine.translate import make_translator
+
+from textfsmgen.core.patterns import LinePattern
 
 class SnippetBase:
     """Base class for snippet parsers."""
@@ -98,6 +101,16 @@ class SnippetBase:
     def snippet(self):
         """Return the formatted snippet, or empty string if not parsed."""
         return self.build() if self._parsed else ""
+
+    @property
+    def pattern(self):
+        """Return the formatted pattern, or empty string if not parsed."""
+        snippet = self.snippet
+        return LinePattern(snippet) if snippet else ""
+
+    @property
+    def pattern_statement(self):
+        return create_pattern_statement(self.snippet, self.pattern)
 
     def normalize(self):
         for item in self._items:
@@ -215,6 +228,14 @@ class LineSnippet:
 
         return "".join(parts)
 
+    @property
+    def pattern(self):
+        snippet = self.snippet
+        return LinePattern(snippet) if snippet else ""
+
+    @property
+    def pattern_statement(self):
+        return create_pattern_statement(self.snippet, self.pattern)
 
     def _split_leading_notation(self, data):
         """Split text into (leading notation, core text) based on punctuation rules."""
@@ -329,3 +350,41 @@ class LineSnippet:
                     tokens.append(trail_token)
 
         self._tokens = tokens[:]
+
+
+def create_pattern_statement(snippet: str, pattern: str) -> str:
+    """Return a formatted pattern statement with a snippet comment block."""
+    if not pattern:
+        return ""
+
+    snippet_comment = f"#  {snippet!r}"
+    width = max(len(snippet_comment), 40)
+    border = "#" * width
+
+    lines = [
+        border,
+        "# Equivalent snippet conversion:",
+        snippet_comment,
+        border,
+    ]
+
+    # Use triple quotes only when pattern contains a double quote
+    if '"' in pattern:
+        first, middle, last = pattern[:1], pattern[1:-1], pattern[-1:]
+        first = '\\"' if first == '"' else first
+        last = '\\"' if last == '"' else last
+
+        parts = []
+        for item in split_by_matches(middle, r'"{3,}'):
+            if re.fullmatch(r'"{3,}"', item):
+                parts.append('\\"' * len(item))
+                continue
+            parts.append(item)
+        body = "".join(parts)
+
+        stmt = f'pattern = r"""{first}{body}{last}"""'
+    else:
+        stmt = f'pattern = r"{pattern}"'
+
+    lines.append(stmt)
+    return "\n".join(lines)
