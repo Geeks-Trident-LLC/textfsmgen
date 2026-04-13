@@ -12,10 +12,12 @@ from textfsmgen.tools.token import (
     LineSnippet
 )
 
+
 class SnippetTranslator:
     def __init__(
         self, raw, variable_flag=True, notation_flag=False,
-        group_flag=False, generic_flag=False, split_arg="/"
+        group_flag=False, generic_flag=False, split_arg="/",
+        explain_flag=False,
     ):
         self._raw = raw
 
@@ -24,6 +26,7 @@ class SnippetTranslator:
         self.group_flag = group_flag
         self.generic_flag = generic_flag
         self.split_arg = split_arg
+        self.explain_flag = explain_flag
 
         self._parsed = False
         self._snippet = ""
@@ -95,7 +98,6 @@ class SnippetTranslator:
         self._snippet = node.snippet
 
         return self._parsed
-
 
 
 class IterateTranslator:

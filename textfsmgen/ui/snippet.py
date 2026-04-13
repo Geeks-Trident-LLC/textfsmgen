@@ -168,11 +168,16 @@ def build_top_controls(parent, app):
         )
         btn.grid(row=0, column=pos.next(), **padding)
 
+
 def build_bottom_controls(parent, app):
     """Build the bottom control bar with checkboxes, separator, and split field."""
     controls = [
         ("Variable", app.tools.translator.variable_flag),
-        ("Notation", app.tools.translator.notation_flag),
+        ("Surrounding Notation", app.tools.translator.notation_flag),
+
+        ("SEPARATOR", None),
+
+        ("Explanation", app.tools.translator.explain_flag),
 
         ("SEPARATOR", None),
 
@@ -354,6 +359,7 @@ def reset_default(app):
     app.tools.translator.group_flag.set(False)
     app.tools.translator.generic_flag.set(True)
     app.tools.translator.notation_flag.set(False)
+    app.tools.translator.explain_flag.set(False)
     app.tools.translator.split_arg.set("/")
 
 
@@ -503,6 +509,8 @@ def copy(app):
 
 
 def translate(app):
+    """Translate input text using current translator settings."""
+
     t = app.tools.translator
     data = extract_text(t.in_textarea)
     translator = SnippetTranslator(
@@ -512,6 +520,7 @@ def translate(app):
         group_flag=t.group_flag.get(),
         generic_flag=t.generic_flag.get(),
         split_arg=t.split_arg.get(),
+        explain_flag=t.explain_flag.get(),
     )
 
     set_text(t.out_textarea, translator.snippet)
