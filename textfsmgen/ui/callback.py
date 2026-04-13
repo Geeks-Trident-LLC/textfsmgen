@@ -114,12 +114,14 @@ def toggle_test_data_mode(app):
         app.settings.test_data_btn_name.set('Test Data')
         app.snapshot.update(test_data=extract_text(app.textarea.input))
         set_text(app.textarea.input, app.snapshot.user_data)
+        app.textarea.input.config(borderwidth=1)
     else:
         # Show test data
         app.root.title('TextFSM Generator CE (Test Data Mode)')
         app.settings.test_data_btn_name.set('Hide')
         app.snapshot.update(user_data=extract_text(app.textarea.input))
         set_text(app.textarea.input, app.snapshot.test_data)
+        app.textarea.input.config(borderwidth=3)
 
 
 def open_file(app):

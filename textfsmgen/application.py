@@ -325,7 +325,8 @@ class Application:
         self.textarea.output = ui.TextArea(
             self.frames.output, width=20, height=5, wrap='none',
             state=tk.DISABLED,
-            name='output_textarea'
+            name='output_textarea',
+            bg=ui.readonly_text_bg_color,
         )
         self.textarea.output.grid(row=0, column=0, sticky='nswe')   # noqa
 

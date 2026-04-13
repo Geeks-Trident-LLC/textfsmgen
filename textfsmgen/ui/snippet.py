@@ -135,8 +135,8 @@ def build_top_controls(parent, app):
     """Build the top control bar with action buttons and a vertical separator."""
     controls = [
         ("Translate", lambda: translate(app)),
-        ("Iterate",   lambda: iterate(app)),
         ("Generate",  lambda: generate_and_execute(app)),
+        ("Iterate",   lambda: iterate(app)),
         ("Default",   lambda: reset_default(app)),
 
         ("SEPARATOR", None),
@@ -157,7 +157,7 @@ def build_top_controls(parent, app):
             continue
 
         name = f"{label.lower()}_btn"
-        width = btn_width + 2 if label == "Translate" else btn_width
+        width = btn_width + 2 if label in ("Translate", "Generate") else btn_width
 
         btn = ui.Button(
             parent,
@@ -279,7 +279,7 @@ def build_python_code_frame(parent, app):
 
     textarea = ui.TextArea(
         frame, width=20, height=3, wrap='none',
-        bg="#f0f0f0",  # slightly stronger gray
+        bg=ui.readonly_text_bg_color,
         name='translator_code_text',
     )
 
@@ -323,7 +323,7 @@ def build_test_result_frame(parent, app):
 
     textarea = ui.TextArea(
         frame, width=20, height=3, wrap='none',
-        bg="#f0f0f0",  # slightly stronger gray
+        bg=ui.readonly_text_bg_color,
         name='translator_result_text',
     )
 

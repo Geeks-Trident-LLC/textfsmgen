@@ -9,6 +9,7 @@ from typing import Optional
 
 import subprocess
 import re
+import platform
 
 from . import ECODE
 from .generic import DotObject
@@ -101,3 +102,19 @@ def execute_command(cmdline: str) -> DotObject:
         exit_code=exit_code,
         is_success=exit_code == ECODE.SUCCESS,
     )
+
+
+def is_macos_dark_mode() -> bool:
+    """Return True if macOS is currently using Dark Mode."""
+    if platform.system() != 'Darwin':
+        return False
+
+    try:
+        result = subprocess.run(
+            ["defaults", "read", "-g", "AppleInterfaceStyle"],
+            capture_output=True,
+            text=True
+        )
+        return result.stdout.strip() == "Dark"
+    except Exception:   # noqa
+        return False  # key doesn't exist → Light Mode
