@@ -1,5 +1,8 @@
 
-from textfsmgen.tools.token import WhitespaceSnippet
+from textfsmgen.tools.token import (
+    WhitespaceSnippet,
+    TokenSnippet
+)
 
 class SnippetTranslator:
     def __init__(
@@ -34,18 +37,38 @@ class SnippetTranslator:
 
     def parse(self):
         """Run available parsers and stop at the first successful match."""
-        parsers = [self._parse_whitespace]
+        if not self._raw:
+            return
+
+        parsers = [
+            self._parse_whitespace,
+            self._parse_group,
+        ]
 
         for parser in parsers:
-            if parser():
+            ok = parser()
+            if ok:
                 return
 
     def _parse_whitespace(self):
         """Parse raw text as a whitespace snippet."""
+
         node = WhitespaceSnippet(self._raw, var_name="v0")
         self._parsed = bool(node)
         self._snippet = node.snippet
         return self._parsed
+
+    def _parse_group(self):
+        """Parse raw text as a group snippet."""
+        if not self.group_flag:
+            return False
+
+        lines = self._raw.splitlines()
+        node = TokenSnippet(*lines, var_name="v0", generic=self.generic_flag)
+        self._parsed = bool(node)
+        self._snippet = node.snippet
+
+        return self._snippet
 
 
 class IterateTranslator:

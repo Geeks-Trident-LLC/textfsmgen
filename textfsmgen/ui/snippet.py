@@ -475,10 +475,10 @@ def translate(app):
     data = extract_text(t.in_textarea)
     translator = SnippetTranslator(
         data,
-        variable_flag=t.variable_flag,
-        notation_flag=t.notation_flag,
-        group_flag=t.group_flag,
-        generic_flag=t.generic_flag,
+        variable_flag=t.variable_flag.get(),
+        notation_flag=t.notation_flag.get(),
+        group_flag=t.group_flag.get(),
+        generic_flag=t.generic_flag.get(),
     )
 
     set_text(t.out_textarea, translator.snippet)

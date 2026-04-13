@@ -2,6 +2,7 @@ import re
 
 from textfsmgen.libs.text import Line
 from textfsmgen.libs.text import get_list_of_lines
+from textfsmgen.engine.translate import make_translator
 
 class SnippetBase:
     """Base class for snippet parsers."""
@@ -18,6 +19,8 @@ class SnippetBase:
 
         self._parsed = False
         self._allow_empty = False
+        self._keyword = ""
+        self._parser = None
 
         self.normalize()
         self.parse()
@@ -64,17 +67,19 @@ class SnippetBase:
             return ""
 
         base = "wss()" if self.is_ws_leading else "spaces()"
-        return f"optional_{base}" if any(item == "" for item in self._leading_list) else base
+        return base if all(self._leading_list) else f"optional_{base}"
 
     @property
     def trailing_snippet(self):
         """Return trailing snippet representation."""
-        if not self.is_leading:
+        if not self.is_trailing:
             return ""
 
         base = "wss()" if self.is_ws_trailing else "spaces()"
-        return f"optional_{base}" if any(item == "" for item in self._trailing_list) else base
+        return base if all(self._trailing_list) else f"optional_{base}"
 
+    @property
+    def keyword(self): return self._keyword
 
     @property
     def snippet(self):
@@ -86,9 +91,19 @@ class SnippetBase:
             line = Line(item)
             self._leading_list.append(line.leading)
             self._trailing_list.append(line.trailing)
-            self._data_list.append(line.data)
-            if not line.data:
+            if line.data:
+                self._data_list.append(line.data)
+            else:
                 self._allow_empty = True
+
+    def keyword_params(self):
+        """Return formatted keyword parameters."""
+        parts = []
+        if self._var_name:
+            parts.append(f"var_{self._var_name}")
+        if self._allow_empty:
+            parts.append("or_empty")
+        return ", ".join(parts)
 
     # --- Methods subclasses must implement ---------------------------------
 
@@ -106,13 +121,11 @@ class WhitespaceSnippet(SnippetBase):
 
     def build(self):
         """Return the snippet string."""
-        params = []
-        if self._var_name:
-            params.append(f"var_{self._var_name}")
-        if self._allow_empty:
-            params.append("or_empty")
-        keyword = "wss" if self.is_ws_leading else "spaces"
-        return f"{keyword}({', '.join(params)})"
+        if not self:
+            return ""
+        params = self.keyword_params()
+        self._keyword = "wss" if self.is_ws_leading else "spaces"
+        return f"{self._keyword}({params})"
 
     def parse(self):
         """Evaluate items and update parsed/empty flags."""
@@ -128,4 +141,25 @@ class WhitespaceSnippet(SnippetBase):
 
 
 class TokenSnippet(SnippetBase):
-    pass
+    def build(self):
+        """Return the snippet string."""
+        if not self:
+            return ""
+
+        params = self.keyword_params()
+        snippet = self._parser.to_snippet(generic=self._generic)
+        if "(" not in snippet:
+            return ""
+
+        self._keyword, _ = snippet.split("(", maxsplit=1)
+        return f"{self.leading_snippet}{self._keyword}({params}){self.trailing_snippet}"
+
+    def parse(self):
+        """Evaluate items and update parsed/empty flags."""
+
+        if not self._data_list:
+            return
+
+        self._parser = make_translator(*self._data_list, multiple=True)
+        self._parsed = bool(self._parser)
+
