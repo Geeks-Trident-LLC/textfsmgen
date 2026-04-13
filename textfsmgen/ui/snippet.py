@@ -9,6 +9,8 @@ from typing import Optional, Union
 
 import re
 
+from textfsmgen.libs.text import get_list_of_lines
+
 from textfsmgen.tools.translator import SnippetTranslator
 
 from textfsmgen.libs.generic import Position
@@ -513,6 +515,15 @@ def translate(app):
 
     t = app.tools.translator
     data = extract_text(t.in_textarea)
+
+    if not any(get_list_of_lines(data)):
+        show_message_dialog(
+            title="Translate Action - No Input",
+            info="TNo text was found to translate.\n"
+                 "Please enter or paste content first.",
+        )
+        return
+
     translator = SnippetTranslator(
         data,
         variable_flag=t.variable_flag.get(),

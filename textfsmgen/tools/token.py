@@ -156,7 +156,7 @@ class WhitespaceSnippet(SnippetBase):
     def parse(self):
         """Evaluate items and update parsed/empty flags."""
 
-        if not self._items:
+        if not any(self._items):
             return
 
         self._allow_empty = any(item == "" for item in self._items)
@@ -183,7 +183,7 @@ class TokenSnippet(SnippetBase):
     def parse(self):
         """Evaluate items and update parsed/empty flags."""
 
-        if not self._data_list:
+        if not any(self._data_list):
             return
 
         self._parser = make_translator(*self._data_list, multiple=True)
