@@ -130,3 +130,8 @@ dmypy.json
 
 # pycharm
 .idea/
+
+# macOS metadata files
+.DS_Store
+.AppleDouble
+.LSOverride
