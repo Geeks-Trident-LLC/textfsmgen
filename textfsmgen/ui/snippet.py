@@ -24,8 +24,8 @@ from textfsmgen.ui.common import (
     set_text
 )
 
-window_width = 1060 if ui.is_macos else 900 if ui.is_linux else 810
-window_height = 770 if ui.is_macos else 785 if ui.is_linux else 720
+window_width = 960 if ui.is_macos else 820 if ui.is_linux else 740
+window_height = 770 if ui.is_macos else 780 if ui.is_linux else 720
 
 def show_dialog(app):
     """Show the dialog window."""
@@ -72,10 +72,10 @@ def build_pane_window(parent):
 def build_input_frame(parent, app):
     frame = ui.Frame(
         parent, width=window_width,
-        height=int(window_height / 20) * 2,
+        height=int(window_height / 20) * 3,
         relief="ridge"
     )
-    parent.add(frame, weight=2)
+    parent.add(frame, weight=3)
 
     # Configure grid for resizing
     frame.rowconfigure(0, weight=1)
@@ -113,88 +113,118 @@ def build_input_frame(parent, app):
 
 def build_controls_frame(parent, app):
     """Create the control button row (Clear, Copy, Paste)."""
-    frame = ui.Frame(parent, width=window_width, height=10, relief="ridge")
+    frame = ui.Frame(parent, width=window_width, height=10, relief="ridge", borderwidth=2)
     parent.add(frame)
 
-    btn_width = 5 if ui.is_macos else 6 if ui.is_linux else 8
-    pad = dict(padx=(2, 0), pady=(2, 2))
+    top = ui.Frame(frame, width=window_width, height=5)
+    top.pack(side="top", fill="x")
 
-    position = Position(value=-1)
+    sep = ui.ttk.Separator(frame, orient="horizontal")
+    sep.pack(fill="x", padx=4)
 
-    buttons = [
-        ("Translate",   lambda: translate(app)),
-        ("Iterate",     lambda: "Implement later"),
-        ("Test",        lambda: "Implement later"),
-        ("Default",     lambda: reset_default(app)),
+    bottom = ui.Frame(frame, width=window_width, height=5)
+    bottom.pack(side="top", fill="x")
 
-        ("SEPARATOR",   ""),
-
-        ("Copy",        lambda: copy(app)),
-        ("Paste",       lambda: paste(app)),
-        ("Clear",       lambda: clear(app)),
-    ]
-
-    for text_ , func in buttons:
-        if text_ == "SEPARATOR":
-            sep = ui.ttk.Separator(frame, orient="vertical")
-            sep.grid(row=0, column=position.next(), sticky="ns", padx=(4, 2), pady=2)
-            continue
-        name = f"{text_.lower()}_button"
-        btn = ui.Button(
-            frame, text=text_, name=name,
-            width=btn_width + 2 if text_ == "Translate" else btn_width,
-            command=func
-        )
-        btn.grid(row=0, column=position.next(), **pad)
-
-    checkboxes = [
-        ("Variable",    app.tools.translator.variable_flag),
-        ("Notation",    app.tools.translator.notation_flag),
-
-        ("SEPARATOR",   ""),
-
-        ("Group",       app.tools.translator.group_flag),
-        ("Generic",     app.tools.translator.generic_flag),
-    ]
-
-    sep = ui.ttk.Separator(frame, orient="vertical")
-    sep.grid(row=0, column=position.next(), sticky="ns", padx=(4, 2), pady=2)
-
-    for text_, var_ in checkboxes:
-        if text_ == "SEPARATOR":
-            sep = ui.ttk.Separator(frame, orient="vertical")
-            sep.grid(row=0, column=position.next(), sticky="ns", padx=(4, 2), pady=2)
-            continue
-
-        checkbox = ui.CheckBox(
-            frame, text=text_, name=f"{text_.lower()}_checkbox",
-            variable=var_,
-            onvalue=True, offvalue=False,
-        )
-        checkbox.grid(row=0, column=position.next(), sticky="ns", **pad)
-
-    sep = ui.ttk.Separator(frame, orient="vertical")
-    sep.grid(row=0, column=position.next(), sticky="ns", padx=(4, 2), pady=2)
-
-    lbl = ui.Label(frame, text="Split")
-    lbl.grid(row=0, column=position.next(), sticky="ns", **pad)
-
-    entry = ui.TextBox(
-        frame, width=6, justify="center",
-        textvariable=app.tools.translator.split_arg
-    )
-    entry.grid(row=0, column=position.next(), sticky="ns", padx=2, pady=4)
+    build_top_controls(top, app)
+    build_bottom_controls(bottom, app)
 
     return frame
+
+
+def build_top_controls(parent, app):
+    """Build the top control bar with action buttons and a vertical separator."""
+    controls = [
+        ("Translate", lambda: translate(app)),
+        ("Iterate",   lambda: "Implement later"),
+        ("Test",      lambda: "Implement later"),
+        ("Default",   lambda: reset_default(app)),
+
+        ("SEPARATOR", None),
+
+        ("Copy",      lambda: copy(app)),
+        ("Paste",     lambda: paste(app)),
+        ("Clear",     lambda: clear(app)),
+    ]
+
+    btn_width = 6 if ui.is_macos else 7 if ui.is_linux else 8
+    padding = dict(padx=(2, 0), pady=(2, 2))
+    pos = Position(value=-1)
+
+    for label, callback in controls:
+        if label == "SEPARATOR":
+            sep = ui.ttk.Separator(parent, orient="vertical")
+            sep.grid(row=0, column=pos.next(), sticky="ns", padx=(4, 2), pady=2)
+            continue
+
+        name = f"{label.lower()}_btn"
+        width = btn_width + 2 if label == "Translate" else btn_width
+
+        btn = ui.Button(
+            parent,
+            text=label,
+            name=name,
+            width=width,
+            command=callback,
+        )
+        btn.grid(row=0, column=pos.next(), **padding)
+
+def build_bottom_controls(parent, app):
+    """Build the bottom control bar with checkboxes, separator, and split field."""
+    controls = [
+        ("Variable", app.tools.translator.variable_flag),
+        ("Notation", app.tools.translator.notation_flag),
+
+        ("SEPARATOR", None),
+
+        ("Group",    app.tools.translator.group_flag),
+        ("Generic",  app.tools.translator.generic_flag),
+    ]
+
+    padding = dict(padx=(2, 0), pady=(2, 2))
+    pos = Position(value=-1)
+
+    # Checkboxes + inline separator
+    for label, var in controls:
+        if label == "SEPARATOR":
+            sep = ui.ttk.Separator(parent, orient="vertical")
+            sep.grid(row=0, column=pos.next(), sticky="ns", padx=(4, 2), pady=2)
+            continue
+
+        chk = ui.CheckBox(
+            parent,
+            text=label,
+            name=f"{label.lower()}_checkbox",
+            variable=var,
+            onvalue=True,
+            offvalue=False,
+        )
+        chk.grid(row=0, column=pos.next(), sticky="ns", **padding)
+
+    # Final separator before split controls
+    sep = ui.ttk.Separator(parent, orient="vertical")
+    sep.grid(row=0, column=pos.next(), sticky="ns", padx=(4, 2), pady=2)
+
+    # Split label
+    lbl = ui.Label(parent, text="Split")
+    lbl.grid(row=0, column=pos.next(), sticky="ns", **padding)
+
+    # Split entry
+    entry = ui.TextBox(
+        parent,
+        width=8,
+        justify="center",
+        textvariable=app.tools.translator.split_arg,
+    )
+    entry.grid(row=0, column=pos.next(), sticky="ns", padx=2, pady=4)
 
 
 def build_output_frame(parent, app):
     frame = ui.Frame(
         parent, width=window_width,
-        height=int(window_height / 20) * 8,
+        height=int(window_height / 20) * 3,
         relief="ridge"
     )
-    parent.add(frame, weight=8)
+    parent.add(frame, weight=3)
 
     # Configure grid for resizing
     frame.rowconfigure(0, weight=1)
@@ -233,10 +263,10 @@ def build_output_frame(parent, app):
 def build_python_code_frame(parent, app):
     frame = ui.Frame(
         parent, width=window_width,
-        height=int(window_height / 20) * 11,
+        height=int(window_height / 20) * 12,
         relief="ridge"
     )
-    parent.add(frame, weight=11)
+    parent.add(frame, weight=12)
 
     # Configure grid for resizing
     frame.rowconfigure(0, weight=1)
@@ -244,6 +274,7 @@ def build_python_code_frame(parent, app):
 
     textarea = ui.TextArea(
         frame, width=20, height=3, wrap='none',
+        bg="#f0f0f0",  # slightly stronger gray
         name='translator_code_text',
     )
 
@@ -276,10 +307,10 @@ def build_python_code_frame(parent, app):
 def build_test_result_frame(parent, app):
     frame = ui.Frame(
         parent, width=window_width,
-        height=int(window_height / 20),
+        height=int(window_height / 20) * 2,
         relief="ridge"
     )
-    parent.add(frame, weight=1)
+    parent.add(frame, weight=2)
 
     # Configure grid for resizing
     frame.rowconfigure(0, weight=1)
@@ -287,6 +318,7 @@ def build_test_result_frame(parent, app):
 
     textarea = ui.TextArea(
         frame, width=20, height=3, wrap='none',
+        bg="#f0f0f0",  # slightly stronger gray
         name='translator_result_text',
     )
 
