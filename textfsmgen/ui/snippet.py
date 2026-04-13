@@ -135,8 +135,8 @@ def build_top_controls(parent, app):
     """Build the top control bar with action buttons and a vertical separator."""
     controls = [
         ("Translate", lambda: translate(app)),
-        ("Iterate",   lambda: "Implement later"),
-        ("Test",      lambda: "Implement later"),
+        ("Iterate",   lambda: iterate(app)),
+        ("Generate",  lambda: generate_and_execute(app)),
         ("Default",   lambda: reset_default(app)),
 
         ("SEPARATOR", None),
@@ -524,3 +524,27 @@ def translate(app):
     )
 
     set_text(t.out_textarea, translator.snippet)
+
+
+def iterate(app):
+    """Notify the user that the Iterate Snippet feature is not yet implemented."""
+    show_message_dialog(
+        title="Iterate Snippet",
+        info=(
+            "The Iterate Snippet feature is not yet available.\n"
+            "It will allow you to edit a snippet and rerun translation "
+            "repeatedly until the output matches your expectations."
+        ),
+    )
+
+
+def generate_and_execute(app):
+    """Notify the user that the Test Snippet feature is not yet implemented."""
+    show_message_dialog(
+        title="Test Snippet",
+        info=(
+            "The Test Snippet feature is not yet available.\n"
+            "It will generate a Python test snippet that you can run "
+            "locally to validate your parsing logic."
+        ),
+    )
