@@ -1,7 +1,15 @@
+"""
+textfsmgen.tools.translator
+==========================
+
+Utilities for building and applying translator nodes used in snippet parsing.
+"""
+
 
 from textfsmgen.tools.token import (
     WhitespaceSnippet,
-    TokenSnippet
+    TokenSnippet,
+    LineSnippet
 )
 
 class SnippetTranslator:
@@ -21,7 +29,6 @@ class SnippetTranslator:
         self._snippet = ""
         self.parse()
 
-
     def __bool__(self): return self._parsed
 
     def __len__(self): return 1 if self._parsed else 0
@@ -40,20 +47,16 @@ class SnippetTranslator:
         if not self._raw:
             return
 
-        parsers = [
-            self._parse_whitespace,
-            self._parse_group,
-        ]
-
+        parsers = [self._parse_whitespace, self._parse_group, self._parse_line,]
         for parser in parsers:
-            ok = parser()
-            if ok:
+            if parser():
                 return
 
     def _parse_whitespace(self):
         """Parse raw text as a whitespace snippet."""
 
-        node = WhitespaceSnippet(self._raw, var_name="v0")
+        var_name = "v0" if self.variable_flag else ""
+        node = WhitespaceSnippet(self._raw, var_name=var_name)
         self._parsed = bool(node)
         self._snippet = node.snippet
         return self._parsed
@@ -63,12 +66,36 @@ class SnippetTranslator:
         if not self.group_flag:
             return False
 
+        var_name = "v0" if self.variable_flag else ""
         lines = self._raw.splitlines()
-        node = TokenSnippet(*lines, var_name="v0", generic=self.generic_flag)
+        node = TokenSnippet(*lines, var_name=var_name, generic=self.generic_flag)
         self._parsed = bool(node)
         self._snippet = node.snippet
 
-        return self._snippet
+        return self._parsed
+
+    def _parse_line(self):
+        """Parse the first non-empty line into a LineSnippet."""
+        if self.group_flag:
+            return False
+
+        lines = [line for line in self._raw.splitlines() if line.strip()]
+        if not lines:
+            return False
+
+        node = LineSnippet(
+            lines[0],
+            with_var=self.variable_flag,
+            with_notation=self.notation_flag,
+            split_divider=self.split_arg,
+            generic=self.generic_flag,
+        )
+
+        self._parsed = bool(node)
+        self._snippet = node.snippet
+
+        return self._parsed
+
 
 
 class IterateTranslator:

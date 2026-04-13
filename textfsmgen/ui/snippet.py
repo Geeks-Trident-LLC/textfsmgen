@@ -479,6 +479,7 @@ def translate(app):
         notation_flag=t.notation_flag.get(),
         group_flag=t.group_flag.get(),
         generic_flag=t.generic_flag.get(),
+        split_arg=t.split_arg.get(),
     )
 
     set_text(t.out_textarea, translator.snippet)

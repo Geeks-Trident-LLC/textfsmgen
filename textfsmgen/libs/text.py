@@ -594,6 +594,12 @@ def is_string_or_none(obj):
     return isinstance(obj, (type(None), typing.Text))
 
 
+def is_punctuation(data):
+    """Return True if the text consists solely of ASCII punctuation."""
+    pattern = r"[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+"
+    return bool(re.fullmatch(pattern, data))
+
+
 def try_to_str(value: Any, allow_none: bool = False) -> Tuple[bool, str]:
     """Attempt to convert input to a string; return success flag and result."""
     if allow_none and value is None:

@@ -1,4 +1,17 @@
+"""
+textfsmgen.tools.snippet
+========================
+
+Helpers for building and manipulating snippet objects used during parsing.
+"""
+
+
 import re
+
+from textfsmgen.libs.pattern import PATTERN
+
+from textfsmgen.libs.utils import split_by_matches
+from textfsmgen.libs.text import is_punctuation
 
 from textfsmgen.libs.text import Line
 from textfsmgen.libs.text import get_list_of_lines
@@ -163,3 +176,156 @@ class TokenSnippet(SnippetBase):
         self._parser = make_translator(*self._data_list, multiple=True)
         self._parsed = bool(self._parser)
 
+
+class LineSnippet:
+    def __init__(
+        self, line, generic=False, split_divider="/", with_var=True, with_notation=False
+    ):
+        self._raw = line
+        self._with_var = with_var
+        self._split_divider = split_divider.strip()
+        self._with_notation = with_notation
+        self._generic = generic
+
+        self._tokens = []
+
+        self._parsed = False
+
+        self.parse_tokens()
+
+    def __bool__(self): return self._parsed
+
+    def __len__(self): return 1 if self._parsed else 0
+
+    @property
+    def raw(self): return self._raw
+
+    @property
+    def data(self): return self._raw.strip()
+
+    @property
+    def snippet(self):
+        """Return the rendered snippet by joining token strings."""
+        if not self._parsed:
+            return ""
+
+        parts = []
+        for tok in self._tokens:
+            parts.append(tok if isinstance(tok, str) else tok.snippet)
+
+        return "".join(parts)
+
+
+    def _split_leading_notation(self, data):
+        """Split text into (leading notation, core text) based on punctuation rules."""
+        if not self._with_notation or is_punctuation(data):
+            return "", data
+
+        if re.match(r"(?i)((::[a-z0-9])|([.][0-9]))", data):
+            return "", data
+
+        match = re.match(rf"(?P<puncts>{PATTERN.PUNCTS})", data)
+
+        if not match:
+            return "", data
+
+        puncts = match.group("puncts")
+        unique = set(puncts)
+        if len(unique) == 1:
+            return puncts, data[len(puncts):]
+        return puncts[0], data[1:]
+
+    def _split_trailing_notation(self, data):
+        """Split text into (core, trailing notation) based on punctuation rules."""
+
+        if not self._with_notation or is_punctuation(data):
+            return data, ""
+
+        # Skip cases like "a::" or "3."
+        if re.search(r"(?i)(([a-z0-9]::)|([0-9][.]))$", data):
+            return data, ""
+
+        match = re.search(rf"(?P<puncts>{PATTERN.PUNCTS})$", data)
+
+        if not match:
+            return data, ""
+
+        puncts = match.group("puncts")
+        unique = set(puncts)
+        if len(unique) == 1:
+            return data[: -len(puncts)], puncts
+
+        # Mixed punctuation: keep only the last char as notation
+        return data[:-1], puncts[-1]
+
+
+    def _split_by_divider(self, data):
+        """Split text using the configured divider, preserving non-empty parts."""
+        if not self._split_divider:
+            return [data]
+
+        pattern = rf"[{re.escape(self._split_divider)}]+"
+        parts = split_by_matches(data, pattern)
+        if parts and parts[-1] == "":
+            parts.pop()
+
+        return parts
+
+    def parse_tokens(self):
+        """Parse raw text into token snippets, punctuation, and notation parts."""
+        tokens = []
+        index = 0
+
+        for chunk in split_by_matches(self._raw):
+            if not chunk:
+                continue
+
+            # Whitespace or pure punctuation → passthrough
+            if chunk.isspace() or is_punctuation(chunk):
+                tokens.append(chunk)
+                continue
+
+            # Leading notation
+            lead, remainder = self._split_leading_notation(chunk)
+            if lead:
+                tokens.append(lead)
+
+            # Divider-based splitting
+            *segments, remainder = self._split_by_divider(chunk)
+            for segment in segments:
+                if is_punctuation(segment):
+                    tokens.append(segment)
+                    continue
+
+                var_name = f"v{index}" if self._with_var else ""
+                index += 1
+
+                snippet = TokenSnippet(segment, var_name=var_name,
+                                       generic=self._generic)
+                self._parsed = bool(snippet)
+                tokens.append(snippet)
+
+            # Trailing notation
+            core, trail = self._split_trailing_notation(remainder)
+
+            var_name = f"v{index}" if self._with_var else ""
+            index += 1
+
+            core_token = TokenSnippet(core, var_name=var_name,
+                                      generic=self._generic)
+            self._parsed = bool(core_token)
+            tokens.append(core_token)
+
+            if trail:
+                if is_punctuation(trail):
+                    tokens.append(trail)
+                else:
+                    var_name = f"v{index}" if self._with_var else ""
+                    index += 1
+
+                    trail_token = TokenSnippet(trail, var_name=var_name,
+                                               generic=self._generic)
+                    self._parsed = bool(trail_token)
+                    tokens.append(trail_token)
+
+        self._tokens = tokens[:]
