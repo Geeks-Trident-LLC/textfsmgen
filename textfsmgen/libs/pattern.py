@@ -17,106 +17,123 @@ class PATTERN:  # noqa
     """Reusable regex fragments for common character classes."""
 
     # --- Generic wildcard ---
-    DOT = '.'
-    DOTS = '.+'
-    ANYTHING = '.*'
-    SOMETHING = '.+'
+    DOT = "."
+    DOTS = ".+"
+    ANYTHING = ".*"
+    SOMETHING = ".+"
 
     # --- Literal spaces ---
-    SPACE = ' '
-    SPACES = ' +'
+    SPACE = " "
+    SPACES = " +"
 
     # --- Whitespace ---
-    WS = r'\s'
-    WHITESPACE = r'\s'
-    WSS = r'\s+'
-    WHITESPACES = r'\s+'
+    WS = r"\s"
+    WHITESPACE = r"\s"
+    WSS = r"\s+"
+    WHITESPACES = r"\s+"
 
     # --- Digits ---
-    DIGIT = r'\d'
-    DIGITS = r'\d+'
+    DIGIT = r"\d"
+    DIGITS = r"\d+"
 
     # --- Numbers ---
-    NUMBER = r'\d*[.]?\d+'
-    NUM = r'\d*[.]?\d+'
-    MIXED_NUMBER = r'[+\(\[\$-]?(\d+([,:/-]\d+)*)?[.]?\d+[\]\)%a-zA-Z]*'
-    MIXED_NUM = r'[+\(\[\$-]?(\d+([,:/-]\d+)*)?[.]?\d+[\]\)%a-zA-Z]*'
+    NUMBER = r"\d*[.]?\d+"
+    NUM = r"\d*[.]?\d+"
+    MIXED_NUMBER = r"[+\(\[\$-]?(\d+([,:/-]\d+)*)?[.]?\d+[\]\)%a-zA-Z]*"
+    MIXED_NUM = r"[+\(\[\$-]?(\d+([,:/-]\d+)*)?[.]?\d+[\]\)%a-zA-Z]*"
 
     # --- letters ---
-    LETTER = '[a-zA-Z]'
-    LETTERS = rf'{LETTER}+'
+    LETTER = "[a-zA-Z]"
+    LETTERS = rf"{LETTER}+"
 
-    OPTIONAL_LETTERS_GROUP = rf'{LETTERS}(\s+{LETTERS})*'
+    OPTIONAL_LETTERS_GROUP = rf"{LETTERS}({WHITESPACES}{LETTERS})*"
     OPT_LETTERS_GRP = OPTIONAL_LETTERS_GROUP
 
-    LETTERS_GROUP = rf'{LETTERS}(\s+{LETTERS})+'
+    LETTERS_GROUP = rf"{LETTERS}(\s+{LETTERS})+"
     LETTERS_GRP = LETTERS_GROUP
 
     # --- alphabet numeric ---
-    ALNUM = '[a-zA-Z0-9]'
+    ALNUM = "[a-zA-Z0-9]"
 
     # --- punctuations ---
-    PUNCT = r'[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]'
-    PUNCTS = r'%s+' % PUNCT
+    PUNCT = r"[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]"
+    PUNCTS = rf"{PUNCT}+"
+
+    PUNCTUATION = PUNCT
+    PUNCTUATIONS = PUNCTS
 
     # --- group of puncts ---
-    OPTIONAL_PUNCTS_GROUP = r'%s(\s+%s)*' % (PUNCTS, PUNCTS)
+    OPTIONAL_PUNCTS_GROUP = rf"{PUNCTS}({WHITESPACES}{PUNCTS})*"
+    OPTIONAL_PUNCTUATIONS_GROUP = OPTIONAL_PUNCTS_GROUP
     OPT_PUNCTS_GRP = OPTIONAL_PUNCTS_GROUP
 
-    PUNCTS_GROUP = r'%s(\s+%s)+' % (PUNCTS, PUNCTS)
+
+    PUNCTS_GROUP = rf"{PUNCTS}({WHITESPACES}{PUNCTS})+"
+    PUNCTUATIONS_GROUP = PUNCTS_GROUP
     PUNCTS_GRP = PUNCTS_GROUP
 
-    SPACE_PUNCT = r'[ \x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]'
-    SP = r'[ \x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]'
+    # --- space or punctuation ---
+    SPACE_PUNCT = r"[ \x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]"
+    SP = SPACE_PUNCT
+    SPACE_PUNCTUATION = SPACE_PUNCT
+    SPACE_OR_PUNCT = SPACE_PUNCT
+    SPACE_OR_PUNCTUATION = SPACE_PUNCT
+    SOP = SPACE_PUNCT
 
-    LETTER_PUNCT = r'[a-zA-Z\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]'
-    LP = r'[a-zA-Z\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]'
+    # --- letter or punctuation ---
+    LETTER_PUNCT = r"[a-zA-Z\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]"
+    LP = LETTER_PUNCT
+    LETTER_PUNCTUATION = LETTER_PUNCT
+    LETTER_OR_PUNCT = LETTER_PUNCT
+    LETTER_OR_PUNCTUATION = LETTER_PUNCT
+    LOP = LP
+
 
     # --- Visible characters ---
-    GRAPH = r'[\x21-\x7e]'
+    GRAPH = r"[\x21-\x7e]"
 
     # --- word ---
-    WORD = r'[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*'
+    WORD = r"[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*"
 
     # --- group of word ---
-    WORDS = r'%s(\s+%s)*' % (WORD, WORD)
+    WORDS = rf"{WORD}({WHITESPACES}{WORD})*"
     OPTIONAL_WORD_GROUP = WORDS
     OPT_WORD_GRP = WORDS
 
-    WORD_GROUP = r'%s(\s+%s)+' % (WORD, WORD)
+    WORD_GROUP = rf"{WORD}({WHITESPACES}{WORD})+"
     WORD_GRP = WORD_GROUP
 
     # --- mixed-words ----
-    MIXED_WORD = r'[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*'
+    MIXED_WORD = r"[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*"
 
     # --- group of mixed-word ---
-    MIXED_WORDS = r'%s(\s+%s)*' % (MIXED_WORD, MIXED_WORD)
+    MIXED_WORDS = rf"{MIXED_WORD}({WHITESPACES}{MIXED_WORD})*"
     OPTIONAL_MIXED_WORD_GROUP = MIXED_WORDS
     OPT_MIXED_WORD_GRP = MIXED_WORDS
 
-    MIXED_WORD_GROUP = r'%s(\s+%s)+' % (MIXED_WORD, MIXED_WORD)
+    MIXED_WORD_GROUP = rf"{MIXED_WORD}({WHITESPACES}{MIXED_WORD})+"
     MIXED_WORD_GRP = MIXED_WORD_GROUP
 
     # --- Non-whitespace(s) ---
-    NON_WS = r'\S'
-    NON_WHITESPACE = r'\S'
-    NON_WSS = r'\S+'
-    NON_WHITESPACES = r'\S+'
+    NON_WS = r"\S"
+    NON_WHITESPACE = NON_WS
+    NON_WSS = r"\S+"
+    NON_WHITESPACES = NON_WSS
 
     # --- group of non-whitespace(s) ---
-    OPTIONAL_NON_WSS_GROUP = r'%s(\s+%s)*' % (NON_WSS, NON_WSS)
+    OPTIONAL_NON_WSS_GROUP = rf"{NON_WSS}({WHITESPACES}{NON_WSS})*"
     OPT_NON_WSS_GRP = OPTIONAL_NON_WSS_GROUP
 
-    NON_WSS_GROUP = r'%s(\s+%s)+' % (NON_WSS, NON_WSS)
+    NON_WSS_GROUP = rf"{NON_WSS}({WHITESPACES}{NON_WSS})+"
     NON_WSS_GRP = NON_WSS_GROUP
 
-    OPTIONAL_NON_WHITESPACES_GROUP = r'%s(\s+%s)*' % (NON_WSS, NON_WSS)
+    OPTIONAL_NON_WHITESPACES_GROUP = OPTIONAL_NON_WSS_GROUP
     OPT_NON_WHITESPACES_GRP = OPTIONAL_NON_WHITESPACES_GROUP
 
-    NON_WHITESPACES_GROUP = r'%s(\s+%s)+' % (NON_WSS, NON_WSS)
+    NON_WHITESPACES_GROUP = NON_WSS_GROUP
     NON_WHITESPACES_GRP = NON_WHITESPACES_GROUP
 
-    ZERO_OR_MORE_NON_WSS = r'(\S+(\s+\S+)*)?'
+    ZERO_OR_MORE_NON_WSS = rf"({NON_WSS}({WHITESPACES}{NON_WSS})*)?"
 
     @classmethod
     def resolve_subset(cls, key):
@@ -227,8 +244,8 @@ class ParsedKeywordMappingName:
                 "DOT",
                 "SPACE", "WS", "WHITESPACE",
                 "DIGIT", "LETTER", "ALNUM", "PUNCT",
-                "SP", "SPACE_PUNCT",
-                "LP", "LETTER_PUNCT",
+                "SP", "SPACE_PUNCT", "SPACE_OR_PUNCT",
+                "LP", "LETTER_PUNCT", "LETTER_OR_PUNCT",
                 "GRAPH", "NON_WS", "NON_WHITESPACE",
             ),
             (  # group 1
@@ -402,6 +419,9 @@ class ParsedKeywordMappingName:
         if self.in_group(base, index=0):
             lo = "" if lo == "0" else lo
             hi = "" if hi == "999" else hi
+            if hi == lo and lo == "":
+                self._apply(rf"{pattern}+")
+                return
             self._apply(rf"{pattern}{{{lo},{hi}}}")
             return
 
@@ -413,6 +433,9 @@ class ParsedKeywordMappingName:
 
         # groups 1–2 → plural or mixed patterns
         if self.in_group(base, index=1) or self.in_group(base, index=2):
+            if hi == lo and lo == "":
+                self._apply(rf"{pattern}(\s+{pattern})*")
+                return
             self._apply(rf"{pattern}(\s+{pattern}){{{lo},{hi}}}")
             return
 
@@ -420,6 +443,9 @@ class ParsedKeywordMappingName:
         if self.in_group(base, index=3):
             subset = PATTERN.resolve_subset(base)
             if not subset:
+                return
+            if hi == lo and lo == "":
+                self._apply(rf"{subset}(\s+{subset})*")
                 return
             self._apply(rf"{subset}(\s+{subset}){{{lo},{hi}}}")
 
