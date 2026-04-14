@@ -9,12 +9,16 @@ import io
 import traceback
 from contextlib import redirect_stdout, redirect_stderr
 
+from rich.console import group
+
 from textfsmgen.libs.text import (
     get_list_of_lines,
     enclose_string
 )
 
 from textfsmgen.core.patterns import LinePattern
+from textfsmgen.libs.utils import split_by_matches
+from textfsmgen.libs.text import timestamp_str
 
 from textfsmgen.tools.token import (
     WhitespaceSnippet,
@@ -121,8 +125,210 @@ class SnippetTranslator:
 
 
 class IterateTranslator:
-    def __init__(self, original):
-        self.original = original
+    def __init__(self, raw, snippet, group_flag=False):
+        self._raw = raw
+        self._original_snippet = snippet
+        self._group_flag = group_flag
+
+        self._snippet = ""
+        self._script = ""
+        self._result = ""
+
+        self._error = ""
+        self._warning = ""
+
+        self._is_wss_or_group = False
+
+        self._test_data_list = []
+        self.build_test_data()
+
+        self.validate_snippet_match(self._original_snippet)
+
+        self.translate_snippet()
+
+
+    def __bool__(self):
+        return bool(self._snippet) or not any([self._error, self._warning])
+
+    def __len__(self): return 1 if self else 0
+
+    @property
+    def raw(self): return self._raw
+
+    @property
+    def original_snippet(self): return self._original_snippet
+
+    @property
+    def warning(self): return self._warning
+
+    @property
+    def error(self): return self._error
+
+    @property
+    def snippet(self): return self._snippet
+
+    @property
+    def script(self): return self._script
+
+
+    @property
+    def result(self): return self._result
+
+    def build_test_data(self):
+        """
+        Normalize raw input into a list of test data lines based on whitespace
+        handling and the group_flag setting.
+        """
+        lines = get_list_of_lines(self._raw)
+        non_empty = [line for line in lines if line.strip()]
+
+        # No lines at all
+        if not any(lines):
+            self._warning = "No test data was found."
+            return
+
+        # Use all lines when:
+        # - all lines are whitespace, or
+        # - group_flag is enabled
+        if not any(non_empty) or self._group_flag:
+            self._test_data_list = lines.copy()
+            self._is_wss_or_group = True
+            return
+
+        # Otherwise use only the first non-empty line
+        self._test_data_list = non_empty[:1]
+
+    def validate_snippet_match(self, snippet):
+        """
+        Validate that the original snippet matches all test data lines.
+        Sets _warning or _error when the snippet or pattern is incompatible.
+        """
+        if not self:
+            return
+
+        try:
+            pattern = LinePattern(snippet)
+
+            for text in self._test_data_list:
+                if re.fullmatch(pattern, text) is None:
+                    self._warning = (
+                        "Incompatible Snippet: Data does not match the pattern\n"
+                        f"  + Given Snippet    : {self._original_snippet!r}\n"
+                        f"  + Translate Pattern: {pattern!r}\n"
+                        f"  + Data             : {text!r}"
+                    )
+                    return
+
+        except Exception:   # noqa
+            self._error = traceback.format_exc()
+            return
+
+    def translate_wss_or_group(self):
+        """
+        Remove the 'keep' parameter from snippet functions while preserving
+        all other parameters and original ordering.
+        """
+        pattern = r"\w+\([^)]*\)"
+        parts = []
+
+        for token in split_by_matches(self._original_snippet, pattern):
+            # Non-function tokens pass through unchanged
+            if not re.fullmatch(pattern, token):
+                parts.append(token)
+                continue
+
+            name, raw_params = token[:-1].split("(", 1)
+            params = re.split(r"\s*,\s*", raw_params)
+
+            # Drop any 'keep' parameter (case-insensitive)
+            filtered = [p for p in params if p.lower() != "keep"]
+
+            if filtered:
+                parts.append(f"{name}({','.join(filtered)})")
+            else:
+                # No parameters left → keep empty parentheses
+                parts.append(f"{name}()")
+
+        self._snippet = "".join(parts)
+
+    def translate_snippet(self):
+        if not self:
+            return
+
+        # Special-case: whitespace/group-style snippet
+        if self._is_wss_or_group:
+            self.translate_wss_or_group()
+            return
+
+        keyword_pattern = r"\w+\([^)]*\)"
+        tokens = split_by_matches(self._original_snippet, keyword_pattern)
+        rewritten = []
+
+        for token in tokens:
+            # Non-token pass through unchanged
+            if not re.fullmatch(keyword_pattern, token):
+                rewritten.append(token)
+                continue
+
+            var_name = timestamp_str(prefix="var_data_")
+            func_name, raw_params = token[:-1].split("(", 1)
+            raw_params = raw_params.strip()
+
+            # No parameters → inject data variable
+            if not raw_params:
+                rewritten.append(f"{func_name}({var_name})")
+                continue
+
+            params = re.split(r"\s*,\s*", raw_params)
+
+            # Drop 'keep' parameter
+            filtered = [p for p in params if p.lower() != "keep"]
+            if len(filtered) != len(params):
+                rewritten.append(f"{func_name}({','.join(filtered)})")
+                continue
+
+            # Remove existing var_* parameters
+            filtered = [p for p in filtered if not re.match(r"(?i)var_\w+", p)]
+
+            # Prepend new data variable
+            filtered.insert(0, var_name)
+            rewritten.append(f"{func_name}({', '.join(filtered)})")
+
+        new_snippet = "".join(rewritten)
+
+        # Validate translated snippet against test data
+        pattern = LinePattern(new_snippet)
+        match = re.fullmatch(pattern, self._test_data_list[0])
+
+        if not match:
+            self._warning = (
+                "Snippet analysis failed: translated pattern did not match test data.\n"
+                "  + This indicates an unexpected translation outcome.\n"
+                "  + Please report this as Bug Case #1."
+            )
+            return
+
+        if not match.groupdict():
+            self._warning = (
+                "Snippet analysis failed: pattern matched but produced no variables.\n"
+                "  + The snippet translation yielded zero captured groups.\n"
+                "  + Please report this as Bug Case #2."
+            )
+            return
+
+        # Replace temporary var_data_* placeholders with matched values
+        for key, value in match.groupdict().items():
+            if re.fullmatch(r"(?i)data_[0-9]{10}_[0-9]{10}", key):
+                for i, part in enumerate(rewritten):
+                    if key in part:
+                        rewritten[i] = value
+
+        snippet = "".join(rewritten)
+        builder = ScriptBuilder(self._raw, snippet, group_flag=self._group_flag)
+
+        self._snippet = snippet
+        self._script = builder.script
+        self._result = builder.result
 
 
 class ScriptBuilder:
@@ -136,8 +342,8 @@ class ScriptBuilder:
 
         self._test_data_list = []
 
-        self._script = "abc"
-        self._result = "xyz"
+        self._script = ""
+        self._result = ""
 
     @property
     def raw(self): return self._raw
@@ -150,7 +356,8 @@ class ScriptBuilder:
         comment = self.build_comment()
         python_code = self.build_python_code()
         self.build_execution_result()
-        return f"{comment}\n\n{python_code}"
+        self._script = f"{comment}\n\n{python_code}"
+        return self._script
 
     @property
     def result(self): return self._result

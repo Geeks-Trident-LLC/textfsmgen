@@ -625,7 +625,8 @@ class ElementPattern(str):
             return result
         else:
             result = '|'.join(new_lst)
-            result = f"({result})" if len(new_lst) > 1 and has_ws else result
+            # result = f"({result})" if len(new_lst) > 1 and has_ws else result
+            result = f"({result})" if len(new_lst) > 1 else result
             return result
 
         # result = '|'.join(new_lst)

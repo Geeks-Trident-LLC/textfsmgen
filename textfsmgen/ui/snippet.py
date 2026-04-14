@@ -13,6 +13,7 @@ from textfsmgen.libs.text import get_list_of_lines
 
 from textfsmgen.tools.translator import SnippetTranslator
 from textfsmgen.tools.translator import ScriptBuilder
+from textfsmgen.tools.translator import IterateTranslator
 
 from textfsmgen.libs.generic import Position
 
@@ -545,14 +546,50 @@ def translate(app):
 
 def iterate(app):
     """Notify the user that the Iterate Snippet feature is not yet implemented."""
-    show_message_dialog(
-        title="Iterate Snippet",
-        info=(
-            "The Iterate Snippet feature is not yet available.\n"
-            "It will allow you to edit a snippet and rerun translation "
-            "repeatedly until the output matches your expectations."
-        ),
+    t = app.tools.translator
+
+    raw_data = extract_text(t.in_textarea)
+    snippet = extract_text(t.out_textarea)
+
+    # --- Validate snippet ----------------------------------------------------
+    if not snippet.strip():
+        show_message_dialog(
+            title="Iterate Snippet – No Snippet",
+            info=(
+                "No snippet is available to adjust.\n"
+                "Please update snippet in the second text area."
+            ),
+        )
+        return
+
+    # --- Validate test data --------------------------------------------------
+    if not get_list_of_lines(raw_data):
+        show_message_dialog(
+            title="Generate Script – No Test Data",
+            info=(
+                "No test data was found to generate a script.\n"
+                "Please enter or paste content in the first text area."
+            ),
+        )
+        return
+
+    # --- Build script --------------------------------------------------------
+    builder = IterateTranslator(
+        raw_data,
+        snippet,
+        group_flag=t.group_flag.get(),
     )
+
+    # --- Update UI -----------------------------------------------------------
+    t.result_textarea.config(wrap="none")
+
+    if not builder:
+        clear_text(t.code_textarea)
+        set_text(t.result_textarea, builder.error or builder.warning)
+
+    set_text(t.out_textarea, builder.snippet)
+    set_text(t.code_textarea, builder.script)
+    set_text(t.result_textarea, builder.result)
 
 
 def generate_and_execute(app):
