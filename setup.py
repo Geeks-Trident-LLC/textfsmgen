@@ -11,12 +11,12 @@ with open("README.md", encoding="utf-8") as f:
 
 setup(
     name='textfsmgen',
-    version='0.5.0',
+    version='0.5.1',
     license='BSD-3-Clause',
     license_files=['LICENSE'],
-    description='TextFSM Generator simplifies template creation by converting '
-                'plain English snippets into reusable parsing rules, '
-                'standardizing workflows and enhancing collaboration across teams.',
+    description='TextFSM Generator is a low‑code, no‑code Python library that '
+                'transforms simple, readable snippets into TextFSM templates, '
+                'reducing manual effort and accelerating automation development.',
     long_description=long_description,
     long_description_content_type='text/markdown',
     author='Tuyen Mathew Duong',
@@ -84,7 +84,10 @@ setup(
         "Topic :: Scientific/Engineering",
         "Topic :: Text Processing",
     ],
-    keywords="textfsm, textfsm generator, text parsing, automation, "
-             "verification, validation, qa, robotframework, test script, "
-             "test case, test plan, ai integration",
+    keywords="low-code, no-code, citizen developer, "
+             "automation, workflow automation, process automation,"
+             "textfsm, textfsm generator, text parsing, "
+             "verification, validation, qa, test automation, "
+             "robotframework, test script, "
+             "ai integration, ai-assisted automation, generative ai",
 )
