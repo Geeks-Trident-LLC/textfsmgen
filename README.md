@@ -4,9 +4,7 @@
 
 # 📖 Overview
 
-The **TextFSM Generator** is a Python library designed to simplify and standardize the creation of TextFSM templates. Instead of manually writing complex parsing rules, developers can generate templates automatically from plain, English‑readable snippets. This approach works much like AI prompts, making template creation intuitive, reusable, and easy to share across teams.  
-
-By reducing the complexity of manual template writing, TextFSM Generator empowers developers, testers, engineers, QA professionals, and other collaborators to work more effectively together. It streamlines workflows, improves consistency, and enhances efficiency in both development and testing processes.  
+**TextFSM Generator** is a low‑code, no‑code tool and Python library that creates TextFSM templates from simple, English‑readable snippets. It removes the need for manual rule‑writing, streamlines parsing workflows, and helps developers, testers, and citizen developers build consistent, reusable automation patterns with minimal effort
 
 ---
 
