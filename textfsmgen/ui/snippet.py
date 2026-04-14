@@ -12,6 +12,7 @@ import re
 from textfsmgen.libs.text import get_list_of_lines
 
 from textfsmgen.tools.translator import SnippetTranslator
+from textfsmgen.tools.translator import ScriptBuilder
 
 from textfsmgen.libs.generic import Position
 
@@ -519,7 +520,7 @@ def translate(app):
     if not any(get_list_of_lines(data)):
         show_message_dialog(
             title="Translate Action - No Input",
-            info="TNo text was found to translate.\n"
+            info="No text was found to translate.\n"
                  "Please enter or paste content first.",
         )
         return
@@ -533,6 +534,9 @@ def translate(app):
         split_arg=t.split_arg.get(),
         explain_flag=t.explain_flag.get(),
     )
+
+    clear_text(t.code_textarea)
+    clear_text(t.result_textarea)
 
     set_text(t.out_textarea, translator.snippet)
     set_text(t.result_textarea, translator.pattern_statement)
@@ -552,12 +556,41 @@ def iterate(app):
 
 
 def generate_and_execute(app):
-    """Notify the user that the Test Snippet feature is not yet implemented."""
-    show_message_dialog(
-        title="Test Snippet",
-        info=(
-            "The Test Snippet feature is not yet available.\n"
-            "It will generate a Python test snippet that you can run "
-            "locally to validate your parsing logic."
-        ),
+    t = app.tools.translator
+
+    raw_data = extract_text(t.in_textarea)
+    snippet = extract_text(t.out_textarea)
+
+    # --- Validate snippet ----------------------------------------------------
+    if not snippet.strip():
+        show_message_dialog(
+            title="Generate Script – No Snippet",
+            info=(
+                "No snippet is available to generate a Python script.\n"
+                "Please translate text or enter a snippet in the second text area."
+            ),
+        )
+        return
+
+    # --- Validate test data --------------------------------------------------
+    if not get_list_of_lines(raw_data):
+        show_message_dialog(
+            title="Generate Script – No Test Data",
+            info=(
+                "No test data was found to generate a script.\n"
+                "Please enter or paste content in the first text area."
+            ),
+        )
+        return
+
+    # --- Build script --------------------------------------------------------
+    builder = ScriptBuilder(
+        raw_data,
+        snippet,
+        group_flag=t.group_flag.get(),
     )
+
+    # --- Update UI -----------------------------------------------------------
+    set_text(t.code_textarea, builder.script)
+    set_text(t.result_textarea, builder.result)
+    t.result_textarea.config(wrap="none")
