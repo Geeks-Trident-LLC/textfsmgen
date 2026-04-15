@@ -10,7 +10,7 @@ import re
 import string
 
 from textfsmgen.exceptions import raise_exception, EscapePatternError
-from .generic import StatusString
+from textfsmgen.libs.generic import StatusString
 
 
 class PATTERN:  # noqa
@@ -29,6 +29,7 @@ class PATTERN:  # noqa
     # --- Whitespace ---
     WS = r"\s"
     WHITESPACE = r"\s"
+
     WSS = r"\s+"
     WHITESPACES = r"\s+"
 
@@ -36,17 +37,23 @@ class PATTERN:  # noqa
     DIGIT = r"\d"
     DIGITS = r"\d+"
 
+    OPTIONAL_DIGITS_GROUP = rf"{DIGITS}({WSS}{DIGITS})*"
+    DIGITS_GROUP = rf"{DIGITS}({WSS}{DIGITS})+"
+
     # --- Numbers ---
     NUMBER = r"\d*[.]?\d+"
-    NUM = r"\d*[.]?\d+"
+    OPTIONAL_NUMBER_GROUP = rf"{NUMBER}({WSS}{NUMBER})*"
+    NUMBER_GROUP = rf"{NUMBER}({WSS}{NUMBER})+"
+
     MIXED_NUMBER = r"[+\(\[\$-]?(\d+([,:/-]\d+)*)?[.]?\d+[\]\)%a-zA-Z]*"
-    MIXED_NUM = r"[+\(\[\$-]?(\d+([,:/-]\d+)*)?[.]?\d+[\]\)%a-zA-Z]*"
+    OPTIONAL_MIXED_NUMBER_GROUP = rf"{MIXED_NUMBER}({WSS}{MIXED_NUMBER})*"
+    MIXED_NUMBER_GROUP = rf"{MIXED_NUMBER}({WSS}{MIXED_NUMBER})+"
 
     # --- letters ---
     LETTER = "[a-zA-Z]"
     LETTERS = rf"{LETTER}+"
 
-    OPTIONAL_LETTERS_GROUP = rf"{LETTERS}({WHITESPACES}{LETTERS})*"
+    OPTIONAL_LETTERS_GROUP = rf"{LETTERS}({WSS}{LETTERS})*"
     OPT_LETTERS_GRP = OPTIONAL_LETTERS_GROUP
 
     LETTERS_GROUP = rf"{LETTERS}(\s+{LETTERS})+"
@@ -63,12 +70,11 @@ class PATTERN:  # noqa
     PUNCTUATIONS = PUNCTS
 
     # --- group of puncts ---
-    OPTIONAL_PUNCTS_GROUP = rf"{PUNCTS}({WHITESPACES}{PUNCTS})*"
+    OPTIONAL_PUNCTS_GROUP = rf"{PUNCTS}({WSS}{PUNCTS})*"
     OPTIONAL_PUNCTUATIONS_GROUP = OPTIONAL_PUNCTS_GROUP
     OPT_PUNCTS_GRP = OPTIONAL_PUNCTS_GROUP
 
-
-    PUNCTS_GROUP = rf"{PUNCTS}({WHITESPACES}{PUNCTS})+"
+    PUNCTS_GROUP = rf"{PUNCTS}({WSS}{PUNCTS})+"
     PUNCTUATIONS_GROUP = PUNCTS_GROUP
     PUNCTS_GRP = PUNCTS_GROUP
 
@@ -88,7 +94,6 @@ class PATTERN:  # noqa
     LETTER_OR_PUNCTUATION = LETTER_PUNCT
     LOP = LP
 
-
     # --- Visible characters ---
     GRAPH = r"[\x21-\x7e]"
 
@@ -96,22 +101,22 @@ class PATTERN:  # noqa
     WORD = r"[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*"
 
     # --- group of word ---
-    WORDS = rf"{WORD}({WHITESPACES}{WORD})*"
+    WORDS = rf"{WORD}({WSS}{WORD})*"
     OPTIONAL_WORD_GROUP = WORDS
     OPT_WORD_GRP = WORDS
 
-    WORD_GROUP = rf"{WORD}({WHITESPACES}{WORD})+"
+    WORD_GROUP = rf"{WORD}({WSS}{WORD})+"
     WORD_GRP = WORD_GROUP
 
     # --- mixed-words ----
     MIXED_WORD = r"[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*"
 
     # --- group of mixed-word ---
-    MIXED_WORDS = rf"{MIXED_WORD}({WHITESPACES}{MIXED_WORD})*"
+    MIXED_WORDS = rf"{MIXED_WORD}({WSS}{MIXED_WORD})*"
     OPTIONAL_MIXED_WORD_GROUP = MIXED_WORDS
     OPT_MIXED_WORD_GRP = MIXED_WORDS
 
-    MIXED_WORD_GROUP = rf"{MIXED_WORD}({WHITESPACES}{MIXED_WORD})+"
+    MIXED_WORD_GROUP = rf"{MIXED_WORD}({WSS}{MIXED_WORD})+"
     MIXED_WORD_GRP = MIXED_WORD_GROUP
 
     # --- Non-whitespace(s) ---
@@ -121,10 +126,10 @@ class PATTERN:  # noqa
     NON_WHITESPACES = NON_WSS
 
     # --- group of non-whitespace(s) ---
-    OPTIONAL_NON_WSS_GROUP = rf"{NON_WSS}({WHITESPACES}{NON_WSS})*"
+    OPTIONAL_NON_WSS_GROUP = rf"{NON_WSS}({WSS}{NON_WSS})*"
     OPT_NON_WSS_GRP = OPTIONAL_NON_WSS_GROUP
 
-    NON_WSS_GROUP = rf"{NON_WSS}({WHITESPACES}{NON_WSS})+"
+    NON_WSS_GROUP = rf"{NON_WSS}({WSS}{NON_WSS})+"
     NON_WSS_GRP = NON_WSS_GROUP
 
     OPTIONAL_NON_WHITESPACES_GROUP = OPTIONAL_NON_WSS_GROUP
@@ -133,7 +138,7 @@ class PATTERN:  # noqa
     NON_WHITESPACES_GROUP = NON_WSS_GROUP
     NON_WHITESPACES_GRP = NON_WHITESPACES_GROUP
 
-    ZERO_OR_MORE_NON_WSS = rf"({NON_WSS}({WHITESPACES}{NON_WSS})*)?"
+    ZERO_OR_MORE_NON_WSS = rf"({NON_WSS}({WSS}{NON_WSS})*)?"
 
     @classmethod
     def resolve_subset(cls, key):
