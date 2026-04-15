@@ -190,6 +190,11 @@ class ParsedKeywordMappingName:
 
         self._keyword = ''
         self._pattern = ''
+
+        self._quantity = None
+        self._quantity_lo = None
+        self._quantity_hi = None
+
         self._is_parsed = False
 
         self._parse()
@@ -197,6 +202,15 @@ class ParsedKeywordMappingName:
     def __bool__(self): return self._is_parsed
 
     def __len__(self): return 1 if self._is_parsed else 0
+
+    @property
+    def quantity(self): return self._quantity
+
+    @property
+    def quantity_lo(self): return self._quantity_lo
+
+    @property
+    def quantity_hi(self): return self._quantity_hi
 
     @property
     def name(self): return self._name
@@ -381,6 +395,7 @@ class ParsedKeywordMappingName:
 
         # group 0 → single-unit patterns
         if self.in_group(base, index=0):
+            self._quantity = count
             self._apply(rf"{pattern}{{{count}}}")
             return
 
@@ -389,6 +404,7 @@ class ParsedKeywordMappingName:
 
         if self.in_group(base, index=1) or self.in_group(base, index=2):
             if n >= 0:
+                self._quantity = n
                 self._apply(rf"{pattern}(\s+{pattern}){{{n}}}")
                 return
             self._apply(pattern)
@@ -400,6 +416,7 @@ class ParsedKeywordMappingName:
                 return
 
             if n >= 0:
+                self._quantity = n
                 self._apply(rf"{subset}(\s+{subset}){{{n}}}")
                 return
             self._apply(pattern)
@@ -436,6 +453,7 @@ class ParsedKeywordMappingName:
         if self.in_group(base, index=0):
             lo = "" if lo == "0" else lo
             hi = "" if hi == "999" else hi
+            self._quantity_lo, self._quantity_hi = lo, hi
             if hi == lo and lo == "":
                 self._apply(rf"{pattern}+")
                 return
@@ -450,6 +468,7 @@ class ParsedKeywordMappingName:
 
         # groups 1–2 → plural or mixed patterns
         if self.in_group(base, index=1) or self.in_group(base, index=2):
+            self._quantity_lo, self._quantity_hi = lo, hi
             if hi == lo and lo == "":
                 self._apply(rf"{pattern}(\s+{pattern})*")
                 return
@@ -461,6 +480,7 @@ class ParsedKeywordMappingName:
             subset = PATTERN.resolve_subset(base)
             if not subset:
                 return
+            self._quantity_lo, self._quantity_hi = lo, hi
             if hi == lo and lo == "":
                 self._apply(rf"{subset}(\s+{subset})*")
                 return
