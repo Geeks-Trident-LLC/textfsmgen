@@ -44,6 +44,7 @@ class PAT:
     space_or_punct = r"[ \x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]"
     letter_or_punct = r"[a-zA-Z\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]"
 
+
 @pytest.mark.parametrize(
     "name, expected",
     [
@@ -138,11 +139,11 @@ def test_incompatible_keyword(name):
     [
         # --- Generic wildcard ---
         ("some_dot",                        rf"{PAT.dot}+"),
-        # ("some_dots",                       rf"{PAT.dot}+"),
+        ("some_dots",                       rf"{PAT.dot}+"),
 
         # --- Literal spaces ---
         ("some_space",                      rf"{PAT.space}+"),
-        # ("some_spaces",                     rf"{PAT.space}+"),
+        ("some_spaces",                     rf"{PAT.space}+"),
 
         # --- Whitespace ---
         ("some_ws",                         rf"{PAT.ws}+"),
@@ -282,6 +283,7 @@ def test_optional_quantity_variant_keyword(name, expected):
         ("3_dot",               rf"{PAT.dot}{{3}}"),
         ("three_dot",           rf"{PAT.dot}{{3}}"),
         ("3dot",                rf"{PAT.dot}{{3}}"),
+        ("fortyfive_dot",       rf"{PAT.dot}{{45}}"),
 
         # --- Literal spaces ---
         ("3_space",             rf"{PAT.space}{{3}}"),

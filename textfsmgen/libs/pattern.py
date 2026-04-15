@@ -178,7 +178,6 @@ class PATTERN:  # noqa
         return subsets.get(key.upper(), "")
 
 
-
 class ParsedKeywordMappingName:
     def __init__(self, name: str, default=None):
         self._default = default
@@ -220,12 +219,15 @@ class ParsedKeywordMappingName:
     @classmethod
     def to_digit(cls, value):
         """Convert a numeric word to its digit string if possible."""
-        text = str(value).lower()
-
+        text = str(value).lower().strip()
         words = {
             "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4,
             "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9,
-            "ten": 10,
+            "ten": 10, "eleven": 11, "twelve": 12, "thirteen": 13,
+            "fourteen": 14, "fifteen": 15, "sixteen": 16,
+            "seventeen": 17, "eighteen": 18, "nineteen": 19, "twenty": 20,
+            "thirty": 30, "forty": 40, "fifty": 50, "sixty": 60,
+            "seventy": 70, "eighty": 80, "ninety": 90
         }
 
         if text.isdigit():
@@ -233,6 +235,15 @@ class ParsedKeywordMappingName:
 
         if text in words:
             return str(words[text])
+
+        tens_lst = ["twenty", "thirty", "forty",
+                    "fifty", "sixty", "seventy", "eighty", "ninety"]
+
+        for key in tens_lst:
+            if text.startswith(key):
+                suffix = text[len(key):].strip("_").strip("-")
+                if suffix in words:
+                    return str(words[key] + words[suffix])
 
         return value
 
@@ -357,6 +368,7 @@ class ParsedKeywordMappingName:
         raw = m.group("value").lower()
         count = self.to_digit(raw)
         base = m.group("name").lower()
+
         pattern = self._resolve_defined(base)
 
         if not pattern or not count.isdigit():
