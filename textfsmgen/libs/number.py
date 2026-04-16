@@ -89,3 +89,37 @@ def try_to_get_number(
         return True, cast_to_type(data, return_type)
 
     return False, obj
+
+
+def word_to_digit(text, as_str: bool = True):
+    """Convert a spelled-out number into its digit form when possible."""
+    word = str(text).lower().strip()
+
+    base = {
+        "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4,
+        "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9,
+        "ten": 10, "eleven": 11, "twelve": 12, "thirteen": 13,
+        "fourteen": 14, "fifteen": 15, "sixteen": 16,
+        "seventeen": 17, "eighteen": 18, "nineteen": 19,
+        "twenty": 20, "thirty": 30, "forty": 40, "fifty": 50,
+        "sixty": 60, "seventy": 70, "eighty": 80, "ninety": 90,
+    }
+
+    if word.isdigit():
+        return str(text) if as_str else int(word)
+
+    if word in base:
+        val = base[word]
+        return str(val) if as_str else val
+
+    tens = ["twenty", "thirty", "forty", "fifty",
+            "sixty", "seventy", "eighty", "ninety"]
+
+    for prefix in tens:
+        if word.startswith(prefix):
+            suffix = word[len(prefix):].strip("_-")
+            if suffix in base:
+                val = base[prefix] + base[suffix]
+                return str(val) if as_str else val
+
+    return text
