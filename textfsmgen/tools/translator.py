@@ -9,8 +9,6 @@ import io
 import traceback
 from contextlib import redirect_stdout, redirect_stderr
 
-from rich.console import group
-
 from textfsmgen.libs.text import (
     get_list_of_lines,
     enclose_string
