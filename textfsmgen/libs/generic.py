@@ -90,29 +90,63 @@ class DotObject(dict):
 
 
 class StatusString(str):
+    """String value carrying a boolean status and optional reason."""
+
+    _ALLOWED_TRUE = {
+        # Boolean‑like
+        "true", "yes", "y", "ok", "okay",
+
+        # Success / pass states
+        "pass", "passed",
+        "success", "successful",
+        "good", "valid", "correct",
+        "accepted", "approved",
+        "validated", "verified",
+        "ready", "parsed", "matched", "resolved",
+
+        # Completion states
+        "done", "complete", "completed",
+    }
+
     def __new__(cls, *args, **kwargs):
-        """String subclass that carries a boolean status affecting truthiness and length."""
-        allowed = ["true", "pass", "passed", "good", "success"]
+        text = (
+            args[0]
+            if args else
+            kwargs.pop("text", kwargs.pop("data", kwargs.pop("value", "")))
+        )
 
-        txt = args[0] if args else kwargs.pop("text", "")
-        status = args[1] if len(args) > 1 else kwargs.pop("status", False)
+        status = (
+            args[1]
+            if len(args) > 1 else
+            kwargs.pop("status", False)
+        )
 
-        result = super().__new__(cls, txt, **kwargs)    # noqa
-        result.status = str(status).strip().lower() in allowed
+        reason = (
+            args[2]
+            if len(args) > 2 else
+            kwargs.pop("reason", kwargs.pop("message", ""))
+        )
 
-        return result
+        # Remove consumed kwargs
+        for key in ("text", "data", "value", "status", "reason", "message"):
+            kwargs.pop(key, None)
+
+        obj = super().__new__(cls, text, **kwargs)
+        obj.status = str(status).strip().lower() in cls._ALLOWED_TRUE
+        obj.reason = str(reason)
+        return obj
 
     def __bool__(self): return self.status
 
-    def __len__(self): return int(self.status)
+    def __len__(self): return 1 if self.status else 0
 
-    def is_good(self): return self.status == True
+    def is_good(self): return self.status is True
 
-    def is_bad(self): return self.status == False
+    def is_bad(self): return self.status is False
 
-    def is_success(self): return self.status == True
+    def is_success(self): return self.status is True
 
-    def is_failure(self): return self.status == False
+    def is_failure(self): return self.status is False
 
 
 class Position:
