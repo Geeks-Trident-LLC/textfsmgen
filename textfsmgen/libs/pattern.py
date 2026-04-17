@@ -5,182 +5,383 @@ textfsmgen.libs.pattern
 General-purpose Patter class and functions used across TextFSMGen.
 """     # noqa
 
-
 import re
 import string
 
 from textfsmgen.exceptions import raise_exception, EscapePatternError
-from textfsmgen.libs.generic import StatusString
+from .generic import StatusString, DotObject
+from .number import word_to_digit
 
 
-class PATTERN:  # noqa
+class KeywordPatternMappingRegister:
+    def __init__(self):
+        self.singular_keywords = None
+        self.singular_map = None
+
+        self.plural_keywords = None
+        self.plural_map = None
+
+        self.semantic_keywords = None
+        self.semantic_map = None
+
+        self.plural_semantic_keywords = None
+        self.plural_semantic_map = None
+
+        self.group_keywords = None
+        self.group_map = None
+
+        self.core_keywords = None
+        self.core_map = None
+
+        self.all_keywords = None
+        self.all_map = None
+
+        self.init()
+
+    def init(self):
+        self.init_singular()
+        self.init_plural()
+        self.init_semantic()
+        self.init_plural_semantic()
+
+        self.core_map = self.singular_map.copy()
+        self.core_map.update(self.plural_map.copy())
+        self.core_map.update(self.semantic_map.copy())
+        self.core_map.update(self.plural_semantic_map.copy())
+
+        self.core_keywords = list(self.core_map.keys())
+
+        self.all_map = self.build_all()
+        self.all_keywords = list(self.all_map.keys())
+
+        self.group_map = dict()
+        self.group_keywords = []
+        for keyword in self.core_keywords:
+            grp_keyword = f"{keyword}_group"
+            if grp_keyword in self.all_map:
+                self.group_map[grp_keyword] = self.all_map[grp_keyword]
+                self.group_keywords.append(grp_keyword)
+
+    def init_singular(self):
+
+        punct_pat = r"[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]"
+        space_or_punct_pat = r"[ \x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]"
+        letter_or_punct_pat = r"[a-zA-Z\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]"
+
+        self.singular_map = {
+            "dot"           : ".",
+
+            "space"         : " ",
+            "ws"            : r"\s",
+            "whitespace"    : r"\s",
+
+            "digit"         : r"\d",
+            "letter"        : r"[a-zA-Z]",
+
+            "alnum"         : r"[a-zA-Z0-9]",
+
+            "punct"         : punct_pat,
+            "punctuation"   : punct_pat,
+
+            "graph"         : r"[\x21-\x7e]",
+
+            "non_ws"        : r"\S",
+            "non_whitespace": r"\S",
+
+            "sp"                    : space_or_punct_pat,
+            "sop"                   : space_or_punct_pat,
+            "space_or_punct"        : space_or_punct_pat,
+            "space_or_punctuation"  : space_or_punct_pat,
+            "punct_or_space"        : space_or_punct_pat,
+            "punctuation_or_space"  : space_or_punct_pat,
+
+            "lp"                    : letter_or_punct_pat,
+            "lop"                   : letter_or_punct_pat,
+            "letter_or_punct"       : letter_or_punct_pat,
+            "letter_or_punctuation" : letter_or_punct_pat,
+            "punct_or_letter"       : letter_or_punct_pat,
+            "punctuation_or_letter" : letter_or_punct_pat,
+        }
+
+        self.singular_keywords = list(self.singular_map.keys())
+
+    def init_plural(self):
+        self.plural_keywords = []
+        self.plural_map = dict()
+        for keyword, pattern in self.singular_map.items():
+            key = f"{keyword}s"
+            # Preserve 'non_' prefix before pluralizing
+            if not key.startswith("non_") and "_" in key:
+                prefix, rest = key.split("_", maxsplit=1)
+                key = f"{prefix}s_{rest}"
+            self.plural_keywords.append(key)
+            self.plural_map[key] = rf"{pattern}+"
+
+    def init_semantic(self):
+        self.semantic_map = {
+            "word": r"[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*",
+            "mixed_word": r"[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*",
+            "number": r"\d*[.]?\d+",
+            "mixed_number": r"[+\(\[\$-]?(\d+([,:/-]\d+)*)?[.]?\d+[\]\)%a-zA-Z]*",
+        }
+        self.semantic_keywords = list(self.semantic_map.keys())
+
+    def init_plural_semantic(self):
+        self.plural_semantic_map = dict()
+        self.plural_semantic_keywords = []
+        sep = r"\s+"
+        for keyword, pattern in self.semantic_map.items():
+            self.plural_semantic_keywords.append(f"{keyword}s")
+            self.plural_semantic_map[f"{keyword}s"] = rf"{pattern}({sep}{pattern})*"
+
+    def build_singular_variants(self) -> dict:
+        """Return expanded regex variants for each singular token pattern."""
+        variants = {}
+        sep = r"\s+"
+
+        special_case = ("dot", "space", "ws", "whitespace")
+
+        for key, pattern in self.singular_map.items():
+            name = key.lower()
+
+            # base
+            variants[name] = pattern
+
+            # zero or one
+            variants[f"optional_{name}"] = f"{pattern}?"
+            variants[f"zero_or_one_{name}"] = f"{pattern}?"
+
+            # (zero or more) or (one or more)
+            variants[f"some_{name}"] = f"{pattern}+"
+            variants[f"zero_or_more_{name}"] = f"{pattern}*"
+            variants[f"one_or_more_{name}"] = f"{pattern}+"
+
+            # <singular>_group: represents two or more plural units
+            # separated by whitespace.
+            # Special cases (dot, space, whitespace) expand only to
+            # their plural form, not to whitespace‑separated multi‑unit groups.
+            variants[f"{name}_group"] = (
+                f"{pattern}+"
+                if key in special_case else
+                f"{pattern}+({sep}{pattern}+)+"
+            )
+
+            # optional_<singular>_group: represents one or more plural
+            # units separated by whitespace.
+            # Special cases (dot, space, whitespace) reduce to zero or more
+            # of the singular token.
+            variants[f"optional_{name}_group"] = (
+                f"{pattern}*"
+                if key in special_case else
+                f"{pattern}+({sep}{pattern}+)*"
+            )
+
+        return variants
+
+    def build_plural_variants(self) -> dict:
+        """Return expanded regex variants for each plural token pattern."""
+        variants = {}
+        sep = r"\s+"
+
+        special_case = ("dots", "spaces", "wss", "whitespaces")
+
+        for key, pattern in self.plural_map.items():
+            name = key.lower()
+
+            # base
+            variants[name] = pattern
+
+            # (zero or one‑of‑plural) -> zero or more of the singular unit
+            variants[f"optional_{name}"] = f"{pattern[:-1]}*"
+            variants[f"zero_or_one_{name}"] = f"{pattern[:-1]}*"
+
+            # some_<plural>: one or more the singular unit
+            variants[f"some_{name}"] = pattern
+
+            # zero_or_more_<plural>: zero or more the singular unit.
+            variants[f"zero_or_more_{name}"] = f"{pattern[:-1]}*"
+
+            # one_or_more_<plural>: one or more the singular unit.
+            variants[f"one_or_more_{name}"] = pattern
+
+            # <plural>_group: two or more plural units separated by whitespace.
+            variants[f"{name}_group"] = (
+                f"{pattern}"
+                if key in special_case else
+                f"{pattern}({sep}{pattern})+"
+            )
+
+            # optional_<plural>_group: one or more plural units separated by whitespace.
+            variants[f"optional_{name}_group"] = (
+                f"{pattern[:-1]}*"
+                if key in special_case else
+                f"{pattern}({sep}{pattern})*"
+            )
+
+        return variants
+
+    def build_semantic_variants(self) -> dict:
+        """Return expanded regex variants for each semantic token pattern."""
+        variants = {}
+        sep = r"\s+"
+
+        for key, pattern in self.semantic_map.items():
+            name = key.lower()
+
+            # base
+            variants[name] = pattern
+
+            # match zero or one semantic
+            variants[f"optional_{name}"] = f"({pattern})?"
+            variants[f"zero_or_one_{name}"] = f"({pattern})?"
+
+            # some_<semantic>: one or more semantic units separated by whitespace
+            variants[f"some_{name}"] = f"{pattern}({sep}{pattern})*"
+
+            # zero_or_more_<semantic>: zero or more semantic units separated by whitespace
+            variants[f"zero_or_more_{name}"] = f"({pattern}({sep}{pattern})*)?"
+
+            # one_or_more_<semantic>: same as some_<semantic>
+            variants[f"one_or_more_{name}"] = f"{pattern}({sep}{pattern})*"
+
+            # <semantic>_group: two or more semantic units separated by whitespace
+            variants[f"{name}_group"] = f"{pattern}({sep}{pattern})+"
+
+            # optional_<semantic>_group: one or more semantic units separated by whitespace
+            variants[f"optional_{name}_group"] = f"{pattern}({sep}{pattern})*"
+
+        return variants
+
+    def build_plural_semantic_variants(self) -> dict:
+        """Return expanded regex variants for each plural semantic token pattern."""
+        variants = {}
+        sep = r"\s+"
+
+        for key, pattern in self.plural_semantic_map.items():
+            name = key.lower()
+
+            # base
+            variants[name] = pattern
+
+            # match zero or one semantic
+            variants[f"optional_{name}"] = f"({pattern})?"
+            variants[f"zero_or_one_{name}"] = f"({pattern})?"
+
+            # some_<plural_semantic>: same as plural semantic
+            variants[f"some_{name}"] = pattern
+
+            # zero_or_more_<plural_semantic>: similar to optional_<plural_semantic>
+            variants[f"zero_or_more_{name}"] = f"({pattern}({sep}{pattern})*)?"
+
+            # one_or_more_<plural_semantic>: same as plural semantic
+            variants[f"one_or_more_{name}"] = pattern
+
+            # <semantic>_group: two or more semantic units separated by whitespace
+            variants[f"{name}_group"] = f"{pattern[:-1]}+"
+
+            # optional_<plural_semantic>_group: same as plural semantic
+            variants[f"optional_{name}_group"] = pattern
+
+        return variants
+
+    def build_all(self):
+        all_map = self.build_singular_variants()
+        all_map.update(self.build_plural_variants())
+        all_map.update(self.build_semantic_variants())
+        all_map.update(self.build_plural_semantic_variants())
+        all_map.update(anything=".*")
+        all_map.update(something=".+")
+        return all_map
+
+
+class Pattern(DotObject):
     """Reusable regex fragments for common character classes."""
 
-    # --- Generic wildcard ---
-    DOT = "."
-    DOTS = ".+"
-    ANYTHING = ".*"
-    SOMETHING = ".+"
+    def __init__(self):
+        register = KeywordPatternMappingRegister()
+        kwargs = dict(zip(
+            map(str.upper, register.all_keywords),  # noqa
+            register.all_map.values())
+        )
 
-    # --- Literal spaces ---
-    SPACE = " "
-    SPACES = " +"
+        super().__init__(**kwargs)
 
-    # --- Whitespace ---
-    WS = r"\s"
-    WHITESPACE = r"\s"
+        self.singular_keywords = register.singular_keywords.copy()
+        self.plural_keywords = register.plural_keywords.copy()
+        self.semantic_keywords = register.semantic_keywords.copy()
+        self.plural_semantic_keywords = register.plural_semantic_keywords.copy()
+        self.core_keywords = register.core_keywords.copy()
+        self.group_keywords = register.group_keywords.copy()
 
-    WSS = r"\s+"
-    WHITESPACES = r"\s+"
+        self.all_map = register.all_map.copy()
 
-    # --- Digits ---
-    DIGIT = r"\d"
-    DIGITS = r"\d+"
+    def keyword_in(
+            self,
+            key,
+            singular=False,
+            plural=False,
+            semantic=False,
+            plural_semantic=False,
+            core=False,
+            group=False,
+    ):
+        """Return True if the keyword belongs to any enabled keyword group."""
+        if singular and key in self.singular_keywords:
+            return True
+        if plural and key in self.plural_keywords:
+            return True
+        if semantic and key in self.semantic_keywords:
+            return True
+        if plural_semantic and key in self.plural_semantic_keywords:
+            return True
+        if core and key in self.core_keywords:
+            return True
+        if group and key in self.group_keywords:
+            return True
+        return False
 
-    OPTIONAL_DIGITS_GROUP = rf"{DIGITS}({WSS}{DIGITS})*"
-    DIGITS_GROUP = rf"{DIGITS}({WSS}{DIGITS})+"
+    def base_group_name(self, keyword: str) -> str:
+        """Return the canonical base name for a *_group keyword."""
+        # Not a group keyword → return unchanged
+        if not self.keyword_in(keyword, plural_semantic=True, group=True):
+            return keyword
 
-    # --- Numbers ---
-    NUMBER = r"\d*[.]?\d+"
-    OPTIONAL_NUMBER_GROUP = rf"{NUMBER}({WSS}{NUMBER})*"
-    NUMBER_GROUP = rf"{NUMBER}({WSS}{NUMBER})+"
+        # Plural semantic group → singularize
+        if self.keyword_in(keyword, plural_semantic=True):
+            return keyword[:-1]
 
-    MIXED_NUMBER = r"[+\(\[\$-]?(\d+([,:/-]\d+)*)?[.]?\d+[\]\)%a-zA-Z]*"
-    OPTIONAL_MIXED_NUMBER_GROUP = rf"{MIXED_NUMBER}({WSS}{MIXED_NUMBER})*"
-    MIXED_NUMBER_GROUP = rf"{MIXED_NUMBER}({WSS}{MIXED_NUMBER})+"
+        base = keyword.removesuffix("_group")
 
-    # --- letters ---
-    LETTER = "[a-zA-Z]"
-    LETTERS = rf"{LETTER}+"
+        # Case: base itself is plural
+        if self.keyword_in(base, plural=True):
+            return base
 
-    OPTIONAL_LETTERS_GROUP = rf"{LETTERS}({WSS}{LETTERS})*"
-    OPT_LETTERS_GRP = OPTIONAL_LETTERS_GROUP
+        # Case: plural form of base
+        plural_base = f"{base}s"
+        if self.keyword_in(plural_base, plural=True):
+            return plural_base
 
-    LETTERS_GROUP = rf"{LETTERS}(\s+{LETTERS})+"
-    LETTERS_GRP = LETTERS_GROUP
+        # Case: pluralize only the first segment
+        first, rest = plural_base.split("_", maxsplit=1)
+        modified = f"{first}s{rest}"
+        if self.keyword_in(modified, plural=True):
+            return modified
 
-    # --- alphabet numeric ---
-    ALNUM = "[a-zA-Z0-9]"
+        return keyword
 
-    # --- punctuations ---
-    PUNCT = r"[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]"
-    PUNCTS = rf"{PUNCT}+"
+    @staticmethod
+    def is_suppressible_group(keyword: str) -> bool:
+        """Return True if keyword matches a suppressible *_group pattern."""
+        bases = ("dot", "space", "ws", "whitespace")
 
-    PUNCTUATION = PUNCT
-    PUNCTUATIONS = PUNCTS
+        for base in bases:
+            if keyword in (f"{base}_group", f"{base}s_group"):
+                return True
 
-    # --- group of puncts ---
-    OPTIONAL_PUNCTS_GROUP = rf"{PUNCTS}({WSS}{PUNCTS})*"
-    OPTIONAL_PUNCTUATIONS_GROUP = OPTIONAL_PUNCTS_GROUP
-    OPT_PUNCTS_GRP = OPTIONAL_PUNCTS_GROUP
+        return False
 
-    PUNCTS_GROUP = rf"{PUNCTS}({WSS}{PUNCTS})+"
-    PUNCTUATIONS_GROUP = PUNCTS_GROUP
-    PUNCTS_GRP = PUNCTS_GROUP
 
-    # --- space or punctuation ---
-    SPACE_PUNCT = r"[ \x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]"
-    SP = SPACE_PUNCT
-    SPACE_PUNCTUATION = SPACE_PUNCT
-    SPACE_OR_PUNCT = SPACE_PUNCT
-    SPACE_OR_PUNCTUATION = SPACE_PUNCT
-    SOP = SPACE_PUNCT
-
-    # --- letter or punctuation ---
-    LETTER_PUNCT = r"[a-zA-Z\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]"
-    LP = LETTER_PUNCT
-    LETTER_PUNCTUATION = LETTER_PUNCT
-    LETTER_OR_PUNCT = LETTER_PUNCT
-    LETTER_OR_PUNCTUATION = LETTER_PUNCT
-    LOP = LP
-
-    # --- Visible characters ---
-    GRAPH = r"[\x21-\x7e]"
-
-    # --- word ---
-    WORD = r"[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*"
-
-    # --- group of word ---
-    WORDS = rf"{WORD}({WSS}{WORD})*"
-    OPTIONAL_WORD_GROUP = WORDS
-    OPT_WORD_GRP = WORDS
-
-    WORD_GROUP = rf"{WORD}({WSS}{WORD})+"
-    WORD_GRP = WORD_GROUP
-
-    # --- mixed-words ----
-    MIXED_WORD = r"[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*"
-
-    # --- group of mixed-word ---
-    MIXED_WORDS = rf"{MIXED_WORD}({WSS}{MIXED_WORD})*"
-    OPTIONAL_MIXED_WORD_GROUP = MIXED_WORDS
-    OPT_MIXED_WORD_GRP = MIXED_WORDS
-
-    MIXED_WORD_GROUP = rf"{MIXED_WORD}({WSS}{MIXED_WORD})+"
-    MIXED_WORD_GRP = MIXED_WORD_GROUP
-
-    # --- Non-whitespace(s) ---
-    NON_WS = r"\S"
-    NON_WHITESPACE = NON_WS
-    NON_WSS = r"\S+"
-    NON_WHITESPACES = NON_WSS
-
-    # --- group of non-whitespace(s) ---
-    OPTIONAL_NON_WSS_GROUP = rf"{NON_WSS}({WSS}{NON_WSS})*"
-    OPT_NON_WSS_GRP = OPTIONAL_NON_WSS_GROUP
-
-    NON_WSS_GROUP = rf"{NON_WSS}({WSS}{NON_WSS})+"
-    NON_WSS_GRP = NON_WSS_GROUP
-
-    OPTIONAL_NON_WHITESPACES_GROUP = OPTIONAL_NON_WSS_GROUP
-    OPT_NON_WHITESPACES_GRP = OPTIONAL_NON_WHITESPACES_GROUP
-
-    NON_WHITESPACES_GROUP = NON_WSS_GROUP
-    NON_WHITESPACES_GRP = NON_WHITESPACES_GROUP
-
-    ZERO_OR_MORE_NON_WSS = rf"({NON_WSS}({WSS}{NON_WSS})*)?"
-
-    @classmethod
-    def resolve_subset(cls, key):
-        """Return the subset name associated with the given key."""
-        subsets = {
-            "OPTIONAL_NON_WSS_GROUP": "NON_WSS",
-            "OPT_NON_WSS_GRP": "NON_WSS",
-            "NON_WSS_GROUP": "NON_WSS",
-            "NON_WSS_GRP": "NON_WSS",
-            "NON_WSS": "NON_WSS",
-
-            "OPTIONAL_NON_WHITESPACES_GROUP": "NON_WHITESPACES",
-            "OPT_NON_WHITESPACES_GRP": "NON_WHITESPACES",
-            "NON_WHITESPACES_GROUP": "NON_WHITESPACES",
-            "NON_WHITESPACES_GRP": "NON_WHITESPACES",
-            "NON_WHITESPACES": "NON_WHITESPACES",
-
-            "OPTIONAL_MIXED_WORD_GROUP": "MIXED_WORD",
-            "OPT_MIXED_WORD_GRP": "MIXED_WORD",
-            "MIXED_WORD_GROUP": "MIXED_WORD",
-            "MIXED_WORD_GRP": "MIXED_WORD",
-            "MIXED_WORDS": "MIXED_WORD",
-            "MIXED_WORD": "MIXED_WORD",
-
-            "OPTIONAL_WORD_GROUP": "WORD",
-            "OPT_WORD_GRP": "WORD",
-            "WORD_GROUP": "WORD",
-            "WORD_GRP": "WORD",
-            "WORDS": "WORD",
-            "WORD": "WORD",
-
-            "OPTIONAL_PUNCTS_GROUP": "PUNCTS",
-            "OPT_PUNCTS_GRP": "PUNCTS",
-            "PUNCTS_GROUP": "PUNCTS",
-            "PUNCTS_GRP": "PUNCTS",
-
-            "OPTIONAL_LETTERS_GROUP": "LETTERS",
-            "OPT_LETTERS_GRP": "LETTERS",
-            "LETTERS_GROUP": "LETTERS",
-            "LETTERS_GRP": "LETTERS",
-        }
-        return subsets.get(key.upper(), "")
+PATTERN = Pattern()
 
 
 class ParsedKeywordMappingName:
@@ -188,20 +389,23 @@ class ParsedKeywordMappingName:
         self._default = default
         self._name = str(name)
 
-        self._keyword = ''
-        self._pattern = ''
+        self._keyword = ""
+        self._base_keyword = ""
+        self._pattern = ""
 
         self._quantity = None
         self._quantity_lo = None
         self._quantity_hi = None
 
-        self._is_parsed = False
+        self._is_resolved = False
 
-        self._parse()
+        self._status = StatusString()
 
-    def __bool__(self): return self._is_parsed
+        self.resolve()
 
-    def __len__(self): return 1 if self._is_parsed else 0
+    def __bool__(self): return self._is_resolved
+
+    def __len__(self): return 1 if self._is_resolved else 0
 
     @property
     def quantity(self): return self._quantity
@@ -219,272 +423,221 @@ class ParsedKeywordMappingName:
     def keyword(self): return self._keyword
 
     @property
-    def pattern(self): return self._pattern or PATTERN.OPTIONAL_NON_WSS_GROUP
+    def pattern(self): return self._pattern or PATTERN.get("optional_non_wss_group")
 
-    def _apply(self, pattern):
+    def set_pattern(self, pattern):
         if not pattern:
             return
-        self._is_parsed = True
+        self._is_resolved = True
         self._keyword = self._name.lower()
         self._pattern = pattern
 
-    def _parse(self):
-        self._load_defined_pattern()
-        self._apply_optional()
-        self._apply_some()
-        self._apply_exact()
-        self._apply_range()
+    def resolve(self) -> None:
+        """Resolve this keyword by applying all pattern rules in order."""
+        self.apply_defined_pattern()
+        self.apply_exact()
+        self.apply_range()
 
-    @classmethod
-    def to_digit(cls, value):
-        """Convert a numeric word to its digit string if possible."""
-        text = str(value).lower().strip()
-        words = {
-            "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4,
-            "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9,
-            "ten": 10, "eleven": 11, "twelve": 12, "thirteen": 13,
-            "fourteen": 14, "fifteen": 15, "sixteen": 16,
-            "seventeen": 17, "eighteen": 18, "nineteen": 19, "twenty": 20,
-            "thirty": 30, "forty": 40, "fifty": 50, "sixty": 60,
-            "seventy": 70, "eighty": 80, "ninety": 90
-        }
+        if not self._is_resolved:
+            msg = (f"Undefined {self._name} keyword.  Request technical "
+                   f"support for feature extension.")
+            self._status = StatusString(msg, status="unresolved")
+        self._status = StatusString(status="approved")
 
-        if text.isdigit():
-            return value
-
-        if text in words:
-            return str(words[text])
-
-        tens_lst = ["twenty", "thirty", "forty",
-                    "fifty", "sixty", "seventy", "eighty", "ninety"]
-
-        for key in tens_lst:
-            if text.startswith(key):
-                suffix = text[len(key):].strip("_").strip("-")
-                if suffix in words:
-                    return str(words[key] + words[suffix])
-
-        return value
-
-    @classmethod
-    def in_group(cls, name, index=0):
-        """Return True if the name belongs to the specified group or any group."""
-        groups = [
-            (  # group 0
-                "DOT",
-                "SPACE", "WS", "WHITESPACE",
-                "DIGIT", "LETTER", "ALNUM", "PUNCT",
-                "SP", "SPACE_PUNCT", "SPACE_OR_PUNCT",
-                "LP", "LETTER_PUNCT", "LETTER_OR_PUNCT",
-                "GRAPH", "NON_WS", "NON_WHITESPACE",
-            ),
-            (  # group 1
-                "DOTS", "SPACES", "WSS", "WHITESPACES",
-                "DIGITS", "LETTERS", "PUNCTS",
-                "NON_WSS", "NON_WHITESPACES",
-            ),
-            (  # group 2
-                "NUMBER", "NUM",
-                "MIXED_NUMBER", "MIXED_NUM",
-                "WORD", "MIXED_WORD",
-            ),
-            (  # group 3
-                "OPTIONAL_LETTERS_GROUP",
-                "OPTIONAL_PUNCTS_GROUP",
-                "OPTIONAL_WORD_GROUP", "WORDS",
-                "OPTIONAL_MIXED_WORD_GROUP",
-                "OPTIONAL_NON_WSS_GROUP",
-                "OPTIONAL_NON_WHITESPACES_GROUP",
-            ),
-        ]
-
-        key = name.upper()
-
-        if 0 <= index < len(groups):
-            return key in groups[index]
-
-        for group in groups:
-            if key in group:
-                return True
-
-        return False
-
-    @classmethod
-    def _resolve_defined(cls, name):
-        """Return the PATTERN constant matching the given name."""
-        return getattr(PATTERN, name.upper(), None)
-
-    def _load_defined_pattern(self):
+    def apply_defined_pattern(self):
         """Resolve and apply the defined pattern for this instance."""
-        pattern = self._resolve_defined(self._name)
-        self._apply(pattern)
+        pattern = PATTERN.all_map.get(self._name, "")
+        self.set_pattern(pattern)
 
-    def _apply_optional(self):
-        """Apply the optional form of a defined pattern if matched."""
-        key = self._name
-        if self._is_parsed:
+    def apply_exact(self):
+        """Apply an exact-count pattern when the keyword encodes a fixed quantity."""
+        if self._is_resolved:
             return
 
-        m = re.fullmatch(r"(?i)optional_(?P<name>\w+)", key)
-        if not m:   # noqa
-            return
-
-        base = m.group("name").lower()
-        pattern = self._resolve_defined(base)
-        if not pattern:
-            return
-
-        # group 0 → single-char patterns
-        if self.in_group(base, index=0):
-            self._apply(rf"{pattern}?")
-            return
-
-        # group 1 → plural patterns ending with '+'
-        if self.in_group(base, index=1):
-            self._apply(rf"{pattern[:-1]}*")    # noqa
-            return
-
-        # group 2 or 3 → grouped patterns
-        if self.in_group(base, index=2) or self.in_group(base, index=3):
-            self._apply(rf"({pattern})?")
-
-    def _apply_some(self):
-        """Apply the 'one or more' form of a defined pattern if matched."""
-        if self._is_parsed:
-            return
-
-        m = re.fullmatch(r"(?i)some_(?P<name>\w+)", self._name)
-        if not m:   # noqa
-            return
-
-        base = m.group("name").lower()
-        pattern = self._resolve_defined(base)
-        if not pattern:
-            return
-
-        # group 0 → single‑unit patterns (use '+')
-        if self.in_group(base, index=0):
-            self._apply(rf"{pattern}+")
-            return
-
-        # groups 1–3 → already plural or grouped (use as‑is)
-        if (
-                self.in_group(base, index=1)
-                or self.in_group(base, index=2)
-                or self.in_group(base, index=3)
-        ):
-            self._apply(pattern)
-
-    def _apply_exact(self):
-        """Apply a generic-count pattern form if the name matches."""
-        if self._is_parsed:
-            return
-
-        m = re.fullmatch(r"(?i)(?P<value>[0-9]+|[a-z]+)_?(?P<name>\w+)", self._name)
+        m = re.fullmatch(r"(?i)(?P<count>[0-9]+|[a-z]+)_?(?P<base>\w+)",
+                         self._name)
         if not m:
             return
 
-        raw = m.group("value").lower()
-        count = self.to_digit(raw)
-        base = m.group("name").lower()
-
-        pattern = self._resolve_defined(base)
+        raw = m.group("count").lower()
+        count = word_to_digit(raw)
+        base = m.group("base").lower()
+        pattern = PATTERN.all_map.get(base, "")
 
         if not pattern or not count.isdigit():
+            messages = []
+
+            if not pattern:
+                messages.append(
+                    f"Undefined keyword {base!r} in {self._name}. "
+                    f"Request technical support for feature extension."
+                )
+
+            if not count.isdigit():
+                messages.append(
+                    f"Invalid exact-count value {count!r} in keyword {self._name}."
+                )
+
+            self._status = StatusString("\n".join(messages), status=False)
             return
 
-        # group 0 → single-unit patterns
-        if self.in_group(base, index=0):
+            return
+
+        # --- Case 1: singular/plural keyword -------------------------------------
+        if PATTERN.keyword_in(base, singular=True, plural=True):
             self._quantity = count
-            self._apply(rf"{pattern}{{{count}}}")
+            self._base_keyword = base
+
+            is_singular = PATTERN.keyword_in(base, singular=True)
+            applied = pattern if is_singular else pattern[:-1]
+
+            self.set_pattern(rf"{applied}{{{count}}}")
             return
 
-        # plural/grouped patterns → subtract 1 for the repeated tail
-        n = int(count) - 1
+        # --- Case 2: suppressible group ------------------------------------------
+        if PATTERN.is_suppressible_group(base):
+            self._quantity = count
+            self._base_keyword = PATTERN.base_group_name(base)
 
-        if self.in_group(base, index=1) or self.in_group(base, index=2):
-            if n >= 0:
-                self._quantity = n
-                self._apply(rf"{pattern}(\s+{pattern}){{{n}}}")
-                return
-            self._apply(pattern)
+            self.set_pattern(rf"{pattern[:-1]}{{{count}}}")
             return
 
-        if self.in_group(base, index=3):
-            subset = PATTERN.resolve_subset(base)
-            if not subset:
+        # --- Case 3: semantic / plural-semantic groups ---------------------------
+        n = max(0, int(count) - 1)
+        sep = r"\s+"
+
+        # Semantic keyword
+        if PATTERN.keyword_in(base, semantic=True):
+            self._quantity = n
+            self._base_keyword = base
+
+            if n == 0:
+                self.set_pattern(pattern)
                 return
 
-            if n >= 0:
-                self._quantity = n
-                self._apply(rf"{subset}(\s+{subset}){{{n}}}")
-                return
-            self._apply(pattern)
+            applied = f"{pattern}({sep}{pattern})"
+            self.set_pattern(rf"{applied}{{{n}}}")
+            return
 
-    def _apply_range(self):
-        """Apply a ranged repetition form if the name encodes a range."""
-        if self._is_parsed:
+        # Plural-semantic group
+        if PATTERN.keyword_in(base, plural_semantic=True, group=True):
+            self._quantity = n
+            self._base_keyword = PATTERN.base_group_name(base)
+
+            if n == 0:
+                self.set_pattern(pattern)
+                return
+
+            self.set_pattern(rf"{pattern[:-1]}{{{n}}}")
+            return
+
+    def apply_range(self):
+        """Apply a ranged repetition pattern when the keyword encodes a range."""
+        if self._is_resolved:
             return
 
         m = re.fullmatch(
-            r"(?i)(?P<left>[a-z0-9]*)_(to_)?(?P<right>[a-z0-9]*)_(?P<name>\w+)",
-            self._name
+            r"(?i)(?P<lo_raw>[a-z0-9]*)_(to_)?(?P<hi_raw>[a-z0-9]*)_(?P<base>\w+)",
+            self._name,
         )
         if not m:
             return
 
-        left_raw = m.group("left").lower() or "0"
-        right_raw = m.group("right").lower() or "999"
-        right_raw = "999" if right_raw == "n" else right_raw
+        sep = r"\s+"
 
-        lo = self.to_digit(left_raw)
-        hi = self.to_digit(right_raw)
+        # --- Normalize raw bounds -------------------------------------------------
+        lo_raw = m.group("lo_raw").lower() or "0"
+        hi_raw = m.group("hi_raw").lower() or "999"
+        hi_raw = "999" if hi_raw == "n" else hi_raw
 
-        base = m.group("name").lower()
-        pattern = self._resolve_defined(base)
+        lo = word_to_digit(lo_raw)
+        hi = word_to_digit(hi_raw)
+
+        base = m.group("base").lower()
+        pattern = PATTERN.all_map.get(base, "")
 
         if not pattern or not lo.isdigit() or not hi.isdigit():
+            messages = []
+
+            if not pattern:
+                messages.append(
+                    f"Undefined keyword {base!r} in {self._name}. "
+                    f"Request technical support for feature extension."
+                )
+
+            if not lo.isdigit() or not hi.isdigit():
+                messages.append(
+                    f"Invalid range pair ({lo_raw}, {hi_raw}) in keyword {self._name}."
+                )
+
+            self._status = StatusString("\n".join(messages), status=False)
             return
 
         if int(hi) <= int(lo):
+            msg = (
+                f"Invalid range ({hi}, {lo}) in keyword {self._name}. "
+                f"Expected {hi} > {lo}."
+            )
+            self._status = StatusString(msg, status=False)
             return
 
-        # group 0 → single-unit patterns
-        if self.in_group(base, index=0):
-            lo = "" if lo == "0" else lo
-            hi = "" if hi == "999" else hi
-            self._quantity_lo, self._quantity_hi = lo, hi
-            if hi == lo and lo == "":
-                self._apply(rf"{pattern}+")
-                return
-            self._apply(rf"{pattern}{{{lo},{hi}}}")
+        # --- Helpers --------------------------------------------------------------
+        def fmt_range(lo_val: str, hi_val: str) -> str:
+            return "*" if lo_val == hi_val == "" else f"{{{lo_val},{hi_val}}}"
+
+        def normalize_quantities(lo_val: str, hi_val: str):
+            lo_norm_ = "" if lo_val == "0" else lo_val
+            hi_norm_ = "" if hi_val in ("998", "999") else hi_val
+            return lo_norm_, hi_norm_
+
+        # --- Case 1: singular/plural keyword -------------------------------------
+        if PATTERN.keyword_in(base, singular=True, plural=True):
+            lo_norm, hi_norm = normalize_quantities(lo, hi)
+            self._base_keyword = base
+            self._quantity_lo, self._quantity_hi = lo_norm, hi_norm
+
+            is_singular = PATTERN.keyword_in(base, singular=True)
+            applied = pattern if is_singular else pattern[:-1]
+            self.set_pattern(rf"{applied}{fmt_range(lo_norm, hi_norm)}")
             return
 
-        lo = 0 if int(lo) - 1 <= 0 else int(lo) - 1
-        hi = 0 if int(hi) - 1 <= 0 else int(hi) - 1
+        # --- Case 2: suppressible group ------------------------------------------
+        if PATTERN.is_suppressible_group(base):
+            lo_norm, hi_norm = normalize_quantities(lo, hi)
+            self._base_keyword = PATTERN.base_group_name(base)
+            self._quantity_lo, self._quantity_hi = lo_norm, hi_norm
 
-        lo = str(lo) if lo else ""
-        hi = "" if hi == 998 else str(hi)
-
-        # groups 1–2 → plural or mixed patterns
-        if self.in_group(base, index=1) or self.in_group(base, index=2):
-            self._quantity_lo, self._quantity_hi = lo, hi
-            if hi == lo and lo == "":
-                self._apply(rf"{pattern}(\s+{pattern})*")
-                return
-            self._apply(rf"{pattern}(\s+{pattern}){{{lo},{hi}}}")
+            self.set_pattern(rf"{pattern[:-1]}{fmt_range(lo_norm, hi_norm)}")
             return
 
-        # group 3 → subset-based patterns
-        if self.in_group(base, index=3):
-            subset = PATTERN.resolve_subset(base)
-            if not subset:
+        # --- Case 3: semantic group (shift range down by 1) -----------------------
+        lo_adj = max(0, int(lo) - 1)
+        hi_adj = max(0, int(hi) - 1)
+        lo_s, hi_s = normalize_quantities(str(lo_adj), str(hi_adj))
+
+        # --- Case 3a: semantic keyword -------------------------------------------
+        if PATTERN.keyword_in(base, semantic=True):
+            self._base_keyword = PATTERN.base_group_name(base)
+            self._quantity_lo, self._quantity_hi = lo_s, hi_s
+
+            applied = f"{pattern}({sep}{pattern})"
+            rng = fmt_range(lo_s, hi_s)
+
+            # Optional wrapper for open‑low ranges
+            if lo_s == "" and hi_s != "":
+                self.set_pattern(rf"({applied}{rng})?")
                 return
-            self._quantity_lo, self._quantity_hi = lo, hi
-            if hi == lo and lo == "":
-                self._apply(rf"{subset}(\s+{subset})*")
-                return
-            self._apply(rf"{subset}(\s+{subset}){{{lo},{hi}}}")
+
+            self.set_pattern(rf"{applied}{rng}")
+            return
+
+        # --- Case 3b: plural semantic group ---------------------------------------
+        if PATTERN.keyword_in(base, plural_semantic=True, group=True):
+            self._base_keyword = PATTERN.base_group_name(base)
+            self._quantity_lo, self._quantity_hi = lo_s, hi_s
+
+            self.set_pattern(rf"{pattern[:-1]}{fmt_range(lo_s, hi_s)}")
+            return
 
 
 def resolve_pattern(name, default=None):
