@@ -316,14 +316,8 @@ class Pattern(DotObject):
         self.all_map = register.all_map.copy()
 
     def keyword_in(
-            self,
-            key,
-            singular=False,
-            plural=False,
-            semantic=False,
-            plural_semantic=False,
-            core=False,
-            group=False,
+        self, key, singular=False, plural=False, semantic=False,
+        plural_semantic=False, core=False, group=False,
     ):
         """Return True if the keyword belongs to any enabled keyword group."""
         if singular and key in self.singular_keywords:
@@ -369,6 +363,27 @@ class Pattern(DotObject):
 
         return keyword
 
+    def parse_base_keyword(self, raw_kw: str):
+        """Return the core keyword and any quantity tag extracted from a mapping name."""
+        is_group = "_group" in raw_kw
+        name = raw_kw.removesuffix("_group")
+
+        for core in self.core_keywords:
+            # Case: exact match or numeric-prefixed match (e.g., "3item")
+            if name == core or re.fullmatch(rf"[0-9]+{core}", raw_kw):
+                return StatusString(core, status="ok")
+
+            # Case: suffix match with quantity prefix (e.g., "zero_or_more_item")
+            if re.search(rf"_{core}$", name):
+                qty_pat = r"(?P<qty>some|optional|zero_or_(one|more)|one_or_more)_"
+                m = re.match(qty_pat, raw_kw)
+                qty = m.group("qty") if m else ""
+                if qty == "optional" or qty == "":
+                    qty = (f"{qty}_group" if is_group else qty).strip("_")
+                return StatusString(core, status="ok", reason=qty)
+
+        return StatusString()
+
     @staticmethod
     def is_suppressible_group(keyword: str) -> bool:
         """Return True if keyword matches a suppressible *_group pattern."""
@@ -408,6 +423,9 @@ class ParsedKeywordMappingName:
     def __len__(self): return 1 if self._is_resolved else 0
 
     @property
+    def status(self): return self._status
+
+    @property
     def quantity(self): return self._quantity
 
     @property
@@ -423,7 +441,20 @@ class ParsedKeywordMappingName:
     def keyword(self): return self._keyword
 
     @property
+    def base_keyword(self): return self._base_keyword
+
+    @property
     def pattern(self): return self._pattern or PATTERN.get("optional_non_wss_group")
+
+    def update_base_keyword(self):
+        if not self._is_resolved or self._base_keyword:
+            return
+
+        result = PATTERN.parse_base_keyword(self._name)
+        if result:
+            self._base_keyword = str(result)
+            if not self._quantity:
+                self._quantity = result.reason or None
 
     def set_pattern(self, pattern):
         if not pattern:
@@ -437,11 +468,13 @@ class ParsedKeywordMappingName:
         self.apply_defined_pattern()
         self.apply_exact()
         self.apply_range()
+        self.update_base_keyword()
 
         if not self._is_resolved:
-            msg = (f"Undefined {self._name} keyword.  Request technical "
+            msg = (f"Undefined {self._name!r} keyword.  Request technical "
                    f"support for feature extension.")
             self._status = StatusString(msg, status="unresolved")
+            return
         self._status = StatusString(status="approved")
 
     def apply_defined_pattern(self):
@@ -481,11 +514,9 @@ class ParsedKeywordMappingName:
             self._status = StatusString("\n".join(messages), status=False)
             return
 
-            return
-
         # --- Case 1: singular/plural keyword -------------------------------------
         if PATTERN.keyword_in(base, singular=True, plural=True):
-            self._quantity = count
+            self._quantity = str(count)
             self._base_keyword = base
 
             is_singular = PATTERN.keyword_in(base, singular=True)
@@ -496,7 +527,7 @@ class ParsedKeywordMappingName:
 
         # --- Case 2: suppressible group ------------------------------------------
         if PATTERN.is_suppressible_group(base):
-            self._quantity = count
+            self._quantity = str(count)
             self._base_keyword = PATTERN.base_group_name(base)
 
             self.set_pattern(rf"{pattern[:-1]}{{{count}}}")
@@ -508,7 +539,7 @@ class ParsedKeywordMappingName:
 
         # Semantic keyword
         if PATTERN.keyword_in(base, semantic=True):
-            self._quantity = n
+            self._quantity = str(count)
             self._base_keyword = base
 
             if n == 0:
@@ -521,7 +552,7 @@ class ParsedKeywordMappingName:
 
         # Plural-semantic group
         if PATTERN.keyword_in(base, plural_semantic=True, group=True):
-            self._quantity = n
+            self._quantity = str(n)
             self._base_keyword = PATTERN.base_group_name(base)
 
             if n == 0:
@@ -594,7 +625,7 @@ class ParsedKeywordMappingName:
         if PATTERN.keyword_in(base, singular=True, plural=True):
             lo_norm, hi_norm = normalize_quantities(lo, hi)
             self._base_keyword = base
-            self._quantity_lo, self._quantity_hi = lo_norm, hi_norm
+            self._quantity_lo, self._quantity_hi = str(lo_norm), str(hi_norm)
 
             is_singular = PATTERN.keyword_in(base, singular=True)
             applied = pattern if is_singular else pattern[:-1]
@@ -605,7 +636,7 @@ class ParsedKeywordMappingName:
         if PATTERN.is_suppressible_group(base):
             lo_norm, hi_norm = normalize_quantities(lo, hi)
             self._base_keyword = PATTERN.base_group_name(base)
-            self._quantity_lo, self._quantity_hi = lo_norm, hi_norm
+            self._quantity_lo, self._quantity_hi = normalize_quantities(lo, hi)
 
             self.set_pattern(rf"{pattern[:-1]}{fmt_range(lo_norm, hi_norm)}")
             return
@@ -618,7 +649,7 @@ class ParsedKeywordMappingName:
         # --- Case 3a: semantic keyword -------------------------------------------
         if PATTERN.keyword_in(base, semantic=True):
             self._base_keyword = PATTERN.base_group_name(base)
-            self._quantity_lo, self._quantity_hi = lo_s, hi_s
+            self._quantity_lo, self._quantity_hi = normalize_quantities(lo, hi)
 
             applied = f"{pattern}({sep}{pattern})"
             rng = fmt_range(lo_s, hi_s)
@@ -634,7 +665,7 @@ class ParsedKeywordMappingName:
         # --- Case 3b: plural semantic group ---------------------------------------
         if PATTERN.keyword_in(base, plural_semantic=True, group=True):
             self._base_keyword = PATTERN.base_group_name(base)
-            self._quantity_lo, self._quantity_hi = lo_s, hi_s
+            self._quantity_lo, self._quantity_hi = normalize_quantities(lo, hi)
 
             self.set_pattern(rf"{pattern[:-1]}{fmt_range(lo_s, hi_s)}")
             return
