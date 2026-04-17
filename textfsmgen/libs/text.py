@@ -11,6 +11,7 @@ from typing import Any, Tuple, Optional
 import re
 import string
 import time
+import random
 
 import textwrap
 
@@ -714,18 +715,12 @@ def escape_quote(value: Any) -> Any:
     return re.sub(r"(['\"])", r"\\\1", val) if is_str else value
 
 
-def timestamp_str(precision: int = 10, dot_char: str = "_",
-                  prefix: str = "", suffix: str = "") -> str:
-    """Return a formatted timestamp string."""
-    ts = f"{time.time():.{precision}f}"
-    ts = ts.replace(".", dot_char)
-    if prefix:
-        ts = f"{prefix}{ts}"
-    if suffix:
-        ts = f"{ts}{suffix}"
-    return ts
+def make_unique_id(prefix: str = "", suffix: str = "") -> str:
+    """Return a unique ID composed of a timestamp and random digits."""
+    timestamp = str(int(time.time()))
+    rand_digits = "".join(str(d) for d in random.sample(range(10), 10))
 
+    clean_prefix = re.sub(r"[^\w-]+", "", prefix)
+    clean_suffix = re.sub(r"[^\w-]+", "", suffix)
 
-def unique_id(precision: int = 10) -> str:
-    """Return a unique string based on the current timestamp."""
-    return timestamp_str(precision=precision)
+    return f"{clean_prefix}{timestamp}{rand_digits}{clean_suffix}"
