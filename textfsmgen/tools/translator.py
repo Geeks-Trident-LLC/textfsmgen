@@ -6,6 +6,9 @@ Utilities for building and applying translator nodes used in snippet parsing.
 """
 import re
 import io
+
+import random
+
 import traceback
 from contextlib import redirect_stdout, redirect_stderr
 
@@ -16,7 +19,6 @@ from textfsmgen.libs.text import (
 
 from textfsmgen.core.patterns import LinePattern
 from textfsmgen.libs.utils import split_by_matches
-from textfsmgen.libs.text import timestamp_str
 
 from textfsmgen.tools.token import (
     WhitespaceSnippet,
@@ -138,6 +140,9 @@ class IterateTranslator:
         self._is_wss_or_group = False
 
         self._test_data_list = []
+
+        self._pad_numbers = [f"{i:03}" for i in range(100)]
+
         self.build_test_data()
 
         self.validate_snippet_match(self._original_snippet)
@@ -268,7 +273,8 @@ class IterateTranslator:
                 rewritten.append(token)
                 continue
 
-            var_name = timestamp_str(prefix="var_data_")
+            random.shuffle(self._pad_numbers)
+            var_name = "var_data_" + "".join(self._pad_numbers[:4])
             func_name, raw_params = token[:-1].split("(", 1)
             raw_params = raw_params.strip()
 
@@ -293,7 +299,6 @@ class IterateTranslator:
             rewritten.append(f"{func_name}({', '.join(filtered)})")
 
         new_snippet = "".join(rewritten)
-
         # Validate translated snippet against test data
         pattern = LinePattern(new_snippet)
         match = re.fullmatch(pattern, self._test_data_list[0])
@@ -316,7 +321,7 @@ class IterateTranslator:
 
         # Replace temporary var_data_* placeholders with matched values
         for key, value in match.groupdict().items():
-            if re.fullmatch(r"(?i)data_[0-9]{10}_[0-9]{10}", key):
+            if re.fullmatch(r"(?i)data_[0-9]{12}", key):
                 for i, part in enumerate(rewritten):
                     if key in part:
                         rewritten[i] = value
