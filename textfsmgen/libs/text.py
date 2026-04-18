@@ -538,6 +538,13 @@ def decorate_list_of_line(items: list[str]) -> str:
     return "\n".join([border] + rows + [border])
 
 
+def decorate_text(*parts: str) -> str:
+    """Convert text parts into lines and decorate them as a framed block."""
+    text = list_to_text(*parts)
+    lines = text.splitlines()
+    return decorate_list_of_line(lines)
+
+
 def list_to_text(*args: Any) -> str:
     """Convert one or more items into a newline-separated string.
     """
