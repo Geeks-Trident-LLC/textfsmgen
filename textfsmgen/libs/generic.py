@@ -133,6 +133,7 @@ class StatusString(str):
 
         obj = super().__new__(cls, text, **kwargs)
         obj.status = str(status).strip().lower() in cls._ALLOWED_TRUE
+        obj.error = str(status).strip().lower()
         obj.reason = str(reason)
         return obj
 
