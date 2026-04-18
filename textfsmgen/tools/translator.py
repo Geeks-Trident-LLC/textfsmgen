@@ -176,7 +176,6 @@ class IterateTranslator:
     @property
     def script(self): return self._script
 
-
     @property
     def result(self): return self._result
 
@@ -203,6 +202,18 @@ class IterateTranslator:
 
         # Otherwise use only the first non-empty line
         self._test_data_list = non_empty[:1]
+
+    def is_keep_in_snippet(self):
+        if not "keep" in self.original_snippet.lower():
+            return False
+
+        keyword_pattern = r"\w+\([^)]*\)"
+        for token in re.findall(keyword_pattern, self._original_snippet):
+            params = re.split(r"\s*,\s*", token[:-1].split("(", 1)[-1])
+            if any(p for p in params if p.lower() != "keep"):
+                return True
+
+        return False
 
     def validate_snippet_match(self, snippet):
         """
@@ -264,6 +275,16 @@ class IterateTranslator:
         # Special-case: whitespace/group-style snippet
         if self._is_wss_or_group:
             self.translate_wss_or_group()
+            builder = ScriptBuilder(self._raw, self._snippet, group_flag=self._group_flag)
+            self._script = builder.script
+            self._result = builder.result
+            return
+
+        if not self.is_keep_in_snippet():
+            builder = ScriptBuilder(self._raw, self._original_snippet, group_flag=self._group_flag)
+            self._snippet = self._original_snippet
+            self._script = builder.script
+            self._result = builder.result
             return
 
         keyword_pattern = r"\w+\([^)]*\)"
@@ -382,15 +403,15 @@ class ScriptBuilder:
         # --- Raw Data -----------------------------------------------------------
         raw_repr = repr(self._raw)
         if len(raw_repr) <= width + 10 or len(self._lines) == 1:
-            lines.append(f"# Raw Data          : {raw_repr}")
+            lines.append(f"# Raw Data: {raw_repr}")
         else:
-            lines.append("# Raw Data          :")
+            lines.append("# Raw Data:")
             for line in self._lines:
                 lines.append(f"#  - {line!r}")
 
         # --- Test Data ----------------------------------------------------------
         if self.is_whitespaces_test_data():
-            lines.append(f"# Test Data         : {self._lines!r}")
+            lines.append(f"# Sample  : {self._lines!r}")
             self._test_data_list = self._lines[:]
 
         else:
@@ -399,15 +420,15 @@ class ScriptBuilder:
 
                 group_repr = repr(self._lines)
                 if len(group_repr) <= width or len(self._lines) == 1:
-                    lines.append(f"# Group of Test Data: {group_repr}")
+                    lines.append(f"# Samples : {group_repr}")
                 else:
-                    lines.append("# Group of Test Data:")
+                    lines.append("# Samples :")
                     for line in self._lines:
                         lines.append(f"#  - {line!r}")
 
             else:
                 first_line = self._data_lines[0]
-                lines.append(f"# Test Data         : {first_line!r}")
+                lines.append(f"# Sample  : {first_line!r}")
                 self._test_data_list = self._data_lines[:1]
 
                 if len(self._data_lines) > 1:
@@ -417,10 +438,10 @@ class ScriptBuilder:
                     )
 
         # --- Snippet & Pattern --------------------------------------------------
-        lines.append(f"# Snippet           : {self._snippet!r}")
+        lines.append(f"# Snippet : {self._snippet!r}")
 
         pattern = LinePattern(self._snippet)
-        lines.append(f"# Generated Pattern : {pattern!r}")
+        lines.append(f"# Pattern : {pattern!r}")
 
         # --- Footer -------------------------------------------------------------
         if footer:
@@ -448,17 +469,17 @@ class ScriptBuilder:
             f"if not group_flag:",
             f"    lines = [line for line in get_list_of_lines(raw_data) if line.strip()]",
             f'    assert lines, "No non-empty lines found in raw_data"',
-            f"    test_data_list = lines[0:1]",
+            f"    samples = lines[0:1]",
             f"else:",
-            f"    test_data_list = get_list_of_lines(raw_data)",
+            f"    samples = get_list_of_lines(raw_data)",
             "",
             f"pattern = r{enclose_string(pattern)}",
             "",
             f"# Run pattern against each test data line",
             "",
-            f"for test_data in test_data_list:",
-            f"    match = re.fullmatch(pattern, test_data)",
-            '    assert match is not None, f"Pattern failed on: {repr(test_data)}"',
+            f"for sample in samples:",
+            f"    match = re.fullmatch(pattern, sample)",
+            '    assert match is not None, f"Pattern failed on: {repr(sample)}"',
             f"    print(match.groupdict() or match)",
             "",
 

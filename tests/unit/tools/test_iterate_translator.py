@@ -38,6 +38,13 @@ from textfsmgen.tools.translator import IterateTranslator
             "word() is good color."
         ),
 
+        (
+            'red is good color.',
+            'word() word(var_v1) word(var_v2) word(var_v3).',
+            False,
+            "word() word(var_v1) word(var_v2) word(var_v3)."
+        ),
+
     ],
 )
 def test(data, snippet, group_flag, expected):
