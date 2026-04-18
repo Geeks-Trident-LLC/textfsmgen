@@ -724,3 +724,52 @@ def make_unique_id(prefix: str = "", suffix: str = "") -> str:
     clean_suffix = re.sub(r"[^\w-]+", "", suffix)
 
     return f"{clean_prefix}{timestamp}{rand_digits}{clean_suffix}"
+
+
+def join_text_block(text: str) -> str:
+    """Join multi-line text into one line using dot/hyphen spacing rules."""
+    lines = [ln.rstrip() for ln in get_list_of_lines(text) if ln.strip()]
+    if not lines:
+        return ""
+
+    merged = [lines[0]]
+
+    for curr in lines[1:]:
+        prev = merged[-1]
+        curr = curr.strip()
+        if prev.endswith(".") or curr.startswith("."):
+            sep = "  "      # two spaces
+        elif prev.endswith("-") or curr.startswith("-"):
+            sep = ""       # no space
+        else:
+            sep = " "      # one space
+
+        merged.append(sep + curr)
+
+    return "".join(merged)
+
+
+def wrap_text_block(text: str, limit: int = 76, subject: str = "") -> str:
+    """Wrap a text block with subject-aware indentation and width limits."""
+    raw = text.decode("utf-8") if isinstance(text, bytes) else str(text)
+    subj = str(subject)
+    width = 76 if limit <= 0 else limit
+
+    if not raw.strip():
+        return raw
+
+    line = join_text_block(raw)
+    subj_len = len(subj)
+
+    # If subject is too long relative to the limit, place wrapped text on next line
+    if subj_len / width > 0.30:
+        wrapped = textwrap.wrap(line, width=width - 4)
+        indented = textwrap.indent("\n".join(wrapped), " " * 4)
+        return f"{subj}\n{indented}"
+
+    # Otherwise, wrap text so the first line starts after the subject
+    wrapped = textwrap.wrap(line, width=width - subj_len)
+    prefixes = [" " * (subj_len + 1)] * len(wrapped)
+    prefixes[0] = f"{subj} "
+
+    return "\n".join(p + w for p, w in zip(prefixes, wrapped))
