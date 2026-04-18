@@ -5,6 +5,12 @@ class TokenDoc:
         self.name = name
         self.or_empty = or_empty
 
+        self._usage = ""
+        self.process()
+
+    @property
+    def usage(self): return self._usage
+
     @staticmethod
     def singular_placeholder(key: str) -> str:
         """Return a placeholder description template for singular token types."""
@@ -212,7 +218,6 @@ class TokenDoc:
                 return template % replacement
         return ""
 
-
     def describe_some(self) -> str:
         or_empty = self.or_empty is True
 
@@ -229,3 +234,16 @@ class TokenDoc:
             if template:
                 return template % replacement
         return ""
+
+    def process(self):
+        methods = [
+            self.describe_core,
+            self.describe_optional,
+            self.describe_some
+        ]
+
+        for method in methods:
+            result = method()
+            if result:
+                self._usage = result
+                return
