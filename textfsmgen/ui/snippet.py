@@ -540,6 +540,7 @@ def translate(app):
     clear_text(t.result_textarea)
 
     set_text(t.out_textarea, translator.snippet)
+    set_text(t.code_textarea, translator.explanation)
     set_text(t.result_textarea, translator.pattern_statement)
     t.result_textarea.config(wrap="char")
 

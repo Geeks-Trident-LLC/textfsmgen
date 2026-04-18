@@ -65,6 +65,9 @@ class SnippetTranslator:
     @property
     def pattern_statement(self): return self._translator.pattern_statement if self else ""
 
+    @property
+    def explanation(self): return self._translator.explanation if self else ""
+
     def parse(self):
         """Run available parsers and stop at the first successful match."""
         if not self._raw:
@@ -247,7 +250,7 @@ class IterateTranslator:
             filtered = [p for p in params if p.lower() != "keep"]
 
             if filtered:
-                parts.append(f"{name}({','.join(filtered)})")
+                parts.append(f"{name}({', '.join(filtered)})")
             else:
                 # No parameters left → keep empty parentheses
                 parts.append(f"{name}()")
@@ -288,7 +291,7 @@ class IterateTranslator:
             # Drop 'keep' parameter
             filtered = [p for p in params if p.lower() != "keep"]
             if len(filtered) != len(params):
-                rewritten.append(f"{func_name}({','.join(filtered)})")
+                rewritten.append(f"{func_name}({', '.join(filtered)})")
                 continue
 
             # Remove existing var_* parameters

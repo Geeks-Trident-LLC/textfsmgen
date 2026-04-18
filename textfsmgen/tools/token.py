@@ -17,8 +17,10 @@ from textfsmgen.libs.text import (
 )
 
 from textfsmgen.engine.translate import make_translator
+from textfsmgen.tools.explain import SnippetExplanation
 
 from textfsmgen.core.patterns import LinePattern
+
 
 class SnippetBase:
     """Base class for snippet parsers."""
@@ -38,12 +40,18 @@ class SnippetBase:
         self._keyword = ""
         self._parser = None
 
+        self._bare_snippet = ""
+        self._explanation = ""
+
         self.normalize()
         self.parse()
 
     def __bool__(self): return self._parsed
 
     def __len__(self): return 1 if self._parsed else 0
+
+    @property
+    def explanation(self): return self._explanation
 
     @property
     def raw(self):
@@ -98,6 +106,9 @@ class SnippetBase:
     def keyword(self): return self._keyword
 
     @property
+    def bare_snippet(self): return self._bare_snippet
+
+    @property
     def snippet(self):
         """Return the formatted snippet, or empty string if not parsed."""
         return self.build() if self._parsed else ""
@@ -131,6 +142,22 @@ class SnippetBase:
             parts.append("or_empty")
         return ", ".join(parts)
 
+    def explain(self, snippet: str, samples=None) -> str:
+        """Generate an explanation for the snippet using provided or stored samples."""
+        if not self:
+            return ""
+
+        items = [item.strip() for item in self._items]
+        data = samples or (items if any(items) else self._items)
+
+        node = SnippetExplanation(snippet, data)
+        explanation = node.explanation
+
+        if samples is None:
+            self._explanation = explanation
+
+        return explanation
+
     # --- Methods subclasses must implement ---------------------------------
 
     def build(self):
@@ -151,7 +178,9 @@ class WhitespaceSnippet(SnippetBase):
             return ""
         params = self.keyword_params()
         self._keyword = "wss" if self.is_ws_leading else "spaces"
-        return f"{self._keyword}({params})"
+        self._bare_snippet = f"{self._keyword}({params})"
+        self._explanation = self.explain(self._bare_snippet)
+        return self._bare_snippet
 
     def parse(self):
         """Evaluate items and update parsed/empty flags."""
@@ -178,7 +207,25 @@ class TokenSnippet(SnippetBase):
             return ""
 
         self._keyword, _ = snippet.split("(", maxsplit=1)
-        return f"{self.leading_snippet}{self._keyword}({params}){self.trailing_snippet}"
+        self._bare_snippet = f"{self._keyword}({params})"
+
+        explanation = self.explain(self._bare_snippet)
+
+        sep = "=" * 72
+        leading_explanation, trailing_explanation = "", ""
+        if re.fullmatch(r"\w+[(][)]", self.leading_snippet):
+            leading_explanation = self.explain(self.leading_snippet, self.leading_list)
+            if "Operation: " in leading_explanation and leading_explanation not in explanation:
+                explanation = f"{leading_explanation}\n\n{sep}\n\n{explanation}"
+
+        if re.fullmatch(r"\w+[(][)]", self.trailing_snippet):
+            trailing_explanation = self.explain(self.trailing_snippet, self.trailing_list)
+            if "Operation: " in trailing_explanation and trailing_explanation not in explanation:
+                explanation = f"{explanation}\n\n{sep}\n\n{trailing_explanation}"
+
+        self._explanation = explanation
+
+        return f"{self.leading_snippet}{self._bare_snippet}{self.trailing_snippet}"
 
     def parse(self):
         """Evaluate items and update parsed/empty flags."""
@@ -203,6 +250,7 @@ class LineSnippet:
         self._tokens = []
 
         self._parsed = False
+        self._explanation = ""
 
         self.parse_tokens()
 
@@ -217,15 +265,25 @@ class LineSnippet:
     def data(self): return self._raw.strip()
 
     @property
+    def explanation(self): return self._explanation
+
+    @property
     def snippet(self):
         """Return the rendered snippet by joining token strings."""
         if not self._parsed:
             return ""
 
+        mapping = {}
         parts = []
         for tok in self._tokens:
-            parts.append(tok if isinstance(tok, str) else tok.snippet)
+            if isinstance(tok, str):
+                parts.append(tok)
+                continue
+            parts.append(tok.snippet)
+            mapping[tok.bare_snippet] = tok.explanation
 
+        sep = "=" * 72
+        self._explanation = f"\n\n{sep}\n\n".join(mapping.values())
         return "".join(parts)
 
     @property
