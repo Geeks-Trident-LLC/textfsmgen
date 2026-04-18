@@ -63,9 +63,9 @@ def test_with_optional():
 
 def test_with_or_empty_flag():
     expected = dedent_and_strip(r"""
-        +------------------------------------------+
-        | optional_non_wss_group(var_v3, or_empty) |
-        +------------------------------------------+
+        +--------------------------------------------------------------+
+        |           optional_non_wss_group(var_v3, or_empty)           |
+        +--------------------------------------------------------------+
         Pattern:   r"(?P<v3>((\S+(\s+\S+)*))|)"
         Operation: match zero or more sequences of non‑whitespace characters, each
                    separated by one or more whitespace characters.
@@ -125,12 +125,16 @@ def test_failure_because_of_keyword_token():
 
 
 def test_failure_undefined_keyword():
-    expected = "Undefined 'unknown_keyword' keyword.  Request technical support for feature extension."
+    expected = dedent_and_strip("""
+        +------------------------------------------+
+        |    Undefined 'dummy_keyword(var_v0)'     |
+        +------------------------------------------+
+        Undefined 'dummy_keyword' keyword.  Request technical support for feature extension.
+    """)
     node = SnippetExplanation(
-        "unknown_keyword(var_v0)",
+        "dummy_keyword(var_v0)",
         ["dummy", ],
     )
-
     assert node.explanation == expected
 
 

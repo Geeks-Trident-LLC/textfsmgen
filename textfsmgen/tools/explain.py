@@ -8,7 +8,8 @@ from textfsmgen.libs.text import (
     dedent_and_strip,
     decorate_text,
     enclose_string,
-    wrap_text_block
+    wrap_text_block,
+    center_fixed_width
 )
 
 from textfsmgen.libs.pattern import ParsedKeywordMappingName
@@ -89,8 +90,7 @@ class SnippetExplanation:
         if re.search(r"\w+[(][^)]*[)]", self._raw_snippet):
             return True
 
-        width = 40 if len(self._snippet) <= 40 else 80
-        header = decorate_text(self._snippet.center(width))
+        header = decorate_text(center_fixed_width(self._snippet))
         usage = dedent_and_strip(
                 """
                 Provided snippet does not match the expected keyword format:
@@ -125,7 +125,11 @@ class SnippetExplanation:
         parser = ParsedKeywordMappingName(keyword)
 
         if not parser:
-            self._status = StatusString(str(parser.status), status="invalid")
+            header = decorate_text(center_fixed_width(f"Undefined {self._snippet!r}"))
+            self._status = StatusString(
+                f"{header}\n{parser.status}",
+                status="invalid"
+            )
             return False
 
         params = re.split(r"\s*,\s*", raw_params.lower())
@@ -174,8 +178,8 @@ class SnippetExplanation:
     def build_explanation(self):
         """Assemble the full explanation block for the snippet."""
         pattern = LinePattern(self._normalized)
-        width = 40 if len(self._snippet) <= 40 else 80
-        header = decorate_text(self._snippet.center(width))
+
+        header = decorate_text(center_fixed_width(self._snippet))
 
         lines = [
             header,
@@ -211,7 +215,7 @@ class SnippetExplanation:
 
         # Failed Match
         lines.extend([
-            decorate_text("Failed Match".center(40)),
+            decorate_text(center_fixed_width("Failed Match")),
             "Expected:",
             f"    {result.reason}",
             "Received:",
