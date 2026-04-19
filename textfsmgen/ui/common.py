@@ -5,8 +5,7 @@ textfsmgen.ui.common
 Utility functions for constructing and managing Tkinter UI components
 in the TextFSMGen GUI application.
 """
-
-
+import re
 from typing import Any, Optional, Tuple, Dict
 from typing import Union
 
@@ -17,6 +16,8 @@ import tkinter as tk
 
 import textfsmgen.ui as ui
 import textfsmgen.config as config
+
+from textfsmgen.libs.utils import split_by_matches
 
 
 class RewriteSync:
@@ -247,3 +248,61 @@ def set_text(widget, text: str) -> None:
     widget.insert("1.0", text)
 
     widget.configure(state=original_state)
+
+
+def render_formatted_text(widget, text: str) -> None:
+    """Render text with <bold>...</bold> markup into a Tkinter Text widget."""
+    if not isinstance(widget, ui.TextArea):
+        return
+
+    original_state = widget["state"]
+    widget.configure(state="normal")
+    widget.delete("1.0", "end")
+
+    # Bold font tag
+    bold_font = ui.Font(widget, widget.cget("font"))
+    bold_font.configure(weight="bold")
+    widget.tag_configure("bold", font=bold_font)
+
+    pattern = r"<(?P<tag>bold|link)>(?P<inner>[^<]+)</(bold|link)>"
+
+    for item in split_by_matches(text, pattern):
+        match = re.match(pattern, item)
+        if match:
+            tag = match.group("tag")
+            inner_text = match.group("inner")
+            if tag == "link":
+                subject, url = inner_text.split(" ---- ")
+                start_pos = widget.index("end-1c")
+                widget.insert("end", subject)
+                end_pos = widget.index("end-1c")
+
+                add_hyperlink(widget, url, start_pos, end_pos)
+            else:
+                widget.insert("end", inner_text, tag)
+        else:
+            widget.insert("end", item)
+
+    widget.configure(state=original_state)
+
+
+def add_hyperlink(text_widget, url, start, end):
+    """Make the text between start and end clickable as a hyperlink."""
+    tag = f"link_{start.replace('.', '_')}"
+    text_widget.tag_add(tag, start, end)
+
+    # Style
+    text_widget.tag_config(
+        tag,
+        foreground="blue",
+        underline=True
+    )
+
+    # Hover cursor
+    text_widget.tag_bind(tag, "<Enter>", lambda e: text_widget.config(cursor="hand2"))
+    text_widget.tag_bind(tag, "<Leave>", lambda e: text_widget.config(cursor=""))
+
+    # Click action
+    text_widget.tag_bind(tag, "<Button-1>", lambda e: webbrowser.open_new_tab(url))
+
+
