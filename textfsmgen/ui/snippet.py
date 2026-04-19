@@ -148,6 +148,11 @@ def build_top_controls(parent, app):
         ("Copy",      lambda: copy(app)),
         ("Paste",     lambda: paste(app)),
         ("Clear",     lambda: clear(app)),
+
+        ("SEPARATOR", None),
+
+        ("?", lambda: show_help(app)),
+
     ]
 
     btn_width = 6 if ui.is_macos else 7 if ui.is_linux else 8
@@ -162,6 +167,7 @@ def build_top_controls(parent, app):
 
         name = f"{label.lower()}_btn"
         width = btn_width + 2 if label in ("Translate", "Generate") else btn_width
+        width = 3 if label == "?" else width
 
         btn = ui.Button(
             parent,
@@ -626,3 +632,7 @@ def generate_and_execute(app):
     set_text(t.code_textarea, builder.script)
     set_text(t.result_textarea, builder.result)
     t.result_textarea.config(wrap="none")
+
+
+def show_help(app):
+    show_message_dialog(info="Hello Snippet Translator Usage")

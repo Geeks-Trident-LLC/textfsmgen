@@ -439,7 +439,7 @@ class ScriptBuilder:
         lines.append(f"# Snippet : {self._snippet!r}")
 
         pattern = LinePattern(self._snippet)
-        lines.append(f"# Pattern : {pattern!r}")
+        lines.append(f"# Pattern : r{enclose_string(pattern)}")
 
         # --- Footer -------------------------------------------------------------
         if footer:
