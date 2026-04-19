@@ -182,7 +182,7 @@ class RightDataNode(LineData):
             if re.sub(r"[ \r\n]+", "", self.trailing):
                 snippet = f"{snippet}wss()"
             return snippet
-        return f"anything(var_{self.var_name}, or_empty)"
+        return f"anything(var_{self.var_name})"
 
 
 class CategoryLineTranslator(LineData):
@@ -279,7 +279,7 @@ class CategoryLineTranslator(LineData):
             result.append(self.trailing)
 
         tmpl_snippet = "".join(result)
-        replaced_pat = r"( +)(anything[\(]var_\w+, or_empty[\)])"
+        replaced_pat = r"( +)(anything[\(]var_\w+[\)])"
         return re.sub(replaced_pat, r"optional_spaces()\2", tmpl_snippet)
 
     def scan_to_boundary(self, char_pos: int, direction: str = "right") -> int:
