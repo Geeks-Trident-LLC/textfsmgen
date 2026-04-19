@@ -9,7 +9,9 @@ from typing import Optional, Union
 
 import re
 
-from textfsmgen.libs.text import get_list_of_lines
+from textfsmgen.libs.text import (
+    get_list_of_lines,
+)
 
 from textfsmgen.tools.translator import SnippetTranslator
 from textfsmgen.tools.translator import ScriptBuilder
@@ -18,6 +20,7 @@ from textfsmgen.tools.translator import IterateTranslator
 from textfsmgen.libs.generic import Position
 
 from textfsmgen import ui
+from textfsmgen.ui import usage
 
 from textfsmgen.ui.common import (
     show_message_dialog,
@@ -151,7 +154,7 @@ def build_top_controls(parent, app):
 
         ("SEPARATOR", None),
 
-        ("?", lambda: show_help(app)),
+        ("?", lambda: usage.show_help(app, "snippet_translator")),
 
     ]
 
@@ -632,7 +635,3 @@ def generate_and_execute(app):
     set_text(t.code_textarea, builder.script)
     set_text(t.result_textarea, builder.result)
     t.result_textarea.config(wrap="none")
-
-
-def show_help(app):
-    show_message_dialog(info="Hello Snippet Translator Usage")
