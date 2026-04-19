@@ -181,10 +181,6 @@ def build_bottom_controls(parent, app):
 
         ("SEPARATOR", None),
 
-        ("Explanation", app.tools.translator.explain_flag),
-
-        ("SEPARATOR", None),
-
         ("Group",    app.tools.translator.group_flag),
         ("Generic",  app.tools.translator.generic_flag),
     ]
@@ -363,7 +359,6 @@ def reset_default(app):
     app.tools.translator.group_flag.set(False)
     app.tools.translator.generic_flag.set(True)
     app.tools.translator.notation_flag.set(False)
-    app.tools.translator.explain_flag.set(False)
     app.tools.translator.split_arg.set("/")
 
 
@@ -533,7 +528,6 @@ def translate(app):
         group_flag=t.group_flag.get(),
         generic_flag=t.generic_flag.get(),
         split_arg=t.split_arg.get(),
-        explain_flag=t.explain_flag.get(),
     )
 
     clear_text(t.code_textarea)
