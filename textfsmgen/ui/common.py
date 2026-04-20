@@ -263,8 +263,14 @@ def render_formatted_text(widget, text: str) -> None:
     bold_font = ui.Font(widget, widget.cget("font"))
     bold_font.configure(weight="bold")
     widget.tag_configure("bold", font=bold_font)
+    widget.tag_configure("bold_red", font=bold_font, foreground="red")
+    widget.tag_configure("bold_green", font=bold_font, foreground="green")
+    widget.tag_configure("bold_blue", font=bold_font, foreground="blue")
+    widget.tag_configure("bold_yellow", font=bold_font, foreground="yellow")
+    widget.tag_configure("bold_brown", font=bold_font, foreground="brown")
+    widget.tag_configure("bold_orange", font=bold_font, foreground="orange")
 
-    pattern = r"<(?P<tag>bold|link)>(?P<inner>[^<]+)</(bold|link)>"
+    pattern = r"<(?P<tag>bold(_\w+)?|link)>(?P<inner>[^<]+)</(bold(_\w+)?|link)>"
 
     for item in split_by_matches(text, pattern):
         match = re.match(pattern, item)
@@ -304,5 +310,3 @@ def add_hyperlink(text_widget, url, start, end):
 
     # Click action
     text_widget.tag_bind(tag, "<Button-1>", lambda e: webbrowser.open_new_tab(url))
-
-
