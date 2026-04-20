@@ -10,6 +10,8 @@ from typing import Optional, Union
 from tkinter import filedialog
 
 from textfsmgen import ui
+from textfsmgen.ui import usage
+
 from textfsmgen.ui.common import (
     center_window,
     make_modal,
@@ -256,6 +258,13 @@ def add_ok_and_default_buttons(app, parent: ui.Frame) -> None:
         command=lambda: parent.master.destroy(),
     )
     ok_btn.grid(row=0, column=7, padx=1, pady=1, sticky="e")
+
+    help_btn = ui.Button(
+        container,
+        text="Help",
+        command=lambda: usage.show_help(app, "settings"),
+    )
+    help_btn.grid(row=0, column=8, padx=1, pady=1, sticky="e")
 
 
 def reset_default_setting(app):

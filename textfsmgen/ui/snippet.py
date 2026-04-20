@@ -154,7 +154,7 @@ def build_top_controls(parent, app):
 
         ("SEPARATOR", None),
 
-        ("?", lambda: usage.show_help(app, "snippet_translator")),
+        ("Help", lambda: usage.show_help(app, "snippet_translator")),
 
     ]
 
@@ -170,7 +170,6 @@ def build_top_controls(parent, app):
 
         name = f"{label.lower()}_btn"
         width = btn_width + 2 if label in ("Translate", "Generate") else btn_width
-        width = (1 if ui.is_macos else 2) if label == "?" else width
 
         btn = ui.Button(
             parent,
