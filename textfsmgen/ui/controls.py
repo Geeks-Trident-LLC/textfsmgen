@@ -6,8 +6,11 @@ Reusable UI controls buttons for the TextFSMGen application.
 """ # noqa
 
 from textfsmgen import ui
-from textfsmgen.ui import callback
-from textfsmgen.ui import settings
+from textfsmgen.ui import (
+    callback,
+    settings,
+    usage,
+)
 
 
 def build_action_buttons(app) -> None:
@@ -30,6 +33,7 @@ def build_primary_buttons(app) -> None:
         ("build", "normal", lambda: callback.build(app)),
         ("result", "disabled", lambda: callback.show_result(app)),
         ("settings", "normal", lambda: settings.show_dialog(app)),
+        ("help", "normal", lambda: usage.show_help(app, "app")),
     )
 
     for pos, options in enumerate(button_lst):
