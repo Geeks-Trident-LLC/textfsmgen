@@ -265,7 +265,8 @@ class Application:
             self.paned_window, width=600, height=300, relief=tk.RIDGE
         )
         self.frames.controls = ui.Frame(
-            self.paned_window, width=600, height=62, relief=tk.RIDGE
+            self.paned_window, width=600, relief=tk.RIDGE,
+            height=70 if ui.is_macos else 74 if ui.is_linux else 62,
         )
         self.frames.controls.pack_propagate(False)  # keep the height
 

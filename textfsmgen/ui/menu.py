@@ -43,10 +43,20 @@ def create(app) -> None:
             "label": "Snippet Translator",
             "command": lambda: snippet.show_dialog(app)
         }),
+        (tools_menu, {
+            "label": "Regex Builder",
+            "state": "disabled",
+            "command": lambda: None
+        }),
+        (tools_menu, {
+            "label": "Keyword Query Assistant",
+            "state": "disabled",
+            "command": lambda: None
+        }),
 
         # Help
         (help_menu, {
-            "label": "Documentation",
+            "label": "README",
             "command": lambda: open_app_resource("documentation")
         }),
         (help_menu, {
