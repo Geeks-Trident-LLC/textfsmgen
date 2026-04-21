@@ -59,7 +59,7 @@ class Application:
     def init_app_variables(self):
         self.frames = DotObject(
             input=None,
-            buttons=None,
+            controls=None,
             output=None
         )
 
@@ -264,16 +264,18 @@ class Application:
         self.frames.input = ui.Frame(
             self.paned_window, width=600, height=300, relief=tk.RIDGE
         )
-        self.frames.buttons = ui.Frame(
-            self.paned_window, width=600, height=10, relief=tk.RIDGE
+        self.frames.controls = ui.Frame(
+            self.paned_window, width=600, height=62, relief=tk.RIDGE
         )
+        self.frames.controls.pack_propagate(False)  # keep the height
+
         self.frames.output = ui.Frame(
             self.paned_window, width=600, height=350, relief=tk.RIDGE
         )
 
         # Add frames to paned window with weights
         self.paned_window.add(self.frames.input, weight=3)
-        self.paned_window.add(self.frames.buttons)
+        self.paned_window.add(self.frames.controls)
         self.paned_window.add(self.frames.output, weight=7)
 
     def build_input_textarea(self):

@@ -15,29 +15,49 @@ from textfsmgen.ui import (
 
 def build_action_buttons(app) -> None:
     """Assemble all main action buttons for the application UI."""
-    build_primary_buttons(app)
-    build_secondary_buttons(app)
+
+    parent = app.frames.controls
+
+    top = ui.Frame(parent, width=600, height=5,)
+    top.pack(side="top", fill="x", padx=2, pady=2)
+
+    sep = ui.ttk.Separator(parent, orient="horizontal")
+    sep.pack(fill="x", padx=4)
+
+    bottom = ui.Frame(parent, width=600, height=5,)
+    bottom.pack(side="top", fill="x", padx=2, pady=2)
+
+    build_primary_buttons(app, top)
+    build_secondary_buttons(app, bottom)
 
 
-def build_primary_buttons(app) -> None:
+def build_primary_buttons(app, parent) -> None:
     """Create the first-row action buttons for the main UI."""
     btn_width = 6 if ui.is_macos else 8
-    parent = app.frames.buttons
     button_lst = (
         (app.settings.test_data_btn_name, "normal", lambda: callback.toggle_test_data_mode(app),),
+        ("SEPARATOR", None, None),
         ("open", "normal", lambda: callback.open_file(app)),
         ("save", "disabled", lambda: callback.save(app)),
         ("copy", "disabled", lambda: callback.copy(app)),
         ("paste", "normal", lambda: callback.paste(app)),
         ("clear", "normal", lambda: callback.clear(app)),
+        ("SEPARATOR", None, None),
         ("build", "normal", lambda: callback.build(app)),
         ("result", "disabled", lambda: callback.show_result(app)),
+        ("SEPARATOR", None, None),
         ("settings", "normal", lambda: settings.show_dialog(app)),
         ("help", "normal", lambda: usage.show_help(app, "app")),
     )
 
     for pos, options in enumerate(button_lst):
         text, state, command = options
+
+        if text == "SEPARATOR":
+            sep = ui.ttk.Separator(parent, orient="vertical")
+            sep.grid(row=0, column=pos, sticky="ns", padx=(4, 2), pady=2)
+            continue
+
         kwargs = {
             "state": state,
             "command": command,
@@ -55,11 +75,10 @@ def build_primary_buttons(app) -> None:
         app.buttons.update({name: button})
 
 
-def build_secondary_buttons(app) -> None:
+def build_secondary_buttons(app, parent) -> None:
     """Create the second-row action buttons for the main UI."""
 
     btn_width = 6 if ui.is_macos else 8
-    parent = app.frames.buttons
 
     button_lst = (
         ("python", "disabled", lambda: callback.create_python_script(app)),
@@ -70,6 +89,7 @@ def build_secondary_buttons(app) -> None:
 
     for pos, options in enumerate(button_lst):
         text, state, command = options
+
         button = ui.Button(
             parent,
             name=f"{text}_btn",
