@@ -259,7 +259,7 @@ class KeywordPatternMappingRegister:
     def build_plural_semantic_variants(self) -> dict:
         """Return expanded regex variants for each plural semantic token pattern."""
         variants = {}
-        sep = r"\s+"
+        # sep = r"\s+"
 
         for key, pattern in self.plural_semantic_map.items():
             name = key.lower()

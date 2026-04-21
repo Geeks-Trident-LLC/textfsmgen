@@ -14,9 +14,13 @@ from textfsmgen.core.registry import PatternRegistry, SymbolCls
 from textfsmgen.exceptions import TextPatternError
 from textfsmgen.exceptions import ElementPatternError
 from textfsmgen.exceptions import LinePatternError
-from textfsmgen.exceptions import raise_exception
+from textfsmgen.exceptions import raise_exception, raise_runtime_error
 
-from textfsmgen.libs.pattern import validate_pattern, soft_escape
+from textfsmgen.libs.pattern import (
+    PATTERN,
+    validate_pattern,
+    soft_escape,
+)
 from textfsmgen.libs.text import WHITESPACE_CHARS
 from textfsmgen.libs.text import Line
 
@@ -587,55 +591,25 @@ class ElementPattern(str):
         return True, pattern
 
     @classmethod
-    def join_list(cls, lst):
-        new_lst = list()
-        has_ws = False  # noqa
-        if len(lst) > 1:
-            for item in lst:
-                if ' ' in item or r'\s' in item:
-                    has_ws = True
-                    if item.startswith('(') and item.endswith(')'):
-                        v = item
-                    else:
-                        if re.match(r' ([?+*]+|([{][0-9,]+[}]))$', item):
-                            v = item
-                        else:
-                            v = '({})'.format(item)
-                else:
-                    if item:
-                        chk1 = '\\' in item
-                        chk2 = '[' in item and ']' in item
-                        chk3 = '(' in item and ')' in item
-                        chk4 = '{' in item and '}' in item
-                        if chk1 or chk2 or chk3 or chk4:
-                            v = '({})'.format(item)
-                        else:
-                            v = item
-                    else:
-                        v = item
-                v not in new_lst and new_lst.append(v)
-        else:
-            new_lst = lst
+    def join_list(cls, items):
+        """Join pattern fragments, preserving empty-option behavior."""
+        has_empty = any(item == "" for item in items)
+        parts = [item for item in items if item]
 
-        has_empty = bool([True for item in new_lst if item == ''])
-        if has_empty:
-            other_lst = [item for item in new_lst if item]
-            result = '|'.join(other_lst)
-            result = f"({result}|)" if len(other_lst) == 1 and not has_ws else f"(({result})|)"
-            return result
-        else:
-            result = '|'.join(new_lst)
-            # result = f"({result})" if len(new_lst) > 1 and has_ws else result
-            result = f"({result})" if len(new_lst) > 1 else result
-            return result
+        if not parts:
+            raise_runtime_error(
+                obj="ElementPatternJoinListError",
+                msg="Internal logic error — please report this to the developers."
+            )
 
-        # result = '|'.join(new_lst)
-        #
-        # has_empty = bool([True for i in new_lst if i == ''])
-        # if has_empty or len(new_lst) > 1 and has_ws:
-        #     result = '({})'.format(result)
-        #
-        # return result
+        # Single non-empty item
+        if len(parts) == 1:
+            item = parts[0]
+            return PATTERN.allow_empty_pattern(item) if has_empty else item
+
+        # Multiple items → join with alternation
+        body = "|".join(f"({item})" for item in parts)
+        return f"({body})?" if has_empty else f"({body})"
 
     @classmethod
     def add_var_name(cls, pattern, name=''):

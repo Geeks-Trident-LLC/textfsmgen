@@ -212,7 +212,7 @@ class TokenSnippet(SnippetBase):
         explanation = self.explain(self._bare_snippet)
 
         sep = "=" * 72
-        leading_explanation, trailing_explanation = "", ""
+        # leading_explanation, trailing_explanation = "", ""
         if re.fullmatch(r"\w+[(][)]", self.leading_snippet):
             leading_explanation = self.explain(self.leading_snippet, self.leading_list)
             if "Operation: " in leading_explanation and leading_explanation not in explanation:
