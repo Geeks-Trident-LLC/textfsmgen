@@ -128,11 +128,15 @@ def set_window_icon(widget) -> None:
     base_dir = path.dirname(path.abspath(__file__))
 
     # Path to the logo image
-    file_path = path.join(base_dir, "images", "icon_logo.png")
+    png_path = path.join(base_dir, "images", "icon_logo.png")
+    xbm_path = path.join(base_dir, "images", "icon_logo.xbm")
 
     # Load logo (PhotoImage supports .png, .gif, .ppm)
     try:
-        logo = tk.PhotoImage(file=file_path)
-        widget.iconphoto(False, logo)
+        if is_linux and path.exists(xbm_path):
+            wiget.iconbitmap(xbm_path)
+        else:
+            logo = tk.PhotoImage(file=png_path)
+            widget.iconphoto(False, logo)
     except Exception:   # noqa
         pass

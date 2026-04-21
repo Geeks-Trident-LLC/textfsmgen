@@ -4,6 +4,7 @@ include LICENSE
 
 # Application assets
 include textfsmgen/ui/images/icon_logo.png
+include textfsmgen/ui/images/icon_logo.xbm
 
 # Source files
 recursive-include textfsmgen *.py
