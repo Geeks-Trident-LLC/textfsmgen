@@ -1036,6 +1036,39 @@ class ParsedTable(RuntimeException):
     # Header cleaning and building
     # -------------------------------
 
+    def header_span(self, row_pos):
+        """Return start/stop indices of meaningful header lines above row_pos."""
+        width_limit = (
+                          len(self.reference_row.line)
+                          if self.reference_row else
+                          max(len(line) for line in self.lines)
+                      ) or 80
+
+        collected = []
+        for line in reversed(self.lines[: row_pos + 1]):
+            stripped = line.strip()
+
+            # Skip punctuation-only rows
+            if re.fullmatch(PATTERN.OPTIONAL_PUNCTS_GROUP, stripped):
+                continue
+
+            # Stop at blank line after collecting something
+            if not stripped:
+                if not collected:
+                    continue
+                break
+
+            # Only accept lines that are at least half the width limit
+            if len(line.rstrip()) >= 0.5 * width_limit:
+                collected.append(line)
+
+        if collected:
+            start = self.lines.index(collected[0])
+            stop = self.lines.index(collected[-1])
+            return start, stop
+
+        return 0, 0
+
     def do_cleaning_data(self) -> None:
         """Clean table data by separating header rows from data rows."""    # noqa
         if not self.reference_row or not self.has_header_row:
@@ -1050,11 +1083,12 @@ class ParsedTable(RuntimeException):
             row_pos = self.lines.index(ref_line)
 
         self.rows = self.rows[row_pos + 1:]
-        self.header_lines = self.lines[:row_pos + 1]
 
+        start, stop = self.header_span(row_pos)
+        self.header_lines = self.lines[start:stop + 1]
         for col in self.columns:
             hdr_col = Column()
-            hdr_col.cells = col.cells[:row_pos + 1]
+            hdr_col.cells = col.cells[start:stop + 1]
             self.header_columns.append(hdr_col)
             col.cells = col.cells[row_pos + 1:]
 
@@ -1076,7 +1110,6 @@ class ParsedTable(RuntimeException):
 
         # Determine source of header names
         raw_names = None
-
         if self.has_header_row and not self.headers:
             raw_names = [
                 "_".join(cell.text for cell in col.cells if cell.text.strip())
@@ -1119,17 +1152,27 @@ class ParsedTable(RuntimeException):
     # -------------------------------
 
     def get_header_lines_snippet(self) -> str:
-        """Extract header lines snippet."""     # noqa
-        headers_lines = self.raw_header_rows or self.header_lines
-        lst: List[str] = []
+        """Return cleaned header lines, stopping at trailing blanks or punct rows."""
+        rows = self.raw_header_rows or self.header_lines
+        collected = []
 
-        for line in text.get_list_of_lines(*headers_lines):
-            if re.fullmatch(PATTERN.OPTIONAL_PUNCTS_GROUP, line.strip()):
+        for line in reversed(text.get_list_of_lines(*rows)):
+            stripped = line.strip()
+
+            # Skip pure punctuation rows
+            if re.fullmatch(PATTERN.OPTIONAL_PUNCTS_GROUP, stripped):
                 continue
-            if line.strip():
-                lst.append(line)
 
-        return text.join_string(*lst, separator="\n")
+            # Stop when hitting a blank after collecting something
+            if not stripped:
+                if not collected:
+                    continue
+                break
+
+            collected.append(line)
+
+        collected.reverse()
+        return text.join_string(*collected, separator="\n")
 
     def to_snippet(self) -> str:
         """Generate a template snippet representing the table."""       # noqa
