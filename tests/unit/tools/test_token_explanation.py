@@ -66,7 +66,7 @@ def test_with_or_empty_flag():
         +--------------------------------------------------------------+
         |           optional_non_wss_group(var_v3, or_empty)           |
         +--------------------------------------------------------------+
-        Pattern:   r"(?P<v3>((\S+(\s+\S+)*))|)"
+        Pattern:   r"(?P<v3>(\S+(\s+\S+)*)?)"
         Operation: match zero or more sequences of non‑whitespace characters, each
                    separated by one or more whitespace characters.
         Explanation:
@@ -90,7 +90,7 @@ def test_failure_incorrect_list_of_data():
         +------------------------------------------+
         |         words(var_v3, or_empty)          |
         +------------------------------------------+
-        Pattern:   r"(?P<v3>(([a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)*))|)"
+        Pattern:   r"(?P<v3>([a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)*)?)"
         Operation: match zero or more words containing alphanumeric or underscore
                    characters, each with at least one alphabetic character, separated
                    by one or more whitespace characters.

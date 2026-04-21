@@ -44,7 +44,7 @@ class PatternRegistry(dict):
                 raise PatternReferenceError(msg)
 
             for key, value in yaml_obj.items():
-                valid_pat = pattern.is_valid_pattern(value)
+                valid_pat = pattern.check_pattern(value)
                 if not valid_pat:
                     if warn:
                         logger.warning(valid_pat)

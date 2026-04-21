@@ -8,7 +8,11 @@ General-purpose Patter class and functions used across TextFSMGen.
 import re
 import string
 
-from textfsmgen.exceptions import raise_exception, EscapePatternError
+from textfsmgen.exceptions import (
+    raise_exception,
+    raise_runtime_error,
+    EscapePatternError,
+)
 from .generic import StatusString, DotObject
 from .number import word_to_digit
 
@@ -271,7 +275,7 @@ class KeywordPatternMappingRegister:
             variants[f"some_{name}"] = pattern
 
             # zero_or_more_<plural_semantic>: similar to optional_<plural_semantic>
-            variants[f"zero_or_more_{name}"] = f"({pattern}({sep}{pattern})*)?"
+            variants[f"zero_or_more_{name}"] = f"({pattern})?"
 
             # one_or_more_<plural_semantic>: same as plural semantic
             variants[f"one_or_more_{name}"] = pattern
@@ -314,6 +318,17 @@ class Pattern(DotObject):
         self.group_keywords = register.group_keywords.copy()
 
         self.all_map = register.all_map.copy()
+
+    @staticmethod
+    def is_suppressible_group(keyword: str) -> bool:
+        """Return True if keyword matches a suppressible *_group pattern."""
+        bases = ("dot", "space", "ws", "whitespace")
+
+        for base in bases:
+            if keyword in (f"{base}_group", f"{base}s_group"):
+                return True
+
+        return False
 
     def keyword_in(
         self, key, singular=False, plural=False, semantic=False,
@@ -384,16 +399,93 @@ class Pattern(DotObject):
 
         return StatusString()
 
-    @staticmethod
-    def is_suppressible_group(keyword: str) -> bool:
-        """Return True if keyword matches a suppressible *_group pattern."""
-        bases = ("dot", "space", "ws", "whitespace")
+    def resolve_plural_keyword(self, keyword):
+        """Return the plural form of a singular keyword if available."""
+        base = keyword
+        plural = f"{base}s"
 
-        for base in bases:
-            if keyword in (f"{base}_group", f"{base}s_group"):
-                return True
+        # Case 1: singular → plural (regular or underscore form)
+        if base in self.singular_keywords:
+            if plural in self.plural_keywords:
+                return plural
 
-        return False
+            if "_" in plural:
+                head, tail = plural.split("_", maxsplit=1)
+                alt_plural = f"{head}s_{tail}"
+                if alt_plural in self.plural_keywords:
+                    return alt_plural
+
+            return base
+
+        # Case 2: semantic plural
+        if plural in self.plural_semantic_keywords:
+            return plural
+
+        return base
+
+    def resolve_keyword_for_pattern(self, pattern):
+        """Return the keyword mapped to this pattern, preferring core keywords."""
+        matches = [k for k, p in self.all_map.items() if p == pattern]
+
+        if not matches:
+            return ""
+
+        for key in matches:
+            if key in self.core_keywords:
+                return key
+
+        return matches[0]
+
+    def allow_empty_pattern(self, pattern):
+        """Return a version of the pattern that allows empty input when appropriate."""
+        keyword = self.resolve_keyword_for_pattern(pattern)
+
+        # No keyword found → fallback: allow empty
+        if not keyword:
+            allowed = rf"({pattern})?"
+            status = check_pattern(allowed)
+
+            if not status:
+                raise_runtime_error(
+                    obj="InvalidAllowedEmptyPattern",
+                    msg=(
+                        "Expected a valid pattern, but received "
+                        f"{allowed!r} (error: {status})"
+                    )
+                )
+            return allowed
+
+        if keyword in ("anything", "something"):
+            return self.all_map["anything"]
+
+        if keyword in self.core_keywords:
+            return self.all_map[f"optional_{keyword}"]
+
+        # Default allowed-empty form
+        allowed = rf"({pattern})?"
+
+        # Group keywords always allow empty
+        if keyword.endswith("_group"):
+            return allowed
+
+        base = self.parse_base_keyword(keyword)
+
+        # optional / zero_or_one / zero_or_more
+        if re.search(r"optional_|zero_or_one_|zero_or_more_", keyword):
+            return self.all_map[keyword]
+
+        # some_ / one_or_more_
+        if re.search(r"some_|one_or_more_", keyword):
+            if self.keyword_in(base, singular=True):
+                plural = self.resolve_plural_keyword(base)
+                return self.all_map[f"optional_{plural}"]
+
+            if self.keyword_in(base, plural=True):
+                return self.all_map[f"optional_{keyword}"]
+
+            return allowed
+
+        return allowed
 
 
 PATTERN = Pattern()
@@ -693,8 +785,8 @@ def validate_pattern(pattern: str, flags: int = 0, exception_cls=None):
         raise_exception(ex, cls=exception_cls)
 
 
-def is_valid_pattern(pattern):
-    """Return a StatusString describing whether the input is a valid regex."""
+def check_pattern(pattern):
+    """Return a StatusString describing whether the pattern is a valid regex."""
     if not isinstance(pattern, str):
         msg = (f"Pattern must be a string, "
                f"but received <{type(pattern).__name__}:{pattern}> instead.)")
