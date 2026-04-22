@@ -208,11 +208,7 @@ def create_styled_label(
 
 def open_app_resource(resource: str) -> None:
     """Open a specified application resource in a web browser."""
-    resources = {
-        "license_text": config.license_url,
-        "documentation": config.documentation_url,
-    }
-    url = resources.get(resource)
+    url = config.urls.get(resource, "")
     if url:
         webbrowser.open_new_tab(str(url))
 

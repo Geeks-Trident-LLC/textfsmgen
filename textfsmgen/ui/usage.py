@@ -5,8 +5,11 @@ textfsmgen.ui.usage
 Provides the usage dialog and formatted help text UI for TextFSMGen.
 """
 
+import re
 
 from textfsmgen.libs.text import dedent_and_strip
+
+import textfsmgen.config as config
 
 from textfsmgen import ui
 
@@ -89,18 +92,29 @@ def build_usage_title(category: str) -> str:
     return f"{base} Usage - TextFSMGen CE"
 
 
+def update_url_link(usage):
+    for name, url in config.urls.items():
+        replacing = rf"----\s*{name}\s*" + re.escape("</link>")
+        replacement = f"---- {url}</link>"
+        usage = re.sub(replacing, replacement, usage)
+    return usage
+
+
 def get_usage(category: str) -> str:
     """Return usage text for the given category."""
+    usage = "Unknown Usage"
     if category == "snippet_translator":
-        return get_snippet_translator_usage()
+        usage = get_snippet_translator_usage()
 
-    if category == "settings":
-        return get_settings_guide()
+    elif category == "settings":
+        usage = get_settings_guide()
 
-    if category == "app":
-        return get_textfsmgen_usage()
+    elif category == "app":
+        usage = get_textfsmgen_usage()
 
-    return "Unknown Usage"
+    usage = update_url_link(usage)
+
+    return f"{usage}\n\n"
 
 
 def get_snippet_translator_usage():
@@ -205,12 +219,12 @@ def get_snippet_translator_usage():
         <bold>References</bold>
         <bold>==========</bold>
         
-            - <link>Using Snippet Translator ---- https://github.com/Geeks-Trident-LLC/textfsmgen/wiki/How-To-Use-Snippet-Translator</link>
-            - <link>Demo Snippet Translator ---- https://github.com/Geeks-Trident-LLC/textfsmgen/wiki/Demo-Snippet-Translator</link>
+            - <link>How to Use the Snippet Translator ---- how-to-use-snippet-translator</link>
+            - <link>Demo: Snippet Translator ---- demo-snippet-translator</link>
 
     """)
 
-    return f"{usage}\n\n"
+    return usage
 
 
 def get_settings_guide():
@@ -386,10 +400,10 @@ def get_settings_guide():
         <bold>References</bold>
         <bold>==========</bold>
         
-            - <link>TextFSM Generator Settings Guide ---- https://github.com/Geeks-Trident-LLC/textfsmgen/wiki/TextFSM-Generator-Settings-Guide</link>
+            - <link>TextFSM Generator Settings Reference ---- textfsm-generator-settings-guide</link>
 
     """)
-    return f"{guide}\n\n"
+    return guide
 
 
 def get_textfsmgen_usage():
@@ -606,10 +620,10 @@ def get_textfsmgen_usage():
         <bold>References</bold>
         <bold>==========</bold>
           
-          - <link>Demo Free-Form IOS show clock ---- https://github.com/Geeks-Trident-LLC/textfsmgen/wiki/Demo-IOS-show-clock</link>
-          - <link>Demo Category Data Linux show clock ---- https://github.com/Geeks-Trident-LLC/textfsmgen/wiki/Demo-Linux-File-Status-Info</link>
-          - <link>Demo Tabular Data Linux ls -la ---- https://github.com/Geeks-Trident-LLC/textfsmgen/wiki/Demo-Linux-List-All-File-in-Long-Format</link>
-          - <link>Demo Tabular Data Powershell ls ---- https://github.com/Geeks-Trident-LLC/textfsmgen/wiki/Demo-Powershell-List-Files</link>
+          - <link>Demo: Building TextFSM Template for IOS - show clock (Free-Form) ---- demo-ios-show-clock</link>
+          - <link>Demo: Building TextFSM Template for Linux - stat file-name (Category-Form) ---- demo-linux-file-status-information</link>
+          - <link>Demo: Building TextFSM Template for Linux - ls -la (Tabular Headerless Rows-Based Form) ---- demo-listing-files-in-long-format-on-linux</link>
+          - <link>Demo: Building TextFSM template for Alias Powershell - ls (Tabular with Header Rows-Based Form) ---- demo-listing-files-on-powershell</link>
     """)
 
-    return f"{usage}\n\n"
+    return usage

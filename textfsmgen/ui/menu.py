@@ -57,11 +57,11 @@ def create(app) -> None:
         # Help
         (help_menu, {
             "label": "README",
-            "command": lambda: open_app_resource("documentation")
+            "command": lambda: open_app_resource("readme")
         }),
         (help_menu, {
             "label": "View Licenses",
-            "command": lambda: open_app_resource("license_text")
+            "command": lambda: open_app_resource("license")
         }),
         (help_menu, None),
         (help_menu, {

@@ -5,8 +5,6 @@ textfsmgen.config
 Configuration utilities for the TextFSM Generator library.
 """
 
-from os import path
-
 from pathlib import Path
 from pathlib import PurePath
 
@@ -15,40 +13,54 @@ import yaml
 
 from textfsmgen.libs.common import dedent_and_strip
 
-__version__ = '0.5.2.1'
+__version__ = "0.5.2.1"
 version = __version__
 
 __all__ = [
-    'version',
+    "version",
 ]
 
 # app yaml files
 user_keyword_mapping_file = str(
-    PurePath(Path.home(), '.textfsmgen', 'user_keyword_mapping.yaml')
+    PurePath(Path.home(), ".textfsmgen", "user_keyword_mapping.yaml")
 )
 
 
 app_version = version
 
 # main app
-main_app_text = f'TextFSM Generator v{version}'
+main_app_text = f"TextFSM Generator v{version}"
 software_release = f"TextFSM Generator v{version} - Beta"
 
 # company
-company = 'Geeks Trident LLC'   # noqa
+company = "Geeks Trident LLC"   # noqa
 company_full_name = company
 company_name = "Geeks Trident"
-company_url = 'https://www.geekstrident.com/'
+company_url = "https://www.geekstrident.com/"
 
 # URL
-repo_url = 'https://github.com/Geeks-Trident-LLC/textfsmgen'
-documentation_url = path.join(repo_url, 'blob/develop/README.md')
-license_url = path.join(repo_url, 'blob/develop/LICENSE')
+repo_url = "https://github.com/Geeks-Trident-LLC/textfsmgen"
+wiki_url = f"{repo_url}/wiki"
+
+urls = {
+    "readme": f"{repo_url}/blob/develop/README.md",
+    "license": f"{repo_url}/blob/develop/LICENSE",
+    "wiki": wiki_url,
+}
+for name in (
+    "high-level-overview", "faq", "textfsm-generator-settings-guide",
+    "how-to-use-snippet-translator",
+    "demo-snippet-translator", "demo-ios-show-clock",
+    "demo-listing-files-in-long-format-on-linux",
+    "demo-listing-files-on-powershell", "demo-linux-file-status-information"
+):
+    urls[name] = f"{wiki_url}/{name}"
+
 
 # License
-years = '2022'
-license_name = f'TextFSM Generator License'
-copyright_text = f'Copyright \xa9 {years}'
+years = "2022"
+license_name = f"TextFSM Generator License"
+copyright_text = f"Copyright \xa9 {years}"
 
 license_text = dedent_and_strip(
     """
@@ -90,12 +102,12 @@ def get_dependency():
     """Return dependency metadata for the application."""
     dependencies = dict(
         textfsm=dict(
-            package=f'textfsm v{textfsm.__version__}',
-            url='https://pypi.org/project/textfsm/'
+            package=f"textfsm v{textfsm.__version__}",
+            url="https://pypi.org/project/textfsm/"
         ),
         pyyaml=dict(
-            package=f'pyyaml v{yaml.__version__}',
-            url='https://pypi.org/project/PyYAML/'
+            package=f"pyyaml v{yaml.__version__}",
+            url="https://pypi.org/project/PyYAML/"
         )
     )
     return dependencies

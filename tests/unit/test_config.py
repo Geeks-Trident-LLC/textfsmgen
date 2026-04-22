@@ -57,8 +57,8 @@ class TestData:
     def test_repo_and_docs_urls(self):
         """Check repo and docs URLs."""
         assert config.repo_url.startswith("https://github.com/")
-        assert config.documentation_url.endswith("README.md")
-        assert config.license_url.endswith("LICENSE")
+        assert config.urls.get("readme").endswith("README.md")
+        assert config.urls.get("license").endswith("LICENSE")
 
     def test_license_info(self):
         """Check license info."""

@@ -134,7 +134,7 @@ def set_window_icon(widget) -> None:
     # Load logo (PhotoImage supports .png, .gif, .ppm)
     try:
         if is_linux and path.exists(xbm_path):
-            wiget.iconbitmap(xbm_path)
+            widget.iconbitmap(xbm_path)
         else:
             logo = tk.PhotoImage(file=png_path)
             widget.iconphoto(False, logo)
