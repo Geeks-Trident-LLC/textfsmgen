@@ -182,7 +182,7 @@ def create_styled_label(
 
     if link:
         style = ttk.Style()
-        style.configure("Blue.TLabel", foreground="blue")
+        style.configure("Blue.TLabel", foreground=ui.hyperlink_fg_color)
         label = ui.Label(parent, text=text, style="Blue.TLabel", **options)
         label.bind("<Enter>", mouse_over)
         label.bind("<Leave>", mouse_out)
@@ -294,11 +294,7 @@ def add_hyperlink(text_widget, url, start, end):
     text_widget.tag_add(tag, start, end)
 
     # Style
-    text_widget.tag_config(
-        tag,
-        foreground="blue",
-        underline=True
-    )
+    text_widget.tag_config(tag, foreground=ui.hyperlink_fg_color, underline=True)
 
     # Hover cursor
     text_widget.tag_bind(tag, "<Enter>", lambda e: text_widget.config(cursor="hand2"))

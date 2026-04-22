@@ -24,11 +24,12 @@ from tkinter.font import Font       # noqa
 
 from textfsmgen.libs.shell import is_macos_dark_mode
 
-readonly_text_bg_color = (
-    "#2a2a2a"   # subtle contrast for readonly fields in dark mode
-    if is_macos_dark_mode() else
-    "#f0f0f0"   # slightly stronger gray
-)
+# #2a2a2a subtle contrast for readonly fields in dark mode
+# #f0f0f0 slightly stronger gray
+readonly_text_bg_color = "#2a2a2a" if is_macos_dark_mode() else "#f0f0f0"
+
+# #4DA3FF blue accent => bright macOS-Style blue
+hyperlink_fg_color = "#4DA3FF" if is_macos_dark_mode() else "blue"
 
 is_macos = platform.system() == 'Darwin'    # noqa
 is_linux = platform.system() == 'Linux'
