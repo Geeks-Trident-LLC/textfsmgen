@@ -51,7 +51,7 @@ urls = {
     "wiki": wiki_url,
 
     "contact-support": "https://www.geekstrident.com/contact",
-    "submit-feedback": "",
+    "submit-feedback": "https://forms.microsoft.com/r/vQ2NHk7tRb",
 
 }
 for name in (

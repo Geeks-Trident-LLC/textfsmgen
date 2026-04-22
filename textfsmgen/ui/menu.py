@@ -102,7 +102,6 @@ def create(app) -> None:
         }),
         (help_menu, {
             "label": "Submit Feedback...",
-            "state": "disabled",
             "command": lambda: open_app_resource("submit-feedback")
         }),
         (help_menu, None),
