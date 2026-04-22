@@ -8,7 +8,7 @@ UI helpers for building the TextFSMGen menu bar.
 from textfsmgen import ui
 from textfsmgen.ui.common import open_app_resource
 from textfsmgen.ui import (
-    about, snippet, callback
+    about, snippet, callback, usage,
 )
 
 
@@ -56,12 +56,54 @@ def create(app) -> None:
 
         # Help
         (help_menu, {
-            "label": "README",
-            "command": lambda: open_app_resource("readme")
+            "label": "Project Homepage",
+            "command": lambda: open_app_resource("project-page")
         }),
         (help_menu, {
-            "label": "View Licenses",
-            "command": lambda: open_app_resource("license")
+            "label": "Package Homepage",
+            "command": lambda: open_app_resource("package-page")
+        }),
+        (help_menu, {
+            "label": "Docs (Github Wiki)",
+            "command": lambda: open_app_resource("wiki")
+        }),
+        (help_menu, None),
+        (help_menu, {
+            "label": "Using TextFSM Generator",
+            "command": lambda: usage.show_help(app, "app")
+        }),
+        (help_menu, {
+            "label": "TextFSMGen Settings Reference",
+            "command": lambda: usage.show_help(app, "settings")
+        }),
+        (help_menu, None),
+        (help_menu, {
+            "label": "Using Snippet Translator",
+            "command": lambda: usage.show_help(app, "snippet_translator")
+        }),
+        (help_menu, {
+            "label": "Using Regex Builder",
+            "state": "disabled",
+            "command": lambda: usage.show_help(app, "regex")
+        }),
+        (help_menu, {
+            "label": "Using Keyword Query Assistant",
+            "state": "disabled",
+            "command": lambda: usage.show_help(app, "query")
+        }),
+        (help_menu, None),
+        (help_menu, {
+            "label": "Report an Issue",
+            "command": lambda: open_app_resource("report-issue")
+        }),
+        (help_menu, {
+            "label": "Contact Support...",
+            "command": lambda: open_app_resource("contact-support")
+        }),
+        (help_menu, {
+            "label": "Submit Feedback...",
+            "state": "disabled",
+            "command": lambda: open_app_resource("submit-feedback")
         }),
         (help_menu, None),
         (help_menu, {
@@ -73,5 +115,5 @@ def create(app) -> None:
     for menu, cfg in items:
         if cfg:
             menu.add_command(**cfg)
-        else:
-            menu.add_separator()
+            continue
+        menu.add_separator()

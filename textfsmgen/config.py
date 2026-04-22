@@ -43,9 +43,16 @@ repo_url = "https://github.com/Geeks-Trident-LLC/textfsmgen"
 wiki_url = f"{repo_url}/wiki"
 
 urls = {
+    "project-page": repo_url,
+    "package-page": "https://pypi.org/project/textfsmgen/",
     "readme": f"{repo_url}/blob/develop/README.md",
     "license": f"{repo_url}/blob/develop/LICENSE",
+    "report-issue": f"{repo_url}/issues/new",
     "wiki": wiki_url,
+
+    "contact-support": "https://www.geekstrident.com/contact",
+    "submit-feedback": "",
+
 }
 for name in (
     "high-level-overview", "faq", "textfsm-generator-settings-guide",
