@@ -75,6 +75,7 @@ class TriStateCheckBox(CheckBox):
             text=label,
             variable=self.state_var,
             command=self._cycle_state,
+            cursor="hand2"
         )
 
     def _cycle_state(self):
@@ -120,6 +121,84 @@ class TriStateCheckBox(CheckBox):
         elif self.state_index == 2:
             items.append(plural)
         self.shared_var.set(str(items))
+
+
+class DynamicCheckboxGroup(ttk.LabelFrame):
+    """A LabelFrame that stays hidden until build() populates checkboxes."""
+
+    def __init__(self, parent, title="Options"):
+        super().__init__(parent, text=title)
+
+        # Dedicated container for dynamic widgets
+        self.body = ttk.Frame(self)
+
+        # Start hidden
+        self.visible = False
+
+    @staticmethod
+    def create_group_labels(items):
+        total = len(items)
+        max_len = max(len(item) for item in items)
+
+        for count in [4, 3, 2]:
+            if max_len * count <= 120:
+                return [items[i:i+count] for i in range(0, len(items), count)]
+
+        # breakpoint()
+        rows = []
+        for item in items:
+            if not rows:
+                rows.append([item])
+                continue
+            last_row = rows[-1]
+            if len(last_row) == 2:
+                rows.append([item])
+                continue
+
+            first_item = last_row[0]
+            if len(first_item) > 60:
+                rows.append([item])
+                continue
+            last_row.append(item)
+        return rows
+
+    def build(self, labels, state_var=None):
+        """Rebuild checkboxes using smart row grouping (4→3→2 fallback).
+        Rules:
+          - Try groups of 4 if total length ≤ 120
+          - Else try groups of 3 if total length ≤ 120
+          - Else use groups of 2 (minimum)
+          - If any label > 60 chars → row becomes 1 item (colspan=2)
+        """
+
+        state_var = state_var or tk.StringVar()
+
+        # Make visible on first build
+        if not self.visible:
+            self.body.pack(fill="x", padx=6, pady=6)
+            self.visible = True
+
+        # Clear old widgets
+        for child in self.body.winfo_children():
+            child.destroy()
+
+        # Build UI rows
+        for row_pos, row in enumerate(self.create_group_labels(labels)):
+            for col_pos, text in enumerate(row):
+                var = tk.BooleanVar(value=False)
+                chk = ttk.Checkbutton(
+                    self.body, text=text,
+                    onvalue=text, offvalue="",
+                    variable=state_var,
+                    cursor="hand2"
+                )
+                # Long label → span 2 columns
+                if len(text) > 60:
+                    chk.grid(row=row_pos, column=0, columnspan=2, sticky="w", padx=2)
+                    self.body.grid_columnconfigure(0, weight=1, uniform="equal")
+                else:
+                    chk.grid(row=row_pos, column=col_pos, sticky="w", padx=2)
+                    self.body.grid_columnconfigure(col_pos, weight=1, uniform="equal")
 
 
 def apply_layout(func: Callable) -> Callable:
