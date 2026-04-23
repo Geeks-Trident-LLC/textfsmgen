@@ -8,7 +8,7 @@ UI helpers for building the TextFSMGen menu bar.
 from textfsmgen import ui
 from textfsmgen.ui.common import open_app_resource
 from textfsmgen.ui import (
-    about, snippet, callback, usage,
+    about, snippet, callback, usage, settings, builder
 )
 
 
@@ -34,6 +34,11 @@ def create(app) -> None:
         }),
         (file_menu, None),
         (file_menu, {
+            "label": "Settings",
+            "command": lambda: settings.show_dialog(app)
+        }),
+        (file_menu, None),
+        (file_menu, {
             "label": "Quit",
             "command": app.root.destroy
         }),
@@ -45,8 +50,7 @@ def create(app) -> None:
         }),
         (tools_menu, {
             "label": "Regex Builder",
-            "state": "disabled",
-            "command": lambda: None
+            "command": lambda: builder.show_dialog(app)
         }),
         (tools_menu, {
             "label": "Keyword Query Assistant",
@@ -69,27 +73,32 @@ def create(app) -> None:
         }),
         (help_menu, None),
         (help_menu, {
-            "label": "Using TextFSM Generator",
+            "label": "Quickstart Guide...",
             "command": lambda: usage.show_help(app, "app")
         }),
         (help_menu, {
-            "label": "TextFSMGen Settings Reference",
+            "label": "Settings Reference",
             "command": lambda: usage.show_help(app, "settings")
         }),
         (help_menu, None),
         (help_menu, {
-            "label": "Using Snippet Translator",
+            "label": "Snippet Translator Guide",
             "command": lambda: usage.show_help(app, "snippet_translator")
         }),
         (help_menu, {
-            "label": "Using Regex Builder",
+            "label": "Regex Builder Guide",
             "state": "disabled",
             "command": lambda: usage.show_help(app, "regex")
         }),
         (help_menu, {
-            "label": "Using Keyword Query Assistant",
+            "label": "Keyword Query Assistant Guide",
             "state": "disabled",
             "command": lambda: usage.show_help(app, "query")
+        }),
+        (help_menu, None),
+        (help_menu, {
+            "label": "Video Tutorial...",
+            "command": lambda: open_app_resource("youtube")
         }),
         (help_menu, None),
         (help_menu, {

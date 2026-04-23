@@ -50,6 +50,10 @@ urls = {
     "report-issue": f"{repo_url}/issues/new",
     "wiki": wiki_url,
 
+    "video": "https://www.youtube.com/@geekstrident",
+
+    "youtube": "https://www.youtube.com/@geekstrident",
+
     "contact-support": "https://www.geekstrident.com/contact",
     "submit-feedback": "https://forms.microsoft.com/r/vQ2NHk7tRb",
 
