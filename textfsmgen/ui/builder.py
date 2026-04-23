@@ -193,11 +193,21 @@ def build_controls(app, parent, row=0):
     frame.grid(row=row, column=0, padx=4, pady=4, sticky="new")
 
     labels = [
-        "default", "copy", "paste", "SEPARATOR",
+        "default", "copy", "paste", "help", "SEPARATOR",
         "build", "aggregate", "SEPARATOR",
         "var_name", "allowed empty",
 
     ]
+
+    mapping = {
+        "default": lambda: perform_default_action(app),
+        "copy": lambda : perform_copy_action(app),
+        "paste": lambda : perform_paste_action(app),
+        "help": lambda : perform_help_action(app),
+
+        "build": lambda : perform_build_action(app),
+        "aggregate": lambda : perform_aggregate_action(app),
+    }
 
     btn_width = 6 if ui.is_macos else 7 if ui.is_linux else 8
     position = Position(-1)
@@ -208,9 +218,9 @@ def build_controls(app, parent, row=0):
             continue
 
         if label == "var_name":
-            label = ui.Label(frame, text="Variable Name:")
+            label = ui.Label(frame, text="Variable:")
             label.grid(row=0, column=position.next(), sticky="nswe", padx=(6, 2), pady=4)
-            textbox = ui.TextBox(frame, width=16, justify="left")
+            textbox = ui.TextBox(frame, width=14, justify="left")
             textbox.grid(row=0, column=position.next(), sticky="nswe", pady=4)
             continue
 
@@ -225,10 +235,11 @@ def build_controls(app, parent, row=0):
             checkbox.grid(row=0, column=position.next(), sticky="nswe", padx=(6, 2), pady=4)
             continue
 
+
         kwargs = (
-            {"state": "disabled", "width": btn_width + 3}
+            {"state": "disabled", "width": btn_width + 3, "command": mapping.get(label)}
             if label == "aggregate" else
-            {"width": btn_width}
+            {"width": btn_width, "command": mapping.get(label)}
         )
         button = ui.Button(frame, text=label.title(), **kwargs)
         button.grid(row=0, column=position.next(), sticky='nswe', padx=2, pady=4)
@@ -293,3 +304,46 @@ def create_textarea(parent, row, name, height_rows):
     )
 
     return text
+
+
+def perform_default_action(app):
+    """Placeholder for resetting application settings to default values."""
+    show_message_dialog(
+        title="Reset Defaults",
+        info="The reset-default functionality is not implemented yet.",
+    )
+
+
+def perform_copy_action(app):
+    show_message_dialog(
+        title="Copy Action",
+        info="The copy functionality is not implemented yet.",
+    )
+
+
+def perform_paste_action(app):
+    show_message_dialog(
+        title="Paste Action",
+        info="The paste functionality is not implemented yet.",
+    )
+
+
+def perform_help_action(app):
+    show_message_dialog(
+        title="Help Action",
+        info="The help functionality is not implemented yet.",
+    )
+
+
+def perform_build_action(app):
+    show_message_dialog(
+        title="Build Action",
+        info="The build functionality is not implemented yet.",
+    )
+
+
+def perform_aggregate_action(app):
+    show_message_dialog(
+        title="Aggregate Action",
+        info="The build functionality is not implemented yet.",
+    )
