@@ -15,6 +15,8 @@ from typing import Any, Callable, Dict, Optional
 import platform
 import functools
 
+import yaml
+
 from os import path
 
 import tkinter as tk
@@ -56,6 +58,68 @@ RadioButton = tk.Radiobutton if is_linux else ttk.Radiobutton
 CheckBox = tk.Checkbutton if is_linux else ttk.Checkbutton
 
 Menu = tk.Menu
+
+
+class TriStateCheckBox(CheckBox):
+    """A three‑state checkbox that cycles: unchecked → singular → plural,
+    and syncs its state into an optional shared StringVar list."""
+
+    def __init__(self, parent, label="", shared_var=None):
+        self.base_label = label
+        self.shared_var = shared_var
+        self.state_var = tk.BooleanVar(value=False)  # reflects checked/unchecked
+        self.state_index = 0  # 0=off, 1=singular, 2=plural
+
+        super().__init__(
+            parent,
+            text=label,
+            variable=self.state_var,
+            command=self._cycle_state,
+        )
+
+    def _cycle_state(self):
+        """Advance to the next state and update UI + shared variable."""
+        self.state_index = (self.state_index + 1) % 3
+
+        if self.state_index == 1:
+            self.state_var.set(True)
+            self.config(text=self.base_label)
+
+        elif self.state_index == 2 and self.base_label not in ("anything", "something"):
+            self.state_var.set(True)
+            self.config(text=f"{self.base_label}s")
+
+        else:  # back to unchecked
+            self.state_var.set(False)
+            self.config(text=self.base_label)
+
+        self._sync_shared_var()
+
+    def _sync_shared_var(self):
+        """Update the shared StringVar list to reflect the current state."""
+        if not isinstance(self.shared_var, tk.StringVar):
+            return
+
+        try:
+            items = yaml.safe_load(self.shared_var.get()) or []
+        except Exception:   # noqa
+            items = []
+
+        if not isinstance(items, list):
+            items = []
+
+        singular = self.base_label
+        plural = f"{self.base_label}s"
+
+        # Remove both forms first
+        items = [x for x in items if x not in (singular, plural)]
+
+        # Add the active form
+        if self.state_index == 1:
+            items.append(singular)
+        elif self.state_index == 2:
+            items.append(plural)
+        self.shared_var.set(str(items))
 
 
 def apply_layout(func: Callable) -> Callable:
