@@ -40,16 +40,16 @@ def build_primary_buttons(app, parent) -> None:
     """Create the first-row action buttons for the main UI."""
     btn_width = 6 if ui.is_macos else 8
     button_lst = (
-        (app.settings.test_data_btn_name, "normal", lambda: callback.toggle_test_data_mode(app),),
+        (app.settings.test_data_btn_name, "normal", lambda: callback.perform_toggle_test_data_mode_action(app),),
         ("SEPARATOR", None, None),
-        ("open", "normal", lambda: callback.open_file(app)),
-        ("save", "disabled", lambda: callback.save(app)),
-        ("copy", "disabled", lambda: callback.copy(app)),
-        ("paste", "normal", lambda: callback.paste(app)),
-        ("clear", "normal", lambda: callback.clear(app)),
+        ("open", "normal", lambda: callback.perform_open_action(app)),
+        ("save", "disabled", lambda: callback.perform_save_action(app)),
+        ("copy", "disabled", lambda: callback.perform_copy_action(app)),
+        ("paste", "normal", lambda: callback.perform_paste_action(app)),
+        ("clear", "normal", lambda: callback.perform_clear_action(app)),
         ("SEPARATOR", None, None),
-        ("build", "normal", lambda: callback.build(app)),
-        ("result", "disabled", lambda: callback.show_result(app)),
+        ("build", "normal", lambda: callback.perform_build_action(app)),
+        ("result", "disabled", lambda: callback.perform_show_result_action(app)),
         ("SEPARATOR", None, None),
         ("settings", "normal", lambda: settings.show_dialog(app)),
         ("help", "normal", lambda: usage.show_help(app, "app")),
@@ -86,11 +86,11 @@ def build_secondary_buttons(app, parent) -> None:
     btn_width = 6 if ui.is_macos else 8
 
     button_lst = (
-        ("python", "disabled", lambda: callback.create_python_script(app)),
-        ("unittest", "disabled", lambda: callback.create_unittest_script(app)),
-        ("pytest", "disabled", lambda: callback.create_pytest_script(app)),
+        ("python", "disabled", lambda: callback.perform_python_action(app)),
+        ("unittest", "disabled", lambda: callback.perform_unittest_action(app)),
+        ("pytest", "disabled", lambda: callback.perform_pytest_action(app)),
         ("SEPARATOR", None, None),
-        ("execute", "disabled", lambda: callback.execute_test_script(app)),
+        ("execute", "disabled", lambda: callback.perform_execute_action(app)),
         ("SEPARATOR", None, None),
         ("snippet translator", "normal", lambda: snippet.show_dialog(app)),
         ("regex builder", "normal", lambda: builder.show_dialog(app)),

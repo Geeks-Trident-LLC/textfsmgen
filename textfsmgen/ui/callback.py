@@ -31,7 +31,7 @@ from textfsmgen.ui.common import (
 from tkinter import filedialog
 
 
-def build(app):
+def perform_build_action(app):
     """Handle the 'Build' button action to generate a TextFSM template."""
 
     activate_user_data_mode(app)
@@ -104,7 +104,7 @@ def build(app):
         return
 
 
-def toggle_test_data_mode(app):
+def perform_toggle_test_data_mode_action(app):
     """Handle the 'Test Data' button toggle."""     # noqa
 
     btn_name = app.settings.test_data_btn_name.get()
@@ -124,7 +124,7 @@ def toggle_test_data_mode(app):
         app.textarea.input.config(borderwidth=3)
 
 
-def open_file(app):
+def perform_open_action(app):
     """Handle the "File > Open" menu action."""
 
     filetypes = (('Text Files', '.txt'), ('All Files', '*'))
@@ -153,7 +153,7 @@ def open_file(app):
         app.textarea.input.focus()
 
 
-def save(app):  # noqa
+def perform_save_action(app):  # noqa
     """Save content from the active input or output textarea based on its type."""
     activate_user_data_mode(app, use_test_data=False)
 
@@ -245,7 +245,7 @@ def save(app):  # noqa
     )
 
 
-def clear(app):
+def perform_clear_action(app):
     """
     Handle the 'Clear' button action for text widgets.
     """
@@ -299,7 +299,7 @@ def clear(app):
     app.textarea.input.focus()
 
 
-def copy(app):
+def perform_copy_action(app):
     """Handle the 'Copy' button action for text widgets."""
 
     # Helper: get selected text or full widget text
@@ -363,7 +363,7 @@ def copy(app):
     app.root.update()
 
 
-def paste(app) -> None:
+def perform_paste_action(app) -> None:
     """Paste clipboard text into the input area and update snapshot state."""
     current_text = extract_text(app.textarea.input)
     widget_name = str(app.prev_widget)
@@ -451,7 +451,7 @@ def paste(app) -> None:
         app.textarea.input.focus()
 
 
-def create_python_script(app):
+def perform_python_action(app):
     """
     Handle the 'Snippet' button action to generate a lightweight Python test script.
     """
@@ -500,7 +500,7 @@ def create_python_script(app):
         )
 
 
-def create_unittest_script(app):
+def perform_unittest_action(app):
     """
     Handle the 'Unittest' button action to generate a Python unittest script.
     """
@@ -549,7 +549,7 @@ def create_unittest_script(app):
         )
 
 
-def create_pytest_script(app):
+def perform_pytest_action(app):
     """Handle the 'Pytest' button action to generate a Python pytest script."""
 
     # --- Validate prerequisites ---
@@ -574,7 +574,7 @@ def create_pytest_script(app):
             test_data=app.snapshot.test_data,
             **kwargs
         )
-        script = builder.create_python_test()
+        script = builder.create_pytest()
 
         if app.category_translator_enabled() or app.tabular_translator_enabled():
             app.reset_category_translator()
@@ -597,7 +597,7 @@ def create_pytest_script(app):
         )
 
 
-def execute_test_script(app):
+def perform_execute_action(app):
 
     if not notify_test_execution(app):  # noqa
         return
@@ -645,7 +645,7 @@ def execute_test_script(app):
     set_text(app.textarea.output, str(result))
 
 
-def show_result(app):
+def perform_show_result_action(app):
     """
     Handle the 'Result' button action to parse test data with a TextFSM template.
     """

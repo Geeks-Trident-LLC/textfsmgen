@@ -30,7 +30,7 @@ def create(app) -> None:
         # File
         (file_menu, {
             "label": "Open",
-            "command": lambda: callback.open_file(app)
+            "command": lambda: callback.perform_open_action(app)
         }),
         (file_menu, None),
         (file_menu, {
