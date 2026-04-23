@@ -248,7 +248,7 @@ def add_ok_and_default_buttons(app, parent: ui.Frame) -> None:
     default_btn = ui.Button(
         container,
         text="Default",
-        command=lambda: reset_default_setting(app),
+        command=lambda: perform_default_action(app),
     )
     default_btn.grid(row=0, column=6, padx=1, pady=1, sticky="e")
 
@@ -267,7 +267,7 @@ def add_ok_and_default_buttons(app, parent: ui.Frame) -> None:
     help_btn.grid(row=0, column=8, padx=1, pady=1, sticky="e")
 
 
-def reset_default_setting(app):
+def perform_default_action(app):
     """Reset all application metadata and checkbox settings to defaults."""
 
     # General Arguments
