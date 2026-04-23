@@ -141,16 +141,16 @@ def build_controls_frame(parent, app):
 def build_top_controls(parent, app):
     """Build the top control bar with action buttons and a vertical separator."""
     controls = [
-        ("Translate", lambda: translate(app)),
-        ("Generate",  lambda: generate_and_execute(app)),
-        ("Iterate",   lambda: iterate(app)),
+        ("Translate", lambda: perform_translate_action(app)),
+        ("Generate",  lambda: perform_generate_action(app)),
+        ("Iterate",   lambda: perform_iterate_action(app)),
         ("Default",   lambda: reset_default(app)),
 
         ("SEPARATOR", None),
 
-        ("Copy",      lambda: copy(app)),
-        ("Paste",     lambda: paste(app)),
-        ("Clear",     lambda: clear(app)),
+        ("Copy",      lambda: perform_copy_action(app)),
+        ("Paste",     lambda: perform_paste_action(app)),
+        ("Clear",     lambda: perform_clear_action(app)),
 
         ("SEPARATOR", None),
 
@@ -370,7 +370,7 @@ def reset_default(app):
     app.tools.translator.split_arg.set("/")
 
 
-def clear(app):
+def perform_clear_action(app):
     """Clear selected text in editable areas; warn or clear readonly ones based on last focus."""
     t = app.tools.translator
 
@@ -419,7 +419,7 @@ def clear(app):
     )
 
 
-def paste(app):
+def perform_paste_action(app):
     """Paste clipboard text into editable areas; warn on readonly ones."""
     try:
         data = app.root.clipboard_get()
@@ -479,7 +479,7 @@ def paste(app):
     )
 
 
-def copy(app):
+def perform_copy_action(app):
     """Copy clipboard text into editable areas; warn on readonly ones."""
 
     t = app.tools.translator
@@ -515,7 +515,7 @@ def copy(app):
     )
 
 
-def translate(app):
+def perform_translate_action(app):
     """Translate input text using current translator settings."""
 
     t = app.tools.translator
@@ -547,7 +547,7 @@ def translate(app):
     t.result_textarea.config(wrap="char")
 
 
-def iterate(app):
+def perform_iterate_action(app):
     """Notify the user that the Iterate Snippet feature is not yet implemented."""
     t = app.tools.translator
 
@@ -595,7 +595,7 @@ def iterate(app):
     set_text(t.result_textarea, builder.result)
 
 
-def generate_and_execute(app):
+def perform_generate_action(app):
     t = app.tools.translator
 
     raw_data = extract_text(t.in_textarea)
