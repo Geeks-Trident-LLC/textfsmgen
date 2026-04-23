@@ -13,6 +13,7 @@ from textfsmgen.ui import (
     settings,
     usage,
     snippet,
+    builder,
 
 )
 
@@ -92,7 +93,7 @@ def build_secondary_buttons(app, parent) -> None:
         ("execute", "disabled", lambda: callback.execute_test_script(app)),
         ("SEPARATOR", None, None),
         ("snippet translator", "normal", lambda: snippet.show_dialog(app)),
-        ("regex builder", "disabled", lambda: None),
+        ("regex builder", "normal", lambda: builder.show_dialog(app)),
         ("keyword query assistant", "disabled", lambda: None),
     )
 
