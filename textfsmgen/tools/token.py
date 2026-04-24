@@ -21,6 +21,8 @@ from textfsmgen.tools.explain import SnippetExplanation
 
 from textfsmgen.core.patterns import LinePattern
 
+from textfsmgen.libs.text import enclose_string
+
 
 class SnippetBase:
     """Base class for snippet parsers."""
@@ -150,7 +152,7 @@ class SnippetBase:
         items = [item.strip() for item in self._items]
         data = samples or (items if any(items) else self._items)
 
-        node = SnippetExplanation(snippet, data)
+        node = SnippetExplanation(snippet, test_samples=data)
         explanation = node.explanation
 
         if samples is None:
@@ -424,25 +426,6 @@ def create_pattern_statement(snippet: str, pattern: str) -> str:
         "# Equivalent snippet conversion:",
         snippet_comment,
         border,
+        f"pattern = r{enclose_string(pattern)}"
     ]
-
-    # Use triple quotes only when pattern contains a double quote
-    if '"' in pattern:
-        first, middle, last = pattern[:1], pattern[1:-1], pattern[-1:]
-        first = '\\"' if first == '"' else first
-        last = '\\"' if last == '"' else last
-
-        parts = []
-        for item in split_by_matches(middle, r'"{3,}'):
-            if re.fullmatch(r'"{3,}"', item):
-                parts.append('\\"' * len(item))
-                continue
-            parts.append(item)
-        body = "".join(parts)
-
-        stmt = f'pattern = r"""{first}{body}{last}"""'
-    else:
-        stmt = f'pattern = r"{pattern}"'
-
-    lines.append(stmt)
     return "\n".join(lines)

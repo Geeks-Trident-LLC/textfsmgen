@@ -29,10 +29,7 @@ def test_basic():
         Produces:
             [True, True]
     """)
-    node = SnippetExplanation(
-        "word(var_v1)",
-        ["dummy", "other_dummy"]
-    )
+    node = SnippetExplanation("word(var_v1)",test_samples=["dummy", "other_dummy"])
     assert node.explanation == expected
 
 
@@ -56,7 +53,7 @@ def test_with_optional():
     """)
     node = SnippetExplanation(
         "optional_mixed_words(var_v1)",
-        ["dummy", "today is good day."]
+        test_samples=["dummy", "today is good day."]
     )
     assert node.explanation == expected
 
@@ -80,7 +77,7 @@ def test_with_or_empty_flag():
     """)
     node = SnippetExplanation(
         "optional_non_wss_group(var_v3, or_empty)",
-        ["dummy", "", "lst = {'a': 1}"],
+        test_samples=["dummy", "", "lst = {'a': 1}"],
     )
     assert node.explanation == expected
 
@@ -110,17 +107,14 @@ def test_failure_incorrect_list_of_data():
     """)
     node = SnippetExplanation(
         "words(var_v3, or_empty)",
-        ["dummy", "", "Connection* 10:"],
+        test_samples=["dummy", "", "Connection* 10:"]
     )
     assert node.explanation == expected
 
 
 def test_failure_because_of_keyword_token():
     expected = "Provided snippet is empty.  Cannot explain."
-    node = SnippetExplanation(
-        "",
-        ["dummy", ],
-    )
+    node = SnippetExplanation("", test_samples=["dummy", ])
     assert node.explanation == expected
 
 
@@ -131,10 +125,7 @@ def test_failure_undefined_keyword():
         +------------------------------------------+
         Undefined 'dummy_keyword' keyword.  Request technical support for feature extension.
     """)
-    node = SnippetExplanation(
-        "dummy_keyword(var_v0)",
-        ["dummy", ],
-    )
+    node = SnippetExplanation("dummy_keyword(var_v0)", test_samples=["dummy", ])
     assert node.explanation == expected
 
 
@@ -163,8 +154,5 @@ def test_failure_invalid_keyword_syntax():
           3. one_to_three_words(var_v2)
              Matches one to three whitespace‑separated words and captures "v2".
     """)
-    node = SnippetExplanation(
-        "word(var_v0",
-        ["dummy", ],
-    )
+    node = SnippetExplanation("word(var_v0", test_samples=["dummy", ])
     assert node.explanation.strip() == expected

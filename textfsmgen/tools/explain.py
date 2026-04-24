@@ -20,7 +20,7 @@ from textfsmgen.engine.doc import TokenDoc
 
 
 class SnippetExplanation:
-    def __init__(self, snippet: str, test_samples):
+    def __init__(self, snippet: str, test_samples=None):
         self._raw_snippet = str(snippet)
         self._test_samples = test_samples
 
