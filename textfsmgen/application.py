@@ -58,17 +58,20 @@ class Application:
 
     def init_app_variables(self):
         self.frames = DotObject(
+            # frame widget
             input=None,
             controls=None,
             output=None
         )
 
         self.textarea = DotObject(
+            # textarea widgets
             input=None,
             output=None,
         )
 
         self.buttons = DotObject(
+            # button widgets
             test_data=None,
             open=None,
             clear=None,
@@ -138,19 +141,25 @@ class Application:
 
         self.tools = DotObject(
             translator = DotObject(
+                # flag or variable
                 variable_flag=tk.BooleanVar(value=True),
                 group_flag=tk.BooleanVar(),
                 generic_flag=tk.BooleanVar(value=True),
                 notation_flag=tk.BooleanVar(),
                 split_arg=tk.StringVar(value="/"),
 
+                # widget
                 in_textarea=None,
                 out_textarea=None,
                 code_textarea=None,
                 result_textarea=None,
             ),
             builder = DotObject(
+                # widget
+                semantic_group = None,
+                possible_outcomes_group=None,
 
+                # widget-variable
                 shared_semantic_list=tk.StringVar(),
 
                 exact_quantity=tk.StringVar(),
@@ -162,7 +171,14 @@ class Application:
                 var_name=tk.StringVar(),
 
                 possible_outcomes_value=tk.StringVar(),
-                possible_outcomes_group=None
+
+                # data
+                shared_data_list = [
+                    tk.StringVar(), tk.StringVar(),
+                    tk.StringVar(), tk.StringVar(),
+                    tk.StringVar(), tk.StringVar(),
+                    tk.StringVar(), tk.StringVar(),
+                ]
             )
         )
 

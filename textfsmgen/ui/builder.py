@@ -105,6 +105,8 @@ def build_semantic_group(app, parent, row=0):
     semantic_group = ui.LabelFrame(parent, text="Semantic")
     semantic_group.grid(row=row, column=0, padx=4, pady=(4, 0), sticky="new")
 
+    app.tools.builder.semantic_group = semantic_group
+
     label_groups = [
         ["anything",    "something",    "space",        "whitespace",       ],
         ["dot",         "alnum",        "graph",        "non-whitespace",   ],
@@ -181,16 +183,23 @@ def build_data_group(app, parent, row=0):
     data_group.grid(row=row, column=0, padx=4, pady=(4, 0), sticky="new")
 
     rows = []
-
+    index = 0
     for row_pos in range(2):
         row = []
         for col_pos in range(4):
             if row_pos == 0:
                 data_group.grid_columnconfigure(col_pos, weight=1, uniform="equal")
 
-            textbox = ui.TextBox(data_group)
-            textbox.grid(row=row_pos, column=col_pos, sticky="nsew", padx=1, pady=(0, 2))
+            textbox = ui.TextBox(
+                data_group,
+                textvariable=app.tools.builder.shared_data_list[index],
+            )
+            textbox.grid(
+                row=row_pos, column=col_pos,
+                sticky="nsew", padx=1, pady=(0, 2)
+            )
             row.append(textbox)
+            index += 1
         rows.append(row)
         data_group.grid_rowconfigure(row_pos, weight=0)
 
@@ -202,11 +211,11 @@ def build_controls(app, parent, row=0):
     labels = [
         "build", "aggregate", "SEPARATOR",
         "var_name", "allowed empty", "SEPARATOR",
-        "copy", "paste", "default", "help",
+        "copy", "paste", "reset", "help",
     ]
 
     mapping = {
-        "default": lambda: perform_default_action(app),
+        "reset": lambda: perform_reset_action(app),
         "copy": lambda : perform_copy_action(app),
         "paste": lambda : perform_paste_action(app),
         "help": lambda : perform_help_action(app),
@@ -291,12 +300,37 @@ def create_textarea(parent, row, name, height_rows):
     return text
 
 
-def perform_default_action(app):
-    """Placeholder for resetting application settings to default values."""
-    show_message_dialog(
-        title="Reset Defaults",
-        info="The reset-default functionality is not implemented yet.",
-    )
+def perform_reset_action(app):
+    """Reset all Regex Builder fields, flags, and widgets to defaults."""
+    b = app.tools.builder
+    empty = ""
+
+    # Reset scalar fields
+    for var in (
+        b.shared_semantic_list,
+        b.exact_quantity,
+        b.range_min_quantity,
+        b.range_max_quantity,
+        b.variant_flag,
+        b.var_name,
+        b.possible_outcomes_value,
+    ):
+        var.set(empty)
+
+    # Reset boolean flags
+    b.allowed_empty_flag.set(False)
+
+    # Reset list‑based data
+    for var in b.shared_data_list:
+        var.set(empty)
+
+    # Reset widget groups
+    b.possible_outcomes_group.reset()
+
+    # Reset TriStateCheckBox widgets
+    for child in b.semantic_group.winfo_children():
+        if isinstance(child, ui.TriStateCheckBox):
+            child.reset()
 
 
 def perform_copy_action(app):
@@ -328,10 +362,9 @@ def perform_build_action(app):
         "words(var_v3)",
         "optional_mixed_word_group(var_another_long_variable)"
     ]
-    app.tools.builder.possible_outcomes_group.build(
-        label_groups,
-        state_var=app.tools.builder.possible_outcomes_value
-    )
+    b = app.tools.builder
+    b.possible_outcomes_group.grid(row=3, column=0, padx=4, pady=(4, 0), sticky="new")
+    b.possible_outcomes_group.build(label_groups, state_var=b.possible_outcomes_value)
 
 
 def perform_aggregate_action(app):
