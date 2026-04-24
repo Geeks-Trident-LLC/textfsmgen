@@ -99,3 +99,23 @@ def clean_list_of_dicts(items: list, chars: Optional[str] = None) -> list:
         else:
             result.append(_copy.deepcopy(item))
     return result
+
+
+def trim_empty_edges(items):
+    """Remove leading and trailing empty-string items."""
+    items = list(items)
+    while items and items[0] == "":
+        items.pop(0)
+    while items and items[-1] == "":
+        items.pop()
+    return items
+
+
+def trim_blank_edges(items):
+    """Remove leading and trailing items that are blank after stripping."""
+    items = list(items)
+    while items and items[0].strip() == "":
+        items.pop(0)
+    while items and items[-1].strip() == "":
+        items.pop()
+    return items
