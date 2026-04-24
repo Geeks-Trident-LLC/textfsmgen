@@ -79,20 +79,25 @@ class TriStateCheckBox(CheckBox):
         )
 
     def _cycle_state(self):
-        """Advance to the next state and update UI + shared variable."""
-        self.state_index = (self.state_index + 1) % 3
+        """Advance checkbox state and update label + shared variable."""
+        is_special = self.base_label in ("anything", "something")
 
-        if self.state_index == 1:
-            self.state_var.set(True)
-            self.config(text=self.base_label)
+        # Determine next state count (2-state or 3-state)
+        max_state = 1 if is_special else 2
+        self.state_index = (self.state_index + 1) % (max_state + 1)
 
-        elif self.state_index == 2 and self.base_label not in ("anything", "something"):
-            self.state_var.set(True)
-            self.config(text=f"{self.base_label}s")
-
-        else:  # back to unchecked
+        # Update UI text + BooleanVar
+        if self.state_index == 0:
             self.state_var.set(False)
             self.config(text=self.base_label)
+
+        elif self.state_index == 1:
+            self.state_var.set(True)
+            self.config(text=self.base_label)
+
+        else:  # state_index == 2 (plural form)
+            self.state_var.set(True)
+            self.config(text=f"{self.base_label}s")
 
         self._sync_shared_var()
 
@@ -136,15 +141,12 @@ class DynamicCheckboxGroup(ttk.LabelFrame):
         # Dedicated container for dynamic widgets
         self.body = ttk.Frame(self)
 
-        # Start hidden
-        self.visible = False
-
     @staticmethod
     def create_group_labels(items):
         max_len = max(len(item) for item in items)
 
         for count in [4, 3, 2]:
-            if max_len * count <= 120:
+            if max_len * count <= 100:
                 return [items[i:i+count] for i in range(0, len(items), count)]
 
         # breakpoint()
@@ -159,7 +161,7 @@ class DynamicCheckboxGroup(ttk.LabelFrame):
                 continue
 
             first_item = last_row[0]
-            if len(first_item) > 60:
+            if len(first_item) > 50:
                 rows.append([item])
                 continue
             last_row.append(item)
@@ -174,19 +176,21 @@ class DynamicCheckboxGroup(ttk.LabelFrame):
           - If any label > 60 chars → row becomes 1 item (colspan=2)
         """
 
+        if not labels:
+            return
+
         state_var = state_var or tk.StringVar()
 
-        # Make visible on first build
-        if not self.visible:
-            self.body.pack(fill="x", padx=6, pady=6)
-            self.visible = True
+        self.body.pack(fill="x", padx=6, pady=6)
 
         # Destroy all dynamic widgets
         for child in self.body.winfo_children():
             child.destroy()
 
+        grouped = self.create_group_labels(labels)
+
         # Build UI rows
-        for row_pos, row in enumerate(self.create_group_labels(labels)):
+        for row_pos, row in enumerate(grouped):
             for col_pos, text in enumerate(row):
                 chk = ttk.Checkbutton(
                     self.body, text=text,
@@ -197,10 +201,15 @@ class DynamicCheckboxGroup(ttk.LabelFrame):
                 # Long label → span 2 columns
                 if len(text) > 60:
                     chk.grid(row=row_pos, column=0, columnspan=2, sticky="w", padx=2)
-                    self.body.grid_columnconfigure(0, weight=1, uniform="equal")
+                    # self.body.grid_columnconfigure(0, weight=1, uniform="equal")
                 else:
                     chk.grid(row=row_pos, column=col_pos, sticky="w", padx=2)
-                    self.body.grid_columnconfigure(col_pos, weight=1, uniform="equal")
+                    # self.body.grid_columnconfigure(col_pos, weight=1, uniform="equal")
+
+        # 2. THEN configure columns (this is the key)
+        max_cols = max(len(row) for row in grouped)
+        for col in range(max_cols):
+            self.body.grid_columnconfigure(col, weight=1, uniform="equal")
 
     def reset(self):
         # Destroy all dynamic widgets
@@ -208,10 +217,8 @@ class DynamicCheckboxGroup(ttk.LabelFrame):
             child.destroy()
 
         # Hide the container frame
-        self.grid_forget()
-
-        # Mark as hidden so build() can show it again
-        self.visible = False
+        self.body.pack_forget()
+        self.grid_remove()
 
 
 def apply_layout(func: Callable) -> Callable:
