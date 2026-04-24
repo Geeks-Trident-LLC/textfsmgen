@@ -122,6 +122,10 @@ class TriStateCheckBox(CheckBox):
             items.append(plural)
         self.shared_var.set(str(items))
 
+    def reset(self):
+        self.state_var.set(False)
+        self.state_index = 0
+
 
 class DynamicCheckboxGroup(ttk.LabelFrame):
     """A LabelFrame that stays hidden until build() populates checkboxes."""
@@ -177,7 +181,7 @@ class DynamicCheckboxGroup(ttk.LabelFrame):
             self.body.pack(fill="x", padx=6, pady=6)
             self.visible = True
 
-        # Clear old widgets
+        # Destroy all dynamic widgets
         for child in self.body.winfo_children():
             child.destroy()
 
@@ -197,6 +201,17 @@ class DynamicCheckboxGroup(ttk.LabelFrame):
                 else:
                     chk.grid(row=row_pos, column=col_pos, sticky="w", padx=2)
                     self.body.grid_columnconfigure(col_pos, weight=1, uniform="equal")
+
+    def reset(self):
+        # Destroy all dynamic widgets
+        for child in self.body.winfo_children():
+            child.destroy()
+
+        # Hide the container frame
+        self.grid_forget()
+
+        # Mark as hidden so build() can show it again
+        self.visible = False
 
 
 def apply_layout(func: Callable) -> Callable:
