@@ -119,3 +119,9 @@ def trim_blank_edges(items):
     while items and items[-1].strip() == "":
         items.pop()
     return items
+
+
+def add_if_absent(item, items):
+    """Add item to list only if it is not already present."""
+    if item not in items:
+        items.append(item)
