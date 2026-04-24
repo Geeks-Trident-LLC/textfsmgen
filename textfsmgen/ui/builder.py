@@ -9,7 +9,12 @@ from typing import Optional, Union
 import re
 
 from textfsmgen.engine.translate import make_translator
+from textfsmgen.libs.datatype import trim_empty_edges, trim_blank_edges, add_if_absent
+from textfsmgen.tools.explain import SnippetExplanation
 
+from textfsmgen.core.patterns import LinePattern
+
+from textfsmgen.libs.text import enclose_string
 from textfsmgen.libs.generic import Position
 
 from textfsmgen import ui
@@ -29,6 +34,7 @@ window_height = 770 if ui.is_macos else 780 if ui.is_linux else 720
 
 def show_dialog(app):
     """Show the dialog window."""
+    b = app.tools.builder
     parent = app.root
 
     dialog = create_window(parent)
@@ -38,17 +44,16 @@ def show_dialog(app):
 
     paned_window = build_pane_window(dialog)
 
-    build_semantic_group(app, paned_window, row=0)
+    b.semantic_group = build_semantic_group(app, paned_window, row=0)
 
     build_data_group(app, paned_window, row=1)
 
     build_controls(app, paned_window, row=2)
 
-    build_possible_outcomes(app, paned_window, row=3)
+    b.outcomes_group = build_possible_outcomes(app, paned_window, row=3)
 
-    create_textarea(paned_window, row=4, name="pattern_area", height_rows=2)
-    create_textarea(paned_window, row=5, name="explanation_area", height_rows=10)
-
+    b.pattern_area = create_textarea(paned_window, row=4, name="pattern_area", height_rows=2)
+    b.explain_area = create_textarea(paned_window, row=5, name="explain_area", height_rows=10)
     dialog.bind("<Button-1>", lambda e: app.callback_focus(e))
 
     # Make dialog modal
@@ -106,8 +111,6 @@ def build_semantic_group(app, parent, row=0):
 
     semantic_group = ui.LabelFrame(parent, text="Semantic")
     semantic_group.grid(row=row, column=0, padx=4, pady=(4, 0), sticky="new")
-
-    app.tools.builder.semantic_group = semantic_group
 
     label_groups = [
         ["anything",    "something",    "space",        "whitespace",       ],
@@ -179,6 +182,8 @@ def build_semantic_group(app, parent, row=0):
             )
             checkbox.grid(row=row_pos, column=col_pos, sticky="nw")
 
+    return semantic_group
+
 
 def build_data_group(app, parent, row=0):
     data_group = ui.LabelFrame(parent, text="Data")
@@ -204,6 +209,8 @@ def build_data_group(app, parent, row=0):
             index += 1
         rows.append(row)
         data_group.grid_rowconfigure(row_pos, weight=0)
+
+    return data_group
 
 
 def build_controls(app, parent, row=0):
@@ -264,11 +271,15 @@ def build_controls(app, parent, row=0):
         button = ui.Button(frame, text=label.title(), **kwargs)
         button.grid(row=0, column=position.next(), sticky='nswe', padx=2, pady=4)
 
+    return frame
+
 
 def build_possible_outcomes(app, parent, row=0):
-    outcomes_group = ui.DynamicCheckboxGroup(parent, title="Possible Outcomes")
+    outcomes_group = ui.DynamicCheckboxGroup(
+        parent, title="Possible Outcomes",
+    )
     outcomes_group.grid(row=row, column=0, padx=4, pady=(4, 0), sticky="new")
-    app.tools.builder.possible_outcomes_group = outcomes_group
+    return outcomes_group
 
 
 def create_textarea(parent, row, name, height_rows):
@@ -278,28 +289,28 @@ def create_textarea(parent, row, name, height_rows):
     frame.columnconfigure(0, weight=1)
     frame.rowconfigure(0, weight=1)
 
-    text = ui.TextArea(
+    textarea = ui.TextArea(
         frame,
         wrap="none",
         state="disabled",
-        foreground=ui.readonly_text_bg_color,
+        background=ui.readonly_text_bg_color,
         height=height_rows,   # rows of text
         name=name
     )
-    text.grid(row=0, column=0, sticky="nsew")
+    textarea.grid(row=0, column=0, sticky="nsew")
 
-    vbar = ui.Scrollbar(frame, orient="vertical", command=text.yview)
+    vbar = ui.Scrollbar(frame, orient="vertical", command=textarea.yview)
     vbar.grid(row=0, column=1, sticky="ns")
 
-    hbar = ui.Scrollbar(frame, orient="horizontal", command=text.xview)
+    hbar = ui.Scrollbar(frame, orient="horizontal", command=textarea.xview)
     hbar.grid(row=1, column=0, sticky="ew")
 
-    text.configure(
+    textarea.configure(
         yscrollcommand=vbar.set,
         xscrollcommand=hbar.set
     )
 
-    return text
+    return textarea
 
 
 def on_dialog_close(app, dialog):
@@ -321,7 +332,7 @@ def perform_reset_action(app):
         b.range_max_quantity,
         b.variant_flag,
         b.var_name,
-        b.possible_outcomes_value,
+        b.outcomes_value,
     ):
         var.set(empty)
 
@@ -333,7 +344,7 @@ def perform_reset_action(app):
         var.set(empty)
 
     # Reset widget groups
-    b.possible_outcomes_group.reset()
+    b.outcomes_group.reset()
 
     # Reset TriStateCheckBox widgets
     for child in b.semantic_group.winfo_children():
@@ -382,9 +393,10 @@ def perform_build_action(app):
     snippets = []
 
     # Data-group snippet
-    data_snippet = create_snippet_from_data_group(app)
+    data_snippet, samples = derive_snippet_from_data(app)
     if data_snippet:
         snippets.append(data_snippet)
+        b.snippet_and_samples = [data_snippet, samples]
 
     # Semantic list
     semantic_text = b.shared_semantic_list.get()
@@ -407,34 +419,44 @@ def perform_build_action(app):
             # Special-case semantics
             if semantic in ("anything", "something"):
                 snippets.append(f"{semantic}({params_txt})")
+
                 continue
 
             # Variant handling
             if variant:
                 if variant == "optional_group":
-                    snippets.append(f"optional_{semantic}_group({params_txt})")
+                    add_if_absent(f"optional_{semantic}_group({params_txt})", snippets)
                 elif variant == "group":
-                    snippets.append(f"{semantic}_group({params_txt})")
+                    add_if_absent(f"{semantic}_group({params_txt})", snippets)
                 else:
-                    snippets.append(f"{variant}_{semantic}({params_txt})")
+                    add_if_absent(f"{variant}_{semantic}({params_txt})", snippets)
                 continue
 
             # Exact quantity
             if qty_exact:
-                snippets.append(f"{qty_exact}_{semantic}({params_txt})")
+                add_if_absent(f"{qty_exact}_{semantic}({params_txt})", snippets)
                 continue
 
             # Range quantity
             if qty_min or qty_max:
-                snippets.append(f"{qty_min}_{qty_max}_{semantic}({params_txt})")
+                add_if_absent(f"{qty_min}_{qty_max}_{semantic}({params_txt})", snippets)
                 continue
 
             # Default
-            snippets.append(f"{semantic}({params_txt})")
+            add_if_absent(f"{semantic}({params_txt})", snippets)
 
     # Display results
-    b.possible_outcomes_group.grid(row=3, column=0, padx=4, pady=(4, 0), sticky="new")
-    b.possible_outcomes_group.build(snippets, state_var=b.possible_outcomes_value)
+    b.outcomes_group.grid(row=3, column=0, padx=4, pady=(4, 0), sticky="new")
+    b.outcomes_group.build(snippets, state_var=b.outcomes_value)
+
+    for checkbox in b.outcomes_group.checkboxes:
+        checkbox.configure(command=lambda: on_click(app))
+
+    if b.outcomes_group.checkboxes:
+        first_checkbox = b.outcomes_group.checkboxes[0]
+        first_checkbox.invoke()
+        if not b.outcomes_value.get():
+            first_checkbox.invoke()
 
 
 def perform_aggregate_action(app):
@@ -444,27 +466,7 @@ def perform_aggregate_action(app):
     )
 
 
-def trim_empty_edges(items):
-    """Remove leading and trailing empty-string items."""
-    items = list(items)
-    while items and items[0] == "":
-        items.pop(0)
-    while items and items[-1] == "":
-        items.pop()
-    return items
-
-
-def trim_blank_edges(items):
-    """Remove leading and trailing items that are blank after stripping."""
-    items = list(items)
-    while items and items[0].strip() == "":
-        items.pop(0)
-    while items and items[-1].strip() == "":
-        items.pop()
-    return items
-
-
-def create_snippet_from_data_group(app):
+def derive_snippet_from_data(app):
     """Build a keyword snippet from the Data Group inputs."""
     b = app.tools.builder
     var_name = b.var_name.get()
@@ -489,7 +491,7 @@ def create_snippet_from_data_group(app):
         params_txt = ", ".join(params)
         translator = make_translator(*cleaned, multiple=False)
         snippet = translator.to_snippet()
-        return snippet.replace("()", f"({params_txt})")
+        return snippet.replace("()", f"({params_txt})"), inner
 
     # Case 2: no meaningful values, but some raw entries exist
     if any(items):
@@ -503,8 +505,32 @@ def create_snippet_from_data_group(app):
         has_non_space = any(re.match(r"[^ \r\n]", s) for s in items if s)
         base = "whitespaces" if has_non_space else "spaces"
 
-        return f"{base}({params_txt})"
+        return f"{base}({params_txt})", inner
 
     # Case 3: nothing at all
-    return ""
+    return "", ""
 
+
+def on_click(app):
+    """Render pattern and explanation for the selected outcome snippet."""
+    b = app.tools.builder
+    snippet = b.outcomes_value.get()
+
+    if not snippet:
+        clear_text(b.pattern_area)
+        clear_text(b.explain_area)
+        return
+
+    # Build explanation node
+    if b.snippet_and_samples and snippet in b.snippet_and_samples:
+        samples = b.snippet_and_samples[-1]
+        node = SnippetExplanation(snippet, test_samples=samples)
+    else:
+        node = SnippetExplanation("word(var_v1)", test_samples=["dummy", "other_dummy"])
+
+    # Build pattern
+    pattern = LinePattern(snippet)
+
+    # Update UI
+    set_text(b.pattern_area, f"pattern = r{enclose_string(pattern)}")
+    set_text(b.explain_area, node.explanation)

@@ -140,6 +140,7 @@ class DynamicCheckboxGroup(ttk.LabelFrame):
 
         # Dedicated container for dynamic widgets
         self.body = ttk.Frame(self)
+        self.checkboxes = []
 
     @staticmethod
     def create_group_labels(items):
@@ -188,6 +189,7 @@ class DynamicCheckboxGroup(ttk.LabelFrame):
             child.destroy()
 
         grouped = self.create_group_labels(labels)
+        self.checkboxes.clear()
 
         # Build UI rows
         for row_pos, row in enumerate(grouped):
@@ -196,15 +198,17 @@ class DynamicCheckboxGroup(ttk.LabelFrame):
                     self.body, text=text,
                     onvalue=text, offvalue="",
                     variable=state_var,
-                    cursor="hand2"
+                    cursor="hand2",
                 )
+                self.checkboxes.append(chk)
                 # Long label → span 2 columns
                 if len(text) > 60:
                     chk.grid(row=row_pos, column=0, columnspan=2, sticky="w", padx=2)
-                    # self.body.grid_columnconfigure(0, weight=1, uniform="equal")
                 else:
                     chk.grid(row=row_pos, column=col_pos, sticky="w", padx=2)
-                    # self.body.grid_columnconfigure(col_pos, weight=1, uniform="equal")
+
+        for c in range(4):
+            self.body.grid_columnconfigure(c, weight=0, uniform="")
 
         # 2. THEN configure columns (this is the key)
         max_cols = max(len(row) for row in grouped)

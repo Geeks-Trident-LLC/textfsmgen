@@ -157,7 +157,9 @@ class Application:
             builder = DotObject(
                 # widget
                 semantic_group = None,
-                possible_outcomes_group=None,
+                outcomes_group=None,
+                pattern_area=None,
+                explain_area=None,
 
                 # widget-variable
                 shared_semantic_list=tk.StringVar(),
@@ -170,7 +172,7 @@ class Application:
                 allowed_empty_flag=tk.BooleanVar(),
                 var_name=tk.StringVar(),
 
-                possible_outcomes_value=tk.StringVar(),
+                outcomes_value=tk.StringVar(),
 
                 # data
                 shared_data_list = [
@@ -178,7 +180,8 @@ class Application:
                     tk.StringVar(), tk.StringVar(),
                     tk.StringVar(), tk.StringVar(),
                     tk.StringVar(), tk.StringVar(),
-                ]
+                ],
+                snippet_and_samples=None
             )
         )
 
