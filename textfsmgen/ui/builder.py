@@ -8,14 +8,13 @@ from typing import Optional, Union
 
 import re
 
-from textfsmgen.libs.text import (
-    get_list_of_lines,
-)
+from textfsmgen.engine.translate import make_translator
 
 from textfsmgen.libs.generic import Position
 
 from textfsmgen import ui
 from textfsmgen.ui import usage
+import yaml
 
 from textfsmgen.ui.common import (
     show_message_dialog,
@@ -33,6 +32,9 @@ def show_dialog(app):
     parent = app.root
 
     dialog = create_window(parent)
+
+    # Register cleanup callback
+    dialog.protocol("WM_DELETE_WINDOW", lambda: on_dialog_close(app, dialog))
 
     paned_window = build_pane_window(dialog)
 
@@ -300,6 +302,12 @@ def create_textarea(parent, row, name, height_rows):
     return text
 
 
+def on_dialog_close(app, dialog):
+    """Cleanup when dialog closes."""
+    perform_reset_action(app)
+    dialog.destroy()
+
+
 def perform_reset_action(app):
     """Reset all Regex Builder fields, flags, and widgets to defaults."""
     b = app.tools.builder
@@ -353,16 +361,80 @@ def perform_help_action(app):
 
 
 def perform_build_action(app):
-    label_groups = [
-        "optional_mixed_word_group(var_abc_xyz, or_empty)",
-        "optional_mixed_word_group(var_v2)",
-        "optional_mixed_word_group(var_another_super_long_variable_that_must_stay_in_one_line)",
-        "words(var_v3)",
-        "optional_mixed_word_group(var_another_long_variable)"
-    ]
+    """Build possible outcome snippets from semantic and data inputs."""
     b = app.tools.builder
+
+    # Build parameter list
+    params = []
+    var_name = b.var_name.get()
+    if var_name:
+        params.append(f"var_{var_name}")
+    if b.allowed_empty_flag.get():
+        params.append("or_empty")
+    params_txt = ", ".join(params)
+
+    # Quantity + variant inputs
+    variant = b.variant_flag.get()
+    qty_exact = b.exact_quantity.get().strip()
+    qty_min = b.range_min_quantity.get().strip()
+    qty_max = b.range_max_quantity.get().strip()
+
+    snippets = []
+
+    # Data-group snippet
+    data_snippet = create_snippet_from_data_group(app)
+    if data_snippet:
+        snippets.append(data_snippet)
+
+    # Semantic list
+    semantic_text = b.shared_semantic_list.get()
+
+    # Nothing selected and no data → warn
+    if not semantic_text and not snippets:
+        show_message_dialog(
+            title="Missing Semantic Selection or Data",
+            warning=(
+                "No semantic items are selected and no data is provided.\n"
+                "Please choose a semantic item or enter data in the Data Group."
+            ),
+        )
+        return
+
+    # Build semantic-based snippets
+    if semantic_text:
+        for semantic in yaml.safe_load(semantic_text):
+
+            # Special-case semantics
+            if semantic in ("anything", "something"):
+                snippets.append(f"{semantic}({params_txt})")
+                continue
+
+            # Variant handling
+            if variant:
+                if variant == "optional_group":
+                    snippets.append(f"optional_{semantic}_group({params_txt})")
+                elif variant == "group":
+                    snippets.append(f"{semantic}_group({params_txt})")
+                else:
+                    snippets.append(f"{variant}_{semantic}({params_txt})")
+                continue
+
+            # Exact quantity
+            if qty_exact:
+                snippets.append(f"{qty_exact}_{semantic}({params_txt})")
+                continue
+
+            # Range quantity
+            if qty_min or qty_max:
+                snippets.append(f"{qty_min}_{qty_max}_{semantic}({params_txt})")
+                continue
+
+            # Default
+            snippets.append(f"{semantic}({params_txt})")
+
+    # Display results
     b.possible_outcomes_group.grid(row=3, column=0, padx=4, pady=(4, 0), sticky="new")
-    b.possible_outcomes_group.build(label_groups, state_var=b.possible_outcomes_value)
+    b.possible_outcomes_group.build(snippets, state_var=b.possible_outcomes_value)
 
 
 def perform_aggregate_action(app):
@@ -370,3 +442,69 @@ def perform_aggregate_action(app):
         title="Aggregate Action",
         info="The build functionality is not implemented yet.",
     )
+
+
+def trim_empty_edges(items):
+    """Remove leading and trailing empty-string items."""
+    items = list(items)
+    while items and items[0] == "":
+        items.pop(0)
+    while items and items[-1] == "":
+        items.pop()
+    return items
+
+
+def trim_blank_edges(items):
+    """Remove leading and trailing items that are blank after stripping."""
+    items = list(items)
+    while items and items[0].strip() == "":
+        items.pop(0)
+    while items and items[-1].strip() == "":
+        items.pop()
+    return items
+
+
+def create_snippet_from_data_group(app):
+    """Build a keyword snippet from the Data Group inputs."""
+    b = app.tools.builder
+    var_name = b.var_name.get()
+
+    params = []
+    if var_name:
+        params.append(f"var_{var_name}")
+
+    # Raw items from UI
+    items = [var.get() for var in b.shared_data_list]
+
+    # Non-empty (after stripping) items
+    cleaned = [s.strip() for s in items if s.strip()]
+
+    # Case 1: actual data values exist
+    if cleaned:
+        # Detect internal empties (after trimming edges)
+        inner = trim_blank_edges(items)
+        if any(s.strip() == "" for s in inner):
+            params.append("or_empty")
+
+        params_txt = ", ".join(params)
+        translator = make_translator(*cleaned, multiple=False)
+        snippet = translator.to_snippet()
+        return snippet.replace("()", f"({params_txt})")
+
+    # Case 2: no meaningful values, but some raw entries exist
+    if any(items):
+        inner = trim_empty_edges(items)
+        if any(bool(s) for s in inner):
+            params.append("or_empty")
+
+        params_txt = ", ".join(params)
+
+        # Detect whitespace vs non-whitespace
+        has_non_space = any(re.match(r"[^ \r\n]", s) for s in items if s)
+        base = "whitespaces" if has_non_space else "spaces"
+
+        return f"{base}({params_txt})"
+
+    # Case 3: nothing at all
+    return ""
+
