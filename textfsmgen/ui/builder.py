@@ -22,7 +22,6 @@ from textfsmgen.ui.common import (
     center_window,
     make_modal,
     clear_text,
-    extract_text,
     set_text
 )
 
@@ -107,10 +106,10 @@ def build_semantic_group(app, parent, row=0):
     semantic_group.grid(row=row, column=0, padx=4, pady=(4, 0), sticky="new")
 
     label_groups = [
-        ["anything",    "something",    "space",    "whitespace",       ],
-        ["dot",         "alnum",        "graph",    "non-whitespace",   ],
-        ["digit",       "number",       "",         "punctuation",      ],
-        ["letter",      "word",         "words",    "",                 ],
+        ["anything",    "something",    "space",        "whitespace",       ],
+        ["dot",         "alnum",        "graph",        "non-whitespace",   ],
+        ["digit",       "number",       "mixed-number", "punctuation",      ],
+        ["letter",      "word",         "mixed-word",   "",                 ],
     ]
 
     row_pos, col_pos = 0, 0
@@ -123,20 +122,19 @@ def build_semantic_group(app, parent, row=0):
                 continue
 
             kwargs = {
-                "text": label,
-                "onvalue": True, "offvalue": False,
-                "variable": app.settings.tabular_arg_has_header_row_flag,
+                "label": label,
+                "shared_var": app.tools.builder.shared_semantic_list,
             }
 
-            checkbox = ui.CheckBox(semantic_group, **kwargs)
+            checkbox = ui.TriStateCheckBox(semantic_group, **kwargs)
             checkbox.grid(row=row_pos, column=col_pos, sticky="nw")
 
     variant_group = ui.LabelFrame(semantic_group, text="Variant / Quantity")
     variant_group.grid(row=row_pos+1, column=0, columnspan=col_pos+1, padx=4, pady=(2, 0), sticky="nw")
 
     label_groups = [
-        ["optional",    "some",         "group",        "exact"],
-        ["zero_or_one", "zero_or_more", "one_or_more",  "range"],
+        ["optional",    "optional_group",   "group",        "some", "exact"],
+        ["zero_or_one", "zero_or_more",     "one_or_more",  "",     "range"],
     ]
 
     for row_pos, group in enumerate(label_groups):
@@ -148,7 +146,10 @@ def build_semantic_group(app, parent, row=0):
                 if label == "exact":
                     label = ui.Label(variant_group, text="exact qty:")
                     label.grid(row=row_pos, column=col_pos, sticky="nw", padx=(20, 2))
-                    textbox = ui.TextBox(variant_group, width=10, justify="center", state="readonly")
+                    textbox = ui.TextBox(
+                        variant_group, width=10, justify="center", state="readonly",
+                        textvariable=app.tools.builder.exact_quantity,
+                    )
                     textbox.grid(row=row_pos, column=col_pos+1, sticky="nw", padx=1, pady=(0, 2))
 
                     continue
@@ -156,15 +157,21 @@ def build_semantic_group(app, parent, row=0):
                 label = ui.Label(variant_group, text="qty range:")
                 label.grid(row=row_pos, column=col_pos, sticky="nw", padx=(20, 2))
 
-                textbox = ui.TextBox(variant_group, width=10, justify="center", state="readonly")
+                textbox = ui.TextBox(
+                    variant_group, width=10, justify="center", state="readonly",
+                    textvariable=app.tools.builder.range_min_quantity,
+                )
                 textbox.grid(row=row_pos, column=col_pos+1, sticky="nw", padx=1, pady=(0, 2))
-                textbox = ui.TextBox(variant_group, width=10, justify="center", state="readonly")
+                textbox = ui.TextBox(
+                    variant_group, width=10, justify="center", state="readonly",
+                    textvariable=app.tools.builder.range_max_quantity,
+                )
                 textbox.grid(row=row_pos, column=col_pos+2, sticky="nw", padx=1, pady=(0, 2))
                 continue
 
             checkbox = ui.CheckBox(variant_group, text=label,
-                variable=app.settings.tabular_arg_has_header_row_flag,
-                onvalue=True, offvalue=False
+                variable=app.tools.builder.variant_flag,
+                onvalue=label, offvalue="", cursor="hand2",
             )
             checkbox.grid(row=row_pos, column=col_pos, sticky="nw")
 
@@ -193,10 +200,9 @@ def build_controls(app, parent, row=0):
     frame.grid(row=row, column=0, padx=4, pady=4, sticky="new")
 
     labels = [
-        "default", "copy", "paste", "help", "SEPARATOR",
         "build", "aggregate", "SEPARATOR",
-        "var_name", "allowed empty",
-
+        "var_name", "allowed empty", "SEPARATOR",
+        "copy", "paste", "default", "help",
     ]
 
     mapping = {
@@ -220,7 +226,10 @@ def build_controls(app, parent, row=0):
         if label == "var_name":
             label = ui.Label(frame, text="Variable:")
             label.grid(row=0, column=position.next(), sticky="nswe", padx=(6, 2), pady=4)
-            textbox = ui.TextBox(frame, width=14, justify="left")
+            textbox = ui.TextBox(
+                frame, width=14, justify="left",
+                textvariable=app.tools.builder.var_name
+            )
             textbox.grid(row=0, column=position.next(), sticky="nswe", pady=4)
             continue
 
@@ -228,13 +237,13 @@ def build_controls(app, parent, row=0):
             kwargs = {
                 "text": label.title(),
                 "onvalue": True, "offvalue": False,
-                "variable": app.settings.tabular_arg_has_header_row_flag,
+                "variable": app.tools.builder.allowed_empty_flag,
+                "cursor": "hand2",
             }
 
             checkbox = ui.CheckBox(frame, **kwargs)
             checkbox.grid(row=0, column=position.next(), sticky="nswe", padx=(6, 2), pady=4)
             continue
-
 
         kwargs = (
             {"state": "disabled", "width": btn_width + 3, "command": mapping.get(label)}
@@ -245,34 +254,10 @@ def build_controls(app, parent, row=0):
         button.grid(row=0, column=position.next(), sticky='nswe', padx=2, pady=4)
 
 
-
 def build_possible_outcomes(app, parent, row=0):
-    result_group = ui.LabelFrame(parent, text="All Possible Outcomes")
-    result_group.grid(row=row, column=0, padx=4, pady=(4, 0), sticky="new")
-
-    label_groups = [
-        ["optional_mixed_word_group(var_abc_xyz, or_empty)",
-         "optional_mixed_word_group(var_v2)", ],
-        ["words(var_v3)",
-         "optional_mixed_word_group(var_another_long_variable)"],
-    ]
-
-    for row_pos, group in enumerate(label_groups):
-
-        for col_pos, label in enumerate(group):
-            if row_pos == 0:
-                result_group.grid_columnconfigure(col_pos, weight=1, uniform="equal")
-
-            if not label:
-                continue
-            kwargs = {
-                "text": label,
-                "onvalue": True, "offvalue": False,
-                "variable": app.settings.tabular_arg_has_header_row_flag,
-            }
-
-            checkbox = ui.CheckBox(result_group, **kwargs)
-            checkbox.grid(row=row_pos, column=col_pos, sticky="nw")
+    outcomes_group = ui.DynamicCheckboxGroup(parent, title="Possible Outcomes")
+    outcomes_group.grid(row=row, column=0, padx=4, pady=(4, 0), sticky="new")
+    app.tools.builder.possible_outcomes_group = outcomes_group
 
 
 def create_textarea(parent, row, name, height_rows):
@@ -336,9 +321,16 @@ def perform_help_action(app):
 
 
 def perform_build_action(app):
-    show_message_dialog(
-        title="Build Action",
-        info="The build functionality is not implemented yet.",
+    label_groups = [
+        "optional_mixed_word_group(var_abc_xyz, or_empty)",
+        "optional_mixed_word_group(var_v2)",
+        "optional_mixed_word_group(var_another_super_long_variable_that_must_stay_in_one_line)",
+        "words(var_v3)",
+        "optional_mixed_word_group(var_another_long_variable)"
+    ]
+    app.tools.builder.possible_outcomes_group.build(
+        label_groups,
+        state_var=app.tools.builder.possible_outcomes_value
     )
 
 

@@ -137,7 +137,6 @@ class DynamicCheckboxGroup(ttk.LabelFrame):
 
     @staticmethod
     def create_group_labels(items):
-        total = len(items)
         max_len = max(len(item) for item in items)
 
         for count in [4, 3, 2]:
@@ -185,7 +184,6 @@ class DynamicCheckboxGroup(ttk.LabelFrame):
         # Build UI rows
         for row_pos, row in enumerate(self.create_group_labels(labels)):
             for col_pos, text in enumerate(row):
-                var = tk.BooleanVar(value=False)
                 chk = ttk.Checkbutton(
                     self.body, text=text,
                     onvalue=text, offvalue="",

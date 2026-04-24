@@ -148,6 +148,21 @@ class Application:
                 out_textarea=None,
                 code_textarea=None,
                 result_textarea=None,
+            ),
+            builder = DotObject(
+
+                shared_semantic_list=tk.StringVar(),
+
+                exact_quantity=tk.StringVar(),
+                range_min_quantity=tk.StringVar(),
+                range_max_quantity=tk.StringVar(),
+                variant_flag=tk.StringVar(),
+
+                allowed_empty_flag=tk.BooleanVar(),
+                var_name=tk.StringVar(),
+
+                possible_outcomes_value=tk.StringVar(),
+                possible_outcomes_group=None
             )
         )
 

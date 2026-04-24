@@ -96,6 +96,8 @@ class StatusString(str):
         # Boolean‑like
         "true", "yes", "y", "ok", "okay",
 
+        "checked", "on",
+
         # Success / pass states
         "pass", "passed",
         "success", "successful",
