@@ -86,7 +86,13 @@ def build_usage_title(category: str) -> str:
         return "Settings Guide - TextFSMGen CE"
 
     if category == "app":
-        return "How To Use TextFSM Generator - TextFSMGen CE"
+        return "Getting Started with TextFSMGen CE"
+
+    if category == "regex":
+        return "Quickstart Regex Builder Tool - TextFSMGen CE"
+
+    if category == "snippet_translator":
+        return "Quickstart Snippet Translator Tool - TextFSMCGen CE"
 
     base = " ".join(category.split("_")).title()
     return f"{base} Usage - TextFSMGen CE"
@@ -110,7 +116,10 @@ def get_usage(category: str) -> str:
         usage = get_settings_guide()
 
     elif category == "app":
-        usage = get_textfsmgen_usage()
+        usage = get_started_with_textfsmgen()
+
+    elif category == "regex":
+        usage = get_quickstart_regex_builder_tool()
 
     usage = update_url_link(usage)
 
@@ -406,7 +415,7 @@ def get_settings_guide():
     return guide
 
 
-def get_textfsmgen_usage():
+def get_started_with_textfsmgen():
     usage = dedent_and_strip("""        
         The TextFSM Generator helps users quickly generate TextFSM templates, 
         verify parsed results, generate unittest scripts, pytest scripts, 
@@ -627,3 +636,10 @@ def get_textfsmgen_usage():
     """)
 
     return usage
+
+
+def get_quickstart_regex_builder_tool():
+    doc = dedent_and_strip("""
+        Will add Quickstart Regex Builder Tool document later
+    """)
+    return doc

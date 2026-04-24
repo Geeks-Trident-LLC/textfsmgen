@@ -348,10 +348,8 @@ def perform_paste_action(app):
 
 
 def perform_help_action(app):
-    show_message_dialog(
-        title="Help Action",
-        info="The help functionality is not implemented yet.",
-    )
+    """Display the Regex Builder help panel."""
+    usage.show_help(app, "regex")
 
 
 def perform_build_action(app):
