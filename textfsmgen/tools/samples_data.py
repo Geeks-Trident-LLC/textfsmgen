@@ -1,0 +1,181 @@
+import string
+
+ipv6_addresses = [
+    "2001:db8::1a4",            "fe80::c2f:9b1e",
+    "2406:da1a:3b2::f",         "2a00:1450:4009::2b",
+    "fd12:3456:789a::1",        "2607:f8b0:4005:805::200e",
+    "2001:4860:4860::8844",     "2a03:2880:f10c:83::face:b00c",
+    "2001:db8:abcd::42",        "fd00:beef::99",
+    "2a02:6b8::feed:1",         "2001:470:1f0b:32::2",
+]
+
+ipv6_with_prefix = [
+    "2a01:4f8:221:1b2::10/56",  "2001:df0:1234::7%64",
+    "2c0f:fb50::12/48",         "2a10:cc44:1::3%96",
+    "fd34:12ab:90cd::5/64",     "2001:db8:1:2::8%48",
+    "2a05:dfc7:5::b/56",        "2a0d:5600:33::1f%64",
+    "2a01:111:f400::3/96",      "2001:678:1e0::15%64",
+    "2a02:26f7:abcd::9/48",     "fd00:1234:5678::aa%64",
+]
+
+ipv4_addresses = [
+    "192.168.1.10",     "10.0.0.5",         "172.16.4.22",      "203.0.113.7",
+    "198.51.100.42",    "8.8.8.8",          "192.0.2.15",       "10.1.2.3",
+    "172.31.255.1",     "192.168.100.200",  "203.0.113.99",     "198.18.0.5",
+]
+
+ipv4_with_subnet = [
+    "100.64.1.20/10",   "192.168.50.77/23",     "10.10.10.10/24",   "172.20.14.9/20",
+    "198.51.100.250/25","203.0.113.123/29",     "192.168.2.45/24",  "192.168.0.250/25",
+    "10.2.3.4/16",      "172.25.33.44/20",      "192.0.2.200/27",   "198.18.10.11/16",
+]
+
+mac_addresses = [
+    "a4:3f:92:10:bb:7c",    "d0:5e:44:9a:12:01",    "b8:27:eb:3c:55:90",
+    "f0:98:9d:22:11:ce",    "c8:2a:14:7e:03:af",    "e0:cb:4e:19:aa:42",
+    "9c:5d:12:88:0f:33",    "84:16:f9:2b:44:de",    "ac:de:48:77:21:09",
+
+    "d4-6a-6a-01-9c-fe",    "b0-25-aa-3d-10-72",    "f4-52-14-66-8b-20",
+    "c0-3f-d5-9a-44-11",    "e8-6a-64-2c-77-5d",    "98-2c-bc-55-33-0a",
+    "a0-ce-c8-1f-02-9e",    "d8-5d-e2-4a-90-7b",    "bc-92-6b-3e-11-48",
+]
+
+space_samples = [" "]
+
+spaces_samples = [" ", " " * 2, " " * 3, " " * 4, " " * 5, " " * 6, " " * 7]
+
+ws_samples = list(string.whitespace)
+wss_samples = list(string.whitespace) + [" \t", "  \t ", "\t   ", "   \t   "]
+
+letter_samples = list(string.ascii_letters)
+
+letters_samples = [
+    "an", "up", "go", "it", "by"
+    "fog", "lid", "tap", "bee", "rim",
+    "moss", "clay", "fern", "drip", "bark",
+    "shore", "flock", "brisk", "cabin", "trail",
+    "branch", "copper", "fabric", "gentle", "hollow",
+    "prairie", "journey", "orchard", "glimmer", "venture",
+    "evermore", "starfall", "woodland", "daybreak", "overcast"
+]
+letters_samples.extend([item.upper() for item in letters_samples[:20]])
+letters_samples.extend(letters_samples)
+
+alnum_samples = list(string.ascii_letters) + list(string.digits)
+
+alnums_samples = [
+    "an", "up", "go", "it", "by"
+    "fog", "lid", "tap", "bee", "rim",
+    "mira", "sola", "tide", "fern", "luma",
+    "vale4", "nora8", "pint2", "sora9", "mend7"
+]
+alnums_samples.extend([item.upper() for item in alnums_samples[:20]])
+alnums_samples.extend([str(n) for n in range(10, 40)])
+alnums_samples.extend(alnum_samples[:5])
+
+graph_samples = list(string.ascii_letters) + list(string.digits) + list(string.punctuation)
+
+graphs_samples = [
+    "an", "up", "go", "it", "by"
+    "fog", "lid", "tap", "bee", "rim",
+    "rap", "middle", "lambda", "testing", "zipper"
+    "fa4", "ri8", "no1", "ke7", "su3",
+    "da6!", "vi1?", "zo8~", "pe4+", "lu9*",
+    "6!", "1?", "8~", "4+", "9*"
+    "@#", "!?", "~*", "+-%", "&$!",
+    "@#%&", "!~*+", "^=/?!", "$$&*@", ":-~^!"
+]
+graphs_samples.extend([item.upper()for item in graphs_samples[:20]])
+graphs_samples.extend(graph_samples)
+
+word_samples = [
+    "sun", "map", "oak", "run", "sky",
+    "leaf", "wave", "hill", "dust", "fire",
+    "river", "stone", "flame", "grain", "bloom",
+    "forest", "canyon", "silver", "marble", "gentle",
+    "harvest", "lantern", "meadow", "whisper", "crystal",
+    "mountain", "sunlight", "wildfire", "blossoms", "sapphire",
+    "pineapple", "waterfall", "happiness", "lighthouse", "butterfly",
+    "foundation", "generation", "playground", "connection", "reflection",
+    "friendships", "wildernesses", "masterpiece", "transmitter", "atmospheric",
+
+    "alpha1", "zone2", "core3", "beta4", "node5", "task6", "unit7", "grid8",
+    "mod9", "step0", "path1", "link2", "flag3", "item4", "slot5", "pack6",
+    "cell7", "mark8", "tag9", "key0", "data1", "sync2", "port3", "host4",
+    "file5", "temp6", "user7", "log8", "run9", "dev0", "north_star", "blue_moon",
+    "fire_fly", "rain_drop", "sun_light", "wind_storm", "earth_bound", "stone_wall",
+    "night_sky", "river_bank", "data_stream", "user_input", "access_point",
+    "error_code", "network_node", "system_call", "cache_line", "task_queue",
+    "event_loop", "packet_loss"
+]
+word_samples.extend([word.upper() for word in word_samples[:30]])
+
+mixed_word_samples = [
+    "north.star", "blue.moon", "fire.fly", "rain.drop", "sun.light",
+    "wind.storm", "earth.bound", "stone.wall", "night.sky", "river.bank",
+
+    "north/south", "input/output", "start/stop", "on/off", "up/down",
+    "true/false", "read/write", "left/right", "win/lose", "day/night",
+
+    "well-known", "long-term", "high-speed", "part-time", "full-scale",
+    "user-friendly", "real-time", "short-lived", "hand-made", "state-wide",
+
+    "@note", "#tagged", "$value", "%percent", "&logic", "*starred", "+plusone",
+    "!alert", "?maybe", "~tildekey",
+    "alert!", "maybe?", "done.", "value*", "count+", "tilde~", "tagged#",
+    "ratio%", "email@", "path/", "alpha1!", "zone-9", "core2@",
+
+    "beta_7", "node#3", "task4%", "unit5*", "grid6+", "mod8?", "step0~",
+    "path1/", "link2-", "flag3!", "item4@", "slot5#", "pack6%", "cell7*",
+    "mark8+", "tag9?", "key0~", "alpha-1", "zone_7", "core/9", "beta+4",
+    "node#3", "task*8", "unit%5", "grid@2", "mod?6", "step~0", "3-load", "7-file",
+    "9-port", "4-sync", "2-host", "8-temp", "6-user", "1-log", "5-run", "0-dev",
+
+    "alpha-3-core", "beta_7_node", "gamma+2_unit", "delta#9_task", "omega/4_load",
+    "river~8_bank", "stone*5_wall", "cloud?1_sky", "forest%6_path", "copper@2_wire",
+    "task-1-run", "file_3_sync", "host+7_port", "temp#4_data", "user/9_group",
+    "cache~0_line", "packet*8_loss", "event?2_loop", "queue%5_job", "stream@6_flow"
+]
+mixed_word_samples.extend([word.upper() for word in mixed_word_samples[:20]])
+mixed_word_samples.extend(ipv4_addresses + ipv6_addresses)
+mixed_word_samples.extend(ipv4_with_subnet + ipv6_with_prefix)
+mixed_word_samples.extend(mac_addresses)
+
+non_ws_samples = graph_samples.copy()
+non_ws_samples.extend([chr(i) for i in range(0xA0, 0x100)])
+
+non_wss_samples = [
+    "café", "brïght", "sölar", "mañgo", "rêst", "süper", "déjà",
+    "fïbre", "slów", "øcean", "cliché", "piñata", "röute", "têa",
+    "sãlty", "mëlon", "crêpe", "blåck", "fócus", "døll", "sørbet",
+    "tóuch", "frãgrance", "mûsic", "lïmon", "bërry", "dïal", "fåte",
+    "röck", "sëason", "tïtle", "hålo", "brûlée", "fóam", "søund",
+    "mãp", "lëaf", "dïet", "sïgn", "tøne",
+]
+
+digit_samples = list(string.digits)
+
+digits_samples = [str(n) for n in range(9999)]
+
+punct_samples = list(string.punctuation)
+puncts_samples = [
+    "@!", "#?", "$%", "&*", "+=", "~^", ";/", ":>", "<|", "!?",
+    "@!#", "$%^", "&*~", "+=/", "?:;", "<>|", "!--", "^^*", "~@?", ";:+",
+    "!!!!", "@@@@", "####", "$$$$", "%%%%", "&&&&", "****", "++++", "----", "====",
+]
+puncts_samples.extend(punct_samples[:5])
+
+dot_samples = non_ws_samples + wss_samples
+dots_samples = [
+    f"# v1 = 3 ÷ 4", f"mango¦beef¦lemonade", f"temperature is 32°.", f"What is Ø?",
+    "Bright sun shines Øver", "Café music plays softly", "Warm breeze feels ñice",
+    "Fresh fruits taste süper", "Calm night brings rêst", "Morning starts with thé",
+    "Birds fly över trees", "Flowers smell délicate today", "Clouds drift slówly away",
+    "Stars glow brïght tonight", "Café lights glow", "Warm breeze ñears",
+    "Stars shine brïght", "Clouds drift slówly", "Birds fly över",
+    "Fresh fruits sürge", "Night feels rêstful", "Waves crash sërenely",
+    "Flowers smell délicate", "Morning starts thé", "Café morning", "Brïght stars",
+    "Slów winds", "Déep silence", "Thé aroma", "Süper taste", "Rêst tonight",
+    "Ñice breeze", "Øver hills", "Fïne weather", "café", "brïght", "sölar",
+    "mañgo", "rêstful", "süper", "délicat", "fïbre", "slówly", "øcean",
+]
