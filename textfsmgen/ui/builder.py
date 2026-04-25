@@ -11,6 +11,7 @@ import re
 from textfsmgen.engine.translate import make_translator
 from textfsmgen.libs.datatype import trim_empty_edges, trim_blank_edges, add_if_absent
 from textfsmgen.tools.explain import SnippetExplanation
+from textfsmgen.tools.samples import SamplesGenerator
 
 from textfsmgen.core.patterns import LinePattern
 
@@ -114,9 +115,9 @@ def build_semantic_group(app, parent, row=0):
 
     label_groups = [
         ["anything",    "something",    "space",        "whitespace",       ],
-        ["dot",         "alnum",        "graph",        "non-whitespace",   ],
-        ["digit",       "number",       "mixed-number", "punctuation",      ],
-        ["letter",      "word",         "mixed-word",   "",                 ],
+        ["dot",         "alnum",        "graph",        "non_whitespace",   ],
+        ["digit",       "number",       "mixed_number", "punctuation",      ],
+        ["letter",      "word",         "mixed_word",   "",                 ],
     ]
 
     row_pos, col_pos = 0, 0
@@ -351,6 +352,9 @@ def perform_reset_action(app):
         if isinstance(child, ui.TriStateCheckBox):
             child.reset()
 
+    clear_text(b.pattern_area)
+    clear_text(b.explain_area)
+
 
 def perform_copy_action(app):
     show_message_dialog(
@@ -526,7 +530,18 @@ def on_click(app):
         samples = b.snippet_and_samples[-1]
         node = SnippetExplanation(snippet, test_samples=samples)
     else:
-        node = SnippetExplanation("word(var_v1)", test_samples=["dummy", "other_dummy"])
+        samples_gen = SamplesGenerator(snippet)
+        if not samples_gen:
+            clear_text(b.pattern_area)
+            msg = (
+                "TextFSMGen cannot generate sample data for:\n"
+                f"    {snippet}\n"
+                "Please submit a bug report for this case.\n"
+            )
+            set_text(b.explain_area, msg)
+            return
+        samples = samples_gen.generate()
+        node = SnippetExplanation(snippet, test_samples=samples)
 
     # Build pattern
     pattern = LinePattern(snippet)
