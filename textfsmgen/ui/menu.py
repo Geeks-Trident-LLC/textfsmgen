@@ -8,7 +8,8 @@ UI helpers for building the TextFSMGen menu bar.
 from textfsmgen import ui
 from textfsmgen.ui.common import open_app_resource
 from textfsmgen.ui import (
-    about, snippet, callback, usage, settings, builder
+    about, snippet, callback, usage, settings, builder,
+    textfsm_tester
 )
 
 
@@ -58,6 +59,10 @@ def create(app) -> None:
             "label": "Regex Builder",
             "command": lambda: builder.show_dialog(app)
         }),
+        (tools_menu, {
+            "label": "TextFSM Tester",
+            "command": lambda: textfsm_tester.show_dialog(app)
+        }),
 
         # Help
         (help_menu, {
@@ -89,6 +94,10 @@ def create(app) -> None:
         (help_menu, {
             "label": "Regex Builder Guide",
             "command": lambda: usage.show_help(app, "regex")
+        }),
+        (help_menu, {
+            "label": "TextFSM Tester Guide",
+            "command": lambda: usage.show_help(app, "tester")
         }),
         (help_menu, {
             "label": "Keyword Query Assistant Guide",

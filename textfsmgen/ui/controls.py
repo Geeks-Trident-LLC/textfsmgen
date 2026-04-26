@@ -14,6 +14,7 @@ from textfsmgen.ui import (
     usage,
     snippet,
     builder,
+    textfsm_tester,
 
 )
 
@@ -94,12 +95,14 @@ def build_secondary_buttons(app, parent) -> None:
         ("SEPARATOR", None, None),
         ("snippet translator", "normal", lambda: snippet.show_dialog(app)),
         ("regex builder", "normal", lambda: builder.show_dialog(app)),
+        ("textfsm tester", "normal", lambda: textfsm_tester.show_dialog(app)),
         ("keyword query assistant", "disabled", lambda: None),
     )
 
     mapping = {
         "snippet_translator": 10,
         "regex_builder": 6,
+        "textfsm_tester": 8,
         "keyword_query_assistant": 16,
     }
 
@@ -116,7 +119,7 @@ def build_secondary_buttons(app, parent) -> None:
         button = ui.Button(
             parent,
             name=f"{name}_btn",
-            text=text.title(),
+            text="TextFSM Tester" if text == "textfsm tester" else text.title(),
             state=state,
             command=command,
             width=btn_width + (2 if pos == 0 else mapping.get(name, 0)),

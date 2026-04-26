@@ -91,6 +91,9 @@ def build_usage_title(category: str) -> str:
     if category == "regex":
         return "Quickstart Regex Builder Tool - TextFSMGen CE"
 
+    if category == "tester":
+        return "Quickstart TextFSM Tester Tool - TextFSMGen CE"
+
     if category == "snippet_translator":
         return "Quickstart Snippet Translator Tool - TextFSMCGen CE"
 
@@ -120,6 +123,9 @@ def get_usage(category: str) -> str:
 
     elif category == "regex":
         usage = get_quickstart_regex_builder_tool()
+
+    elif category == "tester":
+        usage = get_quickstart_textfsm_tester_tool()
 
     usage = update_url_link(usage)
 
@@ -961,5 +967,12 @@ The Explanation area will display:
 
     - <link>How to Use the Regex Builder ---- how-to-use-regex-builder</link>
 
+    """)
+    return doc
+
+
+def get_quickstart_textfsm_tester_tool():
+    doc = dedent_and_strip("""
+    Will create Quickstart TextFSM Tester guide later.
     """)
     return doc

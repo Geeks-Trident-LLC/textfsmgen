@@ -31,7 +31,7 @@ from textfsmgen.ui.common import (
     extract_text,
 )
 
-window_width = 960 if ui.is_macos else 820 if ui.is_linux else 740
+window_width = 1020 if ui.is_macos else 820 if ui.is_linux else 740
 window_height = 770 if ui.is_macos else 780 if ui.is_linux else 720
 
 def show_dialog(app):
