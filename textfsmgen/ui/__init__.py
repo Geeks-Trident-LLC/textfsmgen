@@ -65,7 +65,7 @@ class TriStateCheckBox(CheckBox):
     and syncs its state into an optional shared StringVar list."""
 
     def __init__(self, parent, label="", shared_var=None):
-        self.base_label = label
+        self.label = label
         self.shared_var = shared_var
         self.state_var = tk.BooleanVar(value=False)  # reflects checked/unchecked
         self.state_index = 0  # 0=off, 1=singular, 2=plural
@@ -80,7 +80,7 @@ class TriStateCheckBox(CheckBox):
 
     def _cycle_state(self):
         """Advance checkbox state and update label + shared variable."""
-        is_special = self.base_label in ("anything", "something")
+        is_special = self.label in ("anything", "something")
 
         # Determine next state count (2-state or 3-state)
         max_state = 1 if is_special else 2
@@ -89,15 +89,15 @@ class TriStateCheckBox(CheckBox):
         # Update UI text + BooleanVar
         if self.state_index == 0:
             self.state_var.set(False)
-            self.config(text=self.base_label)
+            self.config(text=self.label)
 
         elif self.state_index == 1:
             self.state_var.set(True)
-            self.config(text=self.base_label)
+            self.config(text=self.label)
 
         else:  # state_index == 2 (plural form)
             self.state_var.set(True)
-            self.config(text=f"{self.base_label}s")
+            self.config(text=f"{self.label}s")
 
         self._sync_shared_var()
 
@@ -114,17 +114,17 @@ class TriStateCheckBox(CheckBox):
         if not isinstance(items, list):
             items = []
 
-        singular = self.base_label
-        plural = f"{self.base_label}s"
+        singular = self.label
+        plural = f"{self.label}s"
 
         # Remove both forms first
         items = [x for x in items if x not in (singular, plural)]
 
         # Add the active form
         if self.state_index == 1:
-            items.append(singular)
+            items.insert(0, singular)
         elif self.state_index == 2:
-            items.append(plural)
+            items.insert(0, plural)
         self.shared_var.set(str(items))
 
     def reset(self):

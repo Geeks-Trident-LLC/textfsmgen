@@ -406,14 +406,21 @@ def perform_build_action(app):
     semantic_text = b.shared_semantic_list.get()
 
     # Nothing selected and no data → warn
-    if not semantic_text and not snippets:
-        show_message_dialog(
-            title="Missing Semantic Selection or Data",
-            warning=(
-                "No semantic items are selected and no data is provided.\n"
-                "Please choose a semantic item or enter data in the Data Group."
-            ),
-        )
+    if not semantic_text and not snippets or semantic_text == "[]":
+        # Reset widget groups
+        b.outcomes_group.reset()
+
+        clear_text(b.pattern_area)
+        clear_text(b.explain_area)
+
+        if not semantic_text:
+            show_message_dialog(
+                title="Missing Semantic Selection or Data",
+                warning=(
+                    "No semantic items are selected and no data is provided.\n"
+                    "Please choose a semantic item or enter data in the Data Group."
+                ),
+            )
         return
 
     # Build semantic-based snippets
@@ -454,7 +461,7 @@ def perform_build_action(app):
     b.outcomes_group.build(snippets, state_var=b.outcomes_value)
 
     for checkbox in b.outcomes_group.checkboxes:
-        checkbox.configure(command=lambda: on_click(app))
+        checkbox.configure(command=lambda: on_click_outcome_checkbox(app))
 
     if b.outcomes_group.checkboxes:
         first_checkbox = b.outcomes_group.checkboxes[0]
@@ -515,7 +522,7 @@ def derive_snippet_from_data(app):
     return "", ""
 
 
-def on_click(app):
+def on_click_outcome_checkbox(app):
     """Render pattern and explanation for the selected outcome snippet."""
     b = app.tools.builder
     snippet = b.outcomes_value.get()
