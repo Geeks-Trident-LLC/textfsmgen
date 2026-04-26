@@ -17,6 +17,21 @@ from textfsmgen.tools.samples import SamplesGenerator
 @pytest.mark.parametrize(
     "snippet",
     (
+        "numbers()",        "mixed_numbers()",
+        "words()",          "mixed_words()",
+    )
+)
+def test_plural_semantic(snippet):
+    node = SamplesGenerator(snippet)
+    assert bool(node) is True
+    samples = node.generate()
+    checks = [bool(re.fullmatch(node.pattern, sample)) for sample in samples]
+    assert checks and all(checks)
+
+
+@pytest.mark.parametrize(
+    "snippet",
+    (
         "dot()",                "dots()",
 
         "space()",              "spaces()",
@@ -24,7 +39,7 @@ from textfsmgen.tools.samples import SamplesGenerator
         "whitespace()",         "whitespaces()",
 
         "digit()",              "digits()",
-        "number()",               "mixed_number()",
+        "number()",             "mixed_number()",
 
         "letter()",             "letters()",
         "alnum()",              "alnums()",
@@ -313,6 +328,7 @@ def test_exact_quantity(snippet):
 
         "_to_3_graph()",                    "_to_3_graphs()",
         "_to_3_punct()",                    "_to_3_puncts()",
+
         "zero_to_three_word()",             "zero_to_three_mixed_word()",
         "zero_to_three_non_ws()",           "zero_to_three_non_wss()",
         "zero_to_three_non_whitespace()",   "zero_to_three_non_whitespaces()",

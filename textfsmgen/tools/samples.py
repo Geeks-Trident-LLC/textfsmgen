@@ -195,6 +195,13 @@ class SamplesGenerator:
             keyword = "dots"
         return self.get_sample(keyword)[:self._count]
 
+    def generate_plural_semantic(self):
+        keyword = self._parser.keyword
+        if PATTERN.keyword_in(keyword, plural_semantic=True):
+            semantic = PATTERN.resolve_semantic(keyword)
+            return self.create_sample_group(semantic, starting=1)
+        return []
+
     def generate_some(self):
         """Generate samples for 'some', 'one_or_more', or 'zero_or_more' quantities."""
         qty = self._parser.quantity
@@ -325,6 +332,7 @@ class SamplesGenerator:
         """Return the first non-empty result from available generators."""
         for func in (
             self.generate_core, self.generate_some, self.generate_optional,
+            self.generate_plural_semantic,
             self.generate_group, self.generate_exact, self.generate_range,
 
         ):
