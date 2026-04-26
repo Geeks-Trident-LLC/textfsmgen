@@ -279,7 +279,7 @@ def build_controls(app, parent, row=0):
     return frame
 
 
-def build_possible_outcomes(app, parent, row=0):
+def build_possible_outcomes(app, parent, row=0):    # noqa
     outcomes_group = ui.DynamicCheckboxGroup(
         parent, title="Possible Outcomes",
     )
@@ -398,9 +398,36 @@ def perform_copy_action(app):
 
 
 def perform_paste_action(app):
+    """Paste clipboard text into the appropriate target, with clear error handling."""
+    try:
+        data = app.root.clipboard_get()
+    except Exception as ex:
+        show_message_dialog(
+            title="Clipboard Empty",
+            info=(
+                "There is no text available to paste from the clipboard.\n"
+                + "-" * 70 + "\n"
+                f"{type(ex).__name__}: {ex}"
+            ),
+        )
+        return
+
+    if not data:
+        show_message_dialog(
+            title="Paste Action",
+            info="Your clipboard contains no text. No operation performed.",
+        )
+        return
+
+    prev = app.prev_widget
+    if isinstance(prev, ui.TextBox):
+        prev.delete(0, "end")
+        prev.insert(0, data)
+        return
+
     show_message_dialog(
-        title="Paste Action",
-        info="The paste functionality is not implemented yet.",
+        title="Ambiguous Paste Action",
+        info="Please choose the specific textbox you want to paste."
     )
 
 
@@ -504,7 +531,7 @@ def perform_build_action(app):
             first_checkbox.invoke()
 
 
-def perform_aggregate_action(app):
+def perform_aggregate_action(app):  # noqa
     show_message_dialog(
         title="Aggregate Action",
         info="The build functionality is not implemented yet.",
