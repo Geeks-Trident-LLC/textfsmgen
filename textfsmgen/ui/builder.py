@@ -181,6 +181,7 @@ def build_semantic_group(app, parent, row=0):
             checkbox = ui.CheckBox(variant_group, text=label,
                 variable=app.tools.builder.variant_flag,
                 onvalue=label, offvalue="", cursor="hand2",
+                command=lambda: on_click_for_refresh(app)
             )
             checkbox.grid(row=row_pos, column=col_pos, sticky="nw")
 
@@ -259,6 +260,7 @@ def build_controls(app, parent, row=0):
                 "onvalue": True, "offvalue": False,
                 "variable": app.tools.builder.allowed_empty_flag,
                 "cursor": "hand2",
+                "command": lambda: on_click_for_refresh(app)
             }
 
             checkbox = ui.CheckBox(frame, **kwargs)
@@ -603,3 +605,14 @@ def sync_shared_var(widget):
         items.insert(0, plural)
 
     widget.shared_var.set(str(items))
+
+
+def on_click_for_refresh(app):
+    """Trigger a rebuild only when the shared semantic list is non‑empty."""
+    txt = app.tools.builder.shared_semantic_list.get()
+
+    # Normalize empty or placeholder values
+    if not txt or txt.strip() in ("[]", ""):
+        return
+
+    perform_build_action(app)
