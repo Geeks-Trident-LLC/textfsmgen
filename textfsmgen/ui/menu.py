@@ -49,13 +49,14 @@ def create(app) -> None:
             "command": lambda: snippet.show_dialog(app)
         }),
         (tools_menu, {
-            "label": "Regex Builder",
-            "command": lambda: builder.show_dialog(app)
-        }),
-        (tools_menu, {
             "label": "Keyword Query Assistant",
             "state": "disabled",
             "command": lambda: None
+        }),
+        (tools_menu, None),
+        (tools_menu, {
+            "label": "Regex Builder",
+            "command": lambda: builder.show_dialog(app)
         }),
 
         # Help
@@ -87,7 +88,6 @@ def create(app) -> None:
         }),
         (help_menu, {
             "label": "Regex Builder Guide",
-            "state": "disabled",
             "command": lambda: usage.show_help(app, "regex")
         }),
         (help_menu, {

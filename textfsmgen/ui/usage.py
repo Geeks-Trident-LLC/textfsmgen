@@ -640,6 +640,326 @@ def get_started_with_textfsmgen():
 
 def get_quickstart_regex_builder_tool():
     doc = dedent_and_strip("""
-        Will add Quickstart Regex Builder Tool document later
+The Regex Builder Tool helps users quickly generate a regular expression pattern
+along with a detailed explanation. This tool provides two ways to generate a pattern:
+  - Select predefined keywords using checkboxes
+  - Use user-provided data inputs
+
+<bold>Interface Overview</bold>
+<bold>------------------</bold>
+
+<bold>1. Semantic Group</bold>
+   Allows users to select predefined keywords and apply quantities to create
+   more precise extraction patterns.
+
+<bold>2. Data Group</bold>
+   Contains eight input textboxes that allow users to generate patterns based
+   on their own data samples.
+
+<bold>3. Control Buttons and Settings</bold>
+   <bold>3.1. Build</bold>
+        Collects all parameters from keyword selections or user data and
+        generates possible outcome snippets so users can review different
+        scenarios.
+
+   <bold>3.2. Aggregate</bold>
+        Combines selected keywords or user data into a single aggregate keyword.
+        Examples:
+          + letters + digits -> word
+          + letters + digits + punctuation -> mixed word
+          + numbers + punctuation -> multiple non-whitespace
+
+   <bold>3.3. Variable</bold>
+        Allows users to assign a variable name for capturing matches.
+
+   <bold>3.4. Allowed Empty</bold>
+        Enables generation of patterns that match an empty string.
+
+   <bold>3.5. Copy</bold>
+        Copies the Pattern area or Explanation area to the clipboard.
+
+   <bold>3.6. Paste</bold>
+        Allows users to paste clipboard text into data textboxes, quantity
+        textboxes, or the variable textbox.
+
+   <bold>3.7. Reset</bold>
+        Restores all settings to default values and clears all textboxes.
+        Also clears the Pattern area, Explanation area, and Possible Outcomes group.
+
+   <bold>3.8. Help</bold>
+        Displays the QuickStart guide.
+
+<bold>4. Possible Outcomes Group</bold>
+   Appears only after selecting checkboxes or clicking Build.
+
+<bold>5. Read-Only Pattern Area</bold>
+   Displays the generated Python pattern statement.
+
+<bold>6. Read-Only Explanation Area</bold>
+   Displays the explanation for the generated pattern.
+
+
+<bold>Semantic Overview</bold>
+<bold>-----------------</bold>
+
+<bold>1. anything</bold>
+   Matches zero or more characters when the DOTALL regex flag is enabled.
+   Without DOTALL, it does not match newline or carriage-return characters
+   in ASCII or Unicode text.
+
+<bold>2. something</bold>
+   Matches one or more characters when the DOTALL regex flag is enabled.
+   Without DOTALL, it does not match newline or carriage-return characters
+   in ASCII or Unicode text.
+
+<bold>3. space</bold>
+   Matches a single blank space character.
+
+<bold>4. spaces</bold>
+   Matches one or more blank space characters.
+
+<bold>5. whitespace</bold>
+   Matches a single whitespace character. This includes:
+       '\\t', '\\n', '\\x0b', '\\x0c', '\\r', '\\x1c', '\\x1d', '\\x1e', '\\x1f',
+       ' ', '\\x85', '\\xa0', '\\u1680', '\\u2000', '\\u2001', '\\u2002',
+       '\\u2003', '\\u2004', '\\u2005', '\\u2006', '\\u2007', '\\u2008',
+       '\\u2009', '\\u200a', '\\u2028', '\\u2029', '\\u202f', '\\u205f', '\\u3000'
+
+   Note: Python's definition of whitespace may differ from other languages,
+   compilers, or interpreters.
+
+<bold>6. whitespaces</bold>
+   Matches one or more whitespace characters.
+
+<bold>7. dot</bold>
+   Matches any character when the DOTALL regex flag is enabled.
+   Without DOTALL, it does not match newline or carriage-return characters
+   in ASCII or Unicode text.
+
+<bold>8. dots</bold>
+   Matches one or more characters when the DOTALL regex flag is enabled.
+   Without DOTALL, it does not match newline or carriage-return characters
+   in ASCII or Unicode text.
+
+<bold>9. alnum</bold>
+   Matches one alphanumeric character (letter or digit).
+
+<bold>10. alnums</bold>
+    Matches one or more alphanumeric characters.
+
+<bold>11. graph</bold>
+    Matches one printable ASCII character (0x21 to 0x7E).
+
+<bold>12. graphs</bold>
+    Matches one or more printable ASCII characters.
+
+<bold>13. non-whitespace</bold>
+    Matches one non-whitespace character.
+
+<bold>14. non-whitespaces</bold>
+    Matches one or more non-whitespace characters.
+
+<bold>15. digit</bold>
+    Matches one digit.
+
+<bold>16. digits</bold>
+    Matches one or more digits.
+
+<bold>17. number</bold>
+    Matches any of the following forms:
+        <digits>
+        <digits>.<digits>
+        .<digits>
+        <digits>.
+    Represents integer or floating‑point formats.
+
+<bold>18. numbers</bold>
+    Matches a sequence of <number> values separated by <whitespaces>.
+    Valid forms include:
+        <number>
+        <number><whitespaces><number>
+
+<bold>19. mixed_number</bold>
+    Matches <prefix><number><suffix> where:
+        prefix may be "+", "-", "$", "(", or similar symbols
+        suffix may be "%", ")", "]", or a unit string
+
+<bold>20. mixed_numbers</bold>
+    Matches a sequence of <mixed_number> values separated by <whitespaces>.
+    Valid forms include:
+        <mixed_number>
+        <mixed_number><whitespaces><mixed_number>
+
+<bold>21. punctuation</bold>
+    Matches one punctuation character.
+
+<bold>22. punctuations</bold>
+    Matches one or more punctuation characters.
+
+<bold>23. letter</bold>
+    Matches one letter from a–z or A–Z.
+
+<bold>24. letters</bold>
+    Matches one or more letters.
+
+<bold>25. word</bold>
+    Matches an alphanumeric string (letters, digits, underscore) that contains
+    at least one letter.
+
+<bold>26. words</bold>
+    Matches a sequence of <word> values separated by <whitespaces>.
+    Valid forms include:
+        <word>
+        <word><whitespaces><word>
+
+<bold>27. mixed_word</bold>
+    Matches a combination of alphanumeric characters and punctuation,
+    containing at least one letter or digit.
+
+<bold>28. mixed_words</bold>
+    Matches a sequence of <mixed_word> values separated by <whitespaces>.
+    Valid forms include:
+        <mixed_word>
+        <mixed_word><whitespaces><mixed_word>
+
+
+<bold>Quantity Overview</bold>
+<bold>=================</bold>
+
+<bold>1. optional</bold>
+   In most cases, matches zero or one semantic unit. However, when combined
+   with a group, the current logic of the TextFSM Generator treats it as
+   matching zero or one *group*, not zero or one semantic. For example,
+   optional_word_group matches one or more words separated by whitespaces.
+
+<bold>2. optional_group</bold>
+   Matches one or more semantics separated by whitespaces.
+
+<bold>3. group</bold>
+   Matches two or more semantics separated by whitespaces.
+
+<bold>4. some</bold>
+   Matches one or more semantics when the semantic type is:
+       space(s), whitespace(s), dot(s), alpha(s), graph(s),
+       non_whitespace(s), digit(s), letter(s), punctuation(s)
+   Matches one or more semantics separated by whitespaces when the type is:
+       number, mixed_number, word, mixed_word
+
+<bold>5. zero_or_one</bold>
+   Matches zero or one semantic.
+
+<bold>6. zero_or_more</bold>
+   Matches zero or more semantics when the semantic type is:
+       space(s), whitespace(s), dot(s), alpha(s), graph(s),
+       non_whitespace(s), digit(s), letter(s), punctuation(s)
+   Matches zero or more semantics separated by whitespaces when the type is:
+       number, mixed_number, word, mixed_word
+
+<bold>7. one_or_more</bold>
+   Matches one or more semantics when the semantic type is:
+       space(s), whitespace(s), dot(s), alpha(s), graph(s),
+       non_whitespace(s), digit(s), letter(s), punctuation(s)
+   Matches one or more semantics separated by whitespaces when the type is:
+       number, mixed_number, word, mixed_word
+
+<bold>8. exact quantity</bold>
+   Matches an exact number of semantics when the semantic type is:
+       space(s), whitespace(s), dot(s), alpha(s), graph(s),
+       non_whitespace(s), digit(s), letter(s), punctuation(s)
+   Matches an exact number of semantics separated by whitespaces when the type is:
+       number, mixed_number, word, mixed_word
+
+<bold>9. quantity range</bold>
+   Matches a quantity range (low to high) of semantics when the semantic type is:
+       space(s), whitespace(s), dot(s), alpha(s), graph(s),
+       non_whitespace(s), digit(s), letter(s), punctuation(s)
+   Matches a quantity range (low to high) of semantics separated by whitespaces
+   when the type is:
+       number, mixed_number, word, mixed_word
+       
+
+<bold>Other Configuration</bold>
+<bold>===================</bold>
+
+<bold>1. Variable</bold>
+   Allows the user to assign a capture name for the generated pattern.
+
+<bold>2. Allowed Empty</bold>
+   Allows the user to specify that the pattern should match an empty string.
+   
+       
+<bold>Brief Step Walk-Through Examples</bold>
+<bold>--------------------------------</bold>
+
+<bold>Example 1: Using Predefined Semantics</bold>
+<bold>-------------------------------------</bold>
+
+Click the "word" semantic.
+
+The snippet "word()" will appear in the Possible Outcomes group.
+
+The Pattern area will display:
+
+        pattern = r"[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*"
+
+The Explanation area will display:
+
+        +------------------------------------------+
+        |                  word()                  |
+        +------------------------------------------+
+        Pattern:   r"[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*"
+        Operation: Matches one word containing alphanumeric or underscore
+                   characters with at least one alphabetic character.
+        Explanation:
+            lst = ['event_loop', 'grid8', 'grain']
+
+        Evaluating:
+            [bool(re.fullmatch(pattern, item)) for item in lst]
+
+        Produces:
+            [True, True, True]
+
+<bold>Note:</bold> The sample data used in this explanation is generated by the
+      TextFSM Generator Samples module.
+
+
+<bold>Example 2: Using User Data</bold>
+<bold>--------------------------</bold>
+
+Enter "Hello Python!" into one of the textboxes in the Data Group.
+
+Click "Build".
+
+The snippet "mixed_word_group()" will appear in the Possible Outcomes group.
+
+The Pattern area will display:
+
+        pattern = r"[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*(\s+[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)+"
+
+The Explanation area will display:
+
+        +------------------------------------------+
+        |            mixed_word_group()            |
+        +------------------------------------------+
+        Pattern:   r"[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*(\s+[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)+"
+
+        Explanation:
+            lst = ['Hello Python!']
+
+        Evaluating:
+            [bool(re.fullmatch(pattern, item)) for item in lst]
+
+        Produces:
+            [True]
+
+<bold>Note:</bold> The sample data in this explanation comes from user input.
+      This snippet is always displayed first in the Possible Outcomes group.
+
+
+<bold>References</bold>
+<bold>==========</bold>
+
+    - <link>How to Use the Regex Builder ---- how-to-use-regex-builder</link>
+
     """)
     return doc
