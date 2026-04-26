@@ -40,6 +40,11 @@ class KeywordPatternMappingRegister:
         self.all_keywords = None
         self.all_map = None
 
+        self.singular_to_plural = dict()
+        self.plural_to_singular = dict()
+        self.semantic_to_plural_semantic = dict()
+        self.plural_semantic_to_semantic = dict()
+
         self.init()
 
     def init(self):
@@ -121,6 +126,9 @@ class KeywordPatternMappingRegister:
             self.plural_keywords.append(key)
             self.plural_map[key] = rf"{pattern}+"
 
+            self.singular_to_plural[keyword] = key
+            self.plural_to_singular[key] = keyword
+
     def init_semantic(self):
         self.semantic_map = {
             "word": r"[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*",
@@ -137,6 +145,9 @@ class KeywordPatternMappingRegister:
         for keyword, pattern in self.semantic_map.items():
             self.plural_semantic_keywords.append(f"{keyword}s")
             self.plural_semantic_map[f"{keyword}s"] = rf"{pattern}({sep}{pattern})*"
+
+            self.semantic_to_plural_semantic[keyword] = f"{keyword}s"
+            self.plural_semantic_to_semantic[f"{keyword}s"] = keyword
 
     def build_singular_variants(self) -> dict:
         """Return expanded regex variants for each singular token pattern."""
@@ -317,6 +328,12 @@ class Pattern(DotObject):
         self.core_keywords = register.core_keywords.copy()
         self.group_keywords = register.group_keywords.copy()
 
+        self.singular_to_plural = register.singular_to_plural.copy()
+        self.plural_to_singular = register.plural_to_singular.copy()
+        self.semantic_to_plural_semantic = register.semantic_to_plural_semantic.copy()
+        self.plural_semantic_to_semantic = register.plural_semantic_to_semantic.copy()
+
+
         self.all_map = register.all_map.copy()
 
     @staticmethod
@@ -380,48 +397,35 @@ class Pattern(DotObject):
 
     def parse_base_keyword(self, raw_kw: str):
         """Return the core keyword and any quantity tag extracted from a mapping name."""
-        is_group = "_group" in raw_kw
+        is_group = raw_kw.endswith("_group")
         name = raw_kw.removesuffix("_group")
-
         for core in self.core_keywords:
             # Case: exact match or numeric-prefixed match (e.g., "3item")
             if name == core or re.fullmatch(rf"[0-9]+{core}", raw_kw):
-                return StatusString(core, status="ok")
-
-            # Case: suffix match with quantity prefix (e.g., "zero_or_more_item")
-            if re.search(rf"_{core}$", name):
-                qty_pat = r"(?P<qty>some|optional|zero_or_(one|more)|one_or_more)_"
-                m = re.match(qty_pat, raw_kw)
-                qty = m.group("qty") if m else ""
-                if qty == "optional" or qty == "":
-                    qty = (f"{qty}_group" if is_group else qty).strip("_")
+                qty = "group" if is_group else ""
                 return StatusString(core, status="ok", reason=qty)
+
+            prefixes = ("some", "optional", "zero_or_one",
+                        "zero_or_more", "one_or_more")
+            for prefix in prefixes:
+                if name == f"{prefix}_{core}":
+                    qty = f"optional_group" if prefix == "optional" and is_group else prefix
+                    return StatusString(core, status="ok", reason=qty)
 
         return StatusString()
 
-    def resolve_plural_keyword(self, keyword):
+    def resolve_semantic(self, keyword):
+        return self.plural_semantic_to_semantic.get(keyword, keyword)
+
+    def resolve_plural_semantic(self, keyword):
+        return self.semantic_to_plural_semantic.get(keyword, keyword)
+
+    def resolve_plural(self, keyword):
         """Return the plural form of a singular keyword if available."""
-        base = keyword
-        plural = f"{base}s"
+        return self.singular_to_plural.get(keyword, keyword)
 
-        # Case 1: singular → plural (regular or underscore form)
-        if base in self.singular_keywords:
-            if plural in self.plural_keywords:
-                return plural
-
-            if "_" in plural:
-                head, tail = plural.split("_", maxsplit=1)
-                alt_plural = f"{head}s_{tail}"
-                if alt_plural in self.plural_keywords:
-                    return alt_plural
-
-            return base
-
-        # Case 2: semantic plural
-        if plural in self.plural_semantic_keywords:
-            return plural
-
-        return base
+    def resolve_singular(self, keyword):
+        return self.plural_to_singular.get(keyword, keyword)
 
     def resolve_keyword_for_pattern(self, pattern):
         """Return the keyword mapped to this pattern, preferring core keywords."""
@@ -477,7 +481,7 @@ class Pattern(DotObject):
         # some_ / one_or_more_
         if re.search(r"some_|one_or_more_", keyword):
             if self.keyword_in(base, singular=True):
-                plural = self.resolve_plural_keyword(base)
+                plural = self.resolve_plural(base)
                 return self.all_map[f"optional_{plural}"]
 
             if self.keyword_in(base, plural=True):

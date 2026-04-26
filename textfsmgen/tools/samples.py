@@ -211,7 +211,7 @@ class SamplesGenerator:
 
         # --- Singular / plural keyword path -------------------------------------
         if PATTERN.keyword_in(base, singular=True, plural=True):
-            resolved = PATTERN.resolve_plural_keyword(base)
+            resolved = PATTERN.resolve_plural(base)
             return self.get_sample(resolved)[: self._count]
 
         # --- Semantic / plural semantic path ------------------------------------
@@ -255,7 +255,7 @@ class SamplesGenerator:
 
         # --- Singular / plural keyword path -------------------------------------
         if PATTERN.keyword_in(base, singular=True, plural=True):
-            plural = PATTERN.resolve_plural_keyword(base)
+            plural = PATTERN.resolve_plural(base)
             starting = 2 if qty == "group" else 1
             return self.create_sample_group(plural, starting=starting)
 
@@ -279,7 +279,7 @@ class SamplesGenerator:
 
         # --- Singular / plural keyword path -------------------------------------
         if PATTERN.keyword_in(base, singular=True, plural=True):
-            singular = PATTERN.resolve_singular_keyword(base)
+            singular = PATTERN.resolve_singular(base)
             parts = []
             for _ in range(self._count):
                 part = "".join(self.get_sample(singular))[:self._count]
@@ -307,7 +307,7 @@ class SamplesGenerator:
 
         # --- Singular / plural keyword path -------------------------------------
         if PATTERN.keyword_in(base, singular=True, plural=True):
-            singular = PATTERN.resolve_singular_keyword(base)
+            singular = PATTERN.resolve_singular(base)
             parts = []
             for i in range(lo, hi + 1):
                 part = "".join(self.get_sample(singular))[:i]
