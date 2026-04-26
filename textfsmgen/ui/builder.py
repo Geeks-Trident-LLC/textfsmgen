@@ -27,7 +27,8 @@ from textfsmgen.ui.common import (
     center_window,
     make_modal,
     clear_text,
-    set_text
+    set_text,
+    extract_text,
 )
 
 window_width = 960 if ui.is_macos else 820 if ui.is_linux else 740
@@ -360,9 +361,39 @@ def perform_reset_action(app):
 
 
 def perform_copy_action(app):
+    """Copy clipboard text into editable areas; warn on readonly ones."""
+
+    b = app.tools.builder
+    prev = app.prev_widget
+    widgets = [b.pattern_area, b.explain_area]
+
+    for widget in widgets:
+        if widget is prev:
+            widget.update_idletasks()
+            content = widget.selection_get() if widget.tag_ranges("sel") else extract_text(widget)
+
+            if not content:
+                show_message_dialog(
+                    title="Copy Action",
+                    warning="There is no text in the your selected area to copy.",
+                )
+                return
+
+            # Update UI and clipboard
+            app.root.clipboard_clear()
+            app.root.clipboard_append(content)
+            app.root.update()
+            return
+
     show_message_dialog(
-        title="Copy Action",
-        info="The copy functionality is not implemented yet.",
+        title="Ambiguous Copy Action",
+        info=(
+            "Please choose the specific area you want to copy.\n\n"
+            "The Copy feature only works for two areas:\n"
+            "  • Pattern area — displays the generated Python pattern code\n"
+            "  • Explanation area — displays the explanation for the pattern and snippet\n\n"
+            "For all other fields, please copy manually using Ctrl+C."
+        ),
     )
 
 
