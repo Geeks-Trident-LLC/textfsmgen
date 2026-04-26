@@ -136,6 +136,7 @@ def build_semantic_group(app, parent, row=0):
 
             checkbox = ui.TriStateCheckBox(semantic_group, **kwargs)
             checkbox.grid(row=row_pos, column=col_pos, sticky="nw")
+            checkbox.configure(command=lambda c=checkbox: on_click_tristate_checkbox(c, app))
 
     variant_group = ui.LabelFrame(semantic_group, text="Variant / Quantity")
     variant_group.grid(row=row_pos+1, column=0, columnspan=col_pos+1, padx=4, pady=(2, 0), sticky="nw")
@@ -556,3 +557,49 @@ def on_click_outcome_checkbox(app):
     # Update UI
     set_text(b.pattern_area, f"pattern = r{enclose_string(pattern)}")
     set_text(b.explain_area, node.explanation)
+
+
+def on_click_tristate_checkbox(widget, app):
+    """Advance widget.state_index and update UI + shared state."""
+    is_special = widget.label in ("anything", "something")
+
+    # Determine next state count (2-state or 3-state)
+    max_state = 1 if is_special else 2
+    widget.state_index = (widget.state_index + 1) % (max_state + 1)
+
+    # Update UI text + BooleanVar
+    if widget.state_index == 0:
+        widget.state_var.set(False)
+        widget.config(text=widget.label)
+
+    elif widget.state_index == 1:
+        widget.state_var.set(True)
+        widget.config(text=widget.label)
+
+    else:  # state_index == 2 (plural form)
+        widget.state_var.set(True)
+        widget.config(text=f"{widget.label}s")
+
+    sync_shared_var(widget)
+    perform_build_action(app)
+
+
+def sync_shared_var(widget):
+    """Update the shared StringVar list to reflect the current state."""
+    try:
+        items = yaml.safe_load(widget.shared_var.get()) or []
+    except Exception:   # noqa
+        items = []
+
+    singular = widget.label
+    plural = f"{widget.label}s"
+    # Remove both forms first
+    items = [x for x in items if x not in (singular, plural)]
+
+    # Add the active form
+    if widget.state_index == 1:
+        items.insert(0, singular)
+    elif widget.state_index == 2:
+        items.insert(0, plural)
+
+    widget.shared_var.set(str(items))

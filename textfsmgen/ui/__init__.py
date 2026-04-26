@@ -74,60 +74,11 @@ class TriStateCheckBox(CheckBox):
             parent,
             text=label,
             variable=self.state_var,
-            command=self._cycle_state,
             cursor="hand2"
         )
 
-    def _cycle_state(self):
-        """Advance checkbox state and update label + shared variable."""
-        is_special = self.label in ("anything", "something")
-
-        # Determine next state count (2-state or 3-state)
-        max_state = 1 if is_special else 2
-        self.state_index = (self.state_index + 1) % (max_state + 1)
-
-        # Update UI text + BooleanVar
-        if self.state_index == 0:
-            self.state_var.set(False)
-            self.config(text=self.label)
-
-        elif self.state_index == 1:
-            self.state_var.set(True)
-            self.config(text=self.label)
-
-        else:  # state_index == 2 (plural form)
-            self.state_var.set(True)
-            self.config(text=f"{self.label}s")
-
-        self._sync_shared_var()
-
-    def _sync_shared_var(self):
-        """Update the shared StringVar list to reflect the current state."""
-        if not isinstance(self.shared_var, tk.StringVar):
-            return
-
-        try:
-            items = yaml.safe_load(self.shared_var.get()) or []
-        except Exception:   # noqa
-            items = []
-
-        if not isinstance(items, list):
-            items = []
-
-        singular = self.label
-        plural = f"{self.label}s"
-
-        # Remove both forms first
-        items = [x for x in items if x not in (singular, plural)]
-
-        # Add the active form
-        if self.state_index == 1:
-            items.insert(0, singular)
-        elif self.state_index == 2:
-            items.insert(0, plural)
-        self.shared_var.set(str(items))
-
     def reset(self):
+        self.configure(text=self.label)
         self.state_var.set(False)
         self.state_index = 0
 
