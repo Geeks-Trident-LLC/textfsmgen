@@ -5,11 +5,12 @@ textfsmgen.tools.samples
 Utilities for generating random test samples used in TextFSM verification and testing.
 """
 
-import string
 import random
 import re
 
 from textfsmgen.libs.pattern import ParsedKeywordMappingName, PATTERN
+
+from textfsmgen.core.patterns import LinePattern
 
 from textfsmgen.tools.samples_data import (
     letter_samples, letters_samples,
@@ -75,64 +76,24 @@ def shuffled_copy(items):
 
 class SamplesGenerator:
     def __init__(self, snippet, count=3):
-        self.snippet = snippet.strip()
-        self.count = count
+        self._snippet = snippet.strip()
+        self._count = count
 
-        self.is_parsed = False
-        keyword, remainder = snippet.split("(")
+        self._is_parsed = False
+        self._allowed_empty = False
+        self._parser = None
 
-        self.allowed_empty = any(re.match("or_empty", item) for item in re.split(",", remainder))
+        self._number_samples = generate_number_samples()
+        self._mixed_number_samples = generated_mixed_number_samples()
 
-        self.keyword = ""
-        self.base_keyword = ""
-        self.pattern = ""
-        self.quantity = ""
-        self.quantity_lo = ""
-        self.quantity_hi = ""
-
-        self.number_samples = generate_number_samples()
-        self.mixed_number_samples = generated_mixed_number_samples()
-
-        self.mapping = self.get_mapping()
-
-        self.parse()
-
-    def __bool__(self): return self.is_parsed
-
-    def __len__(self): return 1 if self.is_parsed else 0
-
-    def parse(self):
-
-        if not self.snippet or not re.fullmatch(r"\w+[(][^)]*[)]", self.snippet):
-            return
-
-        keyword, remainder = self.snippet.split("(")
-
-        node = ParsedKeywordMappingName(keyword)
-        if not node:
-            return
-
-        self.keyword = node.keyword
-        self.base_keyword = node.base_keyword
-        self.quantity = node.quantity
-        self.quantity_lo = node.quantity_lo
-        self.quantity_hi = node.quantity_hi
-        self.pattern = node.pattern
-
-        if self.base_keyword not in PATTERN.core_keywords:
-            if self.keyword not in ("anything", "something"):
-                return
-        self.is_parsed = True
-
-    def get_mapping(self):
-        mapping = {
+        self._mapping= {
             "dot": dot_samples,             "dots": dots_samples,
             "space": space_samples,         "spaces": spaces_samples,
 
             "digit": digit_samples,         "digits": digits_samples,
 
-            "number": self.number_samples,
-            "mixed_number": self.mixed_number_samples,
+            "number": self._number_samples,
+            "mixed_number": self._mixed_number_samples,
 
             "letter": letter_samples,       "letters": letters_samples,
             "alnum": alnum_samples,         "alnums": alnums_samples,
@@ -150,35 +111,227 @@ class SamplesGenerator:
             "non_ws": non_ws_samples,       "non_whitespace": non_ws_samples,
             "non_wss": non_wss_samples,     "non_whitespaces": non_wss_samples,
         }
-        return mapping
 
-    def generate_custom(self):
-        if self.keyword not in ("anything", "something"):
-            return []
+        self.update_allowed_empty()
+        self.parse()
 
-        values = self.mapping.get("dots").copy()
-        random.shuffle(values)
-        self.allowed_empty = self.keyword == "anything"
-        return values[:self.count]
+    def __bool__(self): return self._is_parsed
 
-    def generate_core(self):
-        """Return shuffled samples for this keyword or an empty list."""
-        values = self.mapping.get(self.keyword)
+    def __len__(self): return 1 if self._is_parsed else 0
+
+    @property
+    def pattern(self): return LinePattern(self._snippet) if self else ""
+
+    def update_allowed_empty(self):
+        keyword, remainder = self._snippet.split("(")
+        self._allowed_empty = any(
+            re.match("or_empty", item)
+            for item in re.split(",", remainder)
+        )
+
+    def parse(self):
+
+        if not self._snippet or not re.fullmatch(r"\w+[(][^)]*[)]", self._snippet):
+            return
+
+        keyword, remainder = self._snippet.split("(")
+
+        parser = ParsedKeywordMappingName(keyword)
+        if not parser:
+            return
+
+        self._parser = parser
+        base_keyword = parser.base_keyword
+
+        if base_keyword not in PATTERN.core_keywords:
+            if keyword not in ("anything", "something"):
+                return
+        self._is_parsed = True
+
+    def get_sample(self, keyword):
+        if keyword in self._mapping:
+            samples = self._mapping[keyword].copy()
+            random.shuffle(samples)
+            return samples
+        return []
+
+    def create_sample_group(self, keyword, starting=1, ending=None, exact=None):
+        """Return grouped samples for the given keyword."""
+        values = self.get_sample(keyword)
         if not values:
             return []
 
-        result = values.copy()
-        random.shuffle(result)
-        return result[:self.count]
+        count = self._count
+
+        # --- Exact mode ---------------------------------------------------------
+        if exact:
+            parts = []
+            for i in range(count):
+                start = i * count
+                end = start + count
+                item = " ".join(values[start:end])
+                if item and item not in parts:
+                    parts.append(item)
+            return parts
+
+        # --- Range mode ---------------------------------------------------------
+        ending = ending or (starting + 4)
+
+        parts = []
+        for i in range(starting, ending):
+            start = i * count
+            end = start + (i + 1)
+            item = " ".join(values[start:end])
+            if item and item not in parts:
+                parts.append(item)
+
+        random.shuffle(parts)
+        return parts[:count]
+
+    def generate_core(self):
+        keyword = self._parser.keyword
+        if keyword in ("anything", "something"):
+            self._allowed_empty = keyword == "anything"
+            keyword = "dots"
+        return self.get_sample(keyword)[:self._count]
+
+    def generate_some(self):
+        """Generate samples for 'some', 'one_or_more', or 'zero_or_more' quantities."""
+        qty = self._parser.quantity
+
+        # Only these quantities are supported
+        if qty not in ("some", "one_or_more", "zero_or_more"):
+            return []
+
+        # zero_or_more allows empty output
+        if qty == "zero_or_more":
+            self._allowed_empty = True
+
+        base = self._parser.base_keyword
+
+        # --- Singular / plural keyword path -------------------------------------
+        if PATTERN.keyword_in(base, singular=True, plural=True):
+            resolved = PATTERN.resolve_plural_keyword(base)
+            return self.get_sample(resolved)[: self._count]
+
+        # --- Semantic / plural semantic path ------------------------------------
+        if PATTERN.keyword_in(base, semantic=True, plural_semantic=True):
+            semantic = PATTERN.resolve_semantic(base)
+            return self.create_sample_group(semantic, starting=1)
+
+        return []
+
+    def generate_optional(self):
+        qty = self._parser.quantity
+
+        # Only these quantities are supported
+        if qty not in ("optional", "zero_or_one"):
+            return []
+
+        # zero_or_more allows empty output
+        if qty == "zero_or_one":
+            self._allowed_empty = True
+
+        base = self._parser.base_keyword
+
+        # --- Singular / plural keyword path -------------------------------------
+        if PATTERN.keyword_in(base, singular=True, plural=True, semantic=True):
+            self._allowed_empty = True
+            return self.get_sample(base)[: self._count]
+
+        # --- Semantic / plural semantic path ------------------------------------
+        if PATTERN.keyword_in(base, plural_semantic=True):
+            semantic = PATTERN.resolve_semantic(base)
+            return self.create_sample_group(semantic, starting=1)
+
+        return []
+
+    def generate_group(self):
+        qty = self._parser.quantity
+        # Only these quantities are supported
+        if qty not in ("optional_group", "group"):
+            return []
+        base = self._parser.base_keyword
+
+        # --- Singular / plural keyword path -------------------------------------
+        if PATTERN.keyword_in(base, singular=True, plural=True):
+            plural = PATTERN.resolve_plural_keyword(base)
+            starting = 2 if qty == "group" else 1
+            return self.create_sample_group(plural, starting=starting)
+
+        # --- Semantic / plural semantic path ------------------------------------
+        if PATTERN.keyword_in(base, semantic=True, plural_semantic=True):
+            semantic = PATTERN.resolve_semantic(base)
+            return self.create_sample_group(semantic, starting=1)
+
+        return []
+
+    def generate_exact(self):
+        qty = str(self._parser.quantity)
+
+        # Only these quantities are supported
+        if not qty.isdigit():
+            return []
+
+        qty = int(qty)
+
+        base = self._parser.base_keyword
+
+        # --- Singular / plural keyword path -------------------------------------
+        if PATTERN.keyword_in(base, singular=True, plural=True):
+            singular = PATTERN.resolve_singular_keyword(base)
+            parts = []
+            for _ in range(self._count):
+                part = "".join(self.get_sample(singular))[:self._count]
+                parts.append(part)
+            return parts
+
+        # --- Semantic / plural semantic path ------------------------------------
+        if PATTERN.keyword_in(base, semantic=True, plural_semantic=True):
+            semantic = PATTERN.resolve_semantic(base)
+            return self.create_sample_group(semantic, exact=qty)
+
+        return []
+
+    def generate_range(self):
+        lo, hi = str(self._parser.quantity_lo), str(self._parser.quantity_hi)
+
+        # Only these quantities are supported
+        if not lo.isdigit() and not hi.isdigit():
+            return []
+
+        lo = int(lo) if lo.isdigit() else 0
+        hi = int(hi) if hi.isdigit() else lo + 4
+
+        base = self._parser.base_keyword
+
+        # --- Singular / plural keyword path -------------------------------------
+        if PATTERN.keyword_in(base, singular=True, plural=True):
+            singular = PATTERN.resolve_singular_keyword(base)
+            parts = []
+            for i in range(lo, hi + 1):
+                part = "".join(self.get_sample(singular))[:i]
+                if part and part not in parts:
+                    parts.append(part)
+            return parts[:self._count]
+
+        # --- Semantic / plural semantic path ------------------------------------
+        if PATTERN.keyword_in(base, semantic=True, plural_semantic=True):
+            semantic = PATTERN.resolve_semantic(base)
+            return self.create_sample_group(semantic, starting=lo, ending=hi)
+        return []
 
     def generate(self):
         """Return the first non-empty result from available generators."""
         for func in (
-            self.generate_custom, self.generate_core,
+            self.generate_core, self.generate_some, self.generate_optional,
+            self.generate_group, self.generate_exact, self.generate_range,
+
         ):
             result = func()
             if result:
-                if self.allowed_empty:
-                    result.insert(1, '')
+                if self._allowed_empty:
+                    if "" not in result:
+                        result.insert(random.randint(0, len(result)), "")
                 return result
         return []

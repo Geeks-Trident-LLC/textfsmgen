@@ -40,12 +40,16 @@ mac_addresses = [
     "a0-ce-c8-1f-02-9e",    "d8-5d-e2-4a-90-7b",    "bc-92-6b-3e-11-48",
 ]
 
-space_samples = [" "]
+space_samples = [" "] * 100
 
-spaces_samples = [" ", " " * 2, " " * 3, " " * 4, " " * 5, " " * 6, " " * 7]
+spaces_samples = [" "] * 20
+for i in range(6):
+    spaces_samples.extend([" " * (i + 2)] * 20)
 
-ws_samples = list(string.whitespace)
-wss_samples = list(string.whitespace) + [" \t", "  \t ", "\t   ", "   \t   "]
+ws_samples = list(string.whitespace) * 10
+wss_samples = list(string.whitespace) * 2
+for item in [" \t", "  \t ", "\t   ", "   \t   "]:
+    wss_samples.extend([item] * 20)
 
 letter_samples = list(string.ascii_letters)
 
@@ -142,7 +146,7 @@ mixed_word_samples.extend(ipv4_with_subnet + ipv6_with_prefix)
 mixed_word_samples.extend(mac_addresses)
 
 non_ws_samples = graph_samples.copy()
-non_ws_samples.extend([chr(i) for i in range(0xA0, 0x100)])
+non_ws_samples.extend([chr(i) for i in range(0xA1, 0x100)])
 
 non_wss_samples = [
     "café", "brïght", "sölar", "mañgo", "rêst", "süper", "déjà",
@@ -165,7 +169,7 @@ puncts_samples = [
 ]
 puncts_samples.extend(punct_samples[:5])
 
-dot_samples = non_ws_samples + wss_samples
+dot_samples = non_ws_samples + [' ', '\t', '\x0b', '\x0c'] * 3
 dots_samples = [
     f"# v1 = 3 ÷ 4", f"mango¦beef¦lemonade", f"temperature is 32°.", f"What is Ø?",
     "Bright sun shines Øver", "Café music plays softly", "Warm breeze feels ñice",
