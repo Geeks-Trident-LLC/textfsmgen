@@ -155,7 +155,7 @@ def build_semantic_group(app, parent, row=0):
                     label = ui.Label(variant_group, text="exact qty:")
                     label.grid(row=row_pos, column=col_pos, sticky="nw", padx=(20, 2))
                     textbox = ui.TextBox(
-                        variant_group, width=10, justify="center", state="readonly",
+                        variant_group, width=10, justify="center",
                         textvariable=app.tools.builder.exact_quantity,
                     )
                     textbox.grid(row=row_pos, column=col_pos+1, sticky="nw", padx=1, pady=(0, 2))
@@ -166,12 +166,12 @@ def build_semantic_group(app, parent, row=0):
                 label.grid(row=row_pos, column=col_pos, sticky="nw", padx=(20, 2))
 
                 textbox = ui.TextBox(
-                    variant_group, width=10, justify="center", state="readonly",
+                    variant_group, width=10, justify="center",
                     textvariable=app.tools.builder.range_min_quantity,
                 )
                 textbox.grid(row=row_pos, column=col_pos+1, sticky="nw", padx=1, pady=(0, 2))
                 textbox = ui.TextBox(
-                    variant_group, width=10, justify="center", state="readonly",
+                    variant_group, width=10, justify="center",
                     textvariable=app.tools.builder.range_max_quantity,
                 )
                 textbox.grid(row=row_pos, column=col_pos+2, sticky="nw", padx=1, pady=(0, 2))
