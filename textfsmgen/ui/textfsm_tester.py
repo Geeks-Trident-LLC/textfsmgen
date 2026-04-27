@@ -33,7 +33,7 @@ from textfsmgen.ui.common import (
     extract_text,
 )
 
-window_width = 1020 if ui.is_macos else 820 if ui.is_linux else 740
+window_width = 1100 if ui.is_macos else 860 if ui.is_linux else 720
 window_height = 820 if ui.is_macos else 840 if ui.is_linux else 770
 
 
@@ -87,7 +87,7 @@ def create_window(parent: Optional[Union[ui.Tk, ui.Toplevel]]):
 
 
 def build_controls_frame(app, parent):
-    frame = ui.Frame(parent, width=600, height=32, relief="ridge")
+    frame = ui.Frame(parent, width=600, height=32 if ui.is_window else 38, relief="ridge")
     frame.grid(row=0, column=0, padx=4, pady=4, sticky="ew")
 
     labels = [
@@ -122,7 +122,9 @@ def build_controls_frame(app, parent):
                 shared_var=app.tools.tester.output_flag,
                 width=18,
             )
-            checkbox.grid(row=0, column=position.next(), sticky="nswe", padx=(6, 2), pady=4)
+            checkbox.grid(row=0, column=position.next(), sticky="nswe", padx=(2, 2), pady=4)
+            if ui.is_linux:
+                checkbox.configure(anchor="w", justify="left")
             checkbox.configure(
                 command=lambda widget=checkbox: cycle_tristate_checkbox(widget, app)    # noqa
             )
@@ -130,7 +132,7 @@ def build_controls_frame(app, parent):
 
         kwargs = {"width": btn_width, "command": mapping.get(label)}
         button = ui.Button(frame, text=label.title(), **kwargs)
-        button.grid(row=0, column=position.next(), sticky='nswe', padx=2, pady=4)
+        button.grid(row=0, column=position.next(), sticky='nswe', padx=1, pady=4)
 
     return frame
 
