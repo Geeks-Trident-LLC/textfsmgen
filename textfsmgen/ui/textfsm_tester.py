@@ -32,6 +32,7 @@ from textfsmgen.ui.common import (
     clear_text,
     set_text,
     extract_text,
+    insert_text
 )
 
 window_width = 1100 if ui.is_macos else 860 if ui.is_linux else 720
@@ -376,8 +377,44 @@ def perform_copy_action(app):
 
 
 def perform_paste_action(app):
-    """Paste a TextFSM file into the tester UI."""
-    pass
+    """Paste clipboard text into the active editable area."""
+    # --- Retrieve clipboard text -------------------------------------------
+    try:
+        text = app.root.clipboard_get()
+    except Exception as ex:
+        show_message_dialog(
+            title="Clipboard Empty",
+            info=(
+                "There is no text available to paste from the clipboard.\n"
+                + "-" * 70 + "\n"
+                f"{type(ex).__name__}: {ex}"
+            ),
+        )
+        return
+
+    if not text:
+        show_message_dialog(
+            title="Paste Action",
+            info="Your clipboard contains no text. No operation performed.",
+        )
+        return
+
+    # --- Determine paste target --------------------------------------------
+    tool = app.tools.tester
+    active = app.prev_widget
+    editable_areas = (tool.template_area, tool.test_data_area)
+
+    for area in editable_areas:
+        area.update_idletasks()
+        if area is active:
+            insert_text(area, text)
+            return
+
+    # --- No valid target ----------------------------------------------------
+    show_message_dialog(
+        title="Paste Action — Ambiguous Selection",
+        info="Please choose the specific editable area you want to paste."
+    )
 
 
 def perform_reset_action(app):

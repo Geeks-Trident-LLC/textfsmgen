@@ -246,6 +246,27 @@ def set_text(widget, text: str) -> None:
     widget.configure(state=original_state)
 
 
+def insert_text(widget, text: str) -> None:
+    """Insert text in a Tkinter Text widget while preserving its state."""
+    if not isinstance(widget, ui.TextArea):
+        return
+
+    original_state = widget["state"]
+    widget.configure(state="normal")
+
+    if widget.tag_ranges(ui.tk.SEL):
+        widget.delete(ui.tk.SEL_FIRST, ui.tk.SEL_LAST)
+        insert_pos = widget.index(ui.tk.INSERT)
+        widget.insert(ui.tk.INSERT, text)
+        widget.tag_add(ui.tk.SEL, insert_pos, f"{insert_pos}+{len(text)}c")
+        widget.configure(state=original_state)
+        widget.focus()
+        return
+
+    widget.insert(ui.tk.INSERT, text)
+    widget.configure(state=original_state)
+
+
 def render_formatted_text(widget, text: str) -> None:
     """Render text with <bold>...</bold> markup into a Tkinter Text widget."""
     if not isinstance(widget, ui.TextArea):
