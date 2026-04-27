@@ -55,13 +55,13 @@ def create_window(parent: Optional[Union[ui.Tk, ui.Toplevel]]) -> ui.Toplevel:
     height = 604 if ui.is_macos else 615 if ui.is_linux else 564
 
     if parent:
-        center_window(parent, window, width, height, x_resizable=True, y_resizable=True)
+        center_window(parent, window, width, height, x_resizable=False, y_resizable=True)
     return window
 
 def add_general_arguments_fields(app, parent: ui.Frame) -> None:    # noqa
     """Add author, email, company, and description fields to the parent frame."""
     group = ui.LabelFrame(parent, height=100, width=780, text="General Arguments")
-    group.grid(row=0, column=0, padx=10, pady=(5, 0), sticky="nw")
+    group.grid(row=0, column=0, padx=10, pady=(5, 0), sticky="w")
 
     pad_y = 0 if ui.is_macos else 1
 
@@ -72,115 +72,115 @@ def add_general_arguments_fields(app, parent: ui.Frame) -> None:    # noqa
     ]
     for label_text, var, pos, w in fields:
         lbl = ui.Label(group, text=label_text)
-        lbl.grid(row=0, column=pos * 2, padx=2, pady=pad_y, sticky="nw")
+        lbl.grid(row=0, column=pos * 2, padx=2, pady=pad_y, sticky="w")
         entry = ui.TextBox(group, width=w, textvariable=var)
-        entry.grid(row=0, column=pos * 2 + 1, padx=2, pady=pad_y, sticky="nw")
+        entry.grid(row=0, column=pos * 2 + 1, padx=2, pady=pad_y, sticky="w")
 
     lbl = ui.Label(group, text="Description")
-    lbl.grid(row=1, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
+    lbl.grid(row=1, column=0, columnspan=1, padx=2, pady=pad_y, sticky="w")
     entry = ui.TextBox(group, width=96, textvariable=app.settings.description)
-    entry.grid(row=1, column=1, columnspan=5, padx=2, pady=pad_y, sticky="nw")
+    entry.grid(row=1, column=1, columnspan=5, padx=2, pady=pad_y, sticky="w")
 
 
 def add_category_translator_arguments(app, parent: ui.Frame) -> None:
     group = ui.LabelFrame(parent, height=120, width=780, text="Category Translator Arguments")
-    group.grid(row=1, column=0, padx=10, pady=10, sticky="nw")
+    group.grid(row=1, column=0, padx=10, pady=10, sticky="w")
     pad_y = 0 if ui.is_macos else 1
 
     checkbox = ui.CheckBox(group, text="Use Category Translator",
                            variable=app.settings.use_category_translator_flag,
                            onvalue=True, offvalue=False)
-    checkbox.grid(row=0, column=10, sticky="se")
+    checkbox.grid(row=0, column=10, sticky="e")
 
     lbl = ui.Label(group, text="Separator")
-    lbl.grid(row=0, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
+    lbl.grid(row=0, column=0, columnspan=1, padx=2, pady=pad_y, sticky="w")
     entry = ui.TextBox(group, width=12, justify="center",
                        textvariable=app.settings.category_arg_separator)
-    entry.grid(row=0, column=1, padx=2, pady=pad_y, sticky="nw")    # noqa
+    entry.grid(row=0, column=1, padx=2, pady=pad_y, sticky="w")    # noqa
 
     lbl = ui.Label(group, text="Count")
-    lbl.grid(row=0, column=2, padx=2, pady=pad_y, sticky="se")
+    lbl.grid(row=0, column=2, padx=2, pady=pad_y, sticky="e")
     entry = ui.TextBox(group, width=6, justify="center",
                        textvariable=app.settings.category_arg_count)
-    entry.grid(row=0, column=3, padx=2, pady=pad_y, sticky="nw")
+    entry.grid(row=0, column=3, padx=2, pady=pad_y, sticky="w")
 
     lbl = ui.Label(group, text="Starting From")
-    lbl.grid(row=1, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")    # noqa
+    lbl.grid(row=1, column=0, columnspan=1, padx=2, pady=pad_y, sticky="w")    # noqa
     entry = ui.TextBox(group, width=94, textvariable=app.settings.category_arg_starting_from)
-    entry.grid(row=1, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
+    entry.grid(row=1, column=1, columnspan=10, padx=2, pady=pad_y, sticky="w")
 
     lbl = ui.Label(group, text="Ending At")
-    lbl.grid(row=2, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")    # noqa
+    lbl.grid(row=2, column=0, columnspan=1, padx=2, pady=pad_y, sticky="w")    # noqa
     entry = ui.TextBox(group, width=94, textvariable=app.settings.category_arg_ending_at)
-    entry.grid(row=2, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
+    entry.grid(row=2, column=1, columnspan=10, padx=2, pady=pad_y, sticky="w")
 
     lbl = ui.Label(group, text="Replacing")
-    lbl.grid(row=3, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")    # noqa
+    lbl.grid(row=3, column=0, columnspan=1, padx=2, pady=pad_y, sticky="w")    # noqa
     entry = ui.TextBox(group, width=94, textvariable=app.settings.category_arg_replacing_rules)
-    entry.grid(row=3, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
+    entry.grid(row=3, column=1, columnspan=10, padx=2, pady=pad_y, sticky="w")
 
 def add_tabular_translator_arguments(app, parent: ui.Frame) -> None:
     group = ui.LabelFrame(parent, height=120, width=780, text="Tabular Translator Arguments")
-    group.grid(row=2, column=0, padx=10, pady=10, sticky="nw")
+    group.grid(row=2, column=0, padx=10, pady=10, sticky="w")
     pad_y = 0 if ui.is_macos else 1
 
     checkbox = ui.CheckBox(group, text="Use Tabular Translator",
                            variable=app.settings.use_tabular_translator_flag,
                            onvalue=True, offvalue=False)
-    checkbox.grid(row=0, column=10, sticky="se")
+    checkbox.grid(row=0, column=10, sticky="e")
 
     lbl = ui.Label(group, text="Divider")
-    lbl.grid(row=0, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
+    lbl.grid(row=0, column=0, columnspan=1, padx=2, pady=pad_y, sticky="w")
     entry = ui.TextBox(group, width=8, justify="center",
                        textvariable=app.settings.tabular_arg_divider)
-    entry.grid(row=0, column=1, padx=2, pady=pad_y, sticky="nw")    # noqa
+    entry.grid(row=0, column=1, padx=2, pady=pad_y, sticky="w")    # noqa
 
     lbl = ui.Label(group, text="Count")
-    lbl.grid(row=0, column=2, padx=2, pady=pad_y, sticky="se")
+    lbl.grid(row=0, column=2, padx=2, pady=pad_y, sticky="e")
     entry = ui.TextBox(group, width=6, justify="center",
                        textvariable=app.settings.tabular_arg_count)
-    entry.grid(row=0, column=3, padx=2, pady=pad_y, sticky="nw")
+    entry.grid(row=0, column=3, padx=2, pady=pad_y, sticky="w")
 
     lbl = ui.Label(group, text="Widths")
-    lbl.grid(row=0, column=4, padx=2, pady=pad_y, sticky="se")
+    lbl.grid(row=0, column=4, padx=2, pady=pad_y, sticky="e")
     entry = ui.TextBox(group, width=20, justify="center",
                        textvariable=app.settings.tabular_arg_widths)
-    entry.grid(row=0, column=5, padx=2, pady=pad_y, sticky="nw")
+    entry.grid(row=0, column=5, padx=2, pady=pad_y, sticky="w")
 
     checkbox = ui.CheckBox(group, text="Has Header Row",
                            variable=app.settings.tabular_arg_has_header_row_flag,
                            onvalue=True, offvalue=False)
-    checkbox.grid(row=0, column=6, sticky="nw")
+    checkbox.grid(row=0, column=6, sticky="w")
 
     lbl = ui.Label(group, text="Headers")
-    lbl.grid(row=1, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")    # noqa
+    lbl.grid(row=1, column=0, columnspan=1, padx=2, pady=pad_y, sticky="w")    # noqa
     entry = ui.TextBox(group, width=94, textvariable=app.settings.tabular_arg_headers)
-    entry.grid(row=1, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
+    entry.grid(row=1, column=1, columnspan=10, padx=2, pady=pad_y, sticky="w")
 
     lbl = ui.Label(group, text="Custom Hdr")
-    lbl.grid(row=2, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")    # noqa
+    lbl.grid(row=2, column=0, columnspan=1, padx=2, pady=pad_y, sticky="w")    # noqa
     entry = ui.TextBox(group, width=94, textvariable=app.settings.tabular_arg_custom_header)
-    entry.grid(row=2, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
+    entry.grid(row=2, column=1, columnspan=10, padx=2, pady=pad_y, sticky="w")
 
     lbl = ui.Label(group, text="Header Rows")
-    lbl.grid(row=3, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")    # noqa
+    lbl.grid(row=3, column=0, columnspan=1, padx=2, pady=pad_y, sticky="w")    # noqa
     entry = ui.TextBox(group, width=94, textvariable=app.settings.tabular_arg_header_rows)
-    entry.grid(row=3, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
+    entry.grid(row=3, column=1, columnspan=10, padx=2, pady=pad_y, sticky="w")
 
     lbl = ui.Label(group, text="Starting From")
-    lbl.grid(row=4, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
+    lbl.grid(row=4, column=0, columnspan=1, padx=2, pady=pad_y, sticky="w")
     entry = ui.TextBox(group, width=94, textvariable=app.settings.tabular_arg_starting_from)
-    entry.grid(row=4, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
+    entry.grid(row=4, column=1, columnspan=10, padx=2, pady=pad_y, sticky="w")
 
     lbl = ui.Label(group, text="Ending At")
-    lbl.grid(row=5, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
+    lbl.grid(row=5, column=0, columnspan=1, padx=2, pady=pad_y, sticky="w")
     entry = ui.TextBox(group, width=94, textvariable=app.settings.tabular_arg_ending_at)
-    entry.grid(row=5, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
+    entry.grid(row=5, column=1, columnspan=10, padx=2, pady=pad_y, sticky="w")
 
     lbl = ui.Label(group, text="Replacing")
-    lbl.grid(row=6, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
+    lbl.grid(row=6, column=0, columnspan=1, padx=2, pady=pad_y, sticky="w")
     entry = ui.TextBox(group, width=94, textvariable=app.settings.tabular_arg_replacing_rules)
-    entry.grid(row=6, column=1, columnspan=10, padx=2, pady=pad_y, sticky="nw")
+    entry.grid(row=6, column=1, columnspan=10, padx=2, pady=pad_y, sticky="w")
 
 
 def add_running_test_options(app, parent: ui.Frame) -> None:
@@ -199,20 +199,20 @@ def add_running_test_options(app, parent: ui.Frame) -> None:
         parent, height=120, width=780,
         text="Test Execution Settings - Prefer Python Virtual Environment"
     )
-    group.grid(row=3, column=0, padx=10, pady=10, sticky="nw")
+    group.grid(row=3, column=0, padx=10, pady=10, sticky="w")
 
     pad_y = 0 if ui.is_macos else 1
 
     lbl = ui.Label(group, text="Interpreter")
-    lbl.grid(row=0, column=0, columnspan=1, padx=2, pady=pad_y, sticky="nw")
+    lbl.grid(row=0, column=0, columnspan=1, padx=2, pady=pad_y, sticky="w")
     entry = ui.TextBox(group, width=88, textvariable=app.settings.python_interpreter)
-    entry.grid(row=0, column=1, columnspan=5, padx=2, pady=pad_y, sticky="nw")
+    entry.grid(row=0, column=1, columnspan=5, padx=2, pady=pad_y, sticky="w")
 
     button = ui.Button(
         group, text="...", command=open_,
         width = 1 if ui.is_macos else 3,
     )
-    button.grid(row=0, column=6, padx=2, pady=pad_y, sticky="nw")
+    button.grid(row=0, column=6, padx=2, pady=pad_y, sticky="w")
 
     settings = [
         ("Always Ask",                  app.settings.always_ask_flag, 0),
@@ -220,13 +220,13 @@ def add_running_test_options(app, parent: ui.Frame) -> None:
     ]
     for label, var, col in settings:
         checkbox = ui.CheckBox(group, text=label, variable=var, onvalue=True, offvalue=False,)
-        checkbox.grid(row=1, column=col, sticky="nw")
+        checkbox.grid(row=1, column=col, sticky="w")
 
 
 def add_output_display_options(app, parent: ui.Frame) -> None:
     """Add application setting checkboxes to the given parent frame."""
     group = ui.LabelFrame(parent, height=120, width=380, text="Output Display Options")
-    group.grid(row=4, column=0, padx=10, pady=10, sticky="nw")
+    group.grid(row=4, column=0, padx=10, pady=10, sticky="w")
 
     settings = [
         ("Test Data",   app.settings.test_data_flag,    0, 0, 6),
@@ -243,7 +243,7 @@ def add_output_display_options(app, parent: ui.Frame) -> None:
 def add_ok_and_default_buttons(app, parent: ui.Frame) -> None:
     """Add Default and OK buttons to the given parent frame."""
     container = ui.Frame(parent, height=14, width=380)
-    container.grid(row=4, column=0, padx=10, pady=(10, 5), sticky="es")
+    container.grid(row=4, column=0, padx=10, pady=(10, 5), sticky="e")
 
     default_btn = ui.Button(
         container,

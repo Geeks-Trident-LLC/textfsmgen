@@ -112,7 +112,7 @@ def build_pane_window(parent):
 def build_semantic_group(app, parent, row=0):
 
     semantic_group = ui.LabelFrame(parent, text="Semantic")
-    semantic_group.grid(row=row, column=0, padx=4, pady=(4, 0), sticky="new")
+    semantic_group.grid(row=row, column=0, padx=4, pady=(4, 0), sticky="ew")
 
     label_groups = [
         ["anything",    "something",    "space",        "whitespace",       ],
@@ -136,11 +136,11 @@ def build_semantic_group(app, parent, row=0):
             }
 
             checkbox = ui.TriStateCheckBox(semantic_group, **kwargs)
-            checkbox.grid(row=row_pos, column=col_pos, sticky="nw")
+            checkbox.grid(row=row_pos, column=col_pos, sticky="w")
             checkbox.configure(command=lambda c=checkbox: on_click_tristate_checkbox(c, app))
 
     variant_group = ui.LabelFrame(semantic_group, text="Variant / Quantity")
-    variant_group.grid(row=row_pos+1, column=0, columnspan=col_pos+1, padx=4, pady=(2, 0), sticky="nw")
+    variant_group.grid(row=row_pos+1, column=0, columnspan=col_pos+1, padx=4, pady=(2, 0), sticky="w")
 
     label_groups = [
         ["optional",    "optional_group",   "group",        "some", "exact"],
@@ -155,28 +155,28 @@ def build_semantic_group(app, parent, row=0):
             if label in ["exact", "range"]:
                 if label == "exact":
                     label = ui.Label(variant_group, text="exact qty:")
-                    label.grid(row=row_pos, column=col_pos, sticky="nw", padx=(20, 2))
+                    label.grid(row=row_pos, column=col_pos, sticky="w", padx=(20, 2))
                     textbox = ui.TextBox(
                         variant_group, width=10, justify="center",
                         textvariable=app.tools.builder.exact_quantity,
                     )
-                    textbox.grid(row=row_pos, column=col_pos+1, sticky="nw", padx=1, pady=(0, 2))
+                    textbox.grid(row=row_pos, column=col_pos+1, sticky="w", padx=1, pady=(0, 2))
 
                     continue
 
                 label = ui.Label(variant_group, text="qty range:")
-                label.grid(row=row_pos, column=col_pos, sticky="nw", padx=(20, 2))
+                label.grid(row=row_pos, column=col_pos, sticky="w", padx=(20, 2))
 
                 textbox = ui.TextBox(
                     variant_group, width=10, justify="center",
                     textvariable=app.tools.builder.range_min_quantity,
                 )
-                textbox.grid(row=row_pos, column=col_pos+1, sticky="nw", padx=1, pady=(0, 2))
+                textbox.grid(row=row_pos, column=col_pos+1, sticky="w", padx=1, pady=(0, 2))
                 textbox = ui.TextBox(
                     variant_group, width=10, justify="center",
                     textvariable=app.tools.builder.range_max_quantity,
                 )
-                textbox.grid(row=row_pos, column=col_pos+2, sticky="nw", padx=1, pady=(0, 2))
+                textbox.grid(row=row_pos, column=col_pos+2, sticky="w", padx=1, pady=(0, 2))
                 continue
 
             checkbox = ui.CheckBox(variant_group, text=label,
@@ -184,14 +184,14 @@ def build_semantic_group(app, parent, row=0):
                 onvalue=label, offvalue="", cursor="hand2",
                 command=lambda: on_click_for_refresh(app)
             )
-            checkbox.grid(row=row_pos, column=col_pos, sticky="nw")
+            checkbox.grid(row=row_pos, column=col_pos, sticky="w")
 
     return semantic_group
 
 
 def build_data_group(app, parent, row=0):
     data_group = ui.LabelFrame(parent, text="Data")
-    data_group.grid(row=row, column=0, padx=4, pady=(4, 0), sticky="new")
+    data_group.grid(row=row, column=0, padx=4, pady=(4, 0), sticky="ew")
 
     rows = []
     index = 0
@@ -219,7 +219,7 @@ def build_data_group(app, parent, row=0):
 
 def build_controls(app, parent, row=0):
     frame = ui.Frame(parent, width=600, height=40, relief="ridge")
-    frame.grid(row=row, column=0, padx=4, pady=4, sticky="new")
+    frame.grid(row=row, column=0, padx=4, pady=4, sticky="ew")
 
     labels = [
         "build", "aggregate", "SEPARATOR",
@@ -283,7 +283,7 @@ def build_possible_outcomes(app, parent, row=0):    # noqa
     outcomes_group = ui.DynamicCheckboxGroup(
         parent, title="Possible Outcomes",
     )
-    outcomes_group.grid(row=row, column=0, padx=4, pady=(4, 0), sticky="new")
+    outcomes_group.grid(row=row, column=0, padx=4, pady=(4, 0), sticky="ew")
     return outcomes_group
 
 
@@ -518,7 +518,7 @@ def perform_build_action(app):
             add_if_absent(f"{semantic}({params_txt})", snippets)
 
     # Display results
-    b.outcomes_group.grid(row=3, column=0, padx=4, pady=(4, 0), sticky="new")
+    b.outcomes_group.grid(row=3, column=0, padx=4, pady=(4, 0), sticky="ew")
     b.outcomes_group.build(snippets, state_var=b.outcomes_value)
 
     for checkbox in b.outcomes_group.checkboxes:
