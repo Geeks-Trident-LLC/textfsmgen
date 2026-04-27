@@ -346,7 +346,33 @@ def perform_save_action(app):
 
 def perform_copy_action(app):
     """Open a TextFSM file into the tester UI."""
-    pass
+
+    tool = app.tools.tester
+    prev = app.prev_widget
+    widgets = [tool.template_area, tool.test_data_area, tool.result_area]
+
+    for widget in widgets:
+        if widget is prev:
+            widget.update_idletasks()
+            content = widget.selection_get() if widget.tag_ranges("sel") else extract_text(widget)
+
+            if not content:
+                show_message_dialog(
+                    title="Copy Action",
+                    warning="There is no text in the your selected area to copy.",
+                )
+                return
+
+            # Update UI and clipboard
+            app.root.clipboard_clear()
+            app.root.clipboard_append(content)
+            app.root.update()
+            return
+
+    show_message_dialog(
+        title="Copy Action — Ambiguous Selection",
+        info="A copy target is required. Choose template, test data, or result area."
+    )
 
 
 def perform_paste_action(app):
