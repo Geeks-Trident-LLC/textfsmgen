@@ -15,8 +15,6 @@ from typing import Any, Callable, Dict, Optional
 import platform
 import functools
 
-import yaml
-
 from os import path
 
 import tkinter as tk
@@ -64,17 +62,22 @@ class TriStateCheckBox(CheckBox):
     """A three‑state checkbox that cycles: unchecked → singular → plural,
     and syncs its state into an optional shared StringVar list."""
 
-    def __init__(self, parent, label="", shared_var=None):
+    def __init__(self, parent, label="", state_var=None, shared_var=None, **kwargs):
         self.label = label
         self.shared_var = shared_var
-        self.state_var = tk.BooleanVar(value=False)  # reflects checked/unchecked
-        self.state_index = 0  # 0=off, 1=singular, 2=plural
+        self.state_var = tk.BooleanVar() if state_var is None else state_var
+        self.state_index = 0
+
+        kwargs.pop("text", None)
+        kwargs.pop("variable", None)
+        kwargs.pop("cursor", None)
 
         super().__init__(
             parent,
             text=label,
             variable=self.state_var,
-            cursor="hand2"
+            cursor="hand2",
+            **kwargs
         )
 
     def reset(self):

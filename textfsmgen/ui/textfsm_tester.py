@@ -4,23 +4,25 @@ textfsmgen.ui.builder
 
 UI components for the Regex Translator dialog in TextFSMGen.
 """
+
 from typing import Optional, Union
+import traceback
 
-import re
+from io import StringIO
+import pprint
+import json
+import yaml
 
-from textfsmgen.engine.translate import make_translator
-from textfsmgen.libs.datatype import trim_empty_edges, trim_blank_edges, add_if_absent
-from textfsmgen.tools.explain import SnippetExplanation
-from textfsmgen.tools.samples import SamplesGenerator
+from textfsm import TextFSM
 
-from textfsmgen.core.patterns import LinePattern
-
-from textfsmgen.libs.text import enclose_string
 from textfsmgen.libs.generic import Position
+from textfsmgen.libs.utils import get_data_as_tabular
+from textfsmgen.libs.text import decorate_text
+from textfsmgen.libs.generic import StatusString
 
 from textfsmgen import ui
 from textfsmgen.ui import usage
-import yaml
+
 
 from textfsmgen.ui.common import (
     show_message_dialog,
@@ -32,16 +34,35 @@ from textfsmgen.ui.common import (
 )
 
 window_width = 1020 if ui.is_macos else 820 if ui.is_linux else 740
-window_height = 770 if ui.is_macos else 780 if ui.is_linux else 720
+window_height = 820 if ui.is_macos else 840 if ui.is_linux else 770
+
 
 def show_dialog(app):
     """Show the dialog window."""
-    b = app.tools.builder
+
+    sync_initial_state(app)
+
     parent = app.root
-
     dialog = create_window(parent)
+    app.tools.tester.dialog = dialog
 
-    paned_window = build_pane_window(dialog)
+    # Register cleanup callback
+    dialog.protocol("WM_DELETE_WINDOW", lambda: sync_dialog_state_on_close(app))
+
+    paned_window = ui.PanedWindow(dialog, orient="vertical")
+    paned_window.pack(fill="both", expand=True, padx=2, pady=2)
+
+    template_area = create_textarea_frame(app, paned_window, name="template_area",)
+    test_data_area = create_textarea_frame(app, paned_window, name="test_data_area")
+    result_area = create_textarea_frame(app, paned_window, name="result_area", readonly=True)
+
+    control_area = build_controls_frame(app, paned_window)
+    control_area.grid_propagate(False)
+
+    paned_window.add(template_area, weight=1)
+    paned_window.add(test_data_area, weight=1)
+    paned_window.add(control_area)
+    paned_window.add(result_area, weight=1)
 
     dialog.bind("<Button-1>", lambda e: app.callback_focus(e))
 
@@ -65,25 +86,288 @@ def create_window(parent: Optional[Union[ui.Tk, ui.Toplevel]]):
     return window
 
 
-def build_pane_window(parent):
-    paned_window = ui.PanedWindow(parent, orient="vertical")
-    paned_window.pack(fill="both", expand=True, padx=2, pady=2)
+def build_controls_frame(app, parent):
+    frame = ui.Frame(parent, width=600, height=32, relief="ridge")
+    frame.grid(row=0, column=0, padx=4, pady=4, sticky="ew")
 
-    # row-0: Allow horizontal expansion, prevent vertical expansion
-    paned_window.grid_columnconfigure(0, weight=1)
-    paned_window.grid_rowconfigure(0, weight=1)
+    labels = [
+        "test", "tabular", "SEPARATOR",
+        "sync", "open", "save", "copy", "paste", "reset", "close", "help",
+    ]
 
-    # row-1: Allow horizontal expansion, prevent vertical expansion
-    paned_window.grid_columnconfigure(0, weight=1)
-    paned_window.grid_rowconfigure(1, weight=1)
+    mapping = {
+        "test": lambda: perform_test_action(app),
+        "sync": lambda: perform_sync_action(app),
+        "open": lambda: None,
+        "save": lambda: None,
+        "copy": lambda : None,
+        "paste": lambda : None,
+        "reset": lambda: perform_reset_action(app),
+        "close": lambda: sync_dialog_state_on_close(app),
+        "help": lambda : perform_help_action(app),
+    }
 
-    # row-2: Allow horizontal expansion, prevent vertical expansion
-    paned_window.grid_columnconfigure(0, weight=1)
-    paned_window.grid_rowconfigure(2, weight=0)
+    btn_width = 6 if ui.is_macos else 7 if ui.is_linux else 8
+    position = Position(-1)
+    for label in labels:
+        if label == "SEPARATOR":
+            sep = ui.ttk.Separator(frame, orient="vertical")
+            sep.grid(row=0, column=position.next(), sticky="ns", padx=(4, 2), pady=2)
+            continue
 
-    # row-3: Allow horizontal expansion, prevent vertical expansion
-    paned_window.grid_columnconfigure(0, weight=1)
-    paned_window.grid_rowconfigure(3, weight=1)
+        if label == "tabular":
+            checkbox = ui.TriStateCheckBox(
+                frame, label=label.title(),
+                state_var=app.tools.tester.checkbox_state_var,
+                shared_var=app.tools.tester.output_flag,
+                width=18,
+            )
+            checkbox.grid(row=0, column=position.next(), sticky="nswe", padx=(6, 2), pady=4)
+            checkbox.configure(
+                command=lambda widget=checkbox: cycle_tristate_checkbox(widget, app)    # noqa
+            )
+            continue
+
+        kwargs = {"width": btn_width, "command": mapping.get(label)}
+        button = ui.Button(frame, text=label.title(), **kwargs)
+        button.grid(row=0, column=position.next(), sticky='nswe', padx=2, pady=4)
+
+    return frame
 
 
-    return paned_window
+def create_textarea_frame(app, parent, name, readonly=False):
+    frame = ui.Frame(parent)
+    frame.grid(row=0, column=0, sticky="nsew", pady=4)
+
+    frame.columnconfigure(0, weight=1)
+    frame.rowconfigure(0, weight=0)
+    frame.rowconfigure(1, weight=1)
+
+    kwargs = dict(name=name, wrap="none", relief="ridge", height=5)
+    if readonly:
+        kwargs["state"] = "disabled"
+        kwargs["background"] = ui.readonly_text_bg_color
+
+    if name in ("template_area", "test_data_area"):
+        txt = name.replace("_area", "").replace("_", " ").title()
+        txt = "TextFSM Template" if txt == "Template" else txt
+        label = ui.Label(frame, text=txt)
+        label.grid(row=0, column=0, sticky="nsew")
+
+    textarea = ui.TextArea(frame, **kwargs)
+    textarea.grid(row=1, column=0, sticky="nsew")
+
+    vbar = ui.Scrollbar(frame, orient="vertical", command=textarea.yview)
+    vbar.grid(row=1, column=1, sticky="ns")
+
+    hbar = ui.Scrollbar(frame, orient="horizontal", command=textarea.xview)
+    hbar.grid(row=2, column=0, sticky="ew")
+
+    textarea.configure(yscrollcommand=vbar.set, xscrollcommand=hbar.set)
+
+    tool = app.tools.tester
+
+    data_var = name.replace("_area", "_text")
+    content = tool.get(data_var).get()
+    if content:
+        set_text(textarea, content)
+    tool.update({name: textarea})
+
+    return frame
+
+
+def perform_test_action(app):
+    """Run a TextFSM test using the template and test data from the UI."""
+    tester = app.tools.tester
+
+    template_text = extract_text(tester.template_area).strip()
+    test_data_text = extract_text(tester.test_data_area)
+
+    if not template_text:
+        show_message_dialog(
+            title="Test Action - Empty Template",
+            warning="Cannot run test with an empty TextFSM template."
+        )
+        return
+
+    if not test_data_text:
+        proceed = show_message_dialog(
+            title="Test Action - Empty Test Data",
+            yesno="Test data is empty. Continue anyway?"
+        )
+        if not proceed:
+            return
+
+    rows, success = run_textfsm_parse(template_text, test_data_text)
+
+    if not success:
+        set_text(tester.result_area, success)
+        return
+
+    render_result(rows, app)
+
+
+def perform_sync_action(app):
+    """Sync snapshot template and test data into the tester UI."""
+    tester = app.tools.tester
+    snapshot = app.snapshot
+
+    # Clear previous result
+    tester.result_text.set("")
+
+    # Extract snapshot values
+    template_text = snapshot.template
+    test_data_text = snapshot.test_data
+
+    # Update text variables
+    tester.template_text.set(template_text)
+    tester.test_data_text.set(test_data_text)
+
+    # Update UI text areas
+    set_text(tester.template_area, template_text)
+    set_text(tester.test_data_area, test_data_text)
+
+
+
+def perform_reset_action(app):
+    """Reset all tester fields, flags, and text areas to empty state."""
+    tester = app.tools.tester
+
+    # Reset checkbox state
+    tester.checkbox_state_var.set(False)
+
+    # Reset text variables
+    for var in (
+        tester.output_flag,
+        tester.template_text,
+        tester.test_data_text,
+        tester.result_text,
+    ):
+        var.set("")
+
+    # Clear UI text widgets
+    for area in (
+        tester.template_area,
+        tester.test_data_area,
+        tester.result_area,
+    ):
+        clear_text(area)
+
+
+def perform_help_action(app):
+    """Display the help panel."""
+    usage.show_help(app, "tester")
+
+
+def render_result(rows, app):
+    """Render parsed rows into the tester's result area."""
+    tester = app.tools.tester
+    output_mode = tester.output_flag.get().lower()
+
+    # No rows returned
+    if not rows:
+        set_text(tester.result_area, "No records were produced by the parser.")
+        return
+
+    # Tabular modes
+    if output_mode.startswith("tabular"):
+        show_index = "index" in output_mode
+        result = get_data_as_tabular(rows, with_index=show_index)
+        set_text(tester.result_area, result)
+        return
+
+    # JSON output
+    if output_mode == "json":
+        result = json.dumps(rows, indent=2)
+        set_text(tester.result_area, result)
+        return
+
+    # YAML output
+    if output_mode == "yaml":
+        result = yaml.dump(rows, indent=2)
+        set_text(tester.result_area, result)
+        return
+
+    # Fallback: pretty‑printed Python structure
+    set_text(tester.result_area, pprint.pformat(rows))
+
+
+def run_textfsm_parse(template_text, test_data_text):
+    """Parse test data using a TextFSM template and return rows + status."""
+    try:
+        parser = TextFSM(StringIO(template_text))
+        rows = parser.ParseTextToDicts(test_data_text)
+        return rows, StatusString(status="passed")
+
+    except Exception as ex:
+        header = decorate_text(f"{type(ex).__name__}: {ex}")
+        traceback_text = traceback.format_exc()
+        return [], StatusString(f"{header}\n{traceback_text}", status="failed")
+
+
+def sync_dialog_state_on_close(app):
+    """Persist dialog text areas back into tester state before closing."""
+    tester = app.tools.tester
+
+    mappings = (
+        (tester.template_area, tester.template_text),
+        (tester.test_data_area, tester.test_data_text),
+        (tester.result_area, tester.result_text),
+    )
+
+    for widget, text_var in mappings:
+        text_var.set(extract_text(widget))
+
+    tester.dialog.destroy()
+
+
+def cycle_tristate_checkbox(widget, app):
+    """Advance tri‑state checkbox, update label/state, and re-run parsing."""
+    tester = app.tools.tester
+
+    # Advance through 5 states
+    widget.state_index = (widget.state_index + 1) % 5
+
+    states = (
+        (False, "Tabular"),
+        (True,  "Tabular"),
+        (True,  "Tabular with Index"),
+        (True,  "JSON"),
+        (True,  "YAML"),
+    )
+
+    is_checked, label = states[widget.state_index]
+
+    # Update UI state
+    widget.state_var.set(is_checked)
+    widget.configure(text=label)
+
+    # Update shared output mode (empty when state_index == 0)
+    widget.shared_var.set(label.lower() if widget.state_index else "")
+
+    # Re-run parser and update result
+    template_text = extract_text(tester.template_area)
+    test_data_text = extract_text(tester.test_data_area)
+
+    rows, status = run_textfsm_parse(template_text, test_data_text)
+    if status:
+        render_result(rows, app)
+
+
+def sync_initial_state(app):
+    """Initialize tester fields from snapshot if no existing user input."""
+    tester = app.tools.tester
+
+    # Skip if user already typed something
+    if tester.template_text.get() or tester.test_data_text.get():
+        return
+
+    tester.result_text.set("")
+
+    template_text = app.snapshot.template
+    test_data_text = app.snapshot.test_data
+
+    rows, status = run_textfsm_parse(template_text, test_data_text)
+    if status:
+        tester.template_text.set(template_text)
+        tester.test_data_text.set(test_data_text)

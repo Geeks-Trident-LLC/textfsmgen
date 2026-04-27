@@ -182,6 +182,22 @@ class Application:
                     tk.StringVar(), tk.StringVar(),
                 ],
                 snippet_and_samples=None
+            ),
+            tester = DotObject(
+                # widget
+                dialog=None,
+                template_area=None,
+                test_data_area=None,
+                result_area=None,
+
+                # shared variables
+                checkbox_state_var=tk.BooleanVar(),
+                output_flag=tk.StringVar(),
+
+                # data
+                template_text=tk.StringVar(),
+                test_data_text=tk.StringVar(),
+                result_text=tk.StringVar()
             )
         )
 
