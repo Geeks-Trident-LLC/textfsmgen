@@ -11,7 +11,7 @@ with open("README.md", encoding="utf-8") as f:
 
 setup(
     name='textfsmgen',
-    version='0.6.1',
+    version='0.6.2',
     license='BSD-3-Clause',
     license_files=['LICENSE'],
     description='TextFSM Generator is a low‑code, no‑code Python library that '
