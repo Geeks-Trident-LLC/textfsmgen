@@ -12,12 +12,11 @@ from io import StringIO
 import pprint
 import json
 import yaml
-import re
 
 from textfsm import TextFSM
 
 from textfsmgen.libs.generic import Position
-from textfsmgen.libs.utils import get_data_as_tabular
+from textfsmgen.libs.utils import get_data_as_tabular, is_valid_textfsm_template
 from textfsmgen.libs.text import decorate_text
 from textfsmgen.libs.generic import StatusString
 from textfsmgen.libs import file
@@ -247,7 +246,7 @@ def perform_open_action(app):
 
     content = file.read(filename)
 
-    if validate_textfsm_template(content):
+    if is_valid_textfsm_template(content):
         set_text(app.tools.tester.template_area, content)
         return
     set_text(app.tools.tester.test_data_area, content)
@@ -559,32 +558,3 @@ def sync_initial_state(app):
     if status:
         tester.template_text.set(template_text)
         tester.test_data_text.set(test_data_text)
-
-
-def validate_textfsm_template(template):
-    template = template.strip()
-    if not template:
-        return False
-
-    try:
-        TextFSM(StringIO(template.strip()))
-        return True
-    except Exception as ex:     # noqa
-        checks = []
-
-        for line in template.splitlines():
-            if re.match(r"Value ", line) and not checks:
-                checks.append(True)
-                continue
-
-            if re.match(r"Start ", line) and len(checks) == 1:
-                checks.append(True)
-                continue
-
-            if re.match(r" {2,4}\^", line) and len(checks) == 2:
-                return True
-
-        return False
-
-
-

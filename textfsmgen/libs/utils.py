@@ -7,8 +7,11 @@ General-purpose utility functions used across TextFSMGen.
 
 import re
 from collections import defaultdict
+from io import StringIO
 
 from pprint import pprint
+
+from textfsm import TextFSM
 
 from .pattern import PATTERN
 
@@ -324,3 +327,35 @@ def print_data_as_tabular(data, missing='not_found', with_index=False):
         pprint(result)
     else:
         print(result)
+
+
+def is_valid_textfsm_template(text):
+    """Return True if the given TextFSM template is syntactically valid."""
+    template = text.strip()
+    if not template:
+        return False
+
+    # Primary validation: let TextFSM parse it
+    try:
+        TextFSM(StringIO(template))
+        return True
+    except Exception:   # noqa
+        pass  # fall back to structural heuristics
+
+    # Heuristic validation for incomplete or partially valid templates
+    found_value = False
+    found_start = False
+
+    for line in template.splitlines():
+        if not found_value and re.match(r"Value\s+", line):
+            found_value = True
+            continue
+
+        if found_value and not found_start and re.match(r"Start\s*$", line):
+            found_start = True
+            continue
+
+        if found_start and re.match(r"\s{2,4}\^", line):
+            return True
+
+    return False
