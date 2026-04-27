@@ -12,6 +12,7 @@ from io import StringIO
 import pprint
 import json
 import yaml
+import re
 
 from textfsm import TextFSM
 
@@ -19,10 +20,10 @@ from textfsmgen.libs.generic import Position
 from textfsmgen.libs.utils import get_data_as_tabular
 from textfsmgen.libs.text import decorate_text
 from textfsmgen.libs.generic import StatusString
+from textfsmgen.libs import file
 
 from textfsmgen import ui
 from textfsmgen.ui import usage
-
 
 from textfsmgen.ui.common import (
     show_message_dialog,
@@ -98,7 +99,7 @@ def build_controls_frame(app, parent):
     mapping = {
         "test": lambda: perform_test_action(app),
         "sync": lambda: perform_sync_action(app),
-        "open": lambda: None,
+        "open": lambda: perform_open_action(app),
         "save": lambda: None,
         "copy": lambda : None,
         "paste": lambda : None,
@@ -228,6 +229,28 @@ def perform_sync_action(app):
     # Update UI text areas
     set_text(tester.template_area, template_text)
     set_text(tester.test_data_area, test_data_text)
+
+
+def perform_open_action(app):
+    """Open a TextFSM file into the tester UI."""
+
+    filetypes = [
+        ("TextFSM Templates", "*.template *.textfsm *.fsm"),
+        ("Text Files", "*.txt"),
+        ("All Files", "*"),
+    ]
+
+    filename = ui.filedialog.askopenfilename(filetypes=filetypes)
+    if not filename:
+        return
+
+    content = file.read(filename)
+
+    if validate_textfsm_template(content):
+        set_text(app.tools.tester.template_area, content)
+        return
+    set_text(app.tools.tester.test_data_area, content)
+
 
 
 
@@ -373,3 +396,32 @@ def sync_initial_state(app):
     if status:
         tester.template_text.set(template_text)
         tester.test_data_text.set(test_data_text)
+
+
+def validate_textfsm_template(template):
+    template = template.strip()
+    if not template:
+        return False
+
+    try:
+        TextFSM(StringIO(template.strip()))
+        return True
+    except Exception as ex:     # noqa
+        checks = []
+
+        for line in template.splitlines():
+            if re.match(r"Value ", line) and not checks:
+                checks.append(True)
+                continue
+
+            if re.match(r"Start ", line) and len(checks) == 1:
+                checks.append(True)
+                continue
+
+            if re.match(r" {2,4}\^", line) and len(checks) == 2:
+                return True
+
+        return False
+
+
+

@@ -22,6 +22,8 @@ from tkinter import ttk
 from tkinter import messagebox      # noqa
 from tkinter.font import Font       # noqa
 
+from tkinter import filedialog
+
 from textfsmgen.libs.shell import is_macos_dark_mode
 
 # #2a2a2a subtle contrast for readonly fields in dark mode
