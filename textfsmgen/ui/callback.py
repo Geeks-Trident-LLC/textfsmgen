@@ -296,65 +296,31 @@ def perform_clear_action(app):
 def perform_copy_action(app):
     """Handle the 'Copy' button action for text widgets."""
 
-    # Helper: get selected text or full widget text
-    def get_content(widget):
-        if widget.tag_ranges(ui.tk.SEL):
-            return widget.selection_get()
-        return extract_text(widget)
+    active = app.prev_widget
+    widgets = [app.textarea.input, app.textarea.output]
 
-    focus = app.root.focus_get()
+    for widget in widgets:
+        if widget is active:
+            widget.update_idletasks()
+            content = widget.selection_get() if widget.tag_ranges("sel") else extract_text(widget)
 
-    prev_widget_name = str(app.prev_widget)
-    is_input_area = prev_widget_name.endswith('.input_textarea')
-    is_output_area = prev_widget_name.endswith('.output_textarea')
-    if is_input_area or focus is app.textarea.input:
-        content = get_content(app.textarea.input)
-        if not content.strip():
-            show_message_dialog(
-                title="Copy Options",
-                warning="There is no text in the input window to copy.",
-            )
-            return
-
-    elif is_output_area or focus is app.textarea.output:
-        content = get_content(app.textarea.output)
-        if not content.strip():
-            show_message_dialog(
-                title="Copy Options",
-                warning="There is no text in the output window to copy.",
-            )
-            return
-    else:
-        in_text = extract_text(app.textarea.input)
-        out_text = extract_text(app.textarea.output)
-        if in_text.strip() and out_text.strip():
-            response = show_message_dialog(
-                title="Copy Options",
-                yesnocancel=(
-                    "Choose what you want to copy:\n"
-                    "  Y - Copy text from the input window text.\n"
-                    "  N - Copy text from the output window text.\n"
-                    "  C - Do not copy."
-                ),
-            )
-            if response is None:
+            if not content:
+                show_message_dialog(
+                    title="Copy Action",
+                    warning="There is no text in the your selected area to copy.",
+                )
                 return
-            content = in_text if response else out_text
-        elif in_text.strip():
-            content = in_text
-        elif out_text.strip():
-            content = out_text
-        else:
-            show_message_dialog(
-                title="Copy Options",
-                warning="There is no text available in either window to copy.",
-            )
+
+            # Update UI and clipboard
+            app.root.clipboard_clear()
+            app.root.clipboard_append(content)
+            app.root.update()
             return
 
-    # Update UI and clipboard
-    app.root.clipboard_clear()
-    app.root.clipboard_append(content)
-    app.root.update()
+    show_message_dialog(
+        title="Copy Action — Ambiguous Selection",
+        info="A copy target is required. Choose Input Area or Output Area."
+    )
 
 
 def perform_paste_action(app) -> None:

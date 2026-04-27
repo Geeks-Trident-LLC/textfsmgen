@@ -22,7 +22,7 @@ from tkinter import ttk
 from tkinter import messagebox      # noqa
 from tkinter.font import Font       # noqa
 
-from tkinter import filedialog
+from tkinter import filedialog      # noqa
 
 from textfsmgen.libs.shell import is_macos_dark_mode
 
