@@ -100,9 +100,9 @@ def build_controls_frame(app, parent):
         "test": lambda: perform_test_action(app),
         "sync": lambda: perform_sync_action(app),
         "open": lambda: perform_open_action(app),
-        "save": lambda: None,
-        "copy": lambda : None,
-        "paste": lambda : None,
+        "save": lambda: perform_save_action(app),
+        "copy": lambda : perform_copy_action(app),
+        "paste": lambda : perform_paste_action(app),
         "reset": lambda: perform_reset_action(app),
         "close": lambda: sync_dialog_state_on_close(app),
         "help": lambda : perform_help_action(app),
@@ -252,6 +252,106 @@ def perform_open_action(app):
     set_text(app.tools.tester.test_data_area, content)
 
 
+def perform_save_action(app):
+    """Save the active editor area (template, test data, or result) to a file."""
+    tool = app.tools.tester
+    active = app.prev_widget
+
+    # Validate active area
+    valid_areas = (tool.template_area, tool.test_data_area, tool.result_area)
+    if active not in valid_areas:
+        show_message_dialog(
+            title="Save Action — Ambiguous Selection",
+            warning="A save target is required. Choose template, test data, or result area."
+        )
+        return
+
+    # --- Template Area -----------------------------------------------------
+    if active is tool.template_area:
+        template_text = extract_text(tool.template_area).strip()
+        if not template_text:
+            show_message_dialog(
+                title="Save Action — Empty Template",
+                warning="Cannot save because the TextFSM template is empty."
+            )
+            return
+
+        filename = ui.filedialog.asksaveasfilename(
+            title="Save TextFSM Template",
+            filetypes=[
+                ("TextFSM Templates", "*.template *.textfsm *.fsm"),
+                ("All Files", "*"),
+            ],
+        )
+        if filename:
+            file.write(filename, template_text)
+        return
+
+    # --- Test Data Area ----------------------------------------------------
+    if active is tool.test_data_area:
+        test_data = extract_text(tool.test_data_area)
+        if not test_data:
+            show_message_dialog(
+                title="Save Action — Empty Test Data",
+                warning="Cannot save because the test data is empty."
+            )
+            return
+
+        filename = ui.filedialog.asksaveasfilename(
+            title="Save Test Data",
+            filetypes=[
+                ("Text Files", "*.txt"),
+                ("All Files", "*"),
+            ],
+        )
+        if filename:
+            file.write(filename, test_data)
+        return
+
+    # --- Result Area -------------------------------------------------------
+    if active is tool.result_area:
+        result_text = extract_text(tool.result_area)
+        if not result_text:
+            show_message_dialog(
+                title="Save Action — No Test Result",
+                warning="Cannot save because the test result is empty."
+            )
+            return
+
+        mode = tool.output_flag.get().lower()
+
+        if mode == "json":
+            title = "Save Action — JSON Result"
+            filetypes = [
+                ("JSON Files", "*.json"),
+                ("All Files", "*"),
+            ]
+        elif mode == "yaml":
+            title = "Save Action — YAML Result"
+            filetypes = [
+                ("YAML Files", "*.yaml *.yml"),
+                ("All Files", "*"),
+            ]
+        else:
+            title = "Save Action — Text Result"
+            filetypes = [
+                ("Text Files", "*.txt"),
+                ("All Files", "*"),
+            ]
+
+        filename = ui.filedialog.asksaveasfilename(title=title, filetypes=filetypes)
+        if filename:
+            file.write(filename, result_text)
+
+
+def perform_copy_action(app):
+    """Open a TextFSM file into the tester UI."""
+    pass
+
+
+def perform_paste_action(app):
+    """Paste a TextFSM file into the tester UI."""
+    pass
 
 
 def perform_reset_action(app):
