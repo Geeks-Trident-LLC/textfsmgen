@@ -1,7 +1,15 @@
+"""
+textfsmgen.tools.explain
+========================
+
+Utilities for generating keyword explanations and snippet‑level documentation
+used throughout TextFSMGen.
+"""
 
 import traceback
 
 import re
+from pprint import pformat
 
 from textfsmgen.libs.generic import StatusString
 from textfsmgen.libs.text import (
@@ -175,6 +183,23 @@ class SnippetExplanation:
             reason=str(expected),
         )
 
+    def generate_explanation_section(self):
+        return "Explanation:\n\n"
+
+    def generate_sample_section(self):
+        parts = ["Samples:"]
+        result = pformat(self._test_samples)
+        if len(result.splitlines()) == 1:
+            parts.append(f"    lst = {result}")
+            return "\n".join(parts) + "\n"
+
+        parts.append(f"    lst = [")
+        for sample in self._test_samples:
+            parts.append(f"        {sample!r},")
+        parts.append("    ]\n")
+        return "\n".join(parts)
+
+
     def build_explanation(self):
         """Assemble the full explanation block for the snippet."""
         pattern = LinePattern(self._normalized)
@@ -185,12 +210,8 @@ class SnippetExplanation:
             header,
             f"Pattern:   r{enclose_string(pattern)}",
             self.generate_operation_section(),
-            "Explanation:",
-            "",
-            "",
-            "Samples:",
-            f"    lst = {self._test_samples}",
-            "",
+            self.generate_explanation_section(),
+            self.generate_sample_section(),
             "Evaluating:",
             "    [bool(re.fullmatch(pattern, item)) for item in lst]",
             ""

@@ -597,3 +597,48 @@ def test_optional_items(keyword, expected):
     doc = node.describe_items()
     failure = f"({keyword}|{expected}) => {doc}"
     assert expected in doc, failure
+
+
+@pytest.mark.parametrize(
+    "keyword, exp1, exp2",
+    [
+        # special case
+        (
+            "3word",
+            "match exactly three words ",
+            "separated by one or more whitespace characters."
+        ),
+        (
+            "3_word",
+            "match exactly three words ",
+            "separated by one or more whitespace characters."
+        ),
+        (
+            "three_word",
+            "match exactly three words ",
+            "separated by one or more whitespace characters."
+        ),
+        (
+            "3words",
+            "match exactly three words ",
+            "separated by one or more whitespace characters."
+        ),
+        (
+            "3_words",
+            "match exactly three words ",
+            "separated by one or more whitespace characters."
+        ),
+        (
+            "three_words",
+            "match exactly three words ",
+            "separated by one or more whitespace characters."
+        ),
+
+    ]
+)
+def test_exact_match(keyword, exp1, exp2):
+    node = TokenDoc(keyword)
+    doc = node.describe_exact_match()
+    failure = f"({keyword}|{exp1}|{exp2}) => {doc}"
+    assert exp1 in doc, failure
+    assert exp2 in doc, failure

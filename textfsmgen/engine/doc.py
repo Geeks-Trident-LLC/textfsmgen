@@ -5,6 +5,9 @@ textfsmgen.engine.doc
 Token Documentation utilities for the TextFSM Generator framework.
 """
 
+import re
+
+from textfsmgen.libs import number
 from textfsmgen.libs.pattern import PATTERN
 
 from textfsmgen.exceptions import raise_runtime_error
@@ -442,6 +445,74 @@ class TokenDoc:
 
         return template % "one or more"
 
+    def get_exact_quantity_and_keyword(self):
+        """Return (quantity, keyword) for patterns like '3_word' or 'three_word'."""
+        name = self.name
+
+        # --- Numeric quantity -----------------------------------------------------
+        m = re.fullmatch(r"(?P<qty>\d+)_?(?P<keyword>\w+)", name)
+        if m:
+            return m.group("qty"), m.group("keyword")
+
+        # --- Word quantity --------------------------------------------------------
+        m = re.fullmatch(r"(?P<qty>[A-Za-z]+(?:-[A-Za-z]+)?)_(?P<keyword>\w+)",
+                         name)
+        if m:
+            word_qty = m.group("qty")
+            value = number.word_to_digit(word_qty)
+            if isinstance(value, int):
+                return str(value), m.group("keyword")
+
+        return "", ""
+
+    def describe_exact_match(self) -> str:
+        """Return a human‑readable description for exact quantity patterns like '3_word'."""
+        qty, keyword = self.get_exact_quantity_and_keyword()
+        if not qty.isdigit():
+            return ""
+        qty = int(qty)
+        word_qty = number.digit_to_word(qty)
+
+        # Helper: choose singular vs plural placeholder based on qty
+        def resolve_placeholder(singular_key, plural_key):
+            if qty <= 1:
+                return self._singular_placeholders.get(singular_key, "")
+            return self._plural_placeholders.get(plural_key, "")
+
+        # 1. Singular keyword family
+        if keyword in self._singular_placeholders:
+            plural = PATTERN.resolve_plural(keyword)
+            template = resolve_placeholder(keyword, plural)
+            return template % f"exactly {word_qty}"
+
+        # 2. Plural keyword family
+        if keyword in self._plural_placeholders:
+            singular = PATTERN.resolve_singular(keyword)
+            template = resolve_placeholder(singular, keyword)
+            return template % f"exactly {word_qty}"
+
+        # 3. Semantic keyword family
+        if keyword in self._semantic_placeholders:
+            if qty <= 1:
+                template = self._semantic_placeholders.get(keyword, "")
+            else:
+                plural_sem = PATTERN.resolve_plural_semantic(keyword)
+                template = self._plural_semantic_placeholders.get(plural_sem,
+                                                                  "")
+            return template % f"exactly {word_qty}"
+
+        # 4. Plural semantic keyword family
+        if keyword in self._plural_semantic_placeholders:
+            if qty <= 1:
+                plural_sem = PATTERN.resolve_plural_semantic(keyword)
+                template = self._plural_semantic_placeholders.get(plural_sem,
+                                                                  "")
+            else:
+                template = self._plural_semantic_placeholders.get(keyword, "")
+            return template % f"exactly {word_qty}"
+
+        return ""
+
     def process(self):
         methods = [
             self.describe_custom,
@@ -453,6 +524,7 @@ class TokenDoc:
             self.describe_one_or_more,
             self.describe_group,
             self.describe_items,
+            self.describe_exact_match,
         ]
 
         for method in methods:

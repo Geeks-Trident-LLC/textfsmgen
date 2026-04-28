@@ -148,45 +148,48 @@ class SamplesGenerator:
                 return
         self._is_parsed = True
 
-    def get_sample(self, keyword):
+    def get_sample(self, keyword, total=None):
         if keyword in self._mapping:
             samples = self._mapping[keyword].copy()
-            random.shuffle(samples)
-            return samples
+            if total is None or isinstance(total, int) and len(samples) > total:
+                random.shuffle(samples)
+                return samples
+            for _ in range(1000):
+                samples.extend(samples[:])
+                if len(samples) > total:
+                    random.shuffle(samples)
+                    return samples
         return []
 
     def create_sample_group(self, keyword, starting=1, ending=None, exact=None):
         """Return grouped samples for the given keyword."""
-        values = self.get_sample(keyword)
-        if not values:
+        if keyword not in self._mapping:
             return []
 
         count = self._count
 
         # --- Exact mode ---------------------------------------------------------
-        if exact:
+        if exact is not None:
+            if not exact:
+                return []
+
+            values = self.get_sample(keyword, total=exact)
+
             parts = []
-            for i in range(count):
-                start = i * count
-                end = start + count
-                item = " ".join(values[start:end])
-                if item and item not in parts:
-                    parts.append(item)
+            for _ in range(count):
+                random.shuffle(values)
+                parts.append(" ".join(values[:exact]))
             return parts
 
         # --- Range mode ---------------------------------------------------------
-        ending = ending or (starting + 4)
-
+        ending = ending if ending and ending > starting else starting + 4
+        values = self.get_sample(keyword, total=ending)
         parts = []
-        for i in range(starting, ending):
-            start = i * count
-            end = start + (i + 1)
-            item = " ".join(values[start:end])
-            if item and item not in parts:
-                parts.append(item)
-
-        random.shuffle(parts)
-        return parts[:count]
+        for _ in range(count):
+            random.shuffle(values)
+            size = random.randint(starting, ending)
+            parts.append(" ".join(values[:size]))
+        return parts
 
     def generate_core(self):
         keyword = self._parser.keyword
@@ -290,7 +293,7 @@ class SamplesGenerator:
             singular = PATTERN.resolve_singular(base)
             parts = []
             for _ in range(self._count):
-                part = "".join(self.get_sample(singular))[:self._count]
+                part = "".join(self.get_sample(singular, total=qty))[:qty]
                 parts.append(part)
             return parts
 
@@ -318,7 +321,7 @@ class SamplesGenerator:
             singular = PATTERN.resolve_singular(base)
             parts = []
             for i in range(lo, hi + 1):
-                part = "".join(self.get_sample(singular))[:i]
+                part = "".join(self.get_sample(singular, total=hi))[:i]
                 if part and part not in parts:
                     parts.append(part)
             return parts[:self._count]
