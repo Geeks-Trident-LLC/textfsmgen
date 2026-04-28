@@ -62,12 +62,12 @@ from tests.unit.libs.pattern import (
         # --- letters ---
         ("optional_letter",             rf"{letter}?"),
         ("optional_letters",            rf"{letter}*"),
-        ("optional_letters_group",      rf"{letters}({sep}{letters})*"),
+        ("optional_letters_group",      rf"({letters}({sep}{letters})+)?"),
 
         # --- alphabet numeric ---
         ("optional_alnum",              rf"{alnum}?"),
-        ("optional_alnum_group",        rf"{alnum}+({sep}{alnum}+)*"),
-        ("optional_alnums_group",       rf"{alnum}+({sep}{alnum}+)*"),
+        ("optional_alnum_group",        rf"({alnum}+({sep}{alnum}+)+)?"),
+        ("optional_alnums_group",       rf"({alnum}+({sep}{alnum}+)+)?"),
 
         # --- graph ---
         ("optional_graph",              rf"{graph}?"),
@@ -75,36 +75,36 @@ from tests.unit.libs.pattern import (
         # --- punctuations ---
         ("optional_punct",              rf"{punct}?"),
         ("optional_puncts",             rf"{punct}*"),
-        ("optional_punct_group",        rf"{puncts}({sep}{puncts})*"),
-        ("optional_puncts_group",       rf"{puncts}({sep}{puncts})*"),
+        ("optional_punct_group",        rf"({puncts}({sep}{puncts})+)?"),
+        ("optional_puncts_group",       rf"({puncts}({sep}{puncts})+)?"),
 
         # --- space or punctuation ---
         ("optional_space_or_punct",         rf"{space_or_punct}?"),
-        ("optional_space_or_punct_group",   rf"{space_or_punct}+({sep}{space_or_punct}+)*"),
-        ("optional_spaces_or_puncts_group", rf"{space_or_punct}+({sep}{space_or_punct}+)*"),
+        ("optional_space_or_punct_group",   rf"({space_or_punct}+({sep}{space_or_punct}+)+)?"),
+        ("optional_spaces_or_puncts_group", rf"({space_or_punct}+({sep}{space_or_punct}+)+)?"),
 
         # --- letter or punctuation ---
         ("optional_letter_or_punct",            rf"{letter_or_punct}?"),
-        ("optional_letter_or_punct_group",      rf"{letter_or_punct}+({sep}{letter_or_punct}+)*"),
-        ("optional_letters_or_puncts_group",    rf"{letter_or_punct}+({sep}{letter_or_punct}+)*"),
+        ("optional_letter_or_punct_group",      rf"({letter_or_punct}+({sep}{letter_or_punct}+)+)?"),
+        ("optional_letters_or_puncts_group",    rf"({letter_or_punct}+({sep}{letter_or_punct}+)+)?"),
 
         # --- word ---
         ("optional_word",               rf"({word})?"),
         ("optional_words",              rf"({word}({sep}{word})*)?"),
-        ("optional_word_group",         rf"{word}({sep}{word})*"),
-        ("optional_words_group",        rf"{word}({sep}{word})*"),
+        ("optional_word_group",         rf"({word}({sep}{word})+)?"),
+        ("optional_words_group",        rf"({word}({sep}{word})+)?"),
 
         # --- mixed-word ---
         ("optional_mixed_word",         rf"({mixed_word})?"),
         ("optional_mixed_words",        rf"({mixed_word}({sep}{mixed_word})*)?"),
-        ("optional_mixed_word_group",   rf"{mixed_word}({sep}{mixed_word})*"),
-        ("optional_mixed_words_group",  rf"{mixed_word}({sep}{mixed_word})*"),
+        ("optional_mixed_word_group",   rf"({mixed_word}({sep}{mixed_word})+)?"),
+        ("optional_mixed_words_group",  rf"({mixed_word}({sep}{mixed_word})+)?"),
 
         # --- non-whitespace(s) ---
         ("optional_non_ws",             rf"{non_ws}?"),
         ("optional_non_wss",            rf"{non_ws}*"),
-        ("optional_non_ws_group",       rf"{non_wss}({sep}{non_wss})*"),
-        ("optional_non_wss_group",      rf"{non_wss}({sep}{non_wss})*"),
+        ("optional_non_ws_group",       rf"({non_wss}({sep}{non_wss})+)?"),
+        ("optional_non_wss_group",      rf"({non_wss}({sep}{non_wss})+)?"),
     ]
 )
 def test(name, expected):

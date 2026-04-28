@@ -45,7 +45,6 @@ def test_parses_two_column_table():
     )
     table = translator.parse_table()
     assert table
-
     snippet = table.to_snippet()
     assert snippet == exp_snippet
 

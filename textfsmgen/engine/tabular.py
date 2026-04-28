@@ -486,7 +486,7 @@ class VarColumnTabularTranslator(RuntimeException):
         """Find a reference row where columns are separated by one or more spaces."""   # noqa
         # Pattern to detect a valid reference row
         gap = "" if spaces == " " else " "
-        cell = PATTERN.OPTIONAL_NON_WSS_GROUP
+        cell = PATTERN.NON_WSS_ITEMS
         repeat = self.column_count - 1
 
         detect_pattern = rf" *{cell}({gap} +{cell}){{{repeat}}} *$"
@@ -504,7 +504,7 @@ class VarColumnTabularTranslator(RuntimeException):
             key = f"v{index:03d}"
             base = {
                 "key": key,
-                "cell": PATTERN.OPTIONAL_NON_WSS_GROUP,
+                "cell": PATTERN.NON_WSS_ITEMS,
                 "gap": gap,
             }
 
@@ -1049,7 +1049,7 @@ class ParsedTable(RuntimeException):
             stripped = line.strip()
 
             # Skip punctuation-only rows
-            if re.fullmatch(PATTERN.OPTIONAL_PUNCTS_GROUP, stripped):
+            if re.fullmatch(PATTERN.PUNCTS_ITEMS, stripped):
                 continue
 
             # Stop at blank line after collecting something
@@ -1160,7 +1160,7 @@ class ParsedTable(RuntimeException):
             stripped = line.strip()
 
             # Skip pure punctuation rows
-            if re.fullmatch(PATTERN.OPTIONAL_PUNCTS_GROUP, stripped):
+            if re.fullmatch(PATTERN.PUNCTS_ITEMS, stripped):
                 continue
 
             # Stop when hitting a blank after collecting something
@@ -1828,7 +1828,7 @@ class Row(RuntimeException):    # noqa
     @property
     def is_punct_group(self) -> bool:
         """Return True if the row consists only of symbols."""
-        return bool(re.fullmatch(PATTERN.OPTIONAL_PUNCTS_GROUP, self.line.strip()))
+        return bool(re.fullmatch(PATTERN.PUNCTS_ITEMS, self.line.strip()))
 
     def append_new_cell(self, left_pos: int, right_pos: int) -> "Cell":
         """Create a new cell for this row, align it with the reference row, and append it."""
@@ -2177,7 +2177,7 @@ class Column:
             return []
 
         texts = []
-        pat = PATTERN.OPTIONAL_PUNCTS_GROUP
+        pat = PATTERN.PUNCTS_ITEMS
         for cell in self.cells:
             txt = cell.text
             if not txt or re.fullmatch(pat, cell.line.strip()):

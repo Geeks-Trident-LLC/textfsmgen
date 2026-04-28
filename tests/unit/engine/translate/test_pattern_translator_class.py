@@ -127,7 +127,7 @@ class TestGetReadableSnippetMethod:
             (
                 ["--", "== +++"],
                 "v1",
-                "optional_puncts_group(var=v1, value=--)",   # expected snippet
+                "puncts_items(var=v1, value=--)",   # expected snippet
                 # expected pattern
                 r"[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+(\s+[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]+)*"
             ),
@@ -246,7 +246,7 @@ class TestGetReadableSnippetMethod:
             (
                 ["abc", "123", "---- ++++"],
                 "v1",
-                "optional_non_wss_group(var=v1, value=abc)",
+                "non_wss_items(var=v1, value=abc)",
                 r"\S+(\s+\S+)*"
             ),
             (

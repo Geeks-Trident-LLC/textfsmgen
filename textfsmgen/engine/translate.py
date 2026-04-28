@@ -115,9 +115,9 @@ class PatternTranslator(RuntimeException):
         tbl = dict(
             non_ws=PATTERN.NON_WS,
             non_wss=PATTERN.NON_WSS,
-            non_wss_group=PATTERN.OPTIONAL_NON_WSS_GROUP
+            non_wss_group=PATTERN.NON_WSS_ITEMS
         )
-        root_pattern = tbl.get(self.root_name, PATTERN.OPTIONAL_NON_WSS_GROUP)
+        root_pattern = tbl.get(self.root_name, PATTERN.NON_WSS_ITEMS)
         return root_pattern
 
     def process(self):
@@ -994,11 +994,11 @@ class PunctsGroupTranslator(PatternTranslator):
 
     def __init__(self, data: str, *other: object):
         defined_patterns = [
-            PATTERN.OPTIONAL_PUNCTS_GROUP,
+            PATTERN.PUNCTS_ITEMS,
             PATTERN.PUNCTS_GROUP,
         ]
         ref_names = [
-            "optional_puncts_group",
+            "puncts_items",
             "puncts_group",
         ]
         super().__init__(
@@ -1577,12 +1577,12 @@ class NonWSSGroupTranslator(PatternTranslator):
 
     def __init__(self, data: str, *other: object):
         defined_patterns = [
-            PATTERN.OPTIONAL_NON_WSS_GROUP,
+            PATTERN.NON_WSS_ITEMS,
             PATTERN.NON_WSS_GROUP,
 
         ]
         ref_names = [
-            "optional_non_wss_group",
+            "non_wss_items",
             "non_wss_group",
         ]
 

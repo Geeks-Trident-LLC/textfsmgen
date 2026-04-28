@@ -163,6 +163,56 @@ def get_grouped_placeholders():
     return placeholders
 
 
+def get_items_placeholders():
+    """Return a list of grouped placeholder description templates."""
+    # --------------------------------------------------------------------------
+    def expand_format_placeholders(text):
+        """Expand %s and trailing dots into descriptive placeholder text."""
+        updated = text.replace("%s", "%s sequences of")
+        updated = updated.replace(
+            ".",
+            ", each separated by one or more whitespace characters."
+        )
+        return updated
+    # --------------------------------------------------------------------------
+
+    placeholders = {}
+
+    singular_placeholders = get_singular_placeholders()
+    plural_placeholders = get_plural_placeholders()
+    semantic_placeholders = get_semantic_placeholders()
+    plural_semantic_placeholders = get_plural_semantic_placeholders()
+
+    special = ["dots", "spaces", "wss", "whitespaces"]
+
+    for singular in singular_placeholders:
+        keyword = f"{singular}_items"
+        plural = PATTERN.resolve_plural(singular)
+        plural_desc = plural_placeholders.get(plural, "")
+        if plural in special:
+            placeholders[keyword] = plural_desc
+            continue
+        placeholders[keyword] = expand_format_placeholders(plural_desc)
+
+    for plural, desc in plural_placeholders.items():
+        keyword = f"{plural}_items"
+        if plural in special:
+            placeholders[keyword] = desc
+            continue
+        placeholders[keyword] = expand_format_placeholders(desc)
+
+    for semantic in semantic_placeholders:
+        keyword = f"{semantic}_items"
+        plural_semantic = PATTERN.resolve_plural_semantic(semantic)
+        placeholders[keyword] = plural_semantic_placeholders[plural_semantic]
+
+    for plural_semantic, desc in plural_semantic_placeholders.items():
+        keyword = f"{plural_semantic}_items"
+        placeholders[keyword] = desc
+
+    return placeholders
+
+
 class TokenDoc:
     """Provide short, human-readable descriptions for token names."""
 
@@ -175,6 +225,7 @@ class TokenDoc:
         self._semantic_placeholders = get_semantic_placeholders()
         self._plural_semantic_placeholders = get_plural_semantic_placeholders()
         self._grouped_placeholders = get_grouped_placeholders()
+        self._items_placeholders = get_items_placeholders()
         self._usage = ""
         self.process()
 
@@ -360,16 +411,28 @@ class TokenDoc:
         if not template:
             return ""
 
-        if self.or_empty:
+        if self.or_empty or is_optional:
             return template % "zero or more"
-
-        if is_optional:
-            replacement = "zero or more" if keyword in special else "one or more"
-            return template % replacement
 
         replacement = "one or more" if keyword in special else "two or more"
         return template % replacement
 
+    def describe_items(self) -> str:
+
+        if not self.name.endswith("_items"):
+            return ""
+
+        is_optional = self.name.startswith("optional_")
+        keyword = self.name.removeprefix("optional_")
+        template = self._items_placeholders.get(keyword, "")
+
+        if not template:
+            return ""
+
+        if self.or_empty or is_optional:
+            return template % "zero or more"
+
+        return template % "one or more"
 
     def process(self):
         methods = [
@@ -380,6 +443,7 @@ class TokenDoc:
             self.describe_zero_or_more,
             self.describe_one_or_more,
             self.describe_group,
+            self.describe_items,
         ]
 
         for method in methods:

@@ -58,16 +58,16 @@ def test_with_optional():
     assert node.explanation == expected
 
 
-def test_with_or_empty_flag():
+def test_with_empty_flag():
     expected = dedent_and_strip(r"""
-        +--------------------------------------------------------------+
-        |           optional_non_wss_group(var_v3, or_empty)           |
-        +--------------------------------------------------------------+
-        Pattern:   r"(?P<v3>(\S+(\s+\S+)*)?)"
+        +------------------------------------------+
+        |     non_wss_group(var_v3, or_empty)      |
+        +------------------------------------------+
+        Pattern:   r"(?P<v3>(\S+(\s+\S+)+)?)"
         Operation: match zero or more sequences of non‑whitespace characters, each
                    separated by one or more whitespace characters.
         Explanation:
-            lst = ['dummy', '', "lst = {'a': 1}"]
+            lst = ['v1 = 5 // 3', '', "lst = {'a': 1}"]
         
         Evaluating:
             [bool(re.fullmatch(pattern, item)) for item in lst]
@@ -76,8 +76,8 @@ def test_with_or_empty_flag():
             [True, True, True]
     """)
     node = SnippetExplanation(
-        "optional_non_wss_group(var_v3, or_empty)",
-        test_samples=["dummy", "", "lst = {'a': 1}"],
+        "non_wss_group(var_v3, or_empty)",
+        test_samples=["v1 = 5 // 3", "", "lst = {'a': 1}"],
     )
     assert node.explanation == expected
 

@@ -48,48 +48,48 @@ from tests.unit.libs.pattern import (
         ("optional_whitespaces_group",        rf"{ws}*",                  rf"{ws}*"),
 
         # --- Digits ---
-        ("optional_digit_group",              rf"{digits}({sep}{digits})*",               rf"({digits}({sep}{digits})*)?"),
-        ("optional_digits_group",             rf"{digits}({sep}{digits})*",               rf"({digits}({sep}{digits})*)?"),
+        ("optional_digit_group",              rf"({digits}({sep}{digits})+)?",               rf"({digits}({sep}{digits})+)?"),
+        ("optional_digits_group",             rf"({digits}({sep}{digits})+)?",               rf"({digits}({sep}{digits})+)?"),
 
         # --- Number ---
-        ("optional_number_group",             rf"{number}({sep}{number})*",               rf"({number}({sep}{number})*)?"),
-        ("optional_mixed_number_group",       rf"{mixed_number}({sep}{mixed_number})*",   rf"({mixed_number}({sep}{mixed_number})*)?"),
-        ("optional_numbers_group",            rf"{number}({sep}{number})*",               rf"({number}({sep}{number})*)?"),
-        ("optional_mixed_numbers_group",      rf"{mixed_number}({sep}{mixed_number})*",   rf"({mixed_number}({sep}{mixed_number})*)?"),
+        ("optional_number_group",             rf"({number}({sep}{number})+)?",               rf"({number}({sep}{number})+)?"),
+        ("optional_mixed_number_group",       rf"({mixed_number}({sep}{mixed_number})+)?",   rf"({mixed_number}({sep}{mixed_number})+)?"),
+        ("optional_numbers_group",            rf"({number}({sep}{number})+)?",               rf"({number}({sep}{number})+)?"),
+        ("optional_mixed_numbers_group",      rf"({mixed_number}({sep}{mixed_number})+)?",   rf"({mixed_number}({sep}{mixed_number})+)?"),
 
-        # # --- letters ---
-        ("optional_letter_group",             rf"{letters}({sep}{letters})*",              rf"({letters}({sep}{letters})*)?"),
-        ("optional_letters_group",            rf"{letters}({sep}{letters})*",              rf"({letters}({sep}{letters})*)?"),
+        # --- letters ---
+        ("optional_letter_group",             rf"({letters}({sep}{letters})+)?",              rf"({letters}({sep}{letters})+)?"),
+        ("optional_letters_group",            rf"({letters}({sep}{letters})+)?",              rf"({letters}({sep}{letters})+)?"),
+
+        # --- alnum ---
+        ("optional_alnum_group",              rf"({alnums}({sep}{alnums})+)?",                rf"({alnums}({sep}{alnums})+)?"),
+        ("optional_alnums_group",             rf"({alnums}({sep}{alnums})+)?",                rf"({alnums}({sep}{alnums})+)?"),
         #
-        # # --- alnum ---
-        ("optional_alnum_group",              rf"{alnums}({sep}{alnums})*",                rf"({alnums}({sep}{alnums})*)?"),
-        ("optional_alnums_group",             rf"{alnums}({sep}{alnums})*",                rf"({alnums}({sep}{alnums})*)?"),
-
         # --- graph ---
-        ("optional_graph_group",              rf"{graphs}({sep}{graphs})*",                rf"({graphs}({sep}{graphs})*)?"),
-        ("optional_graphs_group",             rf"{graphs}({sep}{graphs})*",                rf"({graphs}({sep}{graphs})*)?"),
-        #
-        # # --- punct ---
-        ("optional_punct_group",              rf"{puncts}({sep}{puncts})*",                rf"({puncts}({sep}{puncts})*)?"),
-        ("optional_puncts_group",             rf"{puncts}({sep}{puncts})*",                rf"({puncts}({sep}{puncts})*)?"),
+        ("optional_graph_group",              rf"({graphs}({sep}{graphs})+)?",                rf"({graphs}({sep}{graphs})+)?"),
+        ("optional_graphs_group",             rf"({graphs}({sep}{graphs})+)?",                rf"({graphs}({sep}{graphs})+)?"),
 
+        # --- punct ---
+        ("optional_punct_group",              rf"({puncts}({sep}{puncts})+)?",                rf"({puncts}({sep}{puncts})+)?"),
+        ("optional_puncts_group",             rf"({puncts}({sep}{puncts})+)?",                rf"({puncts}({sep}{puncts})+)?"),
+        #
         # space or punct
-        ("optional_space_or_punct_group",     rf"{spaces_or_puncts}({sep}{spaces_or_puncts})*",      rf"({spaces_or_puncts}({sep}{spaces_or_puncts})*)?"),
+        ("optional_space_or_punct_group",     rf"({spaces_or_puncts}({sep}{spaces_or_puncts})+)?",      rf"({spaces_or_puncts}({sep}{spaces_or_puncts})+)?"),
 
         # letter or punct
-        ("optional_letter_or_punct_group",    rf"{letters_or_puncts}({sep}{letters_or_puncts})*",    rf"({letters_or_puncts}({sep}{letters_or_puncts})*)?"),
+        ("optional_letter_or_punct_group",    rf"({letters_or_puncts}({sep}{letters_or_puncts})+)?",    rf"({letters_or_puncts}({sep}{letters_or_puncts})+)?"),
 
         # --- word ---
-        ("optional_word_group",               rf"{word}({sep}{word})*",   rf"({word}({sep}{word})*)?"),
-        ("optional_words_group",              rf"{word}({sep}{word})*",   rf"({word}({sep}{word})*)?"),
+        ("optional_word_group",               rf"({word}({sep}{word})+)?",   rf"({word}({sep}{word})+)?"),
+        ("optional_words_group",              rf"({word}({sep}{word})+)?",   rf"({word}({sep}{word})+)?"),
 
         # --- mixed-word
-        ("optional_mixed_word_group",         rf"{mixed_word}({sep}{mixed_word})*",     rf"({mixed_word}({sep}{mixed_word})*)?"),
-        ("optional_mixed_words_group",        rf"{mixed_word}({sep}{mixed_word})*",     rf"({mixed_word}({sep}{mixed_word})*)?"),
+        ("optional_mixed_word_group",         rf"({mixed_word}({sep}{mixed_word})+)?",     rf"({mixed_word}({sep}{mixed_word})+)?"),
+        ("optional_mixed_words_group",        rf"({mixed_word}({sep}{mixed_word})+)?",     rf"({mixed_word}({sep}{mixed_word})+)?"),
 
         # non-whitespace(s)
-        ("optional_non_ws_group",             rf"{non_wss}({sep}{non_wss})*",       rf"({non_wss}({sep}{non_wss})*)?"),
-        ("optional_non_wss_group",            rf"{non_wss}({sep}{non_wss})*",       rf"({non_wss}({sep}{non_wss})*)?"),
+        ("optional_non_ws_group",             rf"({non_wss}({sep}{non_wss})+)?",       rf"({non_wss}({sep}{non_wss})+)?"),
+        ("optional_non_wss_group",            rf"({non_wss}({sep}{non_wss})+)?",       rf"({non_wss}({sep}{non_wss})+)?"),
     ]
 )
 def test(name, pattern, expected):

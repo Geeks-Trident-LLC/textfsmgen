@@ -34,6 +34,9 @@ class KeywordPatternMappingRegister:
         self.group_keywords = None
         self.group_map = None
 
+        self.items_map = None
+        self.items_keywords = None
+
         self.core_keywords = None
         self.core_map = None
 
@@ -65,11 +68,20 @@ class KeywordPatternMappingRegister:
 
         self.group_map = dict()
         self.group_keywords = []
+
+        self.items_map = dict()
+        self.items_keywords = []
+
         for keyword in self.core_keywords:
             grp_keyword = f"{keyword}_group"
             if grp_keyword in self.all_map:
                 self.group_map[grp_keyword] = self.all_map[grp_keyword]
                 self.group_keywords.append(grp_keyword)
+
+            items_keyword = f"{keyword}_items"
+            if items_keyword in self.all_map:
+                self.items_map[items_keyword] = self.all_map[items_keyword]
+                self.items_keywords.append(items_keyword)
 
     def init_singular(self):
 
@@ -177,14 +189,33 @@ class KeywordPatternMappingRegister:
                 f"{pattern}+({sep}{pattern}+)+"
             )
 
-            # optional_<singular>_group: represents one or more plural
+            # optional_<singular>_group: represents zero or more plural
             # units separated by whitespace.
             # Special cases (dot, space, whitespace) reduce to zero or more
             # of the singular token.
             variants[f"optional_{name}_group"] = (
                 f"{pattern}*"
                 if key in special_case else
+                f"({pattern}+({sep}{pattern}+)+)?"
+            )
+
+            # <singular>_items: represents one or more plural
+            # units separated by whitespace.
+            # Special cases (dot, space, whitespace) expand only to
+            # their plural form, not to whitespace‑separated multi‑unit groups.
+            variants[f"{name}_items"] = (
+                f"{pattern}+"
+                if key in special_case else
                 f"{pattern}+({sep}{pattern}+)*"
+            )
+
+            # optional_<singular>_items: represents zero or more plural
+            # units separated by whitespace.
+            # Special cases (dot, space, whitespace) become zero more unit.
+            variants[f"optional_{name}_items"] = (
+                f"{pattern}*"
+                if key in special_case else
+                f"({pattern}+({sep}{pattern}+)*)?"
             )
 
         return variants
@@ -222,11 +253,25 @@ class KeywordPatternMappingRegister:
                 f"{pattern}({sep}{pattern})+"
             )
 
-            # optional_<plural>_group: one or more plural units separated by whitespace.
+            # optional_<plural>_group: zero or more plural units separated by whitespace.
             variants[f"optional_{name}_group"] = (
                 f"{pattern[:-1]}*"
                 if key in special_case else
+                f"({pattern}({sep}{pattern})+)?"
+            )
+
+            # <plural>_items: one or more plural units separated by whitespace.
+            variants[f"{name}_items"] = (
+                f"{pattern}"
+                if key in special_case else
                 f"{pattern}({sep}{pattern})*"
+            )
+
+            # optional_<plural>_items: zero or more plural units separated by whitespace.
+            variants[f"optional_{name}_items"] = (
+                f"{pattern[:-1]}*"
+                if key in special_case else
+                f"({pattern}({sep}{pattern})*)?"
             )
 
         return variants
@@ -258,8 +303,14 @@ class KeywordPatternMappingRegister:
             # <semantic>_group: two or more semantic units separated by whitespace
             variants[f"{name}_group"] = f"{pattern}({sep}{pattern})+"
 
-            # optional_<semantic>_group: one or more semantic units separated by whitespace
-            variants[f"optional_{name}_group"] = f"{pattern}({sep}{pattern})*"
+            # optional_<semantic>_group: zero or more semantic units separated by whitespace
+            variants[f"optional_{name}_group"] = f"({pattern}({sep}{pattern})+)?"
+
+            # <semantic>_items: one or more semantic units separated by whitespace
+            variants[f"{name}_items"] = f"{pattern}({sep}{pattern})*"
+
+            # optional_<semantic>_items: zero or more semantic units separated by whitespace
+            variants[f"optional_{name}_items"] = f"({pattern}({sep}{pattern})*)?"
 
         return variants
 
@@ -290,8 +341,16 @@ class KeywordPatternMappingRegister:
             # <semantic>_group: two or more semantic units separated by whitespace
             variants[f"{name}_group"] = f"{pattern[:-1]}+"
 
-            # optional_<plural_semantic>_group: same as plural semantic
-            variants[f"optional_{name}_group"] = pattern
+            # optional_<plural_semantic>_group: zero or more semantic units
+            # separated by whitespaces
+            variants[f"optional_{name}_group"] = f"({pattern[:-1]}+)?"
+
+            # <semantic>_items: same as plural semantic
+            variants[f"{name}_items"] = pattern
+
+            # optional_<plural_semantic>_items: zero or more semantic unit
+            # separated by whitespace
+            variants[f"optional_{name}_items"] = f"({pattern})?"
 
         return variants
 
@@ -323,6 +382,7 @@ class Pattern(DotObject):
         self.plural_semantic_keywords = register.plural_semantic_keywords.copy()
         self.core_keywords = register.core_keywords.copy()
         self.group_keywords = register.group_keywords.copy()
+        self.items_keywords = register.items_keywords.copy()
 
         self.singular_to_plural = register.singular_to_plural.copy()
         self.plural_to_singular = register.plural_to_singular.copy()
@@ -338,41 +398,45 @@ class Pattern(DotObject):
         bases = ("dot", "space", "ws", "whitespace")
 
         for base in bases:
-            if keyword in (f"{base}_group", f"{base}s_group"):
+            if keyword in (
+                f"{base}_group", f"{base}s_group",
+                f"{base}_items", f"{base}s_items",
+            ):
                 return True
 
         return False
 
     def keyword_in(
         self, key, singular=False, plural=False, semantic=False,
-        plural_semantic=False, core=False, group=False,
+        plural_semantic=False, core=False, group=False, items=False,
     ):
         """Return True if the keyword belongs to any enabled keyword group."""
-        if singular and key in self.singular_keywords:
-            return True
-        if plural and key in self.plural_keywords:
-            return True
-        if semantic and key in self.semantic_keywords:
-            return True
-        if plural_semantic and key in self.plural_semantic_keywords:
-            return True
-        if core and key in self.core_keywords:
-            return True
-        if group and key in self.group_keywords:
-            return True
+        pairs = [
+            (singular, self.singular_keywords),
+            (plural, self.plural_keywords),
+            (semantic, self.semantic_keywords),
+            (plural_semantic, self.plural_semantic_keywords),
+            (core, self.core_keywords),
+            (group, self.group_keywords),
+            (items, self.items_keywords),
+        ]
+
+        for flag, keywords in pairs:
+            if flag and key in keywords:
+                return True
         return False
 
     def base_group_name(self, keyword: str) -> str:
         """Return the canonical base name for a *_group keyword."""
         # Not a group keyword → return unchanged
-        if not self.keyword_in(keyword, plural_semantic=True, group=True):
+        if not self.keyword_in(keyword, plural_semantic=True, group=True, items=True):
             return keyword
 
         # Plural semantic group → singularize
         if self.keyword_in(keyword, plural_semantic=True):
             return keyword[:-1]
 
-        base = keyword.removesuffix("_group")
+        base = re.sub("_(group|items)$", "", keyword)
 
         # Case: base itself is plural
         if self.keyword_in(base, plural=True):
@@ -393,19 +457,21 @@ class Pattern(DotObject):
 
     def parse_base_keyword(self, raw_kw: str):
         """Return the core keyword and any quantity tag extracted from a mapping name."""
-        is_group = raw_kw.endswith("_group")
-        name = raw_kw.removesuffix("_group")
+        match = re.search(r"_(?P<suffix>group|items)$", raw_kw)
+        suffix = match.group("suffix") if match else ""
+        name = re.sub(r"_(?P<suffix>group|items)$", "", raw_kw)
+
         for core in self.core_keywords:
             # Case: exact match or numeric-prefixed match (e.g., "3item")
             if name == core or re.fullmatch(rf"[0-9]+{core}", raw_kw):
-                qty = "group" if is_group else ""
+                qty = suffix or ""
                 return StatusString(core, status="ok", reason=qty)
 
             prefixes = ("some", "optional", "zero_or_one",
                         "zero_or_more", "one_or_more")
             for prefix in prefixes:
                 if name == f"{prefix}_{core}":
-                    qty = f"optional_group" if prefix == "optional" and is_group else prefix
+                    qty = f"optional_{suffix}" if prefix == "optional" and suffix else prefix
                     return StatusString(core, status="ok", reason=qty)
 
         return StatusString()
@@ -438,10 +504,15 @@ class Pattern(DotObject):
 
     def allow_empty_pattern(self, pattern):
         """Return a version of the pattern that allows empty input when appropriate."""
+
+        if pattern.endswith(")*)?") or pattern.endswith(")+)?"):
+            return pattern
+
         keyword = self.resolve_keyword_for_pattern(pattern)
 
         # No keyword found → fallback: allow empty
         if not keyword:
+
             allowed = rf"({pattern})?"
             status = check_pattern(allowed)
 
@@ -455,37 +526,55 @@ class Pattern(DotObject):
                 )
             return allowed
 
+
         if keyword in ("anything", "something"):
             return self.all_map["anything"]
 
         if keyword in self.core_keywords:
             return self.all_map[f"optional_{keyword}"]
 
-        # Default allowed-empty form
-        allowed = rf"({pattern})?"
-
-        # Group keywords always allow empty
-        if keyword.endswith("_group"):
-            return allowed
-
-        base = self.parse_base_keyword(keyword)
-
-        # optional / zero_or_one / zero_or_more
-        if re.search(r"optional_|zero_or_one_|zero_or_more_", keyword):
+        if re.match("optional_|zero_or_one_|zero_or_more_", keyword):
             return self.all_map[keyword]
 
-        # some_ / one_or_more_
-        if re.search(r"some_|one_or_more_", keyword):
-            if self.keyword_in(base, singular=True):
-                plural = self.resolve_plural(base)
-                return self.all_map[f"optional_{plural}"]
 
-            if self.keyword_in(base, plural=True):
-                return self.all_map[f"optional_{keyword}"]
+        # Default allowed-empty form
+        allowed = rf"({pattern})?"
+        status = check_pattern(allowed)
 
-            return allowed
-
+        if not status:
+            raise_runtime_error(
+                obj="InvalidAllowedEmptyPattern",
+                msg=(
+                    "Expected a valid pattern, but received "
+                    f"{allowed!r} (error: {status})"
+                )
+            )
         return allowed
+
+
+        #
+        # # Group keywords always allow empty
+        # if keyword.endswith("_group") or keyword.endswith("_items"):
+        #     return allowed
+        #
+        # base = self.parse_base_keyword(keyword)
+        #
+        # # optional / zero_or_one / zero_or_more
+        # if re.search(r"optional_|zero_or_one_|zero_or_more_", keyword):
+        #     return self.all_map[keyword]
+        #
+        # # some_ / one_or_more_
+        # if re.search(r"some_|one_or_more_", keyword):
+        #     if self.keyword_in(base, singular=True):
+        #         plural = self.resolve_plural(base)
+        #         return self.all_map[f"optional_{plural}"]
+        #
+        #     if self.keyword_in(base, plural=True):
+        #         return self.all_map[f"optional_{keyword}"]
+        #
+        #     return allowed
+        #
+        # return allowed
 
 
 PATTERN = Pattern()
@@ -643,7 +732,7 @@ class ParsedKeywordMappingName:
             return
 
         # Plural-semantic group
-        if PATTERN.keyword_in(base, plural_semantic=True, group=True):
+        if PATTERN.keyword_in(base, plural_semantic=True, group=True, items=True):
             self._quantity = str(n)
             self._base_keyword = PATTERN.base_group_name(base)
 
@@ -755,7 +844,7 @@ class ParsedKeywordMappingName:
             return
 
         # --- Case 3b: plural semantic group ---------------------------------------
-        if PATTERN.keyword_in(base, plural_semantic=True, group=True):
+        if PATTERN.keyword_in(base, plural_semantic=True, group=True, items=True):
             self._base_keyword = PATTERN.base_group_name(base)
             self._quantity_lo, self._quantity_hi = normalize_quantities(lo, hi)
 
@@ -765,7 +854,7 @@ class ParsedKeywordMappingName:
 
 def resolve_pattern(name, default=None):
     """Return the resolved regex pattern for the given name."""
-    fallback = default or PATTERN.OPTIONAL_NON_WSS_GROUP
+    fallback = default or PATTERN.NON_WSS_ITEMS
     mapping = ParsedKeywordMappingName(name)
     return mapping.pattern or fallback
 
