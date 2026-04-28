@@ -143,8 +143,8 @@ def build_semantic_group(app, parent, row=0):
     variant_group.grid(row=row_pos+1, column=0, columnspan=col_pos+1, padx=4, pady=(2, 0), sticky="w")
 
     label_groups = [
-        ["optional",    "optional_group",   "group",        "some", "exact"],
-        ["zero_or_one", "zero_or_more",     "one_or_more",  "",     "range"],
+        ["optional",    "optional_group",   "group",        "optional_items",   "items",    "exact"],
+        ["zero_or_one", "zero_or_more",     "one_or_more",  "some",             "",         "range"],
     ]
 
     for row_pos, group in enumerate(label_groups):
@@ -500,6 +500,10 @@ def perform_build_action(app):
                     add_if_absent(f"optional_{semantic}_group({params_txt})", snippets)
                 elif variant == "group":
                     add_if_absent(f"{semantic}_group({params_txt})", snippets)
+                elif variant == "optional_items":
+                    add_if_absent(f"optional_{semantic}_items({params_txt})", snippets)
+                elif variant == "items":
+                    add_if_absent(f"{semantic}_items({params_txt})", snippets)
                 else:
                     add_if_absent(f"{variant}_{semantic}({params_txt})", snippets)
                 continue

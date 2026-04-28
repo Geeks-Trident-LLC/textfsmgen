@@ -235,15 +235,15 @@ class SamplesGenerator:
         if qty not in ("optional", "zero_or_one"):
             return []
 
-        # zero_or_more allows empty output
-        if qty == "zero_or_one":
-            self._allowed_empty = True
+        # # zero_or_more allows empty output
+        # if qty == "zero_or_one":
+        self._allowed_empty = True
 
         base = self._parser.base_keyword
 
         # --- Singular / plural keyword path -------------------------------------
         if PATTERN.keyword_in(base, singular=True, plural=True, semantic=True):
-            self._allowed_empty = True
+            # self._allowed_empty = True
             return self.get_sample(base)[: self._count]
 
         # --- Semantic / plural semantic path ------------------------------------
@@ -256,8 +256,9 @@ class SamplesGenerator:
     def generate_group(self):
         qty = self._parser.quantity
         # Only these quantities are supported
-        if qty not in ("optional_group", "group"):
+        if qty not in ("optional_group", "group", "optional_items", "items"):
             return []
+        self._allowed_empty = qty.startswith("optional_")
         base = self._parser.base_keyword
 
         # --- Singular / plural keyword path -------------------------------------

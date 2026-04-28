@@ -252,6 +252,14 @@ class TokenDoc:
         """Return a placeholder description template for grouped token types."""
         return self._grouped_placeholders.get(keyword, "")
 
+    def describe_custom(self):
+        if self.name in ("anything", "something"):
+            template = self._plural_placeholders.get("dots")
+            if self.name == "something" and not self.or_empty:
+                return template % "one or more"
+            return template % "zero or more"
+        return ""
+
     def describe_core(self) -> str:
         """Return a brief description for the core keyword based on its token type."""
         or_empty = self.or_empty is True
@@ -436,6 +444,7 @@ class TokenDoc:
 
     def process(self):
         methods = [
+            self.describe_custom,
             self.describe_core,
             self.describe_optional,
             self.describe_some,
