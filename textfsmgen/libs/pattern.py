@@ -97,19 +97,15 @@ class KeywordPatternMappingRegister:
             "non_ws"        : r"\S",
             "non_whitespace": r"\S",
 
-            "sp"                    : space_or_punct_pat,
             "sop"                   : space_or_punct_pat,
+            "pos"                   : space_or_punct_pat,
             "space_or_punct"        : space_or_punct_pat,
-            "space_or_punctuation"  : space_or_punct_pat,
             "punct_or_space"        : space_or_punct_pat,
-            "punctuation_or_space"  : space_or_punct_pat,
 
-            "lp"                    : letter_or_punct_pat,
             "lop"                   : letter_or_punct_pat,
+            "pol"                   : letter_or_punct_pat,
             "letter_or_punct"       : letter_or_punct_pat,
-            "letter_or_punctuation" : letter_or_punct_pat,
             "punct_or_letter"       : letter_or_punct_pat,
-            "punctuation_or_letter" : letter_or_punct_pat,
         }
 
         self.singular_keywords = list(self.singular_map.keys())

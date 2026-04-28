@@ -40,8 +40,8 @@ def test_with_optional():
         +------------------------------------------+
         Pattern:   r"(?P<v1>([\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*(\s+[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)*)?)"
         Operation: match zero or more mixed words containing alphanumeric or
-                   punctuation characters, each with at least one alphanumeric
-                   character, separated by one or more whitespace characters.
+                   punctuation characters with at least one alphanumeric character,
+                   separated by one or more whitespace characters.
         Explanation:
             lst = ['dummy', 'today is good day.']
         
@@ -89,8 +89,8 @@ def test_failure_incorrect_list_of_data():
         +------------------------------------------+
         Pattern:   r"(?P<v3>([a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)*)?)"
         Operation: match zero or more words containing alphanumeric or underscore
-                   characters, each with at least one alphabetic character, separated
-                   by one or more whitespace characters.
+                   characters with at least one alphabetic character, separated by
+                   one or more whitespace characters.
         Explanation:
             lst = ['dummy', '', 'Connection* 10:']
         
