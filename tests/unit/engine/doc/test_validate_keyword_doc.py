@@ -1,5 +1,5 @@
 """
-Unit tests for the `textfsmgen.engine.doc.TokenDoc` class.
+Unit tests for the `textfsmgen.engine.doc.OperationDoc` class.
 
 Usage
 -----
@@ -10,7 +10,7 @@ Run pytest in the project root to execute these tests:
 """
 import pytest   # noqa
 
-from textfsmgen.engine.doc import TokenDoc
+from textfsmgen.engine.doc import OperationDoc
 
 from tests.unit.engine.doc import get_keywords
 
@@ -31,7 +31,7 @@ from tests.unit.engine.doc import get_keywords
 )
 def test_core_keyword_doc(category, or_empty, expected):
     for key in get_keywords(category=category):
-        node = TokenDoc(key, or_empty=or_empty)
+        node = OperationDoc(key, or_empty=or_empty)
         keyword_doc = node.describe_core()
         failure = f"({key}|{category}|{or_empty}|{expected}) => {keyword_doc}"
         assert expected in keyword_doc, failure
@@ -52,7 +52,7 @@ def test_core_keyword_doc(category, or_empty, expected):
 )
 def test_prefix_optional(category, or_empty, expected):
     for key in get_keywords(category=category):
-        node = TokenDoc(f"optional_{key}", or_empty=or_empty)
+        node = OperationDoc(f"optional_{key}", or_empty=or_empty)
         keyword_doc = node.describe_optional()
         failure = f"(optional_{key}|{category}|{or_empty}|{expected}) => {keyword_doc}"
         assert expected in keyword_doc, failure
@@ -73,7 +73,7 @@ def test_prefix_optional(category, or_empty, expected):
 )
 def test_prefix_some(category, or_empty, expected):
     for key in get_keywords(category=category):
-        node = TokenDoc(f"some_{key}", or_empty=or_empty)
+        node = OperationDoc(f"some_{key}", or_empty=or_empty)
         keyword_doc = node.describe_some()
         failure = f"(some_{key}|{category}|{or_empty}|{expected}) => {keyword_doc}"
         assert expected in keyword_doc, failure
@@ -94,7 +94,7 @@ def test_prefix_some(category, or_empty, expected):
 )
 def test_prefix_zero_or_one(category, or_empty, expected):
     for key in get_keywords(category=category):
-        node = TokenDoc(f"zero_or_one_{key}", or_empty=or_empty)
+        node = OperationDoc(f"zero_or_one_{key}", or_empty=or_empty)
         keyword_doc = node.describe_zero_or_one()
         failure = f"(zero_or_one_{key}|{category}|{or_empty}|{expected}) => {keyword_doc}"
         assert expected in keyword_doc, failure
@@ -116,7 +116,7 @@ def test_prefix_zero_or_one(category, or_empty, expected):
 )
 def test_prefix_zero_or_more(category, or_empty, expected):
     for key in get_keywords(category=category):
-        node = TokenDoc(f"zero_or_more_{key}", or_empty=or_empty)
+        node = OperationDoc(f"zero_or_more_{key}", or_empty=or_empty)
         keyword_doc = node.describe_zero_or_more()
         failure = f"(zero_or_more_{key}|{category}|{or_empty}|{expected}) => {keyword_doc}"
         assert expected in keyword_doc, failure
@@ -138,7 +138,7 @@ def test_prefix_zero_or_more(category, or_empty, expected):
 )
 def test_prefix_one_or_more(category, or_empty, expected):
     for key in get_keywords(category=category):
-        node = TokenDoc(f"one_or_more_{key}", or_empty=or_empty)
+        node = OperationDoc(f"one_or_more_{key}", or_empty=or_empty)
         keyword_doc = node.describe_one_or_more()
         failure = f"(one_or_more_{key}|{category}|{or_empty}|{expected}) => {keyword_doc}"
         assert expected in keyword_doc, failure
@@ -195,7 +195,7 @@ def test_prefix_one_or_more(category, or_empty, expected):
     ]
 )
 def test_suffix_group_with_empty_flag(keyword, expected):
-    node = TokenDoc(keyword, or_empty=True)
+    node = OperationDoc(keyword, or_empty=True)
     doc = node.describe_group()
     failure = f"({keyword}|or_empty=True|{expected}) => {doc}"
     assert expected in doc, failure
@@ -252,7 +252,7 @@ def test_suffix_group_with_empty_flag(keyword, expected):
     ]
 )
 def test_suffix_group(keyword, expected):
-    node = TokenDoc(keyword)
+    node = OperationDoc(keyword)
     doc = node.describe_group()
     failure = f"({keyword}|{expected}) => {doc}"
     assert expected in doc, failure
@@ -308,7 +308,7 @@ def test_suffix_group(keyword, expected):
     ]
 )
 def test_optional_group_with_empty_flag(keyword, expected):
-    node = TokenDoc(keyword, or_empty=True)
+    node = OperationDoc(keyword, or_empty=True)
     doc = node.describe_group()
     failure = f"({keyword}|or_empty=True|{expected}) => {doc}"
     assert expected in doc, failure
@@ -365,7 +365,7 @@ def test_optional_group_with_empty_flag(keyword, expected):
     ]
 )
 def test_optional_group(keyword, expected):
-    node = TokenDoc(keyword)
+    node = OperationDoc(keyword)
     doc = node.describe_group()
     failure = f"({keyword}|{expected}) => {doc}"
     assert expected in doc, failure
@@ -422,7 +422,7 @@ def test_optional_group(keyword, expected):
     ]
 )
 def test_suffix_items_with_empty_flag(keyword, expected):
-    node = TokenDoc(keyword, or_empty=True)
+    node = OperationDoc(keyword, or_empty=True)
     doc = node.describe_items()
     failure = f"({keyword}|or_empty=True|{expected}) => {doc}"
     assert expected in doc, failure
@@ -479,7 +479,7 @@ def test_suffix_items_with_empty_flag(keyword, expected):
     ]
 )
 def test_items(keyword, expected):
-    node = TokenDoc(keyword)
+    node = OperationDoc(keyword)
     doc = node.describe_items()
     failure = f"({keyword}|{expected}) => {doc}"
     assert expected in doc, failure
@@ -536,7 +536,7 @@ def test_items(keyword, expected):
     ]
 )
 def test_optional_items_with_empty_flag(keyword, expected):
-    node = TokenDoc(keyword, or_empty=True)
+    node = OperationDoc(keyword, or_empty=True)
     doc = node.describe_items()
     failure = f"({keyword}|or_empty=True|{expected}) => {doc}"
     assert expected in doc, failure
@@ -593,7 +593,7 @@ def test_optional_items_with_empty_flag(keyword, expected):
     ]
 )
 def test_optional_items(keyword, expected):
-    node = TokenDoc(keyword)
+    node = OperationDoc(keyword)
     doc = node.describe_items()
     failure = f"({keyword}|{expected}) => {doc}"
     assert expected in doc, failure
@@ -637,7 +637,7 @@ def test_optional_items(keyword, expected):
     ]
 )
 def test_exact_match(keyword, exp1, exp2):
-    node = TokenDoc(keyword)
+    node = OperationDoc(keyword)
     doc = node.describe_exact_match()
     failure = f"({keyword}|{exp1}|{exp2}) => {doc}"
     assert exp1 in doc, failure
@@ -684,7 +684,7 @@ def test_exact_match(keyword, exp1, exp2):
     ]
 )
 def test_range_match(keyword, exp1, exp2):
-    node = TokenDoc(keyword)
+    node = OperationDoc(keyword)
     doc = node.describe_range_match()
     failure = f"({keyword}|{exp1}|{exp2}) => {doc}"
     assert exp1 in doc, failure

@@ -217,7 +217,7 @@ def get_items_placeholders():
     return placeholders
 
 
-class TokenDoc:
+class OperationDoc:
     """Provide short, human-readable descriptions for token names."""
 
     def __init__(self, name: str, or_empty: bool = False):

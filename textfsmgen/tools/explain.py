@@ -24,7 +24,7 @@ from textfsmgen.libs.pattern import ParsedKeywordMappingName
 
 from textfsmgen.core.patterns import LinePattern
 
-from textfsmgen.engine.doc import TokenDoc
+from textfsmgen.engine.doc import OperationDoc
 
 
 class SnippetExplanation:
@@ -151,7 +151,7 @@ class SnippetExplanation:
 
     def generate_operation_section(self) -> str:
         """Build the formatted Operation: section for this keyword."""
-        doc = TokenDoc(self._keyword, or_empty=self._allow_empty)
+        doc = OperationDoc(self._keyword, or_empty=self._allow_empty)
         usage = doc.usage
         return wrap_text_block(usage, subject="Operation:")
 
