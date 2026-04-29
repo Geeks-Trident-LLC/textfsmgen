@@ -7,6 +7,7 @@ Token Documentation utilities for the TextFSM Generator framework.
 
 import re
 
+from textfsmgen.libs.number import word_to_digit
 from textfsmgen.libs import number
 from textfsmgen.libs.pattern import PATTERN
 
@@ -460,8 +461,8 @@ class TokenDoc:
         if m:
             word_qty = m.group("qty")
             value = number.word_to_digit(word_qty)
-            if isinstance(value, int):
-                return str(value), m.group("keyword")
+            if str(value).isdigit():
+                return value, m.group("keyword")
 
         return "", ""
 
@@ -472,6 +473,7 @@ class TokenDoc:
             return ""
         qty = int(qty)
         word_qty = number.digit_to_word(qty)
+        replacement = f"either zero or exactly {word_qty}" if self.or_empty else f"exactly {word_qty}"
 
         # Helper: choose singular vs plural placeholder based on qty
         def resolve_placeholder(singular_key, plural_key):
@@ -483,13 +485,13 @@ class TokenDoc:
         if keyword in self._singular_placeholders:
             plural = PATTERN.resolve_plural(keyword)
             template = resolve_placeholder(keyword, plural)
-            return template % f"exactly {word_qty}"
+            return template % replacement
 
         # 2. Plural keyword family
         if keyword in self._plural_placeholders:
             singular = PATTERN.resolve_singular(keyword)
             template = resolve_placeholder(singular, keyword)
-            return template % f"exactly {word_qty}"
+            return template % replacement
 
         # 3. Semantic keyword family
         if keyword in self._semantic_placeholders:
@@ -497,21 +499,115 @@ class TokenDoc:
                 template = self._semantic_placeholders.get(keyword, "")
             else:
                 plural_sem = PATTERN.resolve_plural_semantic(keyword)
-                template = self._plural_semantic_placeholders.get(plural_sem,
-                                                                  "")
-            return template % f"exactly {word_qty}"
+                template = self._plural_semantic_placeholders.get(plural_sem,"")
+            return template % replacement
 
         # 4. Plural semantic keyword family
         if keyword in self._plural_semantic_placeholders:
             if qty <= 1:
                 plural_sem = PATTERN.resolve_plural_semantic(keyword)
-                template = self._plural_semantic_placeholders.get(plural_sem,
-                                                                  "")
+                template = self._plural_semantic_placeholders.get(plural_sem,"")
             else:
                 template = self._plural_semantic_placeholders.get(keyword, "")
-            return template % f"exactly {word_qty}"
+            return template % replacement
 
         return ""
+
+    def get_range_quantity_and_keyword(self):
+        """
+        Extract a ranged quantity and keyword from names like '1_to_3_word'.
+        Returns (lo, hi, keyword) as integers and a string.
+        """
+        pat = r"(?i)(?P<lo>[a-z0-9]*)_(to_)?(?P<hi>[a-z0-9]*)_(?P<keyword>\w+)"
+        m = re.match(pat, self.name)
+        if not m:
+            return None, None, None
+
+        raw_lo = m.group("lo") or "0"
+        raw_hi = m.group("hi")
+        raw_hi = "99999" if raw_hi in ("", "n") else raw_hi
+
+        lo = word_to_digit(raw_lo, as_str=False)
+        hi = word_to_digit(raw_hi, as_str=False)
+        keyword = m.group("keyword")
+
+        return lo, hi, keyword
+
+    def describe_range_match(self):
+        """Return a human-readable description for ranged quantity keywords."""
+        lo, hi, keyword = self.get_range_quantity_and_keyword()
+        if hi is None and lo is None:
+            return ""
+
+        # Invalid: start > end
+        if lo > hi:
+            return (
+                f"{self.name} is invalid: range({lo}, {hi + 1}) cannot count "
+                f"forward because start ({lo}) >= end ({hi}+1).")
+
+        size = hi - lo
+
+        word_digit_lo = number.digit_to_word(lo)
+        word_digit_hi = number.digit_to_word(hi)
+
+        # --- EXACT MATCH CASE ----------------------------------------------------
+        if size == 0:
+            template = ""
+            if keyword in self._singular_placeholders or keyword in self._plural_placeholders:
+                singular = PATTERN.resolve_singular(keyword)
+                template = self._singular_placeholders.get(singular, "")
+            elif keyword in self._semantic_placeholders or keyword in self._plural_semantic_placeholders:
+                semantic = PATTERN.resolve_semantic(keyword)
+                template = self._semantic_placeholders.get(semantic, "")
+
+            if PATTERN.keyword_in(keyword, singular=True, plural=True):
+                if lo == 1:
+                    singular = PATTERN.resolve_singular(keyword)
+                    template = self._singular_placeholders.get(singular, "")
+                elif lo > 1:
+                    plural = PATTERN.resolve_plural(keyword)
+                    template = self._plural_semantic_placeholders.get(plural, "")
+            elif keyword in self._semantic_placeholders or keyword in self._plural_semantic_placeholders:
+                if lo == 1:
+                    semantic = PATTERN.resolve_semantic(keyword)
+                    template = self._semantic_placeholders.get(semantic, "")
+                elif lo > 1:
+                    plural_semantic = PATTERN.resolve_plural_semantic(keyword)
+                    template = self._plural_semantic_placeholders.get(plural_semantic, "")
+
+            if template:
+                replacement = (
+                    f"either zero or exactly {word_digit_lo}"
+                    if self.or_empty else
+                    f"exactly {word_digit_lo}"
+                )
+                return template % replacement
+            return f"{self.name} is invalid snippet keyword."
+
+        # --- RANGE MATCH CASE ----------------------------------------------------
+        template = ""
+        if keyword in self._singular_placeholders or keyword in self._plural_placeholders:
+            plural = PATTERN.resolve_plural(keyword)
+            template = self._singular_placeholders.get(plural, "")
+        elif keyword in self._semantic_placeholders or keyword in self._plural_semantic_placeholders:
+            plural_semantic = PATTERN.resolve_plural_semantic(keyword)
+            template = self._plural_semantic_placeholders.get(plural_semantic, "")
+
+        if template:
+            if self.or_empty:
+                replacement = (
+                    f"zero or more"
+                    if hi == 99999 else
+                    f"either zero or {word_digit_lo} to {word_digit_hi}"
+                )
+            else:
+                replacement = (
+                    f"{word_digit_lo} or more"
+                    if hi == 99999 else
+                    f"{word_digit_lo} to {word_digit_hi}"
+                )
+            return template % replacement
+        return f"{self.name} is invalid snippet keyword."
 
     def process(self):
         methods = [
@@ -525,6 +621,7 @@ class TokenDoc:
             self.describe_group,
             self.describe_items,
             self.describe_exact_match,
+            self.describe_range_match
         ]
 
         for method in methods:

@@ -21,6 +21,9 @@ def test_basic():
         Operation: match one word containing alphanumeric or underscore characters
                    with at least one alphabetic character.
         Explanation:
+        
+        
+        Samples:
             lst = ['dummy', 'other_dummy']
         
         Evaluating:
@@ -43,6 +46,9 @@ def test_with_optional():
                    punctuation characters with at least one alphanumeric character,
                    separated by one or more whitespace characters.
         Explanation:
+        
+        
+        Samples:
             lst = ['dummy', 'today is good day.']
         
         Evaluating:
@@ -67,6 +73,9 @@ def test_with_empty_flag():
         Operation: match zero or more sequences of non‑whitespace characters, each
                    separated by one or more whitespace characters.
         Explanation:
+        
+        
+        Samples:
             lst = ['v1 = 5 // 3', '', "lst = {'a': 1}"]
         
         Evaluating:
@@ -92,6 +101,9 @@ def test_failure_incorrect_list_of_data():
                    characters with at least one alphabetic character, separated by
                    one or more whitespace characters.
         Explanation:
+        
+        
+        Samples:
             lst = ['dummy', '', 'Connection* 10:']
         
         Evaluating:

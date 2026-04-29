@@ -106,7 +106,6 @@ class DynamicCheckboxGroup(ttk.LabelFrame):
             if max_len * count <= 100:
                 return [items[i:i+count] for i in range(0, len(items), count)]
 
-        # breakpoint()
         rows = []
         for item in items:
             if not rows:

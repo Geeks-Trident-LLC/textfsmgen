@@ -161,7 +161,7 @@ class SamplesGenerator:
                     return samples
         return []
 
-    def create_sample_group(self, keyword, starting=1, ending=None, exact=None):
+    def create_sample_group(self, keyword, starting=2, ending=None, exact=None):
         """Return grouped samples for the given keyword."""
         if keyword not in self._mapping:
             return []
@@ -267,13 +267,12 @@ class SamplesGenerator:
         # --- Singular / plural keyword path -------------------------------------
         if PATTERN.keyword_in(base, singular=True, plural=True):
             plural = PATTERN.resolve_plural(base)
-            starting = 2 if qty == "group" else 1
-            return self.create_sample_group(plural, starting=starting)
+            return self.create_sample_group(plural, starting=2)
 
         # --- Semantic / plural semantic path ------------------------------------
         if PATTERN.keyword_in(base, semantic=True, plural_semantic=True):
             semantic = PATTERN.resolve_semantic(base)
-            return self.create_sample_group(semantic, starting=1)
+            return self.create_sample_group(semantic, starting=2)
 
         return []
 
@@ -320,6 +319,14 @@ class SamplesGenerator:
         if PATTERN.keyword_in(base, singular=True, plural=True):
             singular = PATTERN.resolve_singular(base)
             parts = []
+            if hi == lo:
+                if lo == 0:
+                    return []
+                for _ in range(self._count):
+                    part = "".join(self.get_sample(singular, total=hi))[:lo]
+                    parts.append(part)
+                return parts
+
             for i in range(lo, hi + 1):
                 part = "".join(self.get_sample(singular, total=hi))[:i]
                 if part and part not in parts:
@@ -329,6 +336,10 @@ class SamplesGenerator:
         # --- Semantic / plural semantic path ------------------------------------
         if PATTERN.keyword_in(base, semantic=True, plural_semantic=True):
             semantic = PATTERN.resolve_semantic(base)
+            if hi == lo:
+                if hi == 0:
+                    return []
+                return self.create_sample_group(semantic, exact=lo)
             return self.create_sample_group(semantic, starting=lo, ending=hi)
         return []
 

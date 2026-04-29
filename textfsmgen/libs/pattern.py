@@ -552,31 +552,6 @@ class Pattern(DotObject):
         return allowed
 
 
-        #
-        # # Group keywords always allow empty
-        # if keyword.endswith("_group") or keyword.endswith("_items"):
-        #     return allowed
-        #
-        # base = self.parse_base_keyword(keyword)
-        #
-        # # optional / zero_or_one / zero_or_more
-        # if re.search(r"optional_|zero_or_one_|zero_or_more_", keyword):
-        #     return self.all_map[keyword]
-        #
-        # # some_ / one_or_more_
-        # if re.search(r"some_|one_or_more_", keyword):
-        #     if self.keyword_in(base, singular=True):
-        #         plural = self.resolve_plural(base)
-        #         return self.all_map[f"optional_{plural}"]
-        #
-        #     if self.keyword_in(base, plural=True):
-        #         return self.all_map[f"optional_{keyword}"]
-        #
-        #     return allowed
-        #
-        # return allowed
-
-
 PATTERN = Pattern()
 
 
@@ -785,9 +760,9 @@ class ParsedKeywordMappingName:
             self._status = StatusString("\n".join(messages), status=False)
             return
 
-        if int(hi) <= int(lo):
+        if int(hi) < int(lo):
             msg = (
-                f"Invalid range ({hi}, {lo}) in keyword {self._name}. "
+                f"Invalid range({hi}, {lo}) in keyword {self._name}. "
                 f"Expected {hi} > {lo}."
             )
             self._status = StatusString(msg, status=False)

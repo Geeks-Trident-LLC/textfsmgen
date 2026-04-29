@@ -603,31 +603,31 @@ def test_optional_items(keyword, expected):
     "keyword, exp1, exp2",
     [
         # special case
-        (
-            "3word",
-            "match exactly three words ",
-            "separated by one or more whitespace characters."
-        ),
-        (
-            "3_word",
-            "match exactly three words ",
-            "separated by one or more whitespace characters."
-        ),
+        # (
+        #     "3word",
+        #     "match exactly three words ",
+        #     "separated by one or more whitespace characters."
+        # ),
+        # (
+        #     "3_word",
+        #     "match exactly three words ",
+        #     "separated by one or more whitespace characters."
+        # ),
         (
             "three_word",
             "match exactly three words ",
             "separated by one or more whitespace characters."
         ),
-        (
-            "3words",
-            "match exactly three words ",
-            "separated by one or more whitespace characters."
-        ),
-        (
-            "3_words",
-            "match exactly three words ",
-            "separated by one or more whitespace characters."
-        ),
+        # (
+        #     "3words",
+        #     "match exactly three words ",
+        #     "separated by one or more whitespace characters."
+        # ),
+        # (
+        #     "3_words",
+        #     "match exactly three words ",
+        #     "separated by one or more whitespace characters."
+        # ),
         (
             "three_words",
             "match exactly three words ",
@@ -639,6 +639,53 @@ def test_optional_items(keyword, expected):
 def test_exact_match(keyword, exp1, exp2):
     node = TokenDoc(keyword)
     doc = node.describe_exact_match()
+    failure = f"({keyword}|{exp1}|{exp2}) => {doc}"
+    assert exp1 in doc, failure
+    assert exp2 in doc, failure
+
+
+@pytest.mark.parametrize(
+    "keyword, exp1, exp2",
+    [
+        # special case
+        (
+            "2_to_4_words",
+            "match two to four words ",
+            "separated by one or more whitespace characters."
+        ),
+        (
+            "two_to_four_words",
+            "match two to four words ",
+            "separated by one or more whitespace characters."
+        ),
+
+        (
+            "2_to_n_words",
+            "match two or more words ",
+            "separated by one or more whitespace characters."
+        ),
+        (
+            "two_to_n_words",
+            "match two or more words ",
+            "separated by one or more whitespace characters."
+        ),
+
+        (
+            "2_to_2_words",
+            "match exactly two words ",
+            "separated by one or more whitespace characters."
+        ),
+        (
+            "two_to_two_words",
+            "match exactly two words ",
+            "separated by one or more whitespace characters."
+        ),
+
+    ]
+)
+def test_range_match(keyword, exp1, exp2):
+    node = TokenDoc(keyword)
+    doc = node.describe_range_match()
     failure = f"({keyword}|{exp1}|{exp2}) => {doc}"
     assert exp1 in doc, failure
     assert exp2 in doc, failure

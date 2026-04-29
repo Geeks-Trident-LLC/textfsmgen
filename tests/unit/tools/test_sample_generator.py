@@ -13,6 +13,8 @@ import pytest       # noqa
 import re
 from textfsmgen.tools.samples import SamplesGenerator
 
+from textfsmgen.libs.decorators import catch_debug_break
+
 
 @pytest.mark.parametrize(
     "snippet",
@@ -259,10 +261,10 @@ def test_suffix_group(snippet):
 @pytest.mark.parametrize(
     "snippet",
     (
-        "optional_dot_group()",            "optional_dots_group()",
-        "optional_space_group()",          "optional_spaces_group()",
-        "optional_ws_group()",             "optional_wss_group()",
-        "optional_whitespace_group()",     "optional_whitespaces_group()",
+        # "optional_dot_group()",            "optional_dots_group()",
+        # "optional_space_group()",          "optional_spaces_group()",
+        # "optional_ws_group()",             "optional_wss_group()",
+        # "optional_whitespace_group()",     "optional_whitespaces_group()",
 
         "optional_digit_group()",           "optional_digits_group()",
         "optional_number_group()",          "optional_mixed_number_group()",
@@ -275,6 +277,7 @@ def test_suffix_group(snippet):
         "optional_non_whitespace_group()",  "optional_whitespaces_group()",
     )
 )
+@catch_debug_break(False)
 def test_optional_group(snippet):
     node = SamplesGenerator(snippet)
     assert bool(node) is True

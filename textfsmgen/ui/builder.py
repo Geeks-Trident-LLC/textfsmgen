@@ -515,7 +515,9 @@ def perform_build_action(app):
 
             # Range quantity
             if qty_min or qty_max:
-                add_if_absent(f"{qty_min}_{qty_max}_{semantic}({params_txt})", snippets)
+                if qty_min and not qty_max:
+                    qty_max = "n"
+                add_if_absent(f"{qty_min}_to_{qty_max}_{semantic}({params_txt})", snippets)
                 continue
 
             # Default
