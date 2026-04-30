@@ -151,9 +151,9 @@ class SnippetExplanation:
 
     def generate_operation_section(self) -> str:
         """Build the formatted Operation: section for this keyword."""
-        doc = OperationDoc(self._keyword, or_empty=self._allow_empty)
-        usage = doc.usage
-        return wrap_text_block(usage, subject="Operation:")
+        node = OperationDoc(self._keyword, or_empty=self._allow_empty)
+        operation_doc = node.doc
+        return wrap_text_block(operation_doc, subject="Operation:")
 
     def generate_result_section(self) -> StatusString:
         """Evaluate the snippet's pattern against all test samples."""
@@ -187,7 +187,9 @@ class SnippetExplanation:
         return "Explanation:\n\n"
 
     def generate_sample_section(self):
-        parts = ["Samples:"]
+        header = decorate_text(center_fixed_width("Validate Samples Against Pattern"))
+
+        parts = [f"{header}\n", "Samples:"]
         result = pformat(self._test_samples)
         if len(result.splitlines()) == 1:
             parts.append(f"    lst = {result}")

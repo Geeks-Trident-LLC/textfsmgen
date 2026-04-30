@@ -10,6 +10,7 @@ import re
 from textfsmgen.libs.number import word_to_digit
 from textfsmgen.libs import number
 from textfsmgen.libs.pattern import PATTERN
+from textfsmgen.libs.pattern import ParsedKeywordMappingName
 
 from textfsmgen.exceptions import raise_runtime_error
 
@@ -230,11 +231,11 @@ class OperationDoc:
         self._plural_semantic_placeholders = get_plural_semantic_placeholders()
         self._grouped_placeholders = get_grouped_placeholders()
         self._items_placeholders = get_items_placeholders()
-        self._usage = ""
+        self._doc = ""
         self.process()
 
     @property
-    def usage(self): return self._usage
+    def doc(self): return self._doc
 
     def singular_placeholder(self, keyword: str) -> str:
         """Return a placeholder description template for singular token types."""
@@ -627,5 +628,5 @@ class OperationDoc:
         for method in methods:
             result = method()
             if result:
-                self._usage = result
+                self._doc = result
                 return

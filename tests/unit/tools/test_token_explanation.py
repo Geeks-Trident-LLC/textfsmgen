@@ -21,7 +21,11 @@ def test_basic():
         Operation: match one word containing alphanumeric or underscore characters
                    with at least one alphabetic character.
         Explanation:
-        
+
+
+        +------------------------------------------+
+        |     Validate Samples Against Pattern     |
+        +------------------------------------------+
         
         Samples:
             lst = ['dummy', 'other_dummy']
@@ -46,7 +50,11 @@ def test_with_optional():
                    punctuation characters with at least one alphanumeric character,
                    separated by one or more whitespace characters.
         Explanation:
-        
+
+
+        +------------------------------------------+
+        |     Validate Samples Against Pattern     |
+        +------------------------------------------+
         
         Samples:
             lst = ['dummy', 'today is good day.']
@@ -75,6 +83,10 @@ def test_with_empty_flag():
         Explanation:
         
         
+        +------------------------------------------+
+        |     Validate Samples Against Pattern     |
+        +------------------------------------------+
+        
         Samples:
             lst = ['v1 = 5 // 3', '', "lst = {'a': 1}"]
         
@@ -102,6 +114,10 @@ def test_failure_incorrect_list_of_data():
                    one or more whitespace characters.
         Explanation:
         
+        
+        +------------------------------------------+
+        |     Validate Samples Against Pattern     |
+        +------------------------------------------+
         
         Samples:
             lst = ['dummy', '', 'Connection* 10:']
