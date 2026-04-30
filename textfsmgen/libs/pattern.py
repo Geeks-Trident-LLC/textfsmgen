@@ -600,7 +600,7 @@ class ParsedKeywordMappingName:
     def base_keyword(self): return self._base_keyword
 
     @property
-    def pattern(self): return self._pattern or PATTERN.get("optional_non_wss_group")
+    def pattern(self): return self._pattern or PATTERN.get("non_wss_items")
 
     def update_base_keyword(self):
         if not self._is_resolved or self._base_keyword:

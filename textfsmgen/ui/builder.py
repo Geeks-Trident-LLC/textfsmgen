@@ -13,7 +13,7 @@ from textfsmgen.libs.datatype import trim_empty_edges, trim_blank_edges, add_if_
 from textfsmgen.tools.explain import SnippetExplanation
 from textfsmgen.tools.samples import SamplesGenerator
 
-from textfsmgen.core.patterns import LinePattern
+from textfsmgen.core.patterns import ElementPattern
 
 from textfsmgen.libs.text import enclose_string
 from textfsmgen.libs.generic import Position
@@ -618,7 +618,7 @@ def on_click_outcome_checkbox(app):
         node = SnippetExplanation(snippet, test_samples=samples)
 
     # Build pattern
-    pattern = LinePattern(snippet)
+    pattern = ElementPattern(snippet)
 
     # Update UI
     set_text(b.pattern_area, f"pattern = r{enclose_string(pattern)}")

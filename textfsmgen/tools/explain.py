@@ -22,9 +22,10 @@ from textfsmgen.libs.text import (
 
 from textfsmgen.libs.pattern import ParsedKeywordMappingName
 
-from textfsmgen.core.patterns import LinePattern
+from textfsmgen.core.patterns import ElementPattern
 
 from textfsmgen.engine.doc import OperationDoc
+from textfsmgen.engine.doc import ExplanationDoc
 
 
 class SnippetExplanation:
@@ -157,7 +158,7 @@ class SnippetExplanation:
 
     def generate_result_section(self) -> StatusString:
         """Evaluate the snippet's pattern against all test samples."""
-        pattern = LinePattern(self._normalized)
+        pattern = ElementPattern(self._normalized)
 
         # Ensure the generated pattern is a valid regex
         try:
@@ -184,7 +185,10 @@ class SnippetExplanation:
         )
 
     def generate_explanation_section(self):
-        return "Explanation:\n\n"
+        node = ExplanationDoc(self._snippet)
+        if not node:
+            return ""
+        return node.doc
 
     def generate_sample_section(self):
         header = decorate_text(center_fixed_width("Validate Samples Against Pattern"))
@@ -204,7 +208,7 @@ class SnippetExplanation:
 
     def build_explanation(self):
         """Assemble the full explanation block for the snippet."""
-        pattern = LinePattern(self._normalized)
+        pattern = ElementPattern(self._normalized)
 
         header = decorate_text(center_fixed_width(self._snippet))
 

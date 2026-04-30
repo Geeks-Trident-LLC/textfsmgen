@@ -6,7 +6,10 @@ Token Documentation utilities for the TextFSM Generator framework.
 """
 
 import re
+from textwrap import indent
 
+from textfsmgen.core.patterns import ElementPattern
+from textfsmgen.libs.text import wrap_text_block, enclose_string
 from textfsmgen.libs.number import word_to_digit
 from textfsmgen.libs import number
 from textfsmgen.libs.pattern import PATTERN
@@ -630,3 +633,264 @@ class OperationDoc:
             if result:
                 self._doc = result
                 return
+
+
+class ExplanationDoc:
+    def __init__(self, snippet):
+        self._snippet = snippet
+
+        self._pattern = ""
+        self._keyword = ""
+        self._base_keyword = ""
+        self._var_name = ""
+        self._allowed_empty = False
+        self._quantity = ""
+        self._quantity_lo = ""
+        self._quantity_hi = ""
+        self._unit = ""
+
+        self._doc = ""
+        self._parsed = False
+
+        self.parse()
+
+        self.process()
+
+
+    def __bool__(self): return self._parsed
+
+    def __len__(self): return self._parsed
+
+    @property
+    def doc(self): return self._doc
+
+    @property
+    def pattern(self): return self._pattern
+
+    @property
+    def snippet(self): return self._snippet
+
+    @property
+    def keyword(self): return self._keyword
+
+    @property
+    def semantic(self): return self._base_keyword
+
+    @property
+    def quantity(self): return self._quantity
+
+    @property
+    def quantity_lo(self): return self._quantity_lo
+
+    @property
+    def quantity_hi(self): return self._quantity_hi
+
+    @property
+    def unit(self): return self._unit
+
+    @property
+    def parsed(self): return self._parsed
+
+    @property
+    def var_name(self): return self._var_name
+
+    @property
+    def allowed_empty(self): return self._allowed_empty
+
+    def parse(self):
+        """Parse snippet into keyword, parameters, quantity, and unit metadata."""
+        # extract keyword and raw parameter text
+        keyword, params_txt = self._snippet[:-1].split("(", maxsplit=1)
+        parser = ParsedKeywordMappingName(keyword)
+        if not parser:
+            return
+
+        # parse parameters
+        if params_txt.strip():
+            for p in re.split(r"\s*,\s*", params_txt):
+                p = p.strip()
+                if "_" not in p:
+                    continue
+
+                if p.lower() == "or_empty":
+                    self._allowed_empty = True
+                    continue
+
+                prefix, var_name = p.split("_", maxsplit=1)
+                if prefix == "var":
+                    self._var_name = var_name.strip()
+
+        # assign keyword + semantic info
+        self._keyword = parser.keyword
+        self._base_keyword = parser.base_keyword
+
+        # extract quantity + unit
+        pattern = r"((?P<qty>optional)_)?(?P<unit>group|items)"
+        quantity = parser.quantity or ""
+        m = re.fullmatch(pattern, quantity)
+
+        self._quantity = (m.group("qty") or "") if m else quantity
+        self._unit = m.group("unit") if m else ""
+        self._quantity_lo = parser.quantity_lo
+        self._quantity_hi = parser.quantity_hi
+
+        self._pattern = parser.pattern
+
+        self._parsed = True
+
+    def add_allowed_empty_note(self, items):
+        """Append an allowed‑empty note when applicable."""
+        if not self._allowed_empty:
+            return
+
+        mapping = {
+            "anything": (
+                "this semantic already matches zero characters, "
+                "so the allowed‑empty flag has no effect."
+            ),
+            "something": (
+                'enabling allowed‑empty downgrades "+" from one‑or‑more '
+                'to zero‑or‑more ("*").'
+            )
+        }
+
+        for keyword, description in mapping.items():
+            if keyword == self._keyword:
+                note = f"Note: {description}"
+                if len(description) > 84:
+                    note = wrap_text_block(description, subject="Note:", limit=80)
+                items.append(indent(note, " " * 4))
+                break
+
+    def add_params_section(self, items):
+        """Append the Parameters section if any parameters are present."""
+        lines = ["Parameters"]
+        if self._var_name:
+            v = self._var_name
+            line = f"var_{v} ({v}): capture variable using (?P<{v}>...)"
+            lines.append(indent(line, " " * 4))
+        if self._allowed_empty:
+            line = "or_empty (True): allows the entire unit or group to be empty"
+            lines.append(indent(line, " " * 4))
+        lines.append("-" * 60)
+
+        if len(lines) != 2:
+            items.append(indent("\n".join(lines), "    "))
+
+    def add_base_semantic_section(self, items):
+        """Determine the base semantic token and append its documentation block."""
+
+        # Resolve base token
+        if self._keyword in ("anything", "something"):
+            base = "dot"
+        elif PATTERN.keyword_in(self._base_keyword, singular=True, plural=True):
+            base = (
+                PATTERN.resolve_plural(self._base_keyword)
+                if self._unit in ("group", "items") else
+                PATTERN.resolve_singular(self._base_keyword)
+            )
+        elif PATTERN.keyword_in(self._base_keyword, semantic=True, plural_semantic=True):
+            base = PATTERN.resolve_semantic(self._base_keyword)
+        else:
+            base = "dot"
+
+        # Build documentation text
+        base_pattern_text = enclose_string(ElementPattern(f"{base}()"))
+        base_op_doc = OperationDoc(base).doc
+        line = f"Base ({base}): r{base_pattern_text} ({base_op_doc})"
+        if len(line) <= 90:
+            items.append(indent(line, " " * 4))
+            return base
+        block_doc = wrap_text_block(base_op_doc, subject="   ")
+        txt = f"Base ({base}): r{base_pattern_text}\n{block_doc}"
+        items.append(indent(txt, " " * 4))
+        return base
+
+    def get_semantic_group_description(self, base, quantifier=""):
+        """Return the semantic description for grouped <base> patterns."""
+        occurrences = "zero-or-more" if quantifier == "*" else "one-or-more"
+        optional = "?" if self._allowed_empty else ""
+
+        if self._allowed_empty:
+            lst = [
+                f"Semantic: (<{base}>(<sep><{base}>){quantifier}){optional}\n"
+                f'    <sep> is the whitespace separator (r"\\s+")\n'
+                f'    "{quantifier}" repeats {occurrences} (<sep><{base}>) groups\n'
+                f'    "{optional}" accept zero or one match {base} group'
+            ]
+            return "\n".join(lst)
+
+        lst = [
+            f"Semantic: <{base}>(<sep><{base}>){quantifier}\n"
+            f'    <sep> is the whitespace separator (r"\\s+")\n'
+            f'    "{quantifier}" repeats {occurrences} (<sep><{base}>) groups'
+        ]
+        return "\n".join(lst)
+
+    def get_semantic_description(self, base, quantifier="", is_group=False):
+        """Return the semantic description for the given base and quantifier."""
+        if is_group:
+            return self.get_semantic_group_description(base, quantifier)
+
+        if quantifier == "+" or quantifier == "*":
+            quant, occurrences = (
+                ("*", "zero-or-more") if self._allowed_empty else ("+", "one-or-more")
+            )
+        elif quantifier == "?":
+            quant, occurrences = "?", "zero-or-one"
+        else:
+            quant, occurrences = (
+                ("?", "zero-or-one") if self._allowed_empty else ("", "one")
+            )
+
+        lst = [f"Semantic: <{base}>{quant}"]
+        if quant:
+            lst.append(indent(f'"{quant}" repeats {occurrences} {base}', " " * 4))
+
+        return "\n".join(lst)
+
+    def add_custom_semantic_section(self, items):
+        """Append custom semantic descriptions for 'anything' and 'something'."""
+        if self._keyword not in ("anything", "something"):
+            return
+        quantifier = "+" if self._keyword == "something" else "*"
+        desc = self.get_semantic_description("dot", quantifier=quantifier)
+        items.append(indent(desc, " " * 4))
+
+    def add_core_semantic_section(self, base, items):
+        """Append the core semantic description for this keyword, if applicable."""
+        if self._keyword not in PATTERN.core_keywords:
+            return
+
+        if PATTERN.keyword_in(self._keyword, singular=True, plural=True, semantic=True):
+            if PATTERN.keyword_in(self._keyword, plural=True):
+                desc = self.get_semantic_description(base, quantifier="+")
+                items.append(indent(desc, " " * 4))
+                return
+            desc = self.get_semantic_description(base, quantifier="")
+            items.append(indent(desc, " " * 4))
+            return
+        desc = self.get_semantic_description(base, quantifier="*", is_group=True)
+        items.append(indent(desc, " " * 4))
+
+    def add_semantic_section(self, items):
+        """Build the full semantic section by composing base, custom, and core parts."""
+        base = self.add_base_semantic_section(items)
+        self.add_custom_semantic_section(items)
+        self.add_core_semantic_section(base, items)
+
+    def create_intro(self):
+        """Build the introductory explanation header."""
+        return [
+            "Explanation:",
+            indent(f"Snippet: {self.snippet}", " " * 4)
+        ]
+
+    def process(self):
+
+        lst = self.create_intro()
+        self.add_params_section(lst)
+        self.add_semantic_section(lst)
+        self.add_allowed_empty_note(lst)
+
+        self._doc = "\n".join(lst) + "\n"

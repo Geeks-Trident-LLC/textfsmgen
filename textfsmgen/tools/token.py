@@ -19,7 +19,7 @@ from textfsmgen.libs.text import (
 from textfsmgen.engine.translate import make_translator
 from textfsmgen.tools.explain import SnippetExplanation
 
-from textfsmgen.core.patterns import LinePattern
+from textfsmgen.core.patterns import LinePattern, ElementPattern
 
 from textfsmgen.libs.text import enclose_string
 
@@ -119,7 +119,7 @@ class SnippetBase:
     def pattern(self):
         """Return the formatted pattern, or empty string if not parsed."""
         snippet = self.snippet
-        return LinePattern(snippet) if snippet else ""
+        return ElementPattern(snippet) if snippet else ""
 
     @property
     def pattern_statement(self):

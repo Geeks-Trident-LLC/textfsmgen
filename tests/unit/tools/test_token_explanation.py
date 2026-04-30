@@ -13,7 +13,7 @@ from textfsmgen.tools.explain import SnippetExplanation
 from textfsmgen.libs.text import dedent_and_strip
 
 def test_basic():
-    expected = dedent_and_strip("""
+    expected = dedent_and_strip(r"""
         +------------------------------------------+
         |               word(var_v1)               |
         +------------------------------------------+
@@ -21,8 +21,15 @@ def test_basic():
         Operation: match one word containing alphanumeric or underscore characters
                    with at least one alphabetic character.
         Explanation:
-
-
+            Snippet: word(var_v1)
+            Parameters
+                var_v1 (v1): capture variable using (?P<v1>...)
+            ------------------------------------------------------------
+            Base (word): r"[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*"
+                match one word containing alphanumeric or underscore characters with at
+                least one alphabetic character.
+            Semantic: <word>
+        
         +------------------------------------------+
         |     Validate Samples Against Pattern     |
         +------------------------------------------+
@@ -50,8 +57,14 @@ def test_with_optional():
                    punctuation characters with at least one alphanumeric character,
                    separated by one or more whitespace characters.
         Explanation:
-
-
+            Snippet: optional_mixed_words(var_v1)
+            Parameters
+                var_v1 (v1): capture variable using (?P<v1>...)
+            ------------------------------------------------------------
+            Base (mixed_word): r"[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*"
+                match one mixed word containing alphanumeric or punctuation characters
+                with at least one alphanumeric character.
+        
         +------------------------------------------+
         |     Validate Samples Against Pattern     |
         +------------------------------------------+
@@ -81,7 +94,12 @@ def test_with_empty_flag():
         Operation: match zero or more sequences of non‑whitespace characters, each
                    separated by one or more whitespace characters.
         Explanation:
-        
+            Snippet: non_wss_group(var_v3, or_empty)
+            Parameters
+                var_v3 (v3): capture variable using (?P<v3>...)
+                or_empty (True): allows the entire unit or group to be empty
+            ------------------------------------------------------------
+            Base (non_wss): r"\S+" (match one or more non‑whitespace characters.)
         
         +------------------------------------------+
         |     Validate Samples Against Pattern     |
@@ -113,7 +131,18 @@ def test_failure_incorrect_list_of_data():
                    characters with at least one alphabetic character, separated by
                    one or more whitespace characters.
         Explanation:
-        
+            Snippet: words(var_v3, or_empty)
+            Parameters
+                var_v3 (v3): capture variable using (?P<v3>...)
+                or_empty (True): allows the entire unit or group to be empty
+            ------------------------------------------------------------
+            Base (word): r"[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*"
+                match one word containing alphanumeric or underscore characters with at
+                least one alphabetic character.
+            Semantic: (<word>(<sep><word>)*)?
+                <sep> is the whitespace separator (r"\s+")
+                "*" repeats zero-or-more (<sep><word>) groups
+                "?" accept zero or one match word group
         
         +------------------------------------------+
         |     Validate Samples Against Pattern     |
