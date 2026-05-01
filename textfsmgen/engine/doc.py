@@ -739,6 +739,11 @@ class ExplanationDoc:
 
         self._parsed = True
 
+    def is_suppressible_group(self, keyword: str = "") -> bool:
+        """Return True if the given or stored keyword is a suppressible *_group."""
+        target = keyword or self._keyword
+        return PATTERN.is_suppressible_group(target)
+
     def add_allowed_empty_note(self, items):
         """Append an allowed‑empty note when applicable."""
         if not self._allowed_empty:
@@ -752,8 +757,27 @@ class ExplanationDoc:
             'enabling allowed‑empty downgrades "+" from one‑or‑more '
             'to zero‑or‑more ("*").'
         )
+
+        # --- Case A: direct keyword match -------------------------------------
         if self._keyword in ("anything", "something"):
             desc = case1 if self._keyword == "anything" else case2
+            note = wrap_text_block(desc, subject="Note:", limit=68)
+            items.append(text.indent(note, prefix_newline=True))
+            return
+
+        # --- Case B: suppressible group or plural base keyword ----------------
+        if (
+            self.is_suppressible_group() or
+            PATTERN.keyword_in(self._base_keyword, plural=True)
+        ):
+            desc = case1 if self._quantity == "optional" else case2
+            note = wrap_text_block(desc, subject="Note:", limit=68)
+            items.append(text.indent(note, prefix_newline=True))
+            return
+
+        # --- Case C: quantity already allows emptiness ------------------------
+        if self._quantity in ("optional", "zero_or_one", "zero_or_more"):
+            desc = case1
             note = wrap_text_block(desc, subject="Note:", limit=68)
             items.append(text.indent(note, prefix_newline=True))
             return
@@ -782,13 +806,9 @@ class ExplanationDoc:
         elif PATTERN.keyword_in(self._base_keyword, singular=True, plural=True):
 
             if self._unit in ("group", "items"):
-                special = (
-                    "dot", "dots", "space", "spaces", "ws", "wss",
-                    "whitespace", "whitespaces"
-                )
                 base = (
                     PATTERN.resolve_singular(self._base_keyword)
-                    if self._base_keyword in special else
+                    if self.is_suppressible_group() else
                     PATTERN.resolve_plural(self._base_keyword)
                 )
             else:
@@ -938,13 +958,10 @@ class ExplanationDoc:
             items.append(text.indent(desc, prefix_newline=True))
 
     def add_group_semantic_section(self, base, items):
-        special = (
-            "dot", "dots", "space", "spaces", "ws", "wss",
-            "whitespace", "whitespaces"
-        )
         if self._unit not in ("group", "items"):
             return
-        if self._base_keyword in special:
+
+        if self.is_suppressible_group():
             quantifier = "*" if self._quantity == "optional" else "+"
             desc = self.get_semantic_description(base, quantifier=quantifier)
             items.append(text.indent(desc, prefix_newline=True))

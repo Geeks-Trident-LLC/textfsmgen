@@ -401,6 +401,8 @@ class Pattern(DotObject):
             if keyword in (
                 f"{base}_group", f"{base}s_group",
                 f"{base}_items", f"{base}s_items",
+                f"optional_{base}_group", f"optional_{base}s_group",
+                f"optional_{base}_items", f"optional_{base}s_items",
             ):
                 return True
 
