@@ -13,6 +13,8 @@ space = " "
 spaces = " +"
 ws = r"\s"
 wss = r"\s+"
+whitespace = ws
+whitespaces = wss
 
 dot = "."
 letter = "[a-zA-Z]"
@@ -31,6 +33,8 @@ non_wss = r"\S+"
 
 punct = r"[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]"
 puncts = f"{punct}+"
+punctuation = punct
+punctuations = puncts
 
 number = r"\d*[.]?\d+"
 mixed_number = r"[+\(\[\$-]?(\d+([,:/-]\d+)*)?[.]?\d+[\]\)%a-zA-Z]*"

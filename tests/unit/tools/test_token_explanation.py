@@ -22,12 +22,15 @@ def test_basic():
                    with at least one alphabetic character.
         Explanation:
             Snippet: word(var_v1)
+        
             Parameters
                 var_v1 (v1): capture variable using (?P<v1>...)
             ------------------------------------------------------------
+        
             Base (word): r"[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*"
                 match one word containing alphanumeric or underscore characters with at
                 least one alphabetic character.
+        
             Semantic: <word>
         
         +------------------------------------------+
@@ -58,12 +61,19 @@ def test_with_optional():
                    separated by one or more whitespace characters.
         Explanation:
             Snippet: optional_mixed_words(var_v1)
+        
             Parameters
                 var_v1 (v1): capture variable using (?P<v1>...)
             ------------------------------------------------------------
+        
             Base (mixed_word): r"[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*"
                 match one mixed word containing alphanumeric or punctuation characters
                 with at least one alphanumeric character.
+        
+            Semantic: (<mixed_word>(<sep><mixed_word>)*)?
+                <sep> is the whitespace separator (r"\s+")
+                "*" repeats zero-or-more (<sep><mixed_word>) groups
+                "?" allows zero or one occurrence of the entire mixed_word group
         
         +------------------------------------------+
         |     Validate Samples Against Pattern     |
@@ -95,11 +105,21 @@ def test_with_empty_flag():
                    separated by one or more whitespace characters.
         Explanation:
             Snippet: non_wss_group(var_v3, or_empty)
+        
             Parameters
                 var_v3 (v3): capture variable using (?P<v3>...)
                 or_empty (True): allows the entire unit or group to be empty
             ------------------------------------------------------------
+        
             Base (non_wss): r"\S+" (match one or more non‑whitespace characters.)
+        
+            Semantic: (<non_wss>(<sep><non_wss>)+)?
+                <sep> is the whitespace separator (r"\s+")
+                "+" repeats one-or-more (<sep><non_wss>) groups
+                "?" allows zero or one occurrence of the entire non_wss group
+        
+            Note: enabling allowed‑empty downgrades "+" from one‑or‑more to
+                  zero‑or‑more ("*").
         
         +------------------------------------------+
         |     Validate Samples Against Pattern     |
@@ -132,17 +152,20 @@ def test_failure_incorrect_list_of_data():
                    one or more whitespace characters.
         Explanation:
             Snippet: words(var_v3, or_empty)
+        
             Parameters
                 var_v3 (v3): capture variable using (?P<v3>...)
                 or_empty (True): allows the entire unit or group to be empty
             ------------------------------------------------------------
+        
             Base (word): r"[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*"
                 match one word containing alphanumeric or underscore characters with at
                 least one alphabetic character.
+        
             Semantic: (<word>(<sep><word>)*)?
                 <sep> is the whitespace separator (r"\s+")
                 "*" repeats zero-or-more (<sep><word>) groups
-                "?" accept zero or one match word group
+                "?" allows zero or one occurrence of the entire word group
         
         +------------------------------------------+
         |     Validate Samples Against Pattern     |
