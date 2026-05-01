@@ -641,13 +641,14 @@ def join_string(*inputs: Any, separator: str = "") -> str:
     return separator.join(parts)
 
 
-def indent(*inputs: Any, width: int = 2) -> str:
-    """
-    Indent one or more inputs by a specified number of spaces.
-    """
+def indent(*inputs: Any, width: int = 4, prefix_newline=False, suffix_newline=False) -> str:
+    """Indent one or more inputs by a specified number of spaces."""
+    prefix = "\n" if prefix_newline else ""
+    suffix = "\n" if suffix_newline else ""
     indent_width = max(width, 0)
     text_block = "\n".join(get_list_of_lines(*inputs))
-    return textwrap.indent(text_block, " " * indent_width)
+    block = f"{prefix}{text_block}{suffix}"
+    return textwrap.indent(block, " " * indent_width)
 
 
 def indent_level2(*inputs: Any, width: int = 2, start_pos: int = 1, other_width: int = 4) -> str:

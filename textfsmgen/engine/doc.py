@@ -12,6 +12,7 @@ from textfsmgen.core.patterns import ElementPattern
 from textfsmgen.libs.text import wrap_text_block, enclose_string
 from textfsmgen.libs.number import word_to_digit
 from textfsmgen.libs import number
+from textfsmgen.libs import text
 from textfsmgen.libs.pattern import PATTERN
 from textfsmgen.libs.pattern import ParsedKeywordMappingName
 
@@ -759,7 +760,7 @@ class ExplanationDoc:
                 note = f"Note: {description}"
                 if len(description) > 84:
                     note = wrap_text_block(description, subject="Note:", limit=80)
-                items.append(indent(note, " " * 4))
+                items.append(text.indent(note, prefix_newline=True))
                 break
 
     def add_params_section(self, items):
@@ -775,7 +776,7 @@ class ExplanationDoc:
         lines.append("-" * 60)
 
         if len(lines) != 2:
-            items.append(indent("\n".join(lines), "    "))
+            items.append(text.indent(lines, prefix_newline=True))
 
     def add_base_semantic_section(self, items):
         """Determine the base semantic token and append its documentation block."""
@@ -799,24 +800,25 @@ class ExplanationDoc:
         base_op_doc = OperationDoc(base).doc
         line = f"Base ({base}): r{base_pattern_text} ({base_op_doc})"
         if len(line) <= 90:
-            items.append(indent(line, " " * 4))
+            items.append(text.indent(line, prefix_newline=True))
             return base
         block_doc = wrap_text_block(base_op_doc, subject="   ")
         txt = f"Base ({base}): r{base_pattern_text}\n{block_doc}"
-        items.append(indent(txt, " " * 4))
+        items.append(text.indent(txt, prefix_newline=True))
         return base
 
-    def get_semantic_group_description(self, base, quantifier=""):
+    def get_semantic_group_description(self, base, optional=""):
         """Return the semantic description for grouped <base> patterns."""
+        quantifier = "+" if self._unit == "group" else "*"
         occurrences = "zero-or-more" if quantifier == "*" else "one-or-more"
-        optional = "?" if self._allowed_empty else ""
+        optional = "?" if self._allowed_empty or optional=="?" else ""
 
-        if self._allowed_empty:
+        if optional:
             lst = [
                 f"Semantic: (<{base}>(<sep><{base}>){quantifier}){optional}\n"
                 f'    <sep> is the whitespace separator (r"\\s+")\n'
                 f'    "{quantifier}" repeats {occurrences} (<sep><{base}>) groups\n'
-                f'    "{optional}" accept zero or one match {base} group'
+                f'    "{optional}" allows zero or one occurrence of the entire {base} group'
             ]
             return "\n".join(lst)
 
@@ -827,27 +829,37 @@ class ExplanationDoc:
         ]
         return "\n".join(lst)
 
-    def get_semantic_description(self, base, quantifier="", is_group=False):
+    def get_semantic_description(
+            self, base,
+            quantifier="",
+            optional="",
+            is_group=False
+    ):
         """Return the semantic description for the given base and quantifier."""
         if is_group:
-            return self.get_semantic_group_description(base, quantifier)
+            return self.get_semantic_group_description(base, optional=optional)
 
         if quantifier == "+" or quantifier == "*":
             quant, occurrences = (
-                ("*", "zero-or-more") if self._allowed_empty else ("+", "one-or-more")
+                ("+", "one-or-more")
+                if quantifier == "+" and (optional == "" or not self._allowed_empty) else
+                ("*", "zero-or-more")
             )
         elif quantifier == "?":
             quant, occurrences = "?", "zero-or-one"
         else:
             quant, occurrences = (
-                ("?", "zero-or-one") if self._allowed_empty else ("", "one")
+                ("?", "zero-or-one")
+                if self._allowed_empty else
+                ("", "one")
             )
 
-        lst = [f"Semantic: <{base}>{quant}"]
+        plural = PATTERN.resolve_plural(base)
+        lines = [f"Semantic: <{base}>{quant}"]
         if quant:
-            lst.append(indent(f'"{quant}" repeats {occurrences} {base}', " " * 4))
+            lines.append(indent(f'"{quant}" repeats {occurrences} {plural}', " " * 4))
 
-        return "\n".join(lst)
+        return "\n".join(lines)
 
     def add_custom_semantic_section(self, items):
         """Append custom semantic descriptions for 'anything' and 'something'."""
@@ -855,7 +867,7 @@ class ExplanationDoc:
             return
         quantifier = "+" if self._keyword == "something" else "*"
         desc = self.get_semantic_description("dot", quantifier=quantifier)
-        items.append(indent(desc, " " * 4))
+        items.append(text.indent(desc, prefix_newline=True))
 
     def add_core_semantic_section(self, base, items):
         """Append the core semantic description for this keyword, if applicable."""
@@ -865,19 +877,46 @@ class ExplanationDoc:
         if PATTERN.keyword_in(self._keyword, singular=True, plural=True, semantic=True):
             if PATTERN.keyword_in(self._keyword, plural=True):
                 desc = self.get_semantic_description(base, quantifier="+")
-                items.append(indent(desc, " " * 4))
+                items.append(text.indent(desc, prefix_newline=True))
                 return
             desc = self.get_semantic_description(base, quantifier="")
-            items.append(indent(desc, " " * 4))
+            items.append(text.indent(desc, prefix_newline=True))
             return
         desc = self.get_semantic_description(base, quantifier="*", is_group=True)
-        items.append(indent(desc, " " * 4))
+        items.append(text.indent(desc, prefix_newline=True))
+
+    def add_some_semantic_section(self, base, items):
+        """Append the core semantic description for this keyword, if applicable."""
+        if not re.match("(some|one_or_more)_", self._keyword):
+            return
+
+        if PATTERN.keyword_in(self._base_keyword, singular=True, plural=True):
+            desc = self.get_semantic_description(base, quantifier="+")
+            items.append(text.indent(desc, prefix_newline=True))
+            return
+        desc = self.get_semantic_description(base, quantifier="*", is_group=True)
+        items.append(text.indent(desc, prefix_newline=True))
+
+    def add_zero_or_more_semantic_section(self, base, items):
+        """Append the core semantic description for this keyword, if applicable."""
+
+        if not re.match("zero_or_more_", self._keyword):
+            return
+
+        if PATTERN.keyword_in(self._base_keyword, singular=True, plural=True):
+            desc = self.get_semantic_description(base, quantifier="*")
+            items.append(text.indent(desc, prefix_newline=True))
+            return
+        desc = self.get_semantic_description(base, optional="?", is_group=True)
+        items.append(text.indent(desc, prefix_newline=True))
 
     def add_semantic_section(self, items):
         """Build the full semantic section by composing base, custom, and core parts."""
         base = self.add_base_semantic_section(items)
         self.add_custom_semantic_section(items)
         self.add_core_semantic_section(base, items)
+        self.add_some_semantic_section(base, items)
+        self.add_zero_or_more_semantic_section(base, items)
 
     def create_intro(self):
         """Build the introductory explanation header."""
