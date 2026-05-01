@@ -744,24 +744,19 @@ class ExplanationDoc:
         if not self._allowed_empty:
             return
 
-        mapping = {
-            "anything": (
-                "this semantic already matches zero characters, "
-                "so the allowed‑empty flag has no effect."
-            ),
-            "something": (
-                'enabling allowed‑empty downgrades "+" from one‑or‑more '
-                'to zero‑or‑more ("*").'
-            )
-        }
-
-        for keyword, description in mapping.items():
-            if keyword == self._keyword:
-                note = f"Note: {description}"
-                if len(description) > 84:
-                    note = wrap_text_block(description, subject="Note:", limit=80)
-                items.append(text.indent(note, prefix_newline=True))
-                break
+        case1 = (
+            "this semantic already matches zero characters, "
+            "so the allowed‑empty flag has no effect."
+        )
+        case2 = (
+            'enabling allowed‑empty downgrades "+" from one‑or‑more '
+            'to zero‑or‑more ("*").'
+        )
+        if self._keyword in ("anything", "something"):
+            desc = case1 if self._keyword == "anything" else case2
+            note = wrap_text_block(desc, subject="Note:", limit=68)
+            items.append(text.indent(note, prefix_newline=True))
+            return
 
     def add_params_section(self, items):
         """Append the Parameters section if any parameters are present."""
@@ -785,11 +780,19 @@ class ExplanationDoc:
         if self._keyword in ("anything", "something"):
             base = "dot"
         elif PATTERN.keyword_in(self._base_keyword, singular=True, plural=True):
-            base = (
-                PATTERN.resolve_plural(self._base_keyword)
-                if self._unit in ("group", "items") else
-                PATTERN.resolve_singular(self._base_keyword)
-            )
+
+            if self._unit in ("group", "items"):
+                special = (
+                    "dot", "dots", "space", "spaces", "ws", "wss",
+                    "whitespace", "whitespaces"
+                )
+                base = (
+                    PATTERN.resolve_singular(self._base_keyword)
+                    if self._base_keyword in special else
+                    PATTERN.resolve_plural(self._base_keyword)
+                )
+            else:
+                base = PATTERN.resolve_singular(self._base_keyword)
         elif PATTERN.keyword_in(self._base_keyword, semantic=True, plural_semantic=True):
             base = PATTERN.resolve_semantic(self._base_keyword)
         else:
@@ -891,7 +894,7 @@ class ExplanationDoc:
         items.append(text.indent(desc, prefix_newline=True))
 
     def add_some_semantic_section(self, base, items):
-        """Append the core semantic description for this keyword, if applicable."""
+        """Append some or one-or-more semantic description for this keyword, if applicable."""
         if not re.match("(some|one_or_more)_", self._keyword):
             return
 
@@ -903,7 +906,7 @@ class ExplanationDoc:
         items.append(text.indent(desc, prefix_newline=True))
 
     def add_zero_or_more_semantic_section(self, base, items):
-        """Append the core semantic description for this keyword, if applicable."""
+        """Append zero-or-more semantic description for this keyword, if applicable."""
 
         if not re.match("zero_or_more_", self._keyword):
             return
@@ -916,7 +919,7 @@ class ExplanationDoc:
         items.append(text.indent(desc, prefix_newline=True))
 
     def add_optional_semantic_section(self, base, items):
-        """Append the core semantic description for this keyword, if applicable."""
+        """Append the optional or zero-or-one semantic description for this keyword, if applicable."""
 
         if not re.match("(zero_or_one|optional)_", self._keyword):
             return
@@ -931,11 +934,20 @@ class ExplanationDoc:
                 desc = self.get_semantic_description(base, quantifier="*")
                 items.append(text.indent(desc, prefix_newline=True))
                 return
-        desc = self.get_semantic_description(base, optional="?", is_group=True)
-        items.append(text.indent(desc, prefix_newline=True))
+            desc = self.get_semantic_description(base, optional="?", is_group=True)
+            items.append(text.indent(desc, prefix_newline=True))
 
     def add_group_semantic_section(self, base, items):
-        if self._unit not in ("group", "items") or self._quantity == "optional":
+        special = (
+            "dot", "dots", "space", "spaces", "ws", "wss",
+            "whitespace", "whitespaces"
+        )
+        if self._unit not in ("group", "items"):
+            return
+        if self._base_keyword in special:
+            quantifier = "*" if self._quantity == "optional" else "+"
+            desc = self.get_semantic_description(base, quantifier=quantifier)
+            items.append(text.indent(desc, prefix_newline=True))
             return
         desc = self.get_semantic_description(base, is_group=True)
         items.append(text.indent(desc, prefix_newline=True))
