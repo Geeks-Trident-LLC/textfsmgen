@@ -957,7 +957,7 @@ class ExplanationDoc:
             desc = self.get_semantic_description(base, optional="?", is_group=True)
             items.append(text.indent(desc, prefix_newline=True))
 
-    def add_group_semantic_section(self, base, items):
+    def add_semantic_group_section(self, base, items):
         if self._unit not in ("group", "items"):
             return
 
@@ -969,6 +969,115 @@ class ExplanationDoc:
         desc = self.get_semantic_description(base, is_group=True)
         items.append(text.indent(desc, prefix_newline=True))
 
+    def add_exact_quantity_semantic_section(self, base, items):
+        """Append semantic description for exact-quantity patterns."""
+        if not str(self._quantity).isdigit():
+            return
+        qty = int(self._quantity)
+        qty_word = number.digit_to_word(qty)
+
+        # ----------------------------------------------------------------------
+        # Case 1: simple singular/plural (no <sep> groups)
+        # ----------------------------------------------------------------------
+        if PATTERN.keyword_in(self._base_keyword, singular=True, plural=True):
+            singular = PATTERN.resolve_singular(self._base_keyword)
+            plural = PATTERN.resolve_plural(self._base_keyword)
+
+            if self._allowed_empty:
+                lines = [
+                    f"semantic: (<{base}>{{qty}})?",
+                    (
+                        f'"{1}" matches exactly one {singular}'
+                        if qty == 1 else
+                        f'"{{qty}}" matches exactly {qty_word} {plural}'
+                    ),
+                    f'"?" allows zero or one occurrence of the entire {singular} group'
+                ]
+                desc = "\n".join(lines)
+                items.append(text.indent(desc, prefix_newline=True))
+                return
+
+            lines = [
+                f"semantic: <{base}>{{qty}}",
+                text.indent(
+                    f'"{1}" matches exactly one {singular}'
+                    if qty == 1 else
+                    f'"{{qty}}" matches exactly {qty_word} {plural}'
+                ),
+            ]
+            desc = "\n".join(lines)
+            items.append(text.indent(desc, prefix_newline=True))
+            return
+
+        # ----------------------------------------------------------------------
+        # Case 2: semantic groups with <sep>
+        # ----------------------------------------------------------------------
+        if PATTERN.keyword_in(self._base_keyword, semantic=True, plural_semantic=True):
+            singular = PATTERN.resolve_semantic(self._base_keyword)
+            plural = PATTERN.resolve_plural_semantic(self._base_keyword)
+            k = qty - 1
+            k_word = number.digit_to_word(k)
+            spacers = " " * (len(str(k)) + 4)
+
+            repeat_line = (
+                f'"{{{k}}}" repeats the (<sep><{base}>) pair exact once,'
+                if k == 1 else
+                f'"{{{k}}}" repeats the (<sep><{base}>) pair exactly {k_word} times,'
+            )
+            total_line = f"{spacers} producing a total of {qty_word} {plural} in the group"
+            optional_line = f'"?" allows zero or one occurrence of the entire {singular} group'
+
+            if qty == 1:
+                if self._allowed_empty:
+                    lines = [
+                        f"semantic: (<{base}>)?",
+                        text.indent(optional_line)
+                    ]
+                    desc = "\n".join(lines)
+                    items.append(text.indent(desc, prefix_newline=True))
+                    return
+                items.append(text.indent(f"semantic: <{base}>", prefix_newline=True))
+                return
+
+            if k == 1:
+                if self._allowed_empty:
+                    lines = [
+                        f"semantic: (<{base}>(<sep><{base}>){{{k}}})?",
+                        text.indent(repeat_line),
+                        text.indent(total_line),
+                        text.indent(optional_line)
+                    ]
+                    desc = "\n".join(lines)
+                    items.append(text.indent(desc, prefix_newline=True))
+                    return
+                lines = [
+                    f"semantic: <{base}>(<sep><{base}>){{1}}",
+                    text.indent(repeat_line),
+                    text.indent(total_line),
+                ]
+                desc = "\n".join(lines)
+                items.append(text.indent(desc, prefix_newline=True))
+                return
+
+            if self._allowed_empty:
+                lines = [
+                    f"semantic: (<{base}>(<sep><{base}>){{{k}}})?",
+                    text.indent(repeat_line),
+                    text.indent(total_line),
+                    text.indent(optional_line)
+                ]
+                desc = "\n".join(lines)
+                items.append(text.indent(desc, prefix_newline=True))
+                return
+            lines = [
+                f"semantic: <{base}>(<sep><{base}>){{{k}}}",
+                text.indent(repeat_line),
+                text.indent(total_line),
+            ]
+            desc = "\n".join(lines)
+            items.append(text.indent(desc, prefix_newline=True))
+            return
+
     def add_semantic_section(self, items):
         """Build the full semantic section by composing base, custom, and core parts."""
         base = self.add_base_semantic_section(items)
@@ -977,7 +1086,8 @@ class ExplanationDoc:
         self.add_some_semantic_section(base, items)
         self.add_zero_or_more_semantic_section(base, items)
         self.add_optional_semantic_section(base, items)
-        self.add_group_semantic_section(base, items)
+        self.add_semantic_group_section(base, items)
+        self.add_exact_quantity_semantic_section(base, items)
 
     def create_intro(self):
         """Build the introductory explanation header."""
@@ -987,7 +1097,6 @@ class ExplanationDoc:
         ]
 
     def process(self):
-
         lst = self.create_intro()
         self.add_params_section(lst)
         self.add_semantic_section(lst)
