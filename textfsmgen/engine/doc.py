@@ -125,9 +125,9 @@ def get_plural_semantic_placeholders():
 def get_grouped_placeholders():
     """Return a list of grouped placeholder description templates."""
     # --------------------------------------------------------------------------
-    def expand_format_placeholders(text):
+    def expand_format_placeholders(text_):
         """Expand %s and trailing dots into descriptive placeholder text."""
-        updated = text.replace("%s", "%s sequences of")
+        updated = text_.replace("%s", "%s sequences of")
         updated = updated.replace(
             ".",
             ", each separated by one or more whitespace characters."
@@ -175,9 +175,9 @@ def get_grouped_placeholders():
 def get_items_placeholders():
     """Return a list of grouped placeholder description templates."""
     # --------------------------------------------------------------------------
-    def expand_format_placeholders(text):
+    def expand_format_placeholders(text_):
         """Expand %s and trailing dots into descriptive placeholder text."""
-        updated = text.replace("%s", "%s sequences of")
+        updated = text_.replace("%s", "%s sequences of")
         updated = updated.replace(
             ".",
             ", each separated by one or more whitespace characters."
@@ -855,9 +855,14 @@ class ExplanationDoc:
             )
 
         plural = PATTERN.resolve_plural(base)
-        lines = [f"Semantic: <{base}>{quant}"]
+        lines = (
+            [f"semantic: (<{base}>){quant}"]
+            if quant == "?" and PATTERN.keyword_in(self._base_keyword, semantic=True) else
+            [f"Semantic: <{base}>{quant}"]
+        )
         if quant:
-            lines.append(indent(f'"{quant}" repeats {occurrences} {plural}', " " * 4))
+            singular_or_plural = base if quant == "?" else plural
+            lines.append(text.indent(f'"{quant}" repeats {occurrences} {singular_or_plural}'))
 
         return "\n".join(lines)
 
@@ -910,6 +915,31 @@ class ExplanationDoc:
         desc = self.get_semantic_description(base, optional="?", is_group=True)
         items.append(text.indent(desc, prefix_newline=True))
 
+    def add_optional_semantic_section(self, base, items):
+        """Append the core semantic description for this keyword, if applicable."""
+
+        if not re.match("(zero_or_one|optional)_", self._keyword):
+            return
+
+        if not self._unit:
+            if PATTERN.keyword_in(self._base_keyword, singular=True, semantic=True):
+                desc = self.get_semantic_description(base, quantifier="?")
+                items.append(text.indent(desc, prefix_newline=True))
+                return
+
+            if PATTERN.keyword_in(self._base_keyword, plural=True):
+                desc = self.get_semantic_description(base, quantifier="*")
+                items.append(text.indent(desc, prefix_newline=True))
+                return
+        desc = self.get_semantic_description(base, optional="?", is_group=True)
+        items.append(text.indent(desc, prefix_newline=True))
+
+    def add_group_semantic_section(self, base, items):
+        if self._unit not in ("group", "items") or self._quantity == "optional":
+            return
+        desc = self.get_semantic_description(base, is_group=True)
+        items.append(text.indent(desc, prefix_newline=True))
+
     def add_semantic_section(self, items):
         """Build the full semantic section by composing base, custom, and core parts."""
         base = self.add_base_semantic_section(items)
@@ -917,6 +947,8 @@ class ExplanationDoc:
         self.add_core_semantic_section(base, items)
         self.add_some_semantic_section(base, items)
         self.add_zero_or_more_semantic_section(base, items)
+        self.add_optional_semantic_section(base, items)
+        self.add_group_semantic_section(base, items)
 
     def create_intro(self):
         """Build the introductory explanation header."""
