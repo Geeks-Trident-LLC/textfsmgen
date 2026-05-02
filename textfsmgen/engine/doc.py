@@ -985,11 +985,11 @@ class ExplanationDoc:
 
             if self._allowed_empty:
                 lines = [
-                    f"semantic: (<{base}>{{qty}})?",
+                    f"semantic: (<{base}>{{{qty}}})?",
                     (
                         f'"{1}" matches exactly one {singular}'
                         if qty == 1 else
-                        f'"{{qty}}" matches exactly {qty_word} {plural}'
+                        f'"{{{qty}}}" matches exactly {qty_word} {plural}'
                     ),
                     f'"?" allows zero or one occurrence of the entire {singular} group'
                 ]
@@ -1002,7 +1002,7 @@ class ExplanationDoc:
                 text.indent(
                     f'"{1}" matches exactly one {singular}'
                     if qty == 1 else
-                    f'"{{qty}}" matches exactly {qty_word} {plural}'
+                    f'"{{{qty}}}" matches exactly {qty_word} {plural}'
                 ),
             ]
             desc = "\n".join(lines)
@@ -1078,6 +1078,161 @@ class ExplanationDoc:
             items.append(text.indent(desc, prefix_newline=True))
             return
 
+    def add_range_quantity_semantic_section(self, base, items):
+        """Append semantic description for exact-quantity patterns."""
+        raw_lo, raw_hi = self._quantity_lo, self._quantity_hi
+        if raw_lo is None and raw_hi is None:
+            return
+
+        singular = PATTERN.resolve_singular(self._base_keyword)
+        plural = PATTERN.resolve_plural(self._base_keyword)
+
+        lo = int(raw_lo) if raw_lo else 0
+        hi = int(raw_hi) if raw_hi else 99999
+
+        if lo > hi:
+            return
+
+        lo_word = number.digit_to_word(lo)
+        hi_word = number.digit_to_word(hi)
+
+        optional_line = f'"?" allows zero or one occurrence of the entire {base} group'
+
+        # ----------------------------------------------------------------------
+        # Case 1: simple singular/plural (no <sep> groups)
+        # ----------------------------------------------------------------------
+        if PATTERN.keyword_in(self._base_keyword, singular=True, plural=True):
+            lines = [
+                (
+                    f"semantic: (<{base}>{{{raw_lo},{raw_hi}}})?"
+                    if self._allowed_empty else
+                    f"semantic: <{base}>{{{raw_lo},{raw_hi}}}"
+                )
+            ]
+            range_txt = f'"{{{raw_lo},{raw_hi}}}"'
+
+            if raw_hi.isdigit() and raw_lo.isdigit():
+                if hi == lo:
+                    select_name = singular if lo == 1 else plural
+                    match_line = f"{range_txt} matches exact {lo_word} {select_name}"
+                    lines.append(text.indent(match_line))
+                    if self._allowed_empty:
+                        lines.append(text.indent(optional_line))
+
+                    desc = "\n".join(lines)
+                    lines.append(text.indent(desc))
+                    return
+
+                match_line = f"{range_txt} matches {lo_word} to {hi_word} {plural}"
+                lines.append(text.indent(match_line))
+                if self._allowed_empty:
+                    lines.append(text.indent(optional_line))
+
+                desc = "\n".join(lines)
+                items.append(text.indent(desc, prefix_newline=True))
+                return
+
+            select_base = singular if lo == 1 or hi == 1 else plural
+            select_match = "at most" if raw_hi.isdigit() else "at least"
+            select_qty = hi_word if raw_hi.isdigit() else lo_word
+
+            match_line = f"{range_txt} matches {select_match} {select_qty} {select_base}"
+            lines.append(text.indent(match_line, prefix_newline=True))
+            if self._allowed_empty:
+                lines.append(text.indent(optional_line))
+
+            desc = "\n".join(lines)
+            items.append(text.indent(desc, prefix_newline=True))
+            return
+        # ----------------------------------------------------------------------
+        # Case 2: semantic groups with <sep>
+        # ----------------------------------------------------------------------
+        if PATTERN.keyword_in(self._base_keyword, semantic=True, plural_semantic=True):
+            if raw_hi.isdigit() and raw_lo.isdigit():
+                m, n = lo - 1 or 0, hi - 1
+                m_word = number.digit_to_word(m)
+                n_word = number.digit_to_word(n)
+
+                lines = [
+                    (
+                        f"semantic: (<{base}>(<sep><{base}>){{{m},{n}}})?"
+                        if self._allowed_empty else
+                        f"semantic: <{base}>(<sep><{base}>){{{m},{n}}}"
+                    )
+                ]
+
+                range_txt = f'"{{{m},{m}}}"'
+                spacers = " " * len(range_txt)
+
+                if m == n:
+                    select_name = singular if m == 1 else plural
+                    match_line = f'{range_txt} repeats the (<sep><{base}>) pair exact {m_word} {select_name}'
+                    total_line = f"{spacers} producing a total of {hi_word} {plural} in the group"
+                    lines.append(text.indent(match_line))
+                    lines.append(text.indent(total_line))
+                    if self._allowed_empty:
+                        lines.append(text.indent(optional_line))
+
+                    desc = "\n".join(lines)
+                    items.append(text.indent(desc, prefix_newline=True))
+                    return
+
+                range_txt = f'"{{{m},{n}}}"'
+                spacers = " " * len(range_txt)
+
+                match_line = f"{range_txt} repeats the (<sep><{base}>) pair {m_word} to {n_word} times"
+                total_line = f"{spacers} producing a total of {lo}-{hi} {plural} in the group"
+                lines.append(text.indent(match_line))
+                lines.append(text.indent(total_line))
+                if self._allowed_empty:
+                    lines.append(text.indent(optional_line))
+
+                desc = "\n".join(lines)
+                items.append(text.indent(desc, prefix_newline=True))
+                return
+
+            if raw_hi.isdigit():
+                n = hi - 1
+                n_word = number.digit_to_word(n)
+
+                range_txt = f'"{{,{n}}}"'
+                spacers = " " * len(range_txt)
+
+                lines = [f"semantic: (<{base}>(<sep><{base}>){{,{n}}})?"]
+                match_line = f"{range_txt} repeats the (<sep><{base}>) at most {n_word} times"
+                total_line = f"{spacers} producing a total of 1-{raw_hi} {plural} in the group"
+                lines.append(text.indent(match_line))
+                lines.append(text.indent(total_line))
+                lines.append(text.indent(optional_line))
+
+                desc = "\n".join(lines)
+                items.append(text.indent(desc, prefix_newline=True))
+                return
+
+            m = lo - 1
+            m_word = number.digit_to_word(m)
+            range_txt = f'"{{{m},}}"'
+            spacers = " " * len(range_txt)
+
+            lines = [
+                (
+                    f"semantic: (<{base}>(<sep><{base}>){{{m},}})?"
+                    if self._allowed_empty else
+                    f"semantic: <{base}>(<sep><{base}>){{{m},}}"
+                )
+            ]
+
+            match_line = f"{range_txt} repeats the (<sep><{base}>) at least {m_word} times"
+            total_line = f"{spacers} producing a total of {raw_lo} or more {plural} in the group"
+            lines.append(text.indent(match_line, prefix_newline=True))
+            lines.append(text.indent(total_line))
+            if self._allowed_empty:
+                lines.append(text.indent(optional_line))
+            desc = "\n".join(lines)
+            items.append(text.indent(desc, prefix_newline=True))
+            return
+
+
     def add_semantic_section(self, items):
         """Build the full semantic section by composing base, custom, and core parts."""
         base = self.add_base_semantic_section(items)
@@ -1088,6 +1243,7 @@ class ExplanationDoc:
         self.add_optional_semantic_section(base, items)
         self.add_semantic_group_section(base, items)
         self.add_exact_quantity_semantic_section(base, items)
+        self.add_range_quantity_semantic_section(base, items)
 
     def create_intro(self):
         """Build the introductory explanation header."""

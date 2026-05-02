@@ -507,7 +507,7 @@ class Pattern(DotObject):
     def allow_empty_pattern(self, pattern):
         """Return a version of the pattern that allows empty input when appropriate."""
 
-        if pattern.endswith(")*)?") or pattern.endswith(")+)?"):
+        if re.fullmatch(pattern, ""):
             return pattern
 
         keyword = self.resolve_keyword_for_pattern(pattern)
