@@ -72,8 +72,8 @@ def test_with_optional():
         
             Semantic: (<mixed_word>(<sep><mixed_word>)*)?
                 <sep> is the whitespace separator (r"\s+")
-                "*" repeats zero-or-more (<sep><mixed_word>) groups
-                "?" allows zero or one occurrence of the entire mixed_word group
+                "*"   repeats zero-or-more (<sep><mixed_word>) groups
+                "?"   allows zero or one occurrence of the entire mixed_word group
         
         +------------------------------------------+
         |     Validate Samples Against Pattern     |
@@ -115,8 +115,8 @@ def test_with_empty_flag():
         
             Semantic: (<non_wss>(<sep><non_wss>)+)?
                 <sep> is the whitespace separator (r"\s+")
-                "+" repeats one-or-more (<sep><non_wss>) groups
-                "?" allows zero or one occurrence of the entire non_wss group
+                "+"   repeats one-or-more (<sep><non_wss>) groups
+                "?"   allows zero or one occurrence of the entire non_wss group
         
             Note: enabling allowed‑empty downgrades "+" from one‑or‑more to
                   zero‑or‑more ("*").
@@ -164,8 +164,8 @@ def test_failure_incorrect_list_of_data():
         
             Semantic: (<word>(<sep><word>)*)?
                 <sep> is the whitespace separator (r"\s+")
-                "*" repeats zero-or-more (<sep><word>) groups
-                "?" allows zero or one occurrence of the entire word group
+                "*"   repeats zero-or-more (<sep><word>) groups
+                "?"   allows zero or one occurrence of the entire word group
         
         +------------------------------------------+
         |     Validate Samples Against Pattern     |

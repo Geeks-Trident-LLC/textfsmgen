@@ -836,19 +836,23 @@ class ExplanationDoc:
         occurrences = "zero-or-more" if quantifier == "*" else "one-or-more"
         optional = "?" if self._allowed_empty or optional=="?" else ""
 
+        separator_line = f'<sep> is the whitespace separator (r"\\s+")'
+        repeat_line = f'"{quantifier}" repeats {occurrences} (<sep><{base}>) groups'
+        optional_line = f'"{optional}" allows zero or one occurrence of the entire {base} group'
+
         if optional:
             lst = [
-                f"Semantic: (<{base}>(<sep><{base}>){quantifier}){optional}\n"
-                f'    <sep> is the whitespace separator (r"\\s+")\n'
-                f'    "{quantifier}" repeats {occurrences} (<sep><{base}>) groups\n'
-                f'    "{optional}" allows zero or one occurrence of the entire {base} group'
+                f"Semantic: (<{base}>(<sep><{base}>){quantifier}){optional}",
+                text.indent(text.align_first_token(separator_line, width=5)),
+                text.indent(text.align_first_token(repeat_line, width=5)),
+                text.indent(text.align_first_token(optional_line, width=5)),
             ]
             return "\n".join(lst)
 
         lst = [
-            f"Semantic: <{base}>(<sep><{base}>){quantifier}\n"
-            f'    <sep> is the whitespace separator (r"\\s+")\n'
-            f'    "{quantifier}" repeats {occurrences} (<sep><{base}>) groups'
+            f"Semantic: <{base}>(<sep><{base}>){quantifier}",
+            text.indent(text.align_first_token(separator_line, width=5)),
+            text.indent(text.align_first_token(repeat_line, width=5)),
         ]
         return "\n".join(lst)
 
@@ -889,6 +893,23 @@ class ExplanationDoc:
 
         return "\n".join(lines)
 
+    def append_semantic_section_to_list(self, *lines, width: int, items: list[str]):    # noqa
+        """Format semantic section lines and append the result to items."""
+        if not lines:
+            return
+
+        first = lines[0]
+        formatted = [first]
+
+        for line in lines[1:]:
+            if not line:
+                continue
+            aligned = text.align_first_token(line, width=width)
+            formatted.append(text.indent(aligned))
+
+        desc = "\n".join(formatted)
+        items.append(text.indent(desc, prefix_newline=True))
+
     def add_custom_semantic_section(self, items):
         """Append custom semantic descriptions for 'anything' and 'something'."""
         if self._keyword not in ("anything", "something"):
@@ -919,7 +940,8 @@ class ExplanationDoc:
             return
 
         if PATTERN.keyword_in(self._base_keyword, singular=True, plural=True):
-            desc = self.get_semantic_description(base, quantifier="+")
+            quantifier = "*" if self._allowed_empty else "+"
+            desc = self.get_semantic_description(base, quantifier=quantifier)
             items.append(text.indent(desc, prefix_newline=True))
             return
         desc = self.get_semantic_description(base, quantifier="*", is_group=True)
@@ -976,37 +998,32 @@ class ExplanationDoc:
         qty = int(self._quantity)
         qty_word = number.digit_to_word(qty)
 
+
         # ----------------------------------------------------------------------
         # Case 1: simple singular/plural (no <sep> groups)
         # ----------------------------------------------------------------------
         if PATTERN.keyword_in(self._base_keyword, singular=True, plural=True):
             singular = PATTERN.resolve_singular(self._base_keyword)
             plural = PATTERN.resolve_plural(self._base_keyword)
+            optional_line = f'"?" allows zero or one occurrence of the entire {singular} group'
+
+            qty_txt = f'{{{qty}}}'
+            width = len(qty_txt) + 2
+            repeat_line = f'"{qty_txt}" matches exactly {qty_word} {singular if qty == 1 else plural}'
 
             if self._allowed_empty:
-                lines = [
-                    f"semantic: (<{base}>{{{qty}}})?",
-                    (
-                        f'"{1}" matches exactly one {singular}'
-                        if qty == 1 else
-                        f'"{{{qty}}}" matches exactly {qty_word} {plural}'
-                    ),
-                    f'"?" allows zero or one occurrence of the entire {singular} group'
-                ]
-                desc = "\n".join(lines)
-                items.append(text.indent(desc, prefix_newline=True))
+                self.append_semantic_section_to_list(
+                    f"semantic: (<{base}>{qty_txt})?",
+                    repeat_line, optional_line,
+                    width=width, items=items,
+                )
                 return
 
-            lines = [
-                f"semantic: <{base}>{{qty}}",
-                text.indent(
-                    f'"{1}" matches exactly one {singular}'
-                    if qty == 1 else
-                    f'"{{{qty}}}" matches exactly {qty_word} {plural}'
-                ),
-            ]
-            desc = "\n".join(lines)
-            items.append(text.indent(desc, prefix_newline=True))
+            self.append_semantic_section_to_list(
+                f"semantic: <{base}>{qty_txt}",
+                repeat_line,
+                width=width, items=items,
+            )
             return
 
         # ----------------------------------------------------------------------
@@ -1015,67 +1032,67 @@ class ExplanationDoc:
         if PATTERN.keyword_in(self._base_keyword, semantic=True, plural_semantic=True):
             singular = PATTERN.resolve_semantic(self._base_keyword)
             plural = PATTERN.resolve_plural_semantic(self._base_keyword)
+
             k = qty - 1
             k_word = number.digit_to_word(k)
             spacers = " " * (len(str(k)) + 4)
+            width = len(spacers)
+
+            qty_txt = f"{{{k}}}"
 
             repeat_line = (
-                f'"{{{k}}}" repeats the (<sep><{base}>) pair exact once,'
-                if k == 1 else
-                f'"{{{k}}}" repeats the (<sep><{base}>) pair exactly {k_word} times,'
+                f'"{qty_txt}" repeats the (<sep><{base}>) pair exact '
+                f'{"once" if k == 1 else f"{k_word} times"},'
             )
-            total_line = f"{spacers} producing a total of {qty_word} {plural} in the group"
+
+            separator_line = '<sep> is the whitespace separator (r"\\s+")'
+            total_line = f"{spacers} producing a group containing {qty_word} <{base}> items"
             optional_line = f'"?" allows zero or one occurrence of the entire {singular} group'
 
             if qty == 1:
                 if self._allowed_empty:
-                    lines = [
+                    self.append_semantic_section_to_list(
                         f"semantic: (<{base}>)?",
-                        text.indent(optional_line)
-                    ]
-                    desc = "\n".join(lines)
-                    items.append(text.indent(desc, prefix_newline=True))
+                        optional_line,
+                        width=width, items=items,
+                    )
                     return
-                items.append(text.indent(f"semantic: <{base}>", prefix_newline=True))
+
+                self.append_semantic_section_to_list(
+                    f"semantic: <{base}>",
+                    width=width, items=items,
+                )
                 return
 
             if k == 1:
                 if self._allowed_empty:
-                    lines = [
-                        f"semantic: (<{base}>(<sep><{base}>){{{k}}})?",
-                        text.indent(repeat_line),
-                        text.indent(total_line),
-                        text.indent(optional_line)
-                    ]
-                    desc = "\n".join(lines)
-                    items.append(text.indent(desc, prefix_newline=True))
+                    self.append_semantic_section_to_list(
+                        f"semantic: (<{base}>(<sep><{base}>){qty_txt})?",
+                        separator_line, repeat_line, total_line, optional_line,
+                        width=width, items=items,
+                    )
                     return
-                lines = [
-                    f"semantic: <{base}>(<sep><{base}>){{1}}",
-                    text.indent(repeat_line),
-                    text.indent(total_line),
-                ]
-                desc = "\n".join(lines)
-                items.append(text.indent(desc, prefix_newline=True))
+
+                self.append_semantic_section_to_list(
+                    f"semantic: <{base}>(<sep><{base}>){qty_txt}",
+                    separator_line, repeat_line, total_line,
+                    width=width, items=items,
+                )
                 return
 
             if self._allowed_empty:
-                lines = [
-                    f"semantic: (<{base}>(<sep><{base}>){{{k}}})?",
-                    text.indent(repeat_line),
-                    text.indent(total_line),
-                    text.indent(optional_line)
-                ]
-                desc = "\n".join(lines)
-                items.append(text.indent(desc, prefix_newline=True))
+                self.append_semantic_section_to_list(
+                    f"semantic: (<{base}>(<sep><{base}>){qty_txt})?",
+                    separator_line, repeat_line, total_line, optional_line,
+                    width=width, items=items,
+                )
                 return
-            lines = [
-                f"semantic: <{base}>(<sep><{base}>){{{k}}}",
-                text.indent(repeat_line),
-                text.indent(total_line),
-            ]
-            desc = "\n".join(lines)
-            items.append(text.indent(desc, prefix_newline=True))
+
+            self.append_semantic_section_to_list(
+                f"semantic: <{base}>(<sep><{base}>){qty_txt}",
+                separator_line, repeat_line, total_line,
+                width=width, items=items,
+            )
             return
 
     def add_range_quantity_semantic_section(self, base, items):
@@ -1102,134 +1119,137 @@ class ExplanationDoc:
         # Case 1: simple singular/plural (no <sep> groups)
         # ----------------------------------------------------------------------
         if PATTERN.keyword_in(self._base_keyword, singular=True, plural=True):
-            lines = [
-                (
-                    f"semantic: (<{base}>{{{raw_lo},{raw_hi}}})?"
+            range_txt = f'{{{raw_lo},{raw_hi}}}'
+            width = len(range_txt) + 2
+
+            semantic_line = (
+                    f"semantic: (<{base}>{range_txt})?"
                     if self._allowed_empty else
-                    f"semantic: <{base}>{{{raw_lo},{raw_hi}}}"
+                    f"semantic: <{base}>{range_txt}"
                 )
-            ]
-            range_txt = f'"{{{raw_lo},{raw_hi}}}"'
 
             if raw_hi.isdigit() and raw_lo.isdigit():
                 if hi == lo:
                     select_name = singular if lo == 1 else plural
-                    match_line = f"{range_txt} matches exact {lo_word} {select_name}"
-                    lines.append(text.indent(match_line))
-                    if self._allowed_empty:
-                        lines.append(text.indent(optional_line))
-
-                    desc = "\n".join(lines)
-                    lines.append(text.indent(desc))
+                    self.append_semantic_section_to_list(
+                        semantic_line,
+                        f'"{range_txt}" matches exact {lo_word} {select_name}',
+                        optional_line if self._allowed_empty else "",
+                        width=width, items=items,
+                    )
                     return
 
-                match_line = f"{range_txt} matches {lo_word} to {hi_word} {plural}"
-                lines.append(text.indent(match_line))
-                if self._allowed_empty:
-                    lines.append(text.indent(optional_line))
-
-                desc = "\n".join(lines)
-                items.append(text.indent(desc, prefix_newline=True))
+                self.append_semantic_section_to_list(
+                    semantic_line,
+                    f'"{range_txt}" matches {lo_word} to {hi_word} {plural}',
+                    optional_line if self._allowed_empty else "",
+                    width=width, items=items,
+                )
                 return
 
             select_base = singular if lo == 1 or hi == 1 else plural
             select_match = "at most" if raw_hi.isdigit() else "at least"
             select_qty = hi_word if raw_hi.isdigit() else lo_word
 
-            match_line = f"{range_txt} matches {select_match} {select_qty} {select_base}"
-            lines.append(text.indent(match_line, prefix_newline=True))
-            if self._allowed_empty:
-                lines.append(text.indent(optional_line))
-
-            desc = "\n".join(lines)
-            items.append(text.indent(desc, prefix_newline=True))
+            self.append_semantic_section_to_list(
+                semantic_line,
+                f'"{range_txt}" matches {select_match} {select_qty} {select_base}',
+                optional_line if self._allowed_empty else "",
+                width=width, items=items,
+            )
             return
         # ----------------------------------------------------------------------
         # Case 2: semantic groups with <sep>
         # ----------------------------------------------------------------------
         if PATTERN.keyword_in(self._base_keyword, semantic=True, plural_semantic=True):
+            separator_line = '<sep> is the whitespace separator (r"\\s+")'
             if raw_hi.isdigit() and raw_lo.isdigit():
                 m, n = lo - 1 or 0, hi - 1
                 m_word = number.digit_to_word(m)
                 n_word = number.digit_to_word(n)
 
-                lines = [
-                    (
-                        f"semantic: (<{base}>(<sep><{base}>){{{m},{n}}})?"
-                        if self._allowed_empty else
-                        f"semantic: <{base}>(<sep><{base}>){{{m},{n}}}"
-                    )
-                ]
+                range_txt = f'{{{m},{m}}}'
+                spacers = " " * (len(range_txt) + 2)
+                width = len(spacers)
 
-                range_txt = f'"{{{m},{m}}}"'
-                spacers = " " * len(range_txt)
+                semantic_line = (
+                    f"semantic: (<{base}>(<sep><{base}>){range_txt})?"
+                    if self._allowed_empty else
+                    f"semantic: <{base}>(<sep><{base}>){range_txt}"
+                )
 
                 if m == n:
-                    select_name = singular if m == 1 else plural
-                    match_line = f'{range_txt} repeats the (<sep><{base}>) pair exact {m_word} {select_name}'
-                    total_line = f"{spacers} producing a total of {hi_word} {plural} in the group"
-                    lines.append(text.indent(match_line))
-                    lines.append(text.indent(total_line))
-                    if self._allowed_empty:
-                        lines.append(text.indent(optional_line))
+                    choice = "once" if m == 1 else f"{m_word} times"
+                    match_line = f'"{range_txt}" repeats the (<sep><{base}>) pair exact {choice},'
+                    choice = f"a single <{base}>" if m == 0 else f"{hi_word} <{base}> items"
+                    total_line = f"{spacers} producing a group containing {choice}"
 
-                    desc = "\n".join(lines)
-                    items.append(text.indent(desc, prefix_newline=True))
+                    self.append_semantic_section_to_list(
+                        semantic_line, separator_line, match_line, total_line,
+                        optional_line if self._allowed_empty else "",
+                        width=width, items=items,
+                    )
                     return
 
-                range_txt = f'"{{{m},{n}}}"'
-                spacers = " " * len(range_txt)
+                range_txt = f'{{{m},{n}}}'
+                spacers = " " * (len(range_txt) + 2)
+                width = len(spacers)
 
-                match_line = f"{range_txt} repeats the (<sep><{base}>) pair {m_word} to {n_word} times"
-                total_line = f"{spacers} producing a total of {lo}-{hi} {plural} in the group"
-                lines.append(text.indent(match_line))
-                lines.append(text.indent(total_line))
-                if self._allowed_empty:
-                    lines.append(text.indent(optional_line))
+                match_line = f'"{range_txt}" repeats the (<sep><{base}>) pair {m_word} to {n_word} times,'
+                total_line = f"{spacers} producing a group containing {lo_word} to {hi_word} <{base}> items"
 
-                desc = "\n".join(lines)
-                items.append(text.indent(desc, prefix_newline=True))
+                self.append_semantic_section_to_list(
+                    semantic_line, separator_line, match_line, total_line,
+                    optional_line if self._allowed_empty else "",
+                    width=width, items=items,
+                )
                 return
 
             if raw_hi.isdigit():
                 n = hi - 1
                 n_word = number.digit_to_word(n)
 
-                range_txt = f'"{{,{n}}}"'
-                spacers = " " * len(range_txt)
+                range_txt = f'{{,{n}}}'
+                spacers = " " * (len(range_txt) + 2)
+                width = len(spacers)
 
-                lines = [f"semantic: (<{base}>(<sep><{base}>){{,{n}}})?"]
-                match_line = f"{range_txt} repeats the (<sep><{base}>) at most {n_word} times"
-                total_line = f"{spacers} producing a total of 1-{raw_hi} {plural} in the group"
-                lines.append(text.indent(match_line))
-                lines.append(text.indent(total_line))
-                lines.append(text.indent(optional_line))
+                semantic_line = f"semantic: (<{base}>(<sep><{base}>){range_txt})?"
+                if n == 0:
+                    match_line = f'"{range_txt}" repeats the (<sep><{base}>) pair zero times,'
+                    total_line = f"{spacers} producing a single <{base}>"
+                elif n == 1:
+                    match_line = f'"{range_txt}" repeats the (<sep><{base}>) pair at most once,'
+                    total_line = f"{spacers} producing a group of one or two <{base}> items"
+                else:
+                    match_line = f'"{range_txt}" repeats the (<sep><{base}>) pair at most {n_word} times,'
+                    total_line = f"{spacers} producing a group of one to {hi_word} <{base}> items"
 
-                desc = "\n".join(lines)
-                items.append(text.indent(desc, prefix_newline=True))
+                self.append_semantic_section_to_list(
+                    semantic_line, separator_line, match_line,
+                    total_line, optional_line,
+                    width=width, items=items,
+                )
                 return
 
             m = lo - 1
             m_word = number.digit_to_word(m)
-            range_txt = f'"{{{m},}}"'
-            spacers = " " * len(range_txt)
+            range_txt = f'{{{m},}}'
+            spacers = " " * (len(range_txt) + 2)
+            width = len(spacers)
 
-            lines = [
-                (
-                    f"semantic: (<{base}>(<sep><{base}>){{{m},}})?"
-                    if self._allowed_empty else
-                    f"semantic: <{base}>(<sep><{base}>){{{m},}}"
-                )
-            ]
-
-            match_line = f"{range_txt} repeats the (<sep><{base}>) at least {m_word} times"
-            total_line = f"{spacers} producing a total of {raw_lo} or more {plural} in the group"
-            lines.append(text.indent(match_line, prefix_newline=True))
-            lines.append(text.indent(total_line))
-            if self._allowed_empty:
-                lines.append(text.indent(optional_line))
-            desc = "\n".join(lines)
-            items.append(text.indent(desc, prefix_newline=True))
+            semantic_line = (
+                f"semantic: (<{base}>(<sep><{base}>){{{m},}})?"
+                if self._allowed_empty else
+                f"semantic: <{base}>(<sep><{base}>){{{m},}}"
+            )
+            choice = "once" if m == 1 else f"{m_word} times"
+            match_line = f"{range_txt} repeats the (<sep><{base}>) pair at least {choice},"
+            total_line = f"{spacers} producing a group containing {lo_word} or more <{base}> items"
+            self.append_semantic_section_to_list(
+                semantic_line, separator_line, match_line, total_line,
+                optional_line if self._allowed_empty else "",
+                width=width, items=items,
+            )
             return
 
 

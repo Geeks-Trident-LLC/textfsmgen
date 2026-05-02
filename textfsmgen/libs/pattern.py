@@ -710,7 +710,7 @@ class ParsedKeywordMappingName:
 
         # Plural-semantic group
         if PATTERN.keyword_in(base, plural_semantic=True, group=True, items=True):
-            self._quantity = str(n)
+            self._quantity = str(count)
             self._base_keyword = PATTERN.base_group_name(base)
 
             if n == 0:

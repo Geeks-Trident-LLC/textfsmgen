@@ -788,3 +788,16 @@ def center_fixed_width(text: str) -> str:
     txt = text.decode("utf-8") if isinstance(text, bytes) else str(text)
     width = 40 if len(txt) < 40 else 60 if len(txt) < 60 else 80
     return txt.center(width)
+
+
+def align_first_token(line: str, width: int = 0) -> str:
+    """Left‑align the first whitespace‑separated token to a fixed width."""
+    if width <= 0:
+        return line
+
+    parts = re.split(r"\s", line, maxsplit=1)
+    if len(parts) != 2:
+        return line
+
+    first, remainder = parts
+    return f"{first:<{width}} {remainder}" if first else line
