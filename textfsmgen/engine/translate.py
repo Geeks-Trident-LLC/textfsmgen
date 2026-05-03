@@ -327,7 +327,7 @@ class PatternTranslator(RuntimeException):
         if max_c == min_c:
             return f"{max_c}_{self.singular_name}({var_txt})"
 
-        return f"{min_c}_{max_c}_{self.singular_name}({var_txt})"
+        return f"{min_c}_to_{max_c}_{self.singular_name}({var_txt})"
 
 
     @classmethod

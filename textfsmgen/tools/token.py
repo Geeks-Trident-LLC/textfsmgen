@@ -418,7 +418,7 @@ def create_pattern_statement(snippet: str, pattern: str) -> str:
         return ""
 
     snippet_comment = f"#  {snippet!r}"
-    width = max(len(snippet_comment), 40)
+    width = min(max(len(snippet_comment), 40), 60)
     border = "#" * width
 
     lines = [

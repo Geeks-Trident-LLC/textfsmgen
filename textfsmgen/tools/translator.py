@@ -213,6 +213,44 @@ class IterateTranslator:
 
         return False
 
+    def token_has_non_default_var(self, token):     # noqa
+        """Return True if a token contains a var_* parameter that is not var_v<number>."""
+        if not re.match(r"\w+\([^)]*\)", token):
+            return False
+        _, raw_params = token[:-1].split("(", 1)
+        var_any = re.compile(r"(?i)var_\w+")
+        var_default = re.compile(r"(?i)var_v\d+")
+
+        return any(
+            bool(var_any.match(param)) and not var_default.match(param)
+            for param in re.split(r"\s*,\s*", raw_params)
+        )
+
+    def token_has_default_var(self, token):     # noqa
+        """Return True if a token contains a var_* parameter that is not var_v<number>."""
+        if not re.match(r"\w+\([^)]*\)", token):
+            return False
+        _, raw_params = token[:-1].split("(", 1)
+        var_default = re.compile(r"(?i)var_v\d+")
+        return any(
+            bool(var_default.match(param))
+            for param in re.split(r"\s*,\s*", raw_params)
+        )
+
+    def has_default_var(self):
+        """Return True if any token in the original snippet contains a default var_*."""
+        return any(
+            self.token_has_default_var(token)
+            for token in re.findall(r"\w+\([^)]*\)", self._original_snippet)
+        )
+
+    def has_non_default_var(self):
+        """Return True if any token in the original snippet contains a non-default var_*."""
+        return any(
+            self.token_has_non_default_var(token)
+            for token in re.findall(r"\w+\([^)]*\)", self._original_snippet)
+        )
+
     def validate_snippet_match(self, snippet):
         """
         Validate that the original snippet matches all test data lines.
@@ -278,7 +316,7 @@ class IterateTranslator:
             self._result = builder.result
             return
 
-        if not self.is_keep_in_snippet():
+        if not self.is_keep_in_snippet() and not self.has_non_default_var():
             builder = ScriptBuilder(self._raw, self._original_snippet, group_flag=self._group_flag)
             self._snippet = self._original_snippet
             self._script = builder.script
@@ -295,6 +333,10 @@ class IterateTranslator:
                 rewritten.append(token)
                 continue
 
+            if self.token_has_non_default_var(token):
+                rewritten.append(token)
+                continue
+
             random.shuffle(self._pad_numbers)
             var_name = "var_data_" + "".join(self._pad_numbers[:4])
             func_name, raw_params = token[:-1].split("(", 1)
@@ -302,7 +344,8 @@ class IterateTranslator:
 
             # No parameters → inject data variable
             if not raw_params:
-                rewritten.append(f"{func_name}({var_name})")
+                result = token if self.has_default_var() else f"{func_name}({var_name})"
+                rewritten.append(result)
                 continue
 
             params = re.split(r"\s*,\s*", raw_params)
@@ -310,8 +353,13 @@ class IterateTranslator:
             # Drop 'keep' parameter
             filtered = [p for p in params if p.lower() != "keep"]
             if len(filtered) != len(params):
+                for i, item in enumerate(filtered):
+                    if re.match(r"var_v\d+", item, re.IGNORECASE):
+                        filtered[i] = re.sub(r"(?i)var_v", "var_cv", item)
                 rewritten.append(f"{func_name}({', '.join(filtered)})")
                 continue
+
+            filtered = [p for p in filtered if re.match(r"(?i)var_\w+", p)]
 
             # Remove existing var_* parameters
             filtered = [p for p in filtered if not re.match(r"(?i)var_\w+", p)]
