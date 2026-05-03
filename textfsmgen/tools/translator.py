@@ -19,6 +19,7 @@ from textfsmgen.libs.text import (
 
 from textfsmgen.core.patterns import LinePattern
 from textfsmgen.libs.utils import split_by_matches
+from textfsmgen.libs.token import tokenize, CallNode
 
 from textfsmgen.tools.token import (
     WhitespaceSnippet,
@@ -201,54 +202,45 @@ class IterateTranslator:
         # Otherwise use only the first non-empty line
         self._test_data_list = non_empty[:1]
 
-    def is_keep_in_snippet(self):
-        if not "keep" in self.original_snippet.lower():
-            return False
-
-        keyword_pattern = r"\w+\([^)]*\)"
-        for token in re.findall(keyword_pattern, self._original_snippet):
-            params = re.split(r"\s*,\s*", token[:-1].split("(", 1)[-1])
-            if any(p for p in params if p.lower() != "keep"):
-                return True
-
-        return False
-
-    def token_has_non_default_var(self, token):     # noqa
-        """Return True if a token contains a var_* parameter that is not var_v<number>."""
-        if not re.match(r"\w+\([^)]*\)", token):
-            return False
-        _, raw_params = token[:-1].split("(", 1)
-        var_any = re.compile(r"(?i)var_\w+")
-        var_default = re.compile(r"(?i)var_v\d+")
-
+    def should_keep_in_snippet(self):
+        """Return True if any token contains a 'keep' parameter."""
         return any(
-            bool(var_any.match(param)) and not var_default.match(param)
-            for param in re.split(r"\s*,\s*", raw_params)
+            p.has_parameter("keep")
+            for p in tokenize(self._original_snippet) if not p.is_plain
         )
 
-    def token_has_default_var(self, token):     # noqa
-        """Return True if a token contains a var_* parameter that is not var_v<number>."""
-        if not re.match(r"\w+\([^)]*\)", token):
+    def token_has_non_default_var(self, token): # noqa
+        """Return True if the token has var_* parameters excluding var_v<number>."""
+        if not isinstance(token, CallNode):
             return False
-        _, raw_params = token[:-1].split("(", 1)
-        var_default = re.compile(r"(?i)var_v\d+")
-        return any(
-            bool(var_default.match(param))
-            for param in re.split(r"\s*,\s*", raw_params)
-        )
+
+        var_any = token.has_matching_parameter(r"(?i)var_\w+")
+        var_default = token.has_matching_parameter(r"(?i)var_v\d+")
+
+        return var_any and not var_default
+
+    def token_has_default_var(self, token): # noqa
+        """Return True if the token has a default var_v<number> parameter."""
+        if not isinstance(token, CallNode):
+            return False
+
+        var_any = token.has_matching_parameter(r"(?i)var_\w+")
+        var_default = token.has_matching_parameter(r"(?i)var_v\d+")
+
+        return var_any and var_default
 
     def has_default_var(self):
-        """Return True if any token in the original snippet contains a default var_*."""
+        """Return True if any token in the snippet contains a default var_v<number>."""
         return any(
             self.token_has_default_var(token)
-            for token in re.findall(r"\w+\([^)]*\)", self._original_snippet)
+            for token in tokenize(self._original_snippet)
         )
 
     def has_non_default_var(self):
-        """Return True if any token in the original snippet contains a non-default var_*."""
+        """Return True if any token in the snippet contains a non-default var_*."""
         return any(
             self.token_has_non_default_var(token)
-            for token in re.findall(r"\w+\([^)]*\)", self._original_snippet)
+            for token in tokenize(self._original_snippet)
         )
 
     def validate_snippet_match(self, snippet):
@@ -316,20 +308,19 @@ class IterateTranslator:
             self._result = builder.result
             return
 
-        if not self.is_keep_in_snippet() and not self.has_non_default_var():
+        if not self.should_keep_in_snippet() and not self.has_non_default_var():
             builder = ScriptBuilder(self._raw, self._original_snippet, group_flag=self._group_flag)
             self._snippet = self._original_snippet
             self._script = builder.script
             self._result = builder.result
             return
 
-        keyword_pattern = r"\w+\([^)]*\)"
-        tokens = split_by_matches(self._original_snippet, keyword_pattern)
+        tokens = tokenize(self._original_snippet)
         rewritten = []
 
         for token in tokens:
             # Non-token pass through unchanged
-            if not re.fullmatch(keyword_pattern, token):
+            if token.is_plain:
                 rewritten.append(token)
                 continue
 
@@ -339,34 +330,28 @@ class IterateTranslator:
 
             random.shuffle(self._pad_numbers)
             var_name = "var_data_" + "".join(self._pad_numbers[:4])
-            func_name, raw_params = token[:-1].split("(", 1)
-            raw_params = raw_params.strip()
 
             # No parameters → inject data variable
-            if not raw_params:
-                result = token if self.has_default_var() else f"{func_name}({var_name})"
+            if token.has_no_parameters:
+                result = token if self.has_default_var() else token.with_parameters(var_name)
                 rewritten.append(result)
                 continue
 
-            params = re.split(r"\s*,\s*", raw_params)
-
             # Drop 'keep' parameter
-            filtered = [p for p in params if p.lower() != "keep"]
-            if len(filtered) != len(params):
-                for i, item in enumerate(filtered):
-                    if re.match(r"var_v\d+", item, re.IGNORECASE):
-                        filtered[i] = re.sub(r"(?i)var_v", "var_cv", item)
-                rewritten.append(f"{func_name}({', '.join(filtered)})")
+            if token.has_parameter("keep"):
+                token.remove_parameter("keep")
+                param = token.remove_matching_parameter(r"var_v\d+")
+                new_param = re.sub(r"(?i)var_v", "var_cv", param)
+                token.prepend_parameter(new_param)
+                rewritten.append(token.new)
                 continue
 
-            filtered = [p for p in filtered if re.match(r"(?i)var_\w+", p)]
-
             # Remove existing var_* parameters
-            filtered = [p for p in filtered if not re.match(r"(?i)var_\w+", p)]
+            token.remove_matching_parameter(r"(?i)var_\w+")
 
             # Prepend new data variable
-            filtered.insert(0, var_name)
-            rewritten.append(f"{func_name}({', '.join(filtered)})")
+            token.prepend_parameter(var_name)
+            rewritten.append(token.new)
 
         new_snippet = "".join(rewritten)
         # Validate translated snippet against test data
