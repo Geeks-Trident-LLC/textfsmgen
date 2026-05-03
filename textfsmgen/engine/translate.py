@@ -1553,6 +1553,32 @@ class NonWSSGroupTranslator(PatternTranslator):
         return None
 
 
+class TokenAggregator:
+    def __init__(self, *tokens, line="", var_name="", allowed_empty=False):
+        self._tokens = tokens
+        self._line = line
+        self._var_name = var_name
+        self._allowed_empty = allowed_empty
+
+        self._parsed = False
+
+    def __bool__(self): return self._parsed
+
+    def __len__(self): return 1 if self._parsed else 0
+
+    @property
+    def tokens(self): return self._tokens
+
+    @property
+    def line(self): return self._line
+
+    @property
+    def var_name(self): return self._var_name
+
+    @property
+    def allowed_empty(self): return self._allowed_empty
+
+
 def validate_translator_value(value: str):
     """Validate a translator input value: must be a non-empty, trimmed string."""
     if not isinstance(value, str):
