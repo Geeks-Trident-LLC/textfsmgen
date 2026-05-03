@@ -17,7 +17,7 @@ from textfsmgen.libs import text
 from textfsmgen.libs import utils
 
 from textfsmgen.engine.translate import make_translator
-from textfsmgen.engine import LineData
+from textfsmgen.engine.line import LineData
 from textfsmgen.exceptions import raise_runtime_error
 
 from textfsmgen.engine.common import (

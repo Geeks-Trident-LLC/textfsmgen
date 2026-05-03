@@ -11,7 +11,7 @@ Run pytest in the project root to execute these tests:
 
 import pytest   # noqa
 
-from textfsmgen.engine import LineData
+from textfsmgen.engine.line import LineData
 
 
 class TestLineData:

@@ -28,7 +28,7 @@ def require_return_translator(method):
                 msg=f"Unexpected translator type: {type(self).__name__}"
             )
 
-        result = method(self, arg)  # noqa
+        result = method(self, arg)
         if result is None:
 
             raise_runtime_error(
@@ -64,13 +64,12 @@ def require_same_translator_type(method):
     return wrapper
 
 
-
 class PatternTranslator:
     """
     Represents a translated text pattern used in FSM (Finite State Machine)
     generation, providing utilities to normalize, store, and manipulate
     regex-compatible string patterns.
-    """     # noqa
+    """
     def __init__(self, data, *other, name='',
                  defined_pattern='', defined_patterns=None, ref_names=None,
                  singular_name='', singular_pattern='', root_name=''):
@@ -99,10 +98,14 @@ class PatternTranslator:
     @property
     def actual_name(self):
         if self.defined_patterns and self.ref_names:
-            idx = self.defined_patterns.index(self._pattern)
-            return self.ref_names[idx]
-        else:
-            return self.name
+            try:
+                idx = self.defined_patterns.index(self._pattern)
+                return self.ref_names[idx]
+            except ValueError:
+                # Fallback to the first match because it represents a group with ≥1 item,
+                # while the next candidate requires a group with ≥2 items.
+                return self.ref_names[0]
+        return self.name
 
     @property
     def pattern(self):
@@ -370,7 +373,7 @@ class PatternTranslator:
                     return secondary_cls(data, *other)
                 return translator
 
-        raise_runtime_error(    # noqa
+        raise_runtime_error(
             obj="PatternTranslatorFactoryError",
             msg=f"Failed to create translator: data={data!r}, other={other!r}",
         )
@@ -385,7 +388,7 @@ class PatternTranslator:
         """Return a generalized translator derived from two raw inputs."""
         translator_a = cls.do_factory_create(data_a)
         translator_b = cls.do_factory_create(data_b)
-        return translator_a.recommend(translator_b)     # noqa
+        return translator_a.recommend(translator_b)
 
 
 class DigitTranslator(PatternTranslator):
@@ -406,21 +409,21 @@ class DigitTranslator(PatternTranslator):
         """
         Check if this digit pattern is a subset of another pattern.
         """
-        return any([
-            other.is_digit(),
-            other.is_digits(),
-            other.is_number(),
-            other.is_mixed_number(),
-            other.is_alnum(),
-            other.is_graph(),
-            other.is_word(),
-            other.is_mixed_word(),
-            other.is_words(),
-            other.is_mixed_words(),
-            other.is_non_ws(),
-            other.is_non_wss(),
-            other.is_non_wss_group()
-        ])
+        return (
+                other.is_digit()
+                or other.is_digits()
+                or other.is_number()
+                or other.is_mixed_number()
+                or other.is_alnum()
+                or other.is_graph()
+                or other.is_word()
+                or other.is_mixed_word()
+                or other.is_words()
+                or other.is_mixed_words()
+                or other.is_non_ws()
+                or other.is_non_wss()
+                or other.is_non_wss_group()
+        )
 
     @require_same_translator_type
     def is_superset_of(self, other):
@@ -434,12 +437,11 @@ class DigitTranslator(PatternTranslator):
         """
         Recommend a generalized pattern when combined with another pattern.
         """
-        if self.is_subset_of(other) or self.is_superset_of(other):  # noqa
-            return (
-                self.get_new_subset(other)
-                if self.is_subset_of(other)
-                else self.get_new_superset(other)
-            )
+        if self.is_subset_of(other):
+            return self.get_new_subset(other)
+
+        if self.is_superset_of(other):
+            return self.get_new_superset(other)
 
         if other.is_letter():
             return AlnumTranslator(self.data, other.data)
@@ -473,44 +475,40 @@ class DigitsTranslator(PatternTranslator):
         """
         Determine whether this digit pattern is a subset of another translated pattern.
         """
-        return any([
-            other.is_digits(),
-            other.is_number(),
-            other.is_mixed_number(),
-            other.is_word(),
-            other.is_mixed_word(),
-            other.is_words(),
-            other.is_mixed_words(),
-            other.is_non_wss(),
-            other.is_non_wss_group(),
-        ])
+        return (
+                other.is_digits()
+                or other.is_number()
+                or other.is_mixed_number()
+                or other.is_word()
+                or other.is_mixed_word()
+                or other.is_words()
+                or other.is_mixed_words()
+                or other.is_non_wss()
+                or other.is_non_wss_group()
+        )
 
     @require_same_translator_type
     def is_superset_of(self, other):
         """
         Determine whether this digit pattern is a superset of another translated pattern.
         """
-        return any([
-            other.is_digit(),
-            other.is_digits()
-        ])
+        return other.is_digit() or other.is_digits()
 
     @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):    # noqa
+        if self.is_subset_of(other):
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        if any([other.is_letter(), other.is_letters(),
-                other.is_alnum()]):
+        if other.is_letter() or other.is_letters() or other.is_alnum():
             return WordTranslator(self.data, other.data)
 
-        if any([other.is_punct(), other.is_puncts(), other.is_graph()]):
+        if other.is_punct() or other.is_puncts() or other.is_graph():
             return NonWSSTranslator(self.data, other.data)
 
         if other.is_puncts_group():
@@ -540,45 +538,45 @@ class NumberTranslator(PatternTranslator):
         """
         Determine whether this number pattern is a subset of another translated pattern.
         """
-        return any([
-            other.is_number(),
-            other.is_mixed_number(),
-            other.is_mixed_word(),
-            other.is_mixed_words(),
-            other.is_non_wss(),
-            other.is_non_wss_group(),
-        ])
+        return (
+                other.is_number()
+                or other.is_mixed_number()
+                or other.is_mixed_word()
+                or other.is_mixed_words()
+                or other.is_non_wss()
+                or other.is_non_wss_group()
+        )
 
     @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this number pattern is a superset of another translated pattern.
         """
-        return any([
-            other.is_digit(),
-            other.is_digits(),
-            other.is_number()
-        ])
+        return (
+                other.is_digit()
+                or other.is_digits()
+                or other.is_number()
+        )
 
     @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
-        """     # noqa
+        """
         if self.is_subset_of(other):
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        if any([other.is_letter(), other.is_letters(),
-                other.is_alnum(), other.is_graph(), other.is_word()]):
+        if (other.is_letter() or other.is_letters() or other.is_alnum()
+                or other.is_graph() or other.is_word()):
             return MixedWordTranslator(self.data, other.data)
 
         if other.is_words():
             return MixedWordsTranslator(self.data, other.data)
 
-        if any([other.is_punct(), other.is_puncts(), other.is_non_ws()]):
+        if other.is_punct() or other.is_puncts() or other.is_non_ws():
             return NonWSSTranslator(self.data, other.data)
 
         if other.is_puncts_group():
@@ -605,45 +603,45 @@ class MixedNumberTranslator(PatternTranslator):
         """
         Determine whether this mixed number pattern is a subset of another translated pattern.
         """
-        return any([
-            other.is_mixed_number(),
-            other.is_mixed_word(),
-            other.is_mixed_words(),
-            other.is_non_wss(),
-            other.is_non_wss_group(),
-        ])
+        return (
+                other.is_mixed_number()
+                or other.is_mixed_word()
+                or other.is_mixed_words()
+                or other.is_non_wss()
+                or other.is_non_wss_group()
+        )
 
     @require_same_translator_type
     def is_superset_of(self, other):
         """
         Determine whether this mixed number pattern is a superset of another translated pattern.
         """
-        return any([
-            other.is_digit(),
-            other.is_digits(),
-            other.is_number(),
-            other.is_mixed_number()
-        ])
+        return (
+                other.is_digit()
+                or other.is_digits()
+                or other.is_number()
+                or other.is_mixed_number()
+        )
 
     @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
-        """     # noqa
+        """
         if self.is_subset_of(other):
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        if any([other.is_letter(), other.is_letters(),
-                other.is_alnum(), other.is_graph(), other.is_word()]):
+        if (other.is_letter() or other.is_letters() or other.is_alnum()
+                or other.is_graph() or other.is_word()):
             return MixedWordTranslator(self.data, other.data)
 
         if other.is_words():
             return MixedWordsTranslator(self.data, other.data)
 
-        if any([other.is_punct(), other.is_puncts(), other.is_non_ws()]):
+        if other.is_punct() or other.is_puncts() or other.is_non_ws():
             return NonWSSTranslator(self.data, other.data)
 
         if other.is_puncts_group():
@@ -671,19 +669,19 @@ class LetterTranslator(PatternTranslator):
         """
         Determine whether this letter pattern is a subset of another translated pattern.
         """
-        return any([
-            other.is_letter(),
-            other.is_letters(),
-            other.is_alnum(),
-            other.is_graph(),
-            other.is_word(),
-            other.is_words(),
-            other.is_mixed_word(),
-            other.is_mixed_words(),
-            other.is_non_ws(),
-            other.is_non_wss(),
-            other.is_non_wss_group(),
-        ])
+        return (
+                other.is_letter()
+                or other.is_letters()
+                or other.is_alnum()
+                or other.is_graph()
+                or other.is_word()
+                or other.is_words()
+                or other.is_mixed_word()
+                or other.is_mixed_words()
+                or other.is_non_ws()
+                or other.is_non_wss()
+                or other.is_non_wss_group()
+        )
 
     @require_same_translator_type
     def is_superset_of(self, other):
@@ -697,7 +695,7 @@ class LetterTranslator(PatternTranslator):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):    # noqa
+        if self.is_subset_of(other):
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
@@ -738,32 +736,29 @@ class LettersTranslator(PatternTranslator):
         """
         Determine whether this letters pattern is a subset of another translated pattern.
         """
-        return any([
-            other.is_letters(),
-            other.is_word(),
-            other.is_words(),
-            other.is_mixed_word(),
-            other.is_mixed_words(),
-            other.is_non_wss(),
-            other.is_non_wss_group(),
-        ])
+        return (
+                other.is_letters()
+                or other.is_word()
+                or other.is_words()
+                or other.is_mixed_word()
+                or other.is_mixed_words()
+                or other.is_non_wss()
+                or other.is_non_wss_group()
+        )
 
     @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this letters pattern is a superset of another translated pattern.
         """
-        return any([
-            other.is_letter(),
-            other.is_letters()
-        ])
+        return other.is_letter() or other.is_letters()
 
     @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):    # noqa
+        if self.is_subset_of(other):
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
@@ -772,13 +767,13 @@ class LettersTranslator(PatternTranslator):
         if other.is_digit() or other.is_digits() or other.is_alnum():
             return WordTranslator(self.data, other.data)
 
-        if any([other.is_number(), other.is_mixed_number(), other.is_graph()]):
+        if other.is_number() or other.is_mixed_number() or other.is_graph():
             return MixedWordTranslator(self.data, other.data)
 
         if other.is_puncts_group():
             return NonWSSGroupTranslator(self.data, other.data)
 
-        if any([other.is_punct(), other.is_puncts(), other.is_non_ws()]):
+        if other.is_punct() or other.is_puncts() or other.is_non_ws():
             return NonWSSTranslator(self.data, other.data)
 
         return None
@@ -803,35 +798,31 @@ class AlnumTranslator(PatternTranslator):
         """
         Determine whether this alnum pattern is a subset of another translated pattern.
         """
-        return any([
-            other.is_alnum(),
-            other.is_graph(),
-            other.is_word(),
-            other.is_words(),
-            other.is_mixed_word(),
-            other.is_mixed_words(),
-            other.is_non_ws(),
-            other.is_non_wss(),
-            other.is_non_wss_group(),
-        ])
+        return (
+                other.is_alnum()
+                or other.is_graph()
+                or other.is_word()
+                or other.is_words()
+                or other.is_mixed_word()
+                or other.is_mixed_words()
+                or other.is_non_ws()
+                or other.is_non_wss()
+                or other.is_non_wss_group()
+        )
 
     @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this alnum pattern is a superset of another translated pattern.
         """
-        return any([
-            other.is_letter(),
-            other.is_digit(),
-            other.is_alnum()
-        ])
+        return other.is_letter() or other.is_digit() or other.is_alnum()
 
     @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):    # noqa
+        if self.is_subset_of(other):
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
@@ -874,17 +865,17 @@ class PunctTranslator(PatternTranslator):
         """
         Determine whether this punctuation pattern is a subset of another translated pattern.
         """
-        return any([
-            other.is_punct(),
-            other.is_graph(),
-            other.is_puncts(),
-            other.is_puncts_group(),
-            other.is_mixed_word(),
-            other.is_mixed_words(),
-            other.is_non_ws(),
-            other.is_non_wss(),
-            other.is_non_wss_group(),
-        ])
+        return (
+                other.is_punct()
+                or other.is_graph()
+                or other.is_puncts()
+                or other.is_puncts_group()
+                or other.is_mixed_word()
+                or other.is_mixed_words()
+                or other.is_non_ws()
+                or other.is_non_wss()
+                or other.is_non_wss_group()
+        )
 
     @require_same_translator_type
     def is_superset_of(self, other) -> bool:
@@ -898,17 +889,17 @@ class PunctTranslator(PatternTranslator):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):    # noqa
+        if self.is_subset_of(other):
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        if any([other.is_letter(), other.is_digit(), other.is_alnum()]):
-            return GraphTranslator(self.data)
+        if other.is_letter() or other.is_digit() or other.is_alnum():
+            return GraphTranslator(self.data, other.data)
 
-        if any([other.is_letters(), other.is_digits(),
-                other.is_number(), other.is_mixed_number(), other.is_word()]):
+        if (other.is_letters() or other.is_digits() or other.is_number()
+                or other.is_mixed_number() or other.is_word()):
             return NonWSSTranslator(self.data, other.data)
 
         if other.is_words():
@@ -936,48 +927,37 @@ class PunctsTranslator(PatternTranslator):
         """
         Determine whether this punctuation sequence is a subset of another translated pattern.
         """
-        return any([
-            other.is_puncts(),
-            other.is_puncts_group(),
-            other.is_mixed_word(),
-            other.is_mixed_words(),
-            other.is_non_wss(),
-            other.is_non_wss_group(),
-        ])
+        return (
+                other.is_puncts()
+                or other.is_puncts_group()
+                or other.is_mixed_word()
+                or other.is_mixed_words()
+                or other.is_non_wss()
+                or other.is_non_wss_group()
+        )
 
     @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this punctuation sequence is a superset of another translated pattern.
         """
-        return any([
-            other.is_punct(),
-            other.is_puncts()
-        ])
+        return other.is_punct() or other.is_puncts()
 
     @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):    # noqa
+        if self.is_subset_of(other):
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        if any([
-            other.is_letter(),
-            other.is_digit(),
-            other.is_alnum(),
-            other.is_graph(),
-            other.is_letters(),
-            other.is_digits(),
-            other.is_number(),
-            other.is_mixed_number(),
-            other.is_word(),
-            other.is_non_ws(),
-        ]):
+        if (other.is_letter() or other.is_digit() or other.is_alnum()
+                or other.is_graph() or other.is_letters() or other.is_digits()
+                or other.is_number() or other.is_mixed_number()
+                or other.is_word() or other.is_non_ws()):
             return NonWSSTranslator(self.data, other.data)
 
         if other.is_words():
@@ -1014,50 +994,41 @@ class PunctsGroupTranslator(PatternTranslator):
     @require_same_translator_type
     def is_subset_of(self, other) -> bool:
         """
-        Determine whether this punctuation group is a subset of another translated pattern.
+        Determine whether this punctuation group is a subset of
+        another translated pattern.
         """
-        return any([
-            other.is_puncts_group(),
-            other.is_mixed_words(),
-            other.is_non_wss_group(),
-        ])
+        return (
+                other.is_puncts_group()
+                or other.is_mixed_words()
+                or other.is_non_wss_group()
+        )
 
     @require_same_translator_type
     def is_superset_of(self, other) -> bool:
-        """Determine whether this punctuation group is a superset of
-        another translated pattern."""
-
-        return any([
-            other.is_punct(),
-            other.is_puncts(),
-            other.is_puncts_group()
-        ])
+        """
+        Determine whether this punctuation group is a superset of
+        another translated pattern.
+        """
+        return other.is_punct() or other.is_puncts() or other.is_puncts_group()
 
     @require_return_translator
     def recommend(self, other):
-        """Recommend a generalized translated pattern when
-        combined with another pattern."""
-        if self.is_subset_of(other):    # noqa
+        """
+        Recommend a generalized translated pattern when combined with
+        another pattern.
+        """
+        if self.is_subset_of(other):
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        if any([
-            other.is_letter(),
-            other.is_digit(),
-            other.is_alnum(),
-            other.is_graph(),
-            other.is_letters(),
-            other.is_digits(),
-            other.is_number(),
-            other.is_mixed_number(),
-            other.is_word(),
-            other.is_words(),
-            other.is_mixed_word(),
-            other.is_non_ws(),
-            other.is_non_wss(),
-        ]):
+        if (other.is_letter() or other.is_digit() or other.is_alnum()
+                or other.is_graph() or other.is_letters() or other.is_digits()
+                or other.is_number() or other.is_mixed_number()
+                or other.is_word() or other.is_words()
+                or other.is_mixed_word() or other.is_non_ws()
+                or other.is_non_wss()):
             return NonWSSGroupTranslator(self.data, other.data)
 
         return None
@@ -1082,42 +1053,41 @@ class GraphTranslator(PatternTranslator):
         """
         Determine whether this graph pattern is a subset of another translated pattern.
         """
-        return any([
-            other.is_graph(),
-            other.is_mixed_word(),
-            other.is_mixed_words(),
-            other.is_non_ws(),
-            other.is_non_wss(),
-            other.is_non_wss_group(),
-        ])
+        return (
+                other.is_graph()
+                or other.is_mixed_word()
+                or other.is_mixed_words()
+                or other.is_non_ws()
+                or other.is_non_wss()
+                or other.is_non_wss_group()
+        )
 
     @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this graph pattern is a superset of another translated pattern.
         """
-
-        return any([
-            other.is_letter(),
-            other.is_digit(),
-            other.is_alnum(),
-            other.is_punct(),
-            other.is_graph()
-        ])
+        return (
+                other.is_letter()
+                or other.is_digit()
+                or other.is_alnum()
+                or other.is_punct()
+                or other.is_graph()
+        )
 
     @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):    # noqa
+        if self.is_subset_of(other):
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        if any([other.is_letters(), other.is_digits(),
-                other.is_number(), other.is_mixed_number(), other.is_word()]):
+        if (other.is_letters() or other.is_digits() or other.is_number()
+                or other.is_mixed_number() or other.is_word()):
             return MixedWordTranslator(self.data, other.data)
 
         if other.is_words():
@@ -1145,49 +1115,37 @@ class WordTranslator(PatternTranslator):
         """
         Determine whether this word pattern is a subset of another translated pattern.
         """
-        return any([
-            other.is_word(),
-            other.is_words(),
-            other.is_mixed_word(),
-            other.is_mixed_words(),
-            other.is_non_wss(),
-            other.is_non_wss_group(),
-        ])
+        return (
+                other.is_word()
+                or other.is_words()
+                or other.is_mixed_word()
+                or other.is_mixed_words()
+                or other.is_non_wss()
+                or other.is_non_wss_group()
+        )
 
     @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this word pattern is a superset of another translated pattern.
         """
-
-        return any([
-            other.is_letter(),
-            other.is_letters(),
-            other.is_word()
-        ])
+        return other.is_letter() or other.is_letters() or other.is_word()
 
     @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):    # noqa
+        if self.is_subset_of(other):
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        if any([
-            other.is_graph(),
-            other.is_digit(),
-            other.is_digits(),
-            other.is_number(),
-            other.is_mixed_number(),
-            other.is_non_ws(),
-            other.is_punct(),
-            other.is_puncts(),
-            other.is_alnum()
-        ]):
+        if (other.is_graph() or other.is_digit() or other.is_digits()
+                or other.is_number() or other.is_mixed_number()
+                or other.is_non_ws() or other.is_punct()
+                or other.is_puncts() or other.is_alnum()):
             return NonWSSTranslator(self.data, other.data)
 
         if other.is_puncts_group():
@@ -1227,49 +1185,39 @@ class WordsTranslator(PatternTranslator):
         """
         Determine whether this words pattern is a subset of another translated pattern.
         """
-        return any([
-            other.is_words(),
-            other.is_mixed_words(),
-            other.is_non_wss_group(),
-        ])
+        return (
+                other.is_words()
+                or other.is_mixed_words()
+                or other.is_non_wss_group()
+        )
 
     @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this words pattern is a superset of another translated pattern.
         """
-
-        return any([
-            other.is_letter(),
-            other.is_letters(),
-            other.is_word(),
-            other.is_words()
-        ])
+        return (
+                other.is_letter()
+                or other.is_letters()
+                or other.is_word()
+                or other.is_words()
+        )
 
     @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):        # noqa
+        if self.is_subset_of(other):
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        if any([
-            other.is_alnum(),
-            other.is_graph(),
-            other.is_digit(),
-            other.is_digits(),
-            other.is_number(),
-            other.is_mixed_number(),
-            other.is_non_ws(),
-            other.is_non_wss(),
-            other.is_punct(),
-            other.is_puncts(),
-            other.is_puncts_group(),
-        ]):
+        if (other.is_alnum() or other.is_graph() or other.is_digit()
+                or other.is_digits() or other.is_number() or other.is_mixed_number()
+                or other.is_non_ws() or other.is_non_wss() or other.is_punct()
+                or other.is_puncts() or other.is_puncts_group()):
             return NonWSSGroupTranslator(self.data, other.data)
 
         return None
@@ -1294,37 +1242,36 @@ class MixedWordTranslator(PatternTranslator):
         """
         Determine whether this mixed word pattern is a subset of another translated pattern.
         """
-        return any([
-            other.is_mixed_word(),
-            other.is_mixed_words(),
-            other.is_non_wss(),
-            other.is_non_wss_group(),
-        ])
+        return (
+                other.is_mixed_word()
+                or other.is_mixed_words()
+                or other.is_non_wss()
+                or other.is_non_wss_group()
+        )
 
     @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this mixed word pattern is a superset of another translated pattern.
         """
-
-        return any([
-            other.is_letter(),
-            other.is_letters(),
-            other.is_digit(),
-            other.is_digits(),
-            other.is_number(),
-            other.is_mixed_number(),
-            other.is_alnum(),
-            other.is_word(),
-            other.is_mixed_word()
-        ])
+        return (
+                other.is_letter()
+                or other.is_letters()
+                or other.is_digit()
+                or other.is_digits()
+                or other.is_number()
+                or other.is_mixed_number()
+                or other.is_alnum()
+                or other.is_word()
+                or other.is_mixed_word()
+        )
 
     @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):        # noqa
+        if self.is_subset_of(other):
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
@@ -1333,12 +1280,7 @@ class MixedWordTranslator(PatternTranslator):
         if other.is_words():
             return MixedWordsTranslator(self.data, other.data)
 
-        if any([
-            other.is_graph(),
-            other.is_non_ws(),
-            other.is_punct(),
-            other.is_puncts()
-        ]):
+        if other.is_graph() or other.is_non_ws() or other.is_punct() or other.is_puncts():
             return NonWSSTranslator(self.data, other.data)
 
         if other.is_puncts_group():
@@ -1378,50 +1320,40 @@ class MixedWordsTranslator(PatternTranslator):
         """
         Determine whether this mixed words pattern is a subset of another translated pattern.
         """
-        return any([
-            other.is_mixed_words(),
-            other.is_non_wss_group(),
-        ])
+        return other.is_mixed_words() or other.is_non_wss_group()
 
     @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this mixed words pattern is a superset of another translated pattern.
         """
-
-        return any([
-            other.is_letter(),
-            other.is_letters(),
-            other.is_digit(),
-            other.is_digits(),
-            other.is_number(),
-            other.is_mixed_number(),
-            other.is_alnum(),
-            other.is_word(),
-            other.is_words(),
-            other.is_mixed_word(),
-            other.is_mixed_words()
-        ])
+        return (
+                other.is_letter()
+                or other.is_letters()
+                or other.is_digit()
+                or other.is_digits()
+                or other.is_number()
+                or other.is_mixed_number()
+                or other.is_alnum()
+                or other.is_word()
+                or other.is_words()
+                or other.is_mixed_word()
+                or other.is_mixed_words()
+        )
 
     @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):    # noqa
+        if self.is_subset_of(other):
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        if any([
-            other.is_graph(),
-            other.is_non_ws(),
-            other.is_non_wss(),
-            other.is_punct(),
-            other.is_puncts(),
-            other.is_puncts_group(),
-        ]):
+        if (other.is_graph() or other.is_non_ws() or other.is_non_wss()
+                or other.is_punct() or other.is_puncts() or other.is_puncts_group()):
             return NonWSSGroupTranslator(self.data, other.data)
 
         return None
@@ -1446,54 +1378,39 @@ class NonWSTranslator(PatternTranslator):
         """
         Determine whether this non-whitespace pattern is a subset of another translated pattern.
         """
-        return any([
-            other.is_non_ws(),
-            other.is_non_wss(),
-            other.is_non_wss_group(),
-        ])
+        return other.is_non_ws() or other.is_non_wss() or other.is_non_wss_group()
 
     @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this non-whitespace pattern is a superset of another translated pattern.
         """
-
-        return any([
-            other.is_letter(),
-            other.is_digit(),
-            other.is_alnum(),
-            other.is_punct(),
-            other.is_graph(),
-            other.is_non_ws()
-        ])
+        return (
+                other.is_letter()
+                or other.is_digit()
+                or other.is_alnum()
+                or other.is_punct()
+                or other.is_graph()
+                or other.is_non_ws()
+        )
 
     @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):    # noqa
+        if self.is_subset_of(other):
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        if any([
-            other.is_letters(),
-            other.is_digits(),
-            other.is_puncts(),
-            other.is_number(),
-            other.is_mixed_number(),
-            other.is_word(),
-            other.is_mixed_word(),
-        ]):
+        if (other.is_letters() or other.is_digits() or other.is_puncts()
+                or other.is_number() or other.is_mixed_number()
+                or other.is_word() or other.is_mixed_word()):
             return NonWSSTranslator(self.data, other.data)
 
-        if any([
-            other.is_words(),
-            other.is_mixed_words(),
-            other.is_puncts_group(),
-        ]):
+        if other.is_words() or other.is_mixed_words() or other.is_puncts_group():
             return NonWSSGroupTranslator(self.data, other.data)
 
         return None
@@ -1519,51 +1436,43 @@ class NonWSSTranslator(PatternTranslator):
         Determine whether this non-whitespaces pattern is a subset of another
         translated pattern.
         """
-        return any([
-            other.is_non_wss(),
-            other.is_non_wss_group(),
-        ])
+        return other.is_non_wss() or other.is_non_wss_group()
 
     @require_same_translator_type
     def is_superset_of(self, other) -> bool:
         """
         Determine whether this non-whitespaces pattern is a superset of
         another translated pattern.
-        """     # noqa
-
-        return any([
-            other.is_digit(),
-            other.is_digits(),
-            other.is_number(),
-            other.is_mixed_number(),
-            other.is_letter(),
-            other.is_letters(),
-            other.is_alnum(),
-            other.is_graph(),
-            other.is_punct(),
-            other.is_puncts(),
-            other.is_word(),
-            other.is_mixed_word(),
-            other.is_non_ws(),
-            other.is_non_wss()
-        ])
+        """
+        return (
+                other.is_digit()
+                or other.is_digits()
+                or other.is_number()
+                or other.is_mixed_number()
+                or other.is_letter()
+                or other.is_letters()
+                or other.is_alnum()
+                or other.is_graph()
+                or other.is_punct()
+                or other.is_puncts()
+                or other.is_word()
+                or other.is_mixed_word()
+                or other.is_non_ws()
+                or other.is_non_wss()
+        )
 
     @require_return_translator
     def recommend(self, other):
         """
         Recommend a generalized translated pattern when combined with another pattern.
         """
-        if self.is_subset_of(other):    # noqa
+        if self.is_subset_of(other):
             return self.get_new_subset(other)
 
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        if any([
-            other.is_puncts_group(),
-            other.is_words(),
-            other.is_mixed_words(),
-        ]):
+        if other.is_puncts_group() or other.is_words() or other.is_mixed_words():
             return NonWSSGroupTranslator(self.data, other.data)
 
         return None
@@ -1608,28 +1517,27 @@ class NonWSSGroupTranslator(PatternTranslator):
         """
         Determine whether this non-whitespaces group pattern is a superset of
         another translated pattern.
-        """     # noqa
-
-        return any([
-            other.is_digit(),
-            other.is_digits(),
-            other.is_number(),
-            other.is_mixed_number(),
-            other.is_letter(),
-            other.is_letters(),
-            other.is_alnum(),
-            other.is_graph(),
-            other.is_punct(),
-            other.is_puncts(),
-            other.is_puncts_group(),
-            other.is_word(),
-            other.is_mixed_word(),
-            other.is_words(),
-            other.is_mixed_words(),
-            other.is_non_ws(),
-            other.is_non_wss(),
-            other.is_non_wss_group(),
-        ])
+        """
+        return (
+                other.is_digit()
+                or other.is_digits()
+                or other.is_number()
+                or other.is_mixed_number()
+                or other.is_letter()
+                or other.is_letters()
+                or other.is_alnum()
+                or other.is_graph()
+                or other.is_punct()
+                or other.is_puncts()
+                or other.is_puncts_group()
+                or other.is_word()
+                or other.is_mixed_word()
+                or other.is_words()
+                or other.is_mixed_words()
+                or other.is_non_ws()
+                or other.is_non_wss()
+                or other.is_non_wss_group()
+        )
 
     @require_return_translator
     def recommend(self, other):
