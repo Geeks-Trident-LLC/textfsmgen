@@ -10,10 +10,10 @@ from enum import IntFlag
 
 from .pattern import PATTERN
 
-
-is_macos = platform.system() == 'Darwin'
-is_linux = platform.system() == 'Linux'
-is_window = platform.system() == 'Windows'
+_system = platform.system()
+is_macos = _system == 'Darwin'
+is_linux = _system == 'Linux'
+is_windows = _system == 'Windows'
 
 
 class ECODE(IntFlag):
@@ -29,5 +29,5 @@ __all__ = [
     'PATTERN',
     'is_macos',
     'is_linux',
-    'is_window',
+    'is_windows',
 ]

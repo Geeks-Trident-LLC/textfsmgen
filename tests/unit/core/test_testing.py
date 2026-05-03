@@ -13,15 +13,15 @@ import pytest   # noqa
 
 from pathlib import Path, PurePath
 
-from textfsmgen.libs import is_window
+from textfsmgen.libs import is_windows
 from textfsmgen.core import testing
 
 venv_python_path = Path(PurePath(
     Path.home(),
     'workspace',
     'venv_test',
-    'Scripts' if is_window else 'bin',
-    'python.exe' if is_window else 'python'
+    'Scripts' if is_windows else 'bin',
+    'python.exe' if is_windows else 'python'
 ))
 
 file_path = Path(PurePath(
