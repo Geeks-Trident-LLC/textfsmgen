@@ -8,7 +8,7 @@ UI helpers for building the TextFSMGen menu bar.
 from textfsmgen import ui
 from textfsmgen.ui.common import open_app_resource
 from textfsmgen.ui import (
-    about, snippet, callback, usage, settings, builder,
+    about, suggester, callback, usage, settings, builder,
     textfsm_tester
 )
 
@@ -46,19 +46,20 @@ def create(app) -> None:
 
         # Tools
         (tools_menu, {
-            "label": "Snippet Translator",
-            "command": lambda: snippet.show_dialog(app)
-        }),
-        (tools_menu, {
             "label": "Keyword Query Assistant",
             "state": "disabled",
             "command": lambda: None
         }),
         (tools_menu, None),
         (tools_menu, {
+            "label": "Regex Suggester",
+            "command": lambda: suggester.show_dialog(app)
+        }),
+        (tools_menu, {
             "label": "Regex Builder",
             "command": lambda: builder.show_dialog(app)
         }),
+        (tools_menu, None),
         (tools_menu, {
             "label": "TextFSM Tester",
             "command": lambda: textfsm_tester.show_dialog(app)
@@ -88,8 +89,8 @@ def create(app) -> None:
         }),
         (help_menu, None),
         (help_menu, {
-            "label": "Snippet Translator Guide",
-            "command": lambda: usage.show_help(app, "snippet_translator")
+            "label": "Regex Suggester Guide",
+            "command": lambda: usage.show_help(app, "suggester")
         }),
         (help_menu, {
             "label": "Regex Builder Guide",

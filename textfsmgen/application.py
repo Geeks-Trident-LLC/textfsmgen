@@ -140,7 +140,7 @@ class Application:
         )
 
         self.tools = DotObject(
-            translator = DotObject(
+            suggester = DotObject(
                 # flag or variable
                 variable_flag=tk.BooleanVar(value=True),
                 group_flag=tk.BooleanVar(),

@@ -86,10 +86,10 @@ def test_get_dependency(pkg):
     [
         ("how-to-use-regex-builder", ["Regex Builder Tool", "Semantic Overview"]),
         ("how-to-use-textfsm-tester", ["TextFSM Tester Tool", "Interface Overview"]),
-        ("how-to-use-snippet-translator", ["Snippet Translator Tool", "Interface Overview"]),
+        ("how-to-use-regex-suggester", ["Regex Suggester Tool", "Interface Overview"]),
         ("high-level-overview", ["Free‑Form Workflow", "Semi‑Structured Workflow"]),
         ("textfsm-generator-settings-guide", ["General Arguments Settings", "Category Translator Arguments"]),
-        ("demo-snippet-translator", ["Demo Snippet Translator", "The current Snippet Translator settings"]),
+        ("demo-regex-suggester", ["Demo Regex Suggester", "The current Regex Suggester settings"]),
         ("demo-ios-show-clock", ["Demo IOS show clock",]),
         ("demo-listing-files-in-long-format-on-linux", ["Demo Listing Files in Long Format on Linux",]),
         ("demo-listing-files-on-powershell", ["Demo Listing Files on Powershell"]),

@@ -60,10 +60,10 @@ urls = {
 }
 for name in (
     "high-level-overview", "faq", "textfsm-generator-settings-guide",
-    "how-to-use-snippet-translator",
+    "how-to-use-regex-suggester",
     "how-to-use-regex-builder",
     "how-to-use-textfsm-tester",
-    "demo-snippet-translator", "demo-ios-show-clock",
+    "demo-regex-suggester", "demo-ios-show-clock",
     "demo-listing-files-in-long-format-on-linux",
     "demo-listing-files-on-powershell", "demo-linux-file-status-information",
 ):

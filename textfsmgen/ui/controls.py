@@ -12,7 +12,7 @@ from textfsmgen.ui import (
     callback,
     settings,
     usage,
-    snippet,
+    suggester,
     builder,
     textfsm_tester,
 
@@ -93,14 +93,14 @@ def build_secondary_buttons(app, parent) -> None:
         ("SEPARATOR", None, None),
         ("execute", "disabled", lambda: callback.perform_execute_action(app)),
         ("SEPARATOR", None, None),
-        ("snippet translator", "normal", lambda: snippet.show_dialog(app)),
+        ("regex suggester", "normal", lambda: suggester.show_dialog(app)),
         ("regex builder", "normal", lambda: builder.show_dialog(app)),
         ("textfsm tester", "normal", lambda: textfsm_tester.show_dialog(app)),
         ("keyword query assistant", "disabled", lambda: None),
     )
 
     mapping = {
-        "snippet_translator": 10,
+        "regex_suggester": 8,
         "regex_builder": 6,
         "textfsm_tester": 8,
         "keyword_query_assistant": 16,

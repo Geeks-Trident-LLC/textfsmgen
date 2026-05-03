@@ -95,8 +95,8 @@ def build_usage_title(category: str) -> str:
     if category == "tester":
         return "Quickstart TextFSM Tester Tool - TextFSMGen CE"
 
-    if category == "snippet_translator":
-        return "Quickstart Snippet Translator Tool - TextFSMCGen CE"
+    if category == "suggester":
+        return "Quickstart Regex Suggester Tool - TextFSMCGen CE"
 
     base = " ".join(category.split("_")).title()
     return f"{base} Usage - TextFSMGen CE"
@@ -113,8 +113,8 @@ def update_url_link(usage):
 def get_usage(category: str) -> str:
     """Return usage text for the given category."""
     usage = "Unknown Usage"
-    if category == "snippet_translator":
-        usage = get_snippet_translator_usage()
+    if category == "suggester":
+        usage = get_suggester_usage()
 
     elif category == "settings":
         usage = get_settings_guide()
@@ -133,10 +133,10 @@ def get_usage(category: str) -> str:
     return f"{usage}\n\n"
 
 
-def get_snippet_translator_usage():
-    """Return usage of snippet translator."""
+def get_suggester_usage():
+    """Return usage of Regex Suggester."""
     usage = dedent_and_strip("""
-        The <bold>Snippet Translator Tool</bold> helps users quickly generate a <bold>TextFSMGen</bold> snippet 
+        The <bold>Regex Suggester Tool</bold> helps users quickly generate a <bold>TextFSMGen</bold> snippet 
         and optional Python verification code. It provides an iterative workflow for 
         translating raw text, refining the snippet, and validating the parsing logic.
 
@@ -235,8 +235,8 @@ def get_snippet_translator_usage():
         <bold>References</bold>
         <bold>==========</bold>
         
-            - <link>How to Use the Snippet Translator ---- how-to-use-snippet-translator</link>
-            - <link>Demo: Snippet Translator ---- demo-snippet-translator</link>
+            - <link>How to Use the Regex Suggester ---- how-to-use-regex-suggester</link>
+            - <link>Demo: Regex Suggester ---- demo-regex-suggester</link>
 
     """)
 
@@ -560,7 +560,7 @@ def get_started_with_textfsmgen():
         
         Free-form input is unstructured data. Users must manually create 
         a TextFSMGen snippet to translate the data into a TextFSM template. 
-        This requires manual effort, but the Snippet Translator tool can 
+        This requires manual effort, but the Regex Suggester tool can 
         automatically generate a correct snippet without requiring knowledge 
         of regular expressions.
         

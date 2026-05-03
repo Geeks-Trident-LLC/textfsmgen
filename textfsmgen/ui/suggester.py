@@ -20,7 +20,8 @@ from textfsmgen.tools.translator import IterateTranslator
 from textfsmgen.libs.generic import Position
 
 from textfsmgen import ui
-from textfsmgen.ui import usage, widget
+from textfsmgen.ui import usage
+from textfsmgen.ui.widget import set_window_icon
 
 from textfsmgen.ui.common import (
     show_message_dialog,
@@ -55,11 +56,11 @@ def show_dialog(app):
 
 
 def create_window(parent: Optional[Union[ui.Tk, ui.Toplevel]]):
-    """Create and center the snippet translator window."""
+    """Create and center the regex suggester window."""
     window = ui.Toplevel(parent)
-    window.title("Snippet Translator - TextFSMGen CE")
+    window.title("Regex Suggester - TextFSMGen CE")
 
-    widget.set_window_icon(window)
+    set_window_icon(window)
 
     if parent:
         center_window(
@@ -90,7 +91,7 @@ def build_input_frame(parent, app):
 
     textarea = ui.TextArea(
         frame, width=20, height=3, wrap='none',
-        name='translator_input_text',
+        name='suggester_input_text',
     )
 
     textarea.grid(row=0, column=0, sticky='nswe')  # noqa
@@ -115,7 +116,7 @@ def build_input_frame(parent, app):
         xscrollcommand=hscrollbar.set
     )
 
-    app.tools.translator.in_textarea = textarea
+    app.tools.suggester.in_textarea = textarea
 
 
 def build_controls_frame(parent, app):
@@ -141,8 +142,8 @@ def build_controls_frame(parent, app):
 def build_top_controls(parent, app):
     """Build the top control bar with action buttons and a vertical separator."""
     controls = [
-        ("Translate", lambda: perform_translate_action(app)),
-        ("Generate",  lambda: perform_generate_action(app)),
+        ("Suggest", lambda: perform_suggest_action(app)),
+        ("Test",  lambda: perform_test_action(app)),
         ("Iterate",   lambda: perform_iterate_action(app)),
         ("Default",   lambda: reset_default(app)),
 
@@ -154,7 +155,7 @@ def build_top_controls(parent, app):
 
         ("SEPARATOR", None),
 
-        ("Help", lambda: usage.show_help(app, "snippet_translator")),
+        ("Help", lambda: usage.show_help(app, "suggester")),
 
     ]
 
@@ -169,7 +170,7 @@ def build_top_controls(parent, app):
             continue
 
         name = f"{label.lower()}_btn"
-        width = btn_width + 2 if label in ("Translate", "Generate") else btn_width
+        width = btn_width + 2 if label in ("Suggest", "Test") else btn_width
 
         btn = ui.Button(
             parent,
@@ -184,13 +185,13 @@ def build_top_controls(parent, app):
 def build_bottom_controls(parent, app):
     """Build the bottom control bar with checkboxes, separator, and split field."""
     controls = [
-        ("Variable", app.tools.translator.variable_flag),
-        ("Surrounding Notation", app.tools.translator.notation_flag),
+        ("Variable", app.tools.suggester.variable_flag),
+        ("Surrounding Notation", app.tools.suggester.notation_flag),
 
         ("SEPARATOR", None),
 
-        ("Group",    app.tools.translator.group_flag),
-        ("Generic",  app.tools.translator.generic_flag),
+        ("Group",    app.tools.suggester.group_flag),
+        ("Generic",  app.tools.suggester.generic_flag),
     ]
 
     padding = dict(padx=(2, 0), pady=(2, 2))
@@ -226,7 +227,7 @@ def build_bottom_controls(parent, app):
         parent,
         width=8,
         justify="center",
-        textvariable=app.tools.translator.split_arg,
+        textvariable=app.tools.suggester.split_arg,
     )
     entry.grid(row=0, column=pos.next(), sticky="ns", padx=2, pady=4)
 
@@ -270,7 +271,7 @@ def build_output_frame(parent, app):
         xscrollcommand=hscrollbar.set
     )
 
-    app.tools.translator.out_textarea = textarea
+    app.tools.suggester.out_textarea = textarea
 
 
 def build_python_code_frame(parent, app):
@@ -314,7 +315,7 @@ def build_python_code_frame(parent, app):
     )
     textarea.config(state="disabled")
 
-    app.tools.translator.code_textarea = textarea
+    app.tools.suggester.code_textarea = textarea
 
 
 def build_test_result_frame(parent, app):
@@ -358,21 +359,21 @@ def build_test_result_frame(parent, app):
     )
     textarea.config(state="disabled")
 
-    app.tools.translator.result_textarea = textarea
+    app.tools.suggester.result_textarea = textarea
 
 
 def reset_default(app):
     """Reset all application metadata and checkbox settings to defaults."""
-    app.tools.translator.variable_flag.set(True)
-    app.tools.translator.group_flag.set(False)
-    app.tools.translator.generic_flag.set(True)
-    app.tools.translator.notation_flag.set(False)
-    app.tools.translator.split_arg.set("/")
+    app.tools.suggester.variable_flag.set(True)
+    app.tools.suggester.group_flag.set(False)
+    app.tools.suggester.generic_flag.set(True)
+    app.tools.suggester.notation_flag.set(False)
+    app.tools.suggester.split_arg.set("/")
 
 
 def perform_clear_action(app):
     """Clear selected text in editable areas; warn or clear readonly ones based on last focus."""
-    t = app.tools.translator
+    t = app.tools.suggester
 
     readonly = [
         (t.code_textarea,  "Readonly Code Window",   "Cannot clear readonly Python code window"),
@@ -443,7 +444,7 @@ def perform_paste_action(app):
         )
         return
 
-    t = app.tools.translator
+    t = app.tools.suggester
 
     editable = [t.in_textarea, t.out_textarea]
     readonly = [
@@ -482,7 +483,7 @@ def perform_paste_action(app):
 def perform_copy_action(app):
     """Copy clipboard text into editable areas; warn on readonly ones."""
 
-    t = app.tools.translator
+    t = app.tools.suggester
     prev = app.prev_widget
 
     widgets = [t.in_textarea, t.out_textarea, t.code_textarea, t.result_textarea]
@@ -515,16 +516,16 @@ def perform_copy_action(app):
     )
 
 
-def perform_translate_action(app):
-    """Translate input text using current translator settings."""
+def perform_suggest_action(app):
+    """Perform suggesting input text using current suggester settings."""
 
-    t = app.tools.translator
+    t = app.tools.suggester
     data = extract_text(t.in_textarea)
 
     if not any(get_list_of_lines(data)):
         show_message_dialog(
-            title="Translate Action - No Input",
-            info="No text was found to translate.\n"
+            title="Suggest Action- No Input",
+            info="No text was found to suggest.\n"
                  "Please enter or paste content first.",
         )
         return
@@ -549,7 +550,7 @@ def perform_translate_action(app):
 
 def perform_iterate_action(app):
     """Notify the user that the Iterate Snippet feature is not yet implemented."""
-    t = app.tools.translator
+    t = app.tools.suggester
 
     raw_data = extract_text(t.in_textarea)
     snippet = extract_text(t.out_textarea)
@@ -595,8 +596,8 @@ def perform_iterate_action(app):
     set_text(t.result_textarea, builder.result)
 
 
-def perform_generate_action(app):
-    t = app.tools.translator
+def perform_test_action(app):
+    t = app.tools.suggester
 
     raw_data = extract_text(t.in_textarea)
     snippet = extract_text(t.out_textarea)
@@ -607,7 +608,7 @@ def perform_generate_action(app):
             title="Generate Script – No Snippet",
             info=(
                 "No snippet is available to generate a Python script.\n"
-                "Please translate text or enter a snippet in the second text area."
+                "Please perform suggesting text or enter a suggested snippet in the second text area."
             ),
         )
         return
@@ -615,7 +616,7 @@ def perform_generate_action(app):
     # --- Validate test data --------------------------------------------------
     if not get_list_of_lines(raw_data):
         show_message_dialog(
-            title="Generate Script – No Test Data",
+            title="Generate Script and Test – No Test Data",
             info=(
                 "No test data was found to generate a script.\n"
                 "Please enter or paste content in the first text area."
