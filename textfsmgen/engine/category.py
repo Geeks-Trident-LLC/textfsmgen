@@ -18,7 +18,7 @@ from textfsmgen.libs import utils
 
 from textfsmgen.engine.translate import make_translator
 from textfsmgen.engine import LineData
-from textfsmgen.exceptions import RuntimeException
+from textfsmgen.exceptions import raise_runtime_error
 
 from textfsmgen.engine.common import (
 get_line_position_by,
@@ -328,19 +328,22 @@ class CategoryLineTranslator(LineData):
     def validate_category_pattern(self) -> None:
         """Ensure the line contains a valid category pattern."""
         if self.separator not in self.data:
-            self.raise_runtime_error(
+            raise_runtime_error(
+                obj=self,
                 msg=f"Missing separator '{self.separator}' in data."
             )
 
         index = self.data.index(self.separator)
         if index == 0:
-            self.raise_runtime_error(
+            raise_runtime_error(
+                obj=self,
                 msg=f"No variable text before separator '{self.separator}'."
             )
 
         chk_word = self.word_at(index)
         if self.is_time_ipv6_or_mac_format(chk_word):
-            self.raise_runtime_error(
+            raise_runtime_error(
+                obj=self,
                 msg=f"Unsupported variable text format detected: '{chk_word}'."
             )
 
@@ -468,7 +471,7 @@ class CategoryLineTranslator(LineData):
                 return
 
 
-class CategoryLinesTranslator(RuntimeException):
+class CategoryLinesTranslator:
     """
     Represent and process multiple lines into category pattern nodes.
     """
@@ -543,7 +546,7 @@ class CategoryLinesTranslator(RuntimeException):
     def validate_category_format(self) -> None:
         """Raise an error if the parsed lines are not in category format."""
         if not self.is_category_format:
-            self.raise_runtime_error(msg="Text is not in category format.")
+            raise_runtime_error(obj=self, msg="Text is not in category format.")
 
     def to_template_snippet(self) -> str:
         """Generate a template snippet string from parsed lines."""

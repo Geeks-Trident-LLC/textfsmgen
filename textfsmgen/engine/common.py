@@ -18,8 +18,7 @@ from textfsmgen.libs import text
 
 from textfsmgen.engine.translate import make_translator
 
-from textfsmgen.exceptions import RuntimeException
-from textfsmgen.exceptions import raise_exception
+from textfsmgen.exceptions import raise_runtime_error, raise_exception
 
 def get_line_position_by(
     lines: list[str],
@@ -68,9 +67,9 @@ def get_fixed_line_snippet(lines: list[str], line: str = "", index: Optional[int
                 )
                 raise_exception(ex, msg=msg)
             except Exception as ex:
-                RuntimeException.do_raise_runtime_error(ex)
+                raise_runtime_error(ex)
         else:
-            RuntimeException.do_raise_runtime_error(
+            raise_runtime_error(
                 obj="UnknownParamIndexTypeError",
                 msg=(
                     f"Invalid index type: expected an integer to access list, "
@@ -84,7 +83,7 @@ def get_fixed_line_snippet(lines: list[str], line: str = "", index: Optional[int
 
     # Validate type
     if not isinstance(line, str):
-        RuntimeException.do_raise_runtime_error(
+        raise_runtime_error(
             obj="UnknownParamLineTypeError",
             msg=(
                 f"Invalid line type: expected a string, "

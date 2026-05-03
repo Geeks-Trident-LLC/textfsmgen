@@ -140,24 +140,3 @@ def raise_runtime_error(obj=None, msg=''):
     """
     exc_obj = create_runtime_error(obj=obj, msg=msg)
     raise exc_obj
-
-
-class RuntimeException:
-    """
-    Utility class for raising dynamically created runtime exceptions.
-    """
-
-    def raise_runtime_error(self, name: str = "", msg: str = ""):
-        """
-        Raise a dynamically created runtime exception (instance method).
-        """
-        name = name.strip()
-        obj = name or self
-        raise_runtime_error(obj=obj, msg=msg)
-
-    @classmethod
-    def do_raise_runtime_error(cls, obj=None, msg: str = ""):
-        """
-        Raise a dynamically created runtime exception (class method).
-        """
-        raise_runtime_error(obj=obj, msg=msg)

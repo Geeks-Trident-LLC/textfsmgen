@@ -16,7 +16,6 @@ import re
 from textfsmgen.libs import PATTERN
 from textfsmgen.libs import datatype
 
-from textfsmgen.exceptions import RuntimeException
 from textfsmgen.exceptions import raise_runtime_error
 
 
@@ -66,7 +65,7 @@ def require_same_translator_type(method):
 
 
 
-class PatternTranslator(RuntimeException):
+class PatternTranslator:
     """
     Represents a translated text pattern used in FSM (Finite State Machine)
     generation, providing utilities to normalize, store, and manipulate
@@ -282,8 +281,8 @@ class PatternTranslator(RuntimeException):
             f"with data pair ({self.data!r}, {other_repr})"
         )
 
-        self.raise_runtime_error(
-            name="NotImplementTranslator",
+        raise_runtime_error(
+            obj="NotImplementTranslator",
             msg=msg,
         )
 
@@ -292,8 +291,8 @@ class PatternTranslator(RuntimeException):
         Generate a human-readable snippet representation of the pattern.
         """
         if not self.name:
-            self.raise_runtime_error(
-                name="PatternTranslatorSnippetError",
+            raise_runtime_error(
+                obj="PatternTranslatorSnippetError",
                 msg="Cannot create snippet without a defined name",
             )
 
@@ -307,8 +306,8 @@ class PatternTranslator(RuntimeException):
     def to_snippet(self, var="", is_root=False, generic=True) -> str:
         """Generate a template snippet string for the current pattern."""
         if not self.name:
-            self.raise_runtime_error(
-                name="PatternTranslatorSnippetError",
+            raise_runtime_error(
+                obj="PatternTranslatorSnippetError",
                 msg="Cannot create template snippet without a defined name",
             )
 
@@ -1610,8 +1609,6 @@ class NonWSSGroupTranslator(PatternTranslator):
         Determine whether this non-whitespaces group pattern is a superset of
         another translated pattern.
         """     # noqa
-        # if not isinstance(other, PatternTranslator):
-        #     self.raise_recommend_exception(other)
 
         return any([
             other.is_digit(),

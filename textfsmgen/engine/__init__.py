@@ -5,11 +5,10 @@ textfsmgen.engine.__init__
 Initialization for the TextFSM parsing engine.
 """     # noqa
 
-from textfsmgen.exceptions import RuntimeException
 from textfsmgen.libs import text
 
 
-class LineData(RuntimeException):
+class LineData:
     """
     Line wrapper for string input with utilities to
     inspect leading and trailing whitespace.

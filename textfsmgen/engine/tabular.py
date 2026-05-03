@@ -23,7 +23,6 @@ from textfsmgen.libs import number
 
 from textfsmgen.engine.translate import make_translator
 
-from textfsmgen.exceptions import RuntimeException
 from textfsmgen.exceptions import raise_runtime_error
 
 from textfsmgen.engine.common import (
@@ -34,7 +33,7 @@ apply_replacements
 )
 
 
-class TabularTranslator(RuntimeException):
+class TabularTranslator:
     """
     Represents a tabular text pattern that can be parsed into regex patterns
     or template snippets.
@@ -92,7 +91,8 @@ class TabularTranslator(RuntimeException):
                 elif idx == len(widths) - 1:
                     normalized.append("")
                 else:
-                    self.raise_runtime_error(
+                    raise_runtime_error(
+                        obj=self,
                         msg=(
                             f"Invalid column widths in {self.__class__.__name__}.\n"
                             "Expected: list of integers or string of integers\n"
@@ -102,7 +102,8 @@ class TabularTranslator(RuntimeException):
 
             self.kwargs.update(column_widths=normalized, column_count=len(normalized))
         else:
-            self.raise_runtime_error(
+            raise_runtime_error(
+                obj=self,
                 msg=(
                     f"Invalid column widths in {self.__class__.__name__}.\n"
                     "Expected: list of integers or string of integers\n"
@@ -161,7 +162,7 @@ class TabularTranslator(RuntimeException):
         return tmpl_snippet
 
 
-class VarColumnTabularTranslator(RuntimeException):
+class VarColumnTabularTranslator:
     """
     Parse tabular text with variable column structures and optional dividers.
     """
@@ -328,7 +329,7 @@ class VarColumnTabularTranslator(RuntimeException):
                 self.column_count = len(re.split(PATTERN.WSS, line.strip()))
                 return
         if not self:
-            self.raise_runtime_error(msg='column_count cannot be zero')
+            raise_runtime_error(obj=self, msg='column_count cannot be zero')
 
     def prepare_header_rows(self):
         """Extract header lines from header_rows (indices or substrings)."""    # noqa
@@ -688,7 +689,8 @@ class VarColumnTabularTranslator(RuntimeException):
                 break
 
         if case is None:
-            self.raise_runtime_error(
+            raise_runtime_error(
+                obj=self,
                 msg=(
                     f"Unsupported column_divider {self.column_divider!r} in "
                     f"{self.__class__.__name__}.\n"
@@ -698,7 +700,7 @@ class VarColumnTabularTranslator(RuntimeException):
 
         ok, table = self.try_parse_table_with(str(case))
         if not ok:
-            self.raise_runtime_error(msg=str(err_msg))
+            raise_runtime_error(obj=self, msg=str(err_msg))
 
         return table    # noqa
 
@@ -706,7 +708,8 @@ class VarColumnTabularTranslator(RuntimeException):
         """Convert parsed tabular text into a template snippet."""
         table = self.parse_table()
         if not table:
-            self.raise_runtime_error(
+            raise_runtime_error(
+                obj=self,
                 msg=(
                     f"Unable to build template snippet in {self.__class__.__name__}.\n"
                     "Reason: Provided text is not in a valid tabular format."
@@ -715,7 +718,7 @@ class VarColumnTabularTranslator(RuntimeException):
         return table.to_snippet()
 
 
-class ParsedTable(RuntimeException):
+class ParsedTable:
     """Represents a parsed tabular text structure with rows and columns."""
 
     def __init__(
@@ -1461,7 +1464,7 @@ class ParsedTable(RuntimeException):
                 snippets.append(line_snippet)
 
 
-class Cell(RuntimeException):
+class Cell:
     """
     Represents a single cell in a tabular text row.
     """
@@ -1742,7 +1745,8 @@ class Cell(RuntimeException):
             return
 
         cls_name = datatype.get_class_name(self)
-        self.raise_runtime_error(
+        raise_runtime_error(
+            obj=self,
             msg=(
                 f"Invalid reference_cell type detected in {cls_name}.\n"
                 f"Object: {self!r}\n"
@@ -1756,7 +1760,8 @@ class Cell(RuntimeException):
         ok_right, right = number.try_to_get_number(right_pos, return_type=int)
 
         if not ok_left:
-            self.raise_runtime_error(
+            raise_runtime_error(
+                obj=self,
                 msg=(
                     f"Invalid left position in {self.__class__.__name__}.\n"
                     f"Expected: integer value\n"
@@ -1765,7 +1770,8 @@ class Cell(RuntimeException):
             )
 
         if not ok_right:
-            self.raise_runtime_error(
+            raise_runtime_error(
+                obj=self,
                 msg=(
                     f"Invalid right position in {self.__class__.__name__}.\n"
                     f"Expected: integer value\n"
@@ -1782,7 +1788,7 @@ class Cell(RuntimeException):
         self._trailing = None
 
 
-class Row(RuntimeException):    # noqa
+class Row:    # noqa
     """Represents a row in a tabular text structure."""
 
     def __init__(
@@ -1954,7 +1960,7 @@ class Row(RuntimeException):    # noqa
     ) -> "Row":
         """Construct a reference row from parsed tokens and boundary positions."""
         if not tokens:
-            RuntimeException.do_raise_runtime_error(
+            raise_runtime_error(
                 obj=f"{cls.__name__}RTError",
                 msg=(
                     f"Parsing failed for {cls.__name__}.\n"
@@ -2003,7 +2009,7 @@ class Row(RuntimeException):    # noqa
         total = len(tokens)
 
         if column_count > 0 and column_count != total:
-            RuntimeException.do_raise_runtime_error(
+            raise_runtime_error(
                 obj=f"{cls.__name__}RTError",
                 msg=(
                     f"Column count mismatch in {cls.__name__}.\n"
@@ -2052,7 +2058,7 @@ class Row(RuntimeException):    # noqa
         # Validate final token count
 
         if column_count > 0 and column_count != total:
-            RuntimeException.do_raise_runtime_error(
+            raise_runtime_error(
                 obj=f"{cls.__name__}RTError",
                 msg=(
                     f"Column count mismatch in {cls.__name__}.\n"
@@ -2107,7 +2113,7 @@ class Row(RuntimeException):    # noqa
                 column_divider=column_divider
             )
 
-        return RuntimeException.do_raise_runtime_error(
+        return raise_runtime_error(
             obj=f"{cls.__name__}RTError",
             msg=(
                 f"Unsupported case encountered in do_creating_reference_row.\n"
