@@ -20,7 +20,7 @@ from textfsmgen.tools.translator import IterateTranslator
 from textfsmgen.libs.generic import Position
 
 from textfsmgen import ui
-from textfsmgen.ui import usage
+from textfsmgen.ui import usage, widget
 
 from textfsmgen.ui.common import (
     show_message_dialog,
@@ -59,7 +59,7 @@ def create_window(parent: Optional[Union[ui.Tk, ui.Toplevel]]):
     window = ui.Toplevel(parent)
     window.title("Snippet Translator - TextFSMGen CE")
 
-    ui.set_window_icon(window)
+    widget.set_window_icon(window)
 
     if parent:
         center_window(

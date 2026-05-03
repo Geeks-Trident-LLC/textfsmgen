@@ -10,7 +10,7 @@ from typing import Optional, Union
 from tkinter import filedialog
 
 from textfsmgen import ui
-from textfsmgen.ui import usage
+from textfsmgen.ui import usage, widget
 
 from textfsmgen.ui.common import (
     center_window,
@@ -49,7 +49,7 @@ def create_window(parent: Optional[Union[ui.Tk, ui.Toplevel]]) -> ui.Toplevel:
     window = ui.Toplevel(parent)
     window.title("Settings - TextFSMGen CE")
 
-    ui.set_window_icon(window)
+    widget.set_window_icon(window)
 
     width = 982 if ui.is_macos else 880 if ui.is_linux else 680
     height = 604 if ui.is_macos else 615 if ui.is_linux else 564

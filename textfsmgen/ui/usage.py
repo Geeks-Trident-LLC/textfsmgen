@@ -12,6 +12,7 @@ from textfsmgen.libs.text import dedent_and_strip
 import textfsmgen.config as config
 
 from textfsmgen import ui
+from textfsmgen.ui import widget
 
 from textfsmgen.ui.common import (
     center_window,
@@ -31,7 +32,7 @@ def show_help(app, category):
     dialog = ui.Toplevel(parent)
     dialog.title(build_usage_title(category))
 
-    ui.set_window_icon(dialog)
+    widget.set_window_icon(dialog)
 
     if parent:
         center_window(

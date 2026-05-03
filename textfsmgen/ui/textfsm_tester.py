@@ -22,7 +22,7 @@ from textfsmgen.libs.generic import StatusString
 from textfsmgen.libs import file
 
 from textfsmgen import ui
-from textfsmgen.ui import usage
+from textfsmgen.ui import usage, widget
 
 from textfsmgen.ui.common import (
     show_message_dialog,
@@ -76,7 +76,7 @@ def create_window(parent: Optional[Union[ui.Tk, ui.Toplevel]]):
     window = ui.Toplevel(parent)
     window.title("TextFSM Tester - TextFSMGen CE")
 
-    ui.set_window_icon(window)
+    widget.set_window_icon(window)
 
     if parent:
         center_window(
@@ -117,7 +117,7 @@ def build_controls_frame(app, parent):
             continue
 
         if label == "tabular":
-            checkbox = ui.TriStateCheckBox(
+            checkbox = widget.TriStateCheckBox(
                 frame, label=label.title(),
                 state_var=app.tools.tester.checkbox_state_var,
                 shared_var=app.tools.tester.output_flag,

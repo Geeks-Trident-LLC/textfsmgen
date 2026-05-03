@@ -18,6 +18,7 @@ import textfsmgen.ui as ui
 import textfsmgen.config as config
 
 from textfsmgen.libs.utils import split_by_matches
+from textfsmgen.ui import widget
 
 
 class RewriteSync:
@@ -151,7 +152,7 @@ def show_message_dialog(    # noqa
     # Default fallback: show info dialog
     return ui.messagebox.showinfo(title=title, message=info or "", **options)
 
-@ui.apply_layout
+@widget.apply_layout
 def create_styled_label(
     parent: tk.Widget,
     text: str = "",
