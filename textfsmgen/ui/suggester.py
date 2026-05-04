@@ -13,7 +13,7 @@ from textfsmgen.libs.text import (
     get_list_of_lines,
 )
 
-from textfsmgen.tools.translator import SnippetTranslator
+from textfsmgen.tools.translator import SnippetSuggester
 from textfsmgen.tools.translator import ScriptBuilder
 from textfsmgen.tools.translator import IterateTranslator
 
@@ -529,7 +529,7 @@ def perform_suggest_action(app):
         )
         return
 
-    translator = SnippetTranslator(
+    translator = SnippetSuggester(
         data,
         variable_flag=t.variable_flag.get(),
         notation_flag=t.notation_flag.get(),

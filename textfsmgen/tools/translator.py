@@ -28,7 +28,7 @@ from textfsmgen.tools.token import (
 )
 
 
-class SnippetTranslator:
+class SnippetSuggester:
     def __init__(
         self, raw, variable_flag=True, notation_flag=False,
         group_flag=False, generic_flag=False, split_arg="/",
