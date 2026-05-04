@@ -3,20 +3,12 @@ textfsmgen.application
 ======================
 
 Main logic and user interface components for the `textfsmgen` library.
-"""     # noqa
-
-from textfsmgen.libs.common import ensure_tkinter_available
-tk = ensure_tkinter_available(app_name="textfsmgen")
-
-from tkinter import ttk
+"""
 
 from textfsmgen.libs.generic import DotObject
-
 from textfsmgen import version
-
+from textfsmgen.ui import common, controls, menu
 from textfsmgen import ui
-from textfsmgen.ui import menu, common
-from textfsmgen.ui import controls
 
 __version__ = version
 
@@ -90,45 +82,45 @@ class Application:
         )
 
         self.settings = DotObject(
-            test_data_btn_name=tk.StringVar(value="Test Data"),
+            test_data_btn_name=ui.tk.StringVar(value="Test Data"),
 
             # general arguments for TemplateBuilder
-            author=tk.StringVar(),
-            email=tk.StringVar(),
-            company=tk.StringVar(),
-            description=tk.StringVar(),
+            author=ui.tk.StringVar(),
+            email=ui.tk.StringVar(),
+            company=ui.tk.StringVar(),
+            description=ui.tk.StringVar(),
 
             # Category translator arguments
-            use_category_translator_flag=tk.BooleanVar(),
-            category_arg_count=tk.IntVar(value=1),
-            category_arg_separator=tk.StringVar(value=":"),
-            category_arg_starting_from=tk.StringVar(),
-            category_arg_ending_at=tk.StringVar(),
-            category_arg_replacing_rules=tk.StringVar(),
+            use_category_translator_flag=ui.tk.BooleanVar(),
+            category_arg_count=ui.tk.IntVar(value=1),
+            category_arg_separator=ui.tk.StringVar(value=":"),
+            category_arg_starting_from=ui.tk.StringVar(),
+            category_arg_ending_at=ui.tk.StringVar(),
+            category_arg_replacing_rules=ui.tk.StringVar(),
 
             # Tabular Translator arguments
-            use_tabular_translator_flag=tk.BooleanVar(),
-            tabular_arg_has_header_row_flag=tk.BooleanVar(value=True),
-            tabular_arg_divider=tk.StringVar(),
-            tabular_arg_count=tk.IntVar(),
-            tabular_arg_widths=tk.StringVar(),
-            tabular_arg_headers=tk.StringVar(),
-            tabular_arg_header_rows=tk.StringVar(),
-            tabular_arg_custom_header=tk.StringVar(),
-            tabular_arg_starting_from=tk.StringVar(),
-            tabular_arg_ending_at=tk.StringVar(),
-            tabular_arg_replacing_rules=tk.StringVar(),
+            use_tabular_translator_flag=ui.tk.BooleanVar(),
+            tabular_arg_has_header_row_flag=ui.tk.BooleanVar(value=True),
+            tabular_arg_divider=ui.tk.StringVar(),
+            tabular_arg_count=ui.tk.IntVar(),
+            tabular_arg_widths=ui.tk.StringVar(),
+            tabular_arg_headers=ui.tk.StringVar(),
+            tabular_arg_header_rows=ui.tk.StringVar(),
+            tabular_arg_custom_header=ui.tk.StringVar(),
+            tabular_arg_starting_from=ui.tk.StringVar(),
+            tabular_arg_ending_at=ui.tk.StringVar(),
+            tabular_arg_replacing_rules=ui.tk.StringVar(),
 
             # Test execution settings
-            always_ask_flag=tk.BooleanVar(value=True),
-            delete_file_after_run_flag=tk.BooleanVar(value=True),
-            python_interpreter=tk.StringVar(),
+            always_ask_flag=ui.tk.BooleanVar(value=True),
+            delete_file_after_run_flag=ui.tk.BooleanVar(value=True),
+            python_interpreter=ui.tk.StringVar(),
 
             # Output Display Options
-            test_data_flag=tk.BooleanVar(),
-            template_flag=tk.BooleanVar(),
-            tabular_flag=tk.BooleanVar(value=True),
-            index_flag=tk.BooleanVar()
+            test_data_flag=ui.tk.BooleanVar(),
+            template_flag=ui.tk.BooleanVar(),
+            tabular_flag=ui.tk.BooleanVar(value=True),
+            index_flag=ui.tk.BooleanVar()
         )
 
         self.snapshot = DotObject(
@@ -142,11 +134,11 @@ class Application:
         self.tools = DotObject(
             suggester = DotObject(
                 # flag or variable
-                variable_flag=tk.BooleanVar(value=True),
-                group_flag=tk.BooleanVar(),
-                generic_flag=tk.BooleanVar(value=True),
-                notation_flag=tk.BooleanVar(),
-                split_arg=tk.StringVar(value="/"),
+                variable_flag=ui.tk.BooleanVar(value=True),
+                group_flag=ui.tk.BooleanVar(),
+                generic_flag=ui.tk.BooleanVar(value=True),
+                notation_flag=ui.tk.BooleanVar(),
+                split_arg=ui.tk.StringVar(value="/"),
 
                 # widget
                 in_textarea=None,
@@ -162,24 +154,24 @@ class Application:
                 explain_area=None,
 
                 # widget-variable
-                shared_semantic_list=tk.StringVar(),
+                shared_semantic_list=ui.tk.StringVar(),
 
-                exact_quantity=tk.StringVar(),
-                range_min_quantity=tk.StringVar(),
-                range_max_quantity=tk.StringVar(),
-                variant_flag=tk.StringVar(),
+                exact_quantity=ui.tk.StringVar(),
+                range_min_quantity=ui.tk.StringVar(),
+                range_max_quantity=ui.tk.StringVar(),
+                variant_flag=ui.tk.StringVar(),
 
-                allowed_empty_flag=tk.BooleanVar(),
-                var_name=tk.StringVar(),
+                allowed_empty_flag=ui.tk.BooleanVar(),
+                var_name=ui.tk.StringVar(),
 
-                outcomes_value=tk.StringVar(),
+                outcomes_value=ui.tk.StringVar(),
 
                 # data
                 shared_data_list = [
-                    tk.StringVar(), tk.StringVar(),
-                    tk.StringVar(), tk.StringVar(),
-                    tk.StringVar(), tk.StringVar(),
-                    tk.StringVar(), tk.StringVar(),
+                    ui.tk.StringVar(), ui.tk.StringVar(),
+                    ui.tk.StringVar(), ui.tk.StringVar(),
+                    ui.tk.StringVar(), ui.tk.StringVar(),
+                    ui.tk.StringVar(), ui.tk.StringVar(),
                 ],
                 snippet_and_samples=None
             ),
@@ -191,13 +183,13 @@ class Application:
                 result_area=None,
 
                 # shared variables
-                checkbox_state_var=tk.BooleanVar(),
-                output_flag=tk.StringVar(),
+                checkbox_state_var=ui.tk.BooleanVar(),
+                output_flag=ui.tk.StringVar(),
 
                 # data
-                template_text=tk.StringVar(),
-                test_data_text=tk.StringVar(),
-                result_text=tk.StringVar()
+                template_text=ui.tk.StringVar(),
+                test_data_text=ui.tk.StringVar(),
+                result_text=ui.tk.StringVar()
             )
         )
 
@@ -289,7 +281,7 @@ class Application:
             print(f"... skip {getattr(event, 'widget', event)}")
 
     def build_main_window(self):
-        self.root = tk.Tk()
+        self.root = ui.tk.Tk()
         width, height = (1200, 750) if ui.is_macos else (1100, 650) if ui.is_linux else (900, 600)
         # self.root.geometry('1000x750+100+100' if ui.is_macos else '900x600+100+100')
         self.root.geometry(f"{width}x{height}+100+100")
@@ -307,21 +299,21 @@ class Application:
         # Main vertical paned container
 
         # Create main paned window
-        self.paned_window = ui.PanedWindow(self.root, orient=tk.VERTICAL)
-        self.paned_window.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
+        self.paned_window = ui.PanedWindow(self.root, orient="vertical")
+        self.paned_window.pack(fill="both", expand=True, padx=2, pady=2)
 
         # Define frames
         self.frames.input = ui.Frame(
-            self.paned_window, width=600, height=300, relief=tk.RIDGE
+            self.paned_window, width=600, height=300, relief="ridge"
         )
         self.frames.controls = ui.Frame(
-            self.paned_window, width=600, relief=tk.RIDGE,
+            self.paned_window, width=600, relief="ridge",
             height=70 if ui.is_macos else 74 if ui.is_linux else 62,
         )
         self.frames.controls.pack_propagate(False)  # keep the height
 
         self.frames.output = ui.Frame(
-            self.paned_window, width=600, height=350, relief=tk.RIDGE
+            self.paned_window, width=600, height=350, relief="ridge"
         )
 
         # Add frames to paned window with weights
@@ -345,15 +337,15 @@ class Application:
         self.textarea.input.grid(row=0, column=0, sticky='nswe')    # noqa
 
         # Add vertical scrollbar
-        vscrollbar = ttk.Scrollbar(
-            self.frames.input, orient=tk.VERTICAL,
+        vscrollbar = ui.Scrollbar(
+            self.frames.input, orient="vertical",
             command=self.textarea.input.yview
         )
         vscrollbar.grid(row=0, column=1, sticky='ns')
 
         # Add horizontal scrollbar
-        hscrollbar = ttk.Scrollbar(
-            self.frames.input, orient=tk.HORIZONTAL,
+        hscrollbar = ui.Scrollbar(
+            self.frames.input, orient="horizontal",
             command=self.textarea.input.xview
         )
         hscrollbar.grid(row=1, column=0, sticky='ew')
@@ -376,21 +368,21 @@ class Application:
         # Create result text area
         self.textarea.output = ui.TextArea(
             self.frames.output, width=20, height=5, wrap='none',
-            state=tk.DISABLED,
+            state="disabled",
             name='output_textarea',
             bg=ui.readonly_text_bg_color,
         )
         self.textarea.output.grid(row=0, column=0, sticky='nswe')   # noqa
 
         # Attach scrollbars
-        vscrollbar = ttk.Scrollbar(
-            self.frames.output, orient=tk.VERTICAL,
+        vscrollbar = ui.Scrollbar(
+            self.frames.output, orient="vertical",
             command=self.textarea.output.yview
         )
         vscrollbar.grid(row=0, column=1, sticky='ns')
 
-        hscrollbar = ttk.Scrollbar(
-            self.frames.output, orient=tk.HORIZONTAL,
+        hscrollbar = ui.Scrollbar(
+            self.frames.output, orient="horizontal",
             command=self.textarea.output.xview
         )
         hscrollbar.grid(row=1, column=0, sticky='ew')

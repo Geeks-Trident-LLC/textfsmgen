@@ -171,7 +171,7 @@ puncts_samples.extend(punct_samples[:5])
 
 dot_samples = non_ws_samples + [' ', '\t', '\x0b', '\x0c'] * 3
 dots_samples = [
-    f"# v1 = 3 ÷ 4", f"mango¦beef¦lemonade", f"temperature is 32°.", f"What is Ø?",
+    "# v1 = 3 ÷ 4", "mango¦beef¦lemonade", "temperature is 32°.", "What is Ø?",
     "Bright sun shines Øver", "Café music plays softly", "Warm breeze feels ñice",
     "Fresh fruits taste süper", "Calm night brings rêst", "Morning starts with thé",
     "Birds fly över trees", "Flowers smell délicate today", "Clouds drift slówly away",

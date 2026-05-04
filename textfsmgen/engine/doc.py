@@ -601,7 +601,7 @@ class OperationDoc:
         if template:
             if self.or_empty:
                 replacement = (
-                    f"zero or more"
+                    "zero or more"
                     if hi == 99999 else
                     f"either zero or {word_digit_lo} to {word_digit_hi}"
                 )
@@ -836,7 +836,7 @@ class ExplanationDoc:
         occurrences = "zero-or-more" if quantifier == "*" else "one-or-more"
         optional = "?" if self._allowed_empty or optional=="?" else ""
 
-        separator_line = f'<sep> is the whitespace separator (r"\\s+")'
+        separator_line = r'<sep> is the whitespace separator (r"\s+")'
         repeat_line = f'"{quantifier}" repeats {occurrences} (<sep><{base}>) groups'
         optional_line = f'"{optional}" allows zero or one occurrence of the entire {base} group'
 

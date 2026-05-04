@@ -1077,7 +1077,7 @@ class ParsedTable:
         if not self.reference_row or not self.has_header_row:
             return
 
-        if not self.reference_row.line in self.lines:
+        if self.reference_row.line not in self.lines:
             if not self.has_header_row:
                 return
             row_pos = 0

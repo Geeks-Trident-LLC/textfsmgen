@@ -1,7 +1,13 @@
-# Core libraries used by RewordApp
+# Core libraries used by textfsmgen
 -r requirements.txt
 
 # Development & testing
 pytest
+pytest-cov
 requests
-flake8
+
+# Linting / formatting (optional but recommended)
+ruff
+
+# Type checking (optional)
+mypy

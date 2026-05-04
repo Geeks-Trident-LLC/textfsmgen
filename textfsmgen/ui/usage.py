@@ -135,7 +135,7 @@ def get_usage(category: str) -> str:
 
 def get_suggester_usage():
     """Return usage of Regex Suggester."""
-    usage = dedent_and_strip("""
+    usage = dedent_and_strip(r"""
         The <bold>Regex Suggester Tool</bold> helps users quickly generate a <bold>TextFSMGen</bold> snippet 
         and optional Python verification code. It provides an iterative workflow for 
         translating raw text, refining the snippet, and validating the parsing logic.
@@ -646,7 +646,7 @@ def get_started_with_textfsmgen():
 
 
 def get_quickstart_regex_builder_tool():
-    doc = dedent_and_strip("""
+    doc = dedent_and_strip(r"""
 The Regex Builder Tool helps users quickly generate a regular expression pattern
 along with a detailed explanation. This tool provides two ways to generate a pattern:
   - Select predefined keywords using checkboxes

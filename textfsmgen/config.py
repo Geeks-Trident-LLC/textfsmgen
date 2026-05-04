@@ -72,7 +72,7 @@ for name in (
 
 # License
 years = "2022"
-license_name = f"TextFSM Generator License"
+license_name = "TextFSM Generator License"
 copyright_text = f"Copyright \xa9 {years}"
 
 license_text = dedent_and_strip(

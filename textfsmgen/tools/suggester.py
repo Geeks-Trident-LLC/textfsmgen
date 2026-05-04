@@ -485,6 +485,7 @@ class ScriptBuilder:
     def build_python_code(self):
         group_flag = True if self.is_whitespaces_test_data() else self._group_flag
         pattern = LinePattern(self._snippet)
+
         lst = [
             "import re",
             "from textfsmgen.core.patterns import LinePattern",
@@ -496,24 +497,23 @@ class ScriptBuilder:
             "",
             f"raw_data = {enclose_string(self._raw)}",
             "",
-            f"# When group_flag is False, only the first non-empty line is used",
-            f"if not group_flag:",
-            f"    lines = [line for line in get_list_of_lines(raw_data) if line.strip()]",
-            f'    assert lines, "No non-empty lines found in raw_data"',
-            f"    samples = lines[0:1]",
-            f"else:",
-            f"    samples = get_list_of_lines(raw_data)",
+            "# When group_flag is False, only the first non-empty line is used",
+            "if not group_flag:",
+            "    lines = [line for line in get_list_of_lines(raw_data) if line.strip()]",
+            '    assert lines, "No non-empty lines found in raw_data"',
+            "    samples = lines[0:1]",
+            "else:",
+            "    samples = get_list_of_lines(raw_data)",
             "",
             f"pattern = r{enclose_string(pattern)}",
             "",
-            f"# Run pattern against each test data line",
+            "# Run pattern against each test data line",
             "",
-            f"for sample in samples:",
-            f"    match = re.fullmatch(pattern, sample)",
+            "for sample in samples:",
+            "    match = re.fullmatch(pattern, sample)",
             '    assert match is not None, f"Pattern failed on: {repr(sample)}"',
-            f"    print(match.groupdict() or match)",
+            "    print(match.groupdict() or match)",
             "",
-
         ]
 
         return "\n".join(lst)

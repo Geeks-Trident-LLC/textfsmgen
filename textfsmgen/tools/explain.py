@@ -199,7 +199,7 @@ class SnippetExplanation:
             parts.append(f"    lst = {result}")
             return "\n".join(parts) + "\n"
 
-        parts.append(f"    lst = [")
+        parts.append("    lst = [")
         for sample in self._test_samples:
             parts.append(f"        {sample!r},")
         parts.append("    ]\n")
