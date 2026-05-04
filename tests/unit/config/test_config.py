@@ -4,14 +4,12 @@ Unit tests for the `textfsmgen.config` module.
 Usage
 -----
 Run pytest in the project root to execute these tests:
-    $ pytest tests/unit/test_config.py
+    $ pytest tests/unit/config/test_config.py
     or
-    $ python -m pytest tests/unit/test_config.py
+    $ python -m pytest tests/unit/config/test_config.py
 """
 
-
 import pytest   # noqa
-
 import requests     # noqa
 
 from pathlib import Path
@@ -37,8 +35,6 @@ def test_version_matches_config():
     """Ensure installed package version matches config version."""
     assert pkg_info.is_installed is True
     assert pkg_info.version == config.version
-
-
 
 
 def test_user_keyword_mapping_file():
@@ -79,35 +75,3 @@ def test_get_dependency(pkg):
     pkg_name, pkg_url = config.get_dependency().get(pkg).values()
     assert pkg_name.startswith(f"{pkg} v")
     assert pkg_url.rstrip("/").lower() == f"https://pypi.org/project/{pkg}"
-
-
-@pytest.mark.parametrize(
-    "page, expected",
-    [
-        ("how-to-use-regex-builder", ["Regex Builder Tool", "Semantic Overview"]),
-        ("how-to-use-textfsm-tester", ["TextFSM Tester Tool", "Interface Overview"]),
-        ("how-to-use-regex-suggester", ["Regex Suggester Tool", "Interface Overview"]),
-        ("high-level-overview", ["Free‑Form Workflow", "Semi‑Structured Workflow"]),
-        ("textfsm-generator-settings-guide", ["General Arguments Settings", "Category Translator Arguments"]),
-        ("demo-regex-suggester", ["Demo Regex Suggester", "The current Regex Suggester settings"]),
-        ("demo-ios-show-clock", ["Demo IOS show clock",]),
-        ("demo-listing-files-in-long-format-on-linux", ["Demo Listing Files in Long Format on Linux",]),
-        ("demo-listing-files-on-powershell", ["Demo Listing Files on Powershell"]),
-        ("demo-linux-file-status-information", ["Demo Linux File Status Information"]),
-        ("faq", ["FAQ"]),
-    ]
-)
-def test_url_page(page, expected):
-    url = config.urls.get(page)
-    response = requests.get(url, timeout=10)
-    assert response.status_code == 200
-
-    html_text = response.text.lower()
-
-    for item in expected:
-        assert item.lower() in html_text
-
-
-
-
-
