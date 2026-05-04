@@ -11,7 +11,7 @@ Run pytest in the project root to execute these tests:
 
 import pytest  # noqa
 
-from textfsmgen.tools.translator import IterateSuggester
+from textfsmgen.tools.suggester import IterateSuggester
 
 
 @pytest.mark.parametrize(

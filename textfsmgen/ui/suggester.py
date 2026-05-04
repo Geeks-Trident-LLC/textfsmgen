@@ -13,9 +13,9 @@ from textfsmgen.libs.text import (
     get_list_of_lines,
 )
 
-from textfsmgen.tools.translator import SnippetSuggester
-from textfsmgen.tools.translator import ScriptBuilder
-from textfsmgen.tools.translator import IterateSuggester
+from textfsmgen.tools.suggester import SnippetSuggester
+from textfsmgen.tools.suggester import ScriptBuilder
+from textfsmgen.tools.suggester import IterateSuggester
 
 from textfsmgen.libs.generic import Position
 
