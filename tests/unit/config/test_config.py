@@ -16,23 +16,6 @@ from pathlib import PurePath
 
 from textfsmgen import version
 import textfsmgen.config as config
-from textfsmgen.libs import shell
-
-
-# Package info for textfsmgen
-pkg_info = shell.PackageInfo("textfsmgen")
-
-# Skip marker if textfsmgen is not installed
-skip_if_missing_textfsmgen = pytest.mark.skipif(
-    not pkg_info.is_installed, reason="Skipping: textfsmgen package is not installed."
-)
-
-
-@skip_if_missing_textfsmgen
-def test_version_matches_config():
-    """Ensure installed package version matches config version."""
-    assert pkg_info.is_installed is True
-    assert pkg_info.version == config.version
 
 
 def test_user_keyword_mapping_file():

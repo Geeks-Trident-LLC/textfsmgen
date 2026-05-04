@@ -7,6 +7,7 @@ Entry point for the TextFSM Generator command‑line interface (CLI).
 
 import argparse
 
+import textfsmgen
 from textfsmgen.libs.common import sys_exit
 from textfsmgen.libs.common import decorate_list_of_line
 from textfsmgen.libs import file
@@ -56,7 +57,7 @@ def show_dependency(options):
 
 def show_version(options):
     """Display the current version of the TextFSM Generator application."""
-    if not options.version:
+    if not textfsmgen.version:
         return
 
     from textfsmgen import version

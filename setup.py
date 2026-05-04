@@ -23,6 +23,7 @@ setup(
     author_email='tuyen@geekstrident.com',
     maintainer='Tuyen Mathew Duong',
     maintainer_email='tuyen@geekstrident.com',
+
     install_requires=[
         "textfsm>=1.1.0",
         "pyyaml>=6.0",

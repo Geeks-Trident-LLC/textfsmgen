@@ -11,14 +11,8 @@ from pathlib import PurePath
 import textfsm
 import yaml
 
+from textfsmgen import version
 from textfsmgen.libs.common import dedent_and_strip
-
-__version__ = "0.6.2"
-version = __version__
-
-__all__ = [
-    "version",
-]
 
 # app yaml files
 user_keyword_mapping_file = str(

@@ -10,9 +10,9 @@ from textfsmgen.core.template import LineParser
 from textfsmgen.core.template import TemplateBuilder
 from textfsmgen.core.template import CategoryTemplateBuilder
 from textfsmgen.core.template import TabularTemplateBuilder
-from textfsmgen.config import version
 
-__version__ = version
+__version__ = "0.6.2"
+version = __version__
 
 __all__ = [
     "LineParser",
