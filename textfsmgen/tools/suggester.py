@@ -47,8 +47,6 @@ class SnippetSuggester:
 
     def __bool__(self): return self._parsed
 
-    def __len__(self): return 1 if self._parsed else 0
-
     @property
     def raw(self): return self._raw
 
@@ -154,8 +152,6 @@ class IterateSuggester:
 
     def __bool__(self):
         return bool(self._snippet) or not any([self._error, self._warning])
-
-    def __len__(self): return 1 if self else 0
 
     @property
     def raw(self): return self._raw

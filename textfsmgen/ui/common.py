@@ -37,9 +37,6 @@ class RewriteSync:
     def __bool__(self):
         return self.is_application_app
 
-    def __len__(self):
-        return 1 if self.is_application_app else 0
-
     def is_synced(self, app) -> bool:
         """Return True if both input and output match the stored originals."""
 

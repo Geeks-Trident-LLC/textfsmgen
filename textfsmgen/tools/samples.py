@@ -146,8 +146,6 @@ class SamplesGenerator:
 
     def __bool__(self): return self._is_parsed
 
-    def __len__(self): return 1 if self._is_parsed else 0
-
     @property
     def pattern(self): return LinePattern(self._snippet) if self else ""
 

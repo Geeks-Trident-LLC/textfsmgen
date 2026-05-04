@@ -50,8 +50,6 @@ class SnippetBase:
 
     def __bool__(self): return self._parsed
 
-    def __len__(self): return 1 if self._parsed else 0
-
     @property
     def explanation(self): return self._explanation
 
@@ -257,8 +255,6 @@ class LineSnippet:
         self.parse_tokens()
 
     def __bool__(self): return self._parsed
-
-    def __len__(self): return 1 if self._parsed else 0
 
     @property
     def raw(self): return self._raw

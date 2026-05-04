@@ -613,8 +613,6 @@ class CategoryTemplateBuilder:
 
     def __bool__(self): return bool(self.translator)
 
-    def __len__(self): return 1 if self.translator else 0
-
     @property
     def snippet(self):
         return self.translator.to_template_snippet() if self.translator else ""
@@ -710,8 +708,6 @@ class TabularTemplateBuilder:
             self.builder = TemplateBuilder(**self.template_builder_args)
 
     def __bool__(self): return bool(self.translator)
-
-    def __len__(self): return 1 if self.translator else 0
 
     @property
     def snippet(self):

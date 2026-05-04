@@ -49,8 +49,6 @@ class SnippetExplanation:
 
     def __bool__(self): return self._ready
 
-    def __len__(self): return 1 if self._ready else 0
-
     @property
     def raw_snippet(self): return self._raw_snippet
 

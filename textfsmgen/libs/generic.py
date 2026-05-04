@@ -141,8 +141,6 @@ class StatusString(str):
 
     def __bool__(self): return self.status
 
-    def __len__(self): return 1 if self.status else 0
-
     def is_good(self): return self.status is True
 
     def is_bad(self): return self.status is False

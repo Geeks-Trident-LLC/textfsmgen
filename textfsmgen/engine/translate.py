@@ -88,8 +88,6 @@ class PatternTranslator:
 
     def __bool__(self): return self._pattern != ""
 
-    def __len__(self): return 1 if self._pattern != "" else 0
-
     def __call__(self, *args, **kwargs): return self.__class__(*args, **kwargs)
 
     @property
@@ -1564,8 +1562,6 @@ class TokenAggregator:
         self._parsed = False
 
     def __bool__(self): return self._parsed
-
-    def __len__(self): return 1 if self._parsed else 0
 
     @property
     def tokens(self): return self._tokens

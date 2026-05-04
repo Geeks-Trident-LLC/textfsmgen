@@ -66,9 +66,7 @@ class TabularTranslator:
         self.prepare_column_widths()
         self.process()
 
-    def __len__(self) -> int:
-        """Return 1 if a tabular parser exists, otherwise 0."""
-        return int(bool(self.tabular_parser))
+    def __bool__(self): return bool(self.tabular_parser)
 
     def prepare_column_widths(self) -> None:
         """Validate and normalize column widths."""
@@ -198,9 +196,7 @@ class VarColumnTabularTranslator:
         self.parse_headers()
         self.prepare_header_rows()
 
-    def __len__(self):
-        """Return True if column_count is non-zero, else False."""
-        return bool(self.column_count)
+    def __bool__(self): return bool(self.column_count)
 
     @property
     def is_punct_divider(self):
@@ -771,9 +767,7 @@ class ParsedTable:
 
         self.process()
 
-    def __len__(self) -> int:
-        """Return 1 if table has rows and columns, else 0."""
-        return int(bool(self.rows) and bool(self.columns))
+    def __bool__(self) -> bool: return bool(self.rows) and bool(self.columns)
 
     def __repr__(self) -> str:
         """Return a string representation of the table."""
@@ -1504,10 +1498,6 @@ class Cell:
         """Return True if the cell has valid boundaries, otherwise False."""
         return self.left >= 0 or self.right > self.left
 
-    def __len__(self) -> int:
-        """Return 1 if the cell has valid boundaries, otherwise 0."""
-        return int(self.left >= 0 or self.right > self.left)
-
     def __repr__(self) -> str:
         """Return a string representation with text, data, and boundaries."""
         cls_name = datatype.get_class_name(self)
@@ -1813,7 +1803,7 @@ class Row:    # noqa
 
     def __bool__(self) -> bool: return True if self.cells else False
 
-    def __len__(self) -> int: return int(bool(self.cells))
+    def __len__(self) -> int: return len(self.cells)
 
     def __repr__(self) -> str: return str(self)
 
@@ -2162,7 +2152,7 @@ class Column:
 
     def __bool__(self) -> bool: return True if self.cells else False
 
-    def __len__(self) -> int: return int(bool(self.cells))
+    def __len__(self) -> int: return len(self.cells)
 
     def __str__(self) -> str:
         """Return a string representation of the column with name and cell count."""

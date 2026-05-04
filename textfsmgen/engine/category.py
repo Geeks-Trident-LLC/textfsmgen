@@ -208,8 +208,6 @@ class CategoryLineTranslator(LineData):
 
     def __bool__(self) -> bool: return True if self._lst else False
 
-    def __len__(self) -> int: return len(self._lst)
-
     @property
     def parsed(self) -> bool: return bool(self)
 
@@ -519,8 +517,6 @@ class CategoryLinesTranslator:
         return any(isinstance(item, CategoryLineTranslator) for item in self._lst)
 
     def __bool__(self) -> bool: return True if self._lst else False
-
-    def __len__(self) -> int: return len(self._lst)
 
     def process(self) -> None:
         """

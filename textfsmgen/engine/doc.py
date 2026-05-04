@@ -660,8 +660,6 @@ class ExplanationDoc:
 
     def __bool__(self): return self._parsed
 
-    def __len__(self): return self._parsed
-
     @property
     def doc(self): return self._doc
 

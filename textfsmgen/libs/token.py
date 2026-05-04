@@ -64,8 +64,6 @@ class CallNode(BaseText):
 
     def __bool__(self): return self._parsed
 
-    def __len__(self): return 1 if self else 0
-
     def __repr__(self):
         return f"CallNode(name={self._name!r}, params={self._params!r})"
 

@@ -93,9 +93,6 @@ class TextMatcher:
     def __bool__(self):
         return bool(self._patterns)
 
-    def __len__(self):
-        return 1 if self else 0
-
     def clear(self):
         """Remove all stored patterns."""
         self._patterns.clear()
@@ -122,8 +119,6 @@ class Tabular:
         self.process()
 
     def __bool__(self): return self.is_tabular
-
-    def __len__(self): return 1 if self.is_tabular else 0
 
     def compute_column_widths(self, columns):
         """Return max display width for each column based on data and defaults."""

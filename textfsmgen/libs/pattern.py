@@ -578,8 +578,6 @@ class ParsedKeywordMappingName:
 
     def __bool__(self): return self._is_resolved
 
-    def __len__(self): return 1 if self._is_resolved else 0
-
     @property
     def status(self): return self._status
 
