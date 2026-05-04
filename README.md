@@ -1,3 +1,9 @@
+![PyPI](https://img.shields.io/pypi/v/textfsmgen)
+![Build](https://github.com/geekstrident/textfsmgen/actions/workflows/release-test.yml/badge.svg)
+![Docs](https://img.shields.io/badge/docs-online-brightgreen)
+![License](https://img.shields.io/github/license/geekstrident/textfsmgen)
+
+
 # TextFSM Generator
 
 ---

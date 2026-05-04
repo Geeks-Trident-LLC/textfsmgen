@@ -1,32 +1,50 @@
-# Stop on first error
-$ErrorActionPreference = "Stop"
-
 param(
     [ValidateSet("patch", "minor", "major")]
-    [string]$Part = "patch"
+    [string]$Bump = "patch",
+
+    [switch]$DryRun
 )
 
-Write-Host "==> Bumping version ($Part)..."
-bump2version $Part
+$root = Split-Path $PSScriptRoot -Parent
 
-Write-Host "==> Cleaning old build artifacts..."
-Remove-Item -Recurse -Force build, dist, *.egg-info -ErrorAction Ignore
+Write-Host "=== Python Package Release Tool ===" -ForegroundColor Cyan
+Write-Host "Bump type: $Bump"
+if ($DryRun) { Write-Host "Dry-run mode enabled." -ForegroundColor Yellow }
 
-Write-Host "==> Running tests..."
-pytest
+# --- Validate tools ---
+$required = @("python", "pip", "twine", "bump2version")
+foreach ($tool in $required) {
+    if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
+        Write-Host "Missing required tool: $tool" -ForegroundColor Red
+        exit 1
+    }
+}
 
-Write-Host "==> Building package..."
-python -m build
+# --- Version bump ---
+if ($DryRun) {
+    Write-Host "[DRY] Would bump version: $Bump"
+}
+else {
+    Write-Host "Bumping version ($Bump)..." -ForegroundColor Cyan
+    bump2version $Bump
+}
 
-Write-Host "==> Uploading to PyPI..."
-twine upload dist/*
+# --- Build package ---
+Write-Host "Building package..." -ForegroundColor Cyan
+if ($DryRun) {
+    Write-Host "[DRY] Would run: python -m build"
+}
+else {
+    python -m build
+}
 
-Write-Host "==> Tagging version..."
-$version = python -c "import textfsmgen; print(textfsmgen.__version__)"
-git tag "v$version"
-git push --tags
+# --- Upload to PyPI ---
+Write-Host "Uploading to PyPI..." -ForegroundColor Cyan
+if ($DryRun) {
+    Write-Host "[DRY] Would run: twine upload dist/*"
+}
+else {
+    twine upload dist/*
+}
 
-Write-Host "==> Pushing commits..."
-git push
-
-Write-Host "==> Release complete!"
+Write-Host "Release complete." -ForegroundColor Green

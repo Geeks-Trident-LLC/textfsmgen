@@ -1,12 +1,13 @@
-name: Publish to PyPI
+name: CI
 
 on:
   push:
-    tags:
-      - "v*"
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
 
 jobs:
-  publish:
+  build-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -16,18 +17,13 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
-          pip install build twine
 
-      - name: Build package
-        run: python -m build
-
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.8.11
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
+      - name: Run CI pipeline
+        shell: pwsh
+        run: pwsh scripts/ci.ps1

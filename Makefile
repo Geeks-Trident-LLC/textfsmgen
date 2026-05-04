@@ -1,6 +1,12 @@
-# Clean build artifacts
+.PHONY: clean deep-clean
+
 clean:
     rm -rf build dist *.egg-info
+
+deep-clean:
+    rm -rf build dist *.egg-info
+    python clean.py
+
 
 # Run tests
 test:
@@ -85,3 +91,4 @@ check:
 
 release: check build upload
 release-test: check build upload-test
+

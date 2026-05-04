@@ -1,0 +1,19 @@
+# Global ownership
+* @geekstrident
+
+* @geekstrident/maintainers
+
+# Documentation
+/docs/ @geekstrident
+
+# Core engine
+/textfsmgen/engine/ @geekstrident
+
+# Libraries
+/textfsmgen/libs/ @geekstrident
+
+# Tools
+/textfsmgen/tools/ @geekstrident
+
+# Tests
+/tests/ @geekstrident

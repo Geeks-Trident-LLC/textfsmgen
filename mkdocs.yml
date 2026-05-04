@@ -1,0 +1,98 @@
+site_name: textfsmgen Documentation
+site_description: Documentation for the textfsmgen parsing and template toolkit
+site_author: Geeks Trident LLC
+site_url: https://geeks-trident-llc.github.io/textfsmgen/
+repo_url: https://github.com/Geeks-Trident-LLC/textfsmgen
+repo_name: textfsmgen
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  logo: assets/images/logo.svg
+  favicon: assets/images/favicon.svg
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.footer
+    - navigation.instant
+    - content.code.copy
+    - content.code.annotate
+    - content.action.edit
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.snippets
+  - pymdownx.magiclink
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+plugins:
+  - search
+  - autorefs
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: true
+
+nav:
+  - 🏠 Home: index.md
+  - 📦 Installation: installation.md
+  - ⚡ Quickstart: quickstart.md
+
+  - 🧭 Usage:
+      - 📘 Overview: usage/overview.md
+      - 💻 CLI: usage/cli.md
+      - 🐍 Python API: usage/python-api.md
+      - 🧪 Examples: usage/examples.md
+      - 🐞 Debugging: usage/debugging.md
+
+  - 📝 Guides:
+      - ✍️ Writing Templates: guides/writing-templates.md
+      - 🌟 Best Practices: guides/best-practices.md
+      - ✔️ Validation: guides/validation.md
+
+  - 📖 Reference:
+      - 🔧 API: reference/api.md
+      - ⚙️ Config: reference/config.md
+
+  - 🧩 Development:
+      - 🤝 Contributing: development/contributing.md
+      - 🚢 Release Process: development/release.md
+      - 🏗️ Architecture: development/architecture.md
+      - 🗺️ Roadmap: development/roadmap.md
+
+  - ---
+  - 📄 Quick Tools:
+      - 🧭 Cheat Sheet: cheatsheet.md
+      - 👥 Quickstart Roles: quickstart-roles.md
+
+  - 🛠️ Maintenance:
+      - 🔵 Regular Maintenance: maintenance/regular.md
+      - 🟢 Testing Maintenance: maintenance/testing.md
+      - 🟧 Release Maintenance: maintenance/release.md
+      - 🟪 Deployment Maintenance: maintenance/deployment.md
+
+  - ---
+  - 🧷 Miscellaneous:
+      - ⚙️ Installing PowerShell 7: miscellaneous/powershell-install.md

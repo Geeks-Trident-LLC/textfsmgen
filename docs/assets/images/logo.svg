@@ -1,0 +1,14 @@
+<svg width="420" height="120" viewBox="0 0 420 120" xmlns="http://www.w3.org/2000/svg">
+  <rect width="420" height="120" rx="12" fill="#1E1E1E"/>
+  <text x="40" y="72" font-family="Segoe UI, Roboto, sans-serif" font-size="48" fill="#00D1FF" font-weight="600">
+    textfsmgen
+  </text>
+  <text x="42" y="100" font-family="Segoe UI, Roboto, sans-serif" font-size="16" fill="#CCCCCC">
+    Template validation & parsing toolkit
+  </text>
+
+  <!-- Icon -->
+  <rect x="330" y="30" width="60" height="60" rx="8" fill="#00D1FF" opacity="0.15"/>
+  <path d="M350 50 L370 50 L370 70 L350 70 Z" stroke="#00D1FF" stroke-width="3" fill="none"/>
+  <path d="M350 60 L370 60" stroke="#00D1FF" stroke-width="3"/>
+</svg>
