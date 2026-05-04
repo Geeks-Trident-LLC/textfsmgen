@@ -33,7 +33,7 @@ main_app_text = f"TextFSM Generator v{version}"
 software_release = f"TextFSM Generator v{version} - Beta"
 
 # company
-company = "Geeks Trident LLC"   # noqa
+company = "Geeks Trident LLC"  # noqa
 company_full_name = company
 company_name = "Geeks Trident"
 company_url = "https://www.geekstrident.com/"
@@ -49,23 +49,23 @@ urls = {
     "license": f"{repo_url}/blob/develop/LICENSE",
     "report-issue": f"{repo_url}/issues/new",
     "wiki": wiki_url,
-
     "video": "https://www.youtube.com/@geekstrident",
-
     "youtube": "https://www.youtube.com/@geekstrident",
-
     "contact-support": "https://www.geekstrident.com/contact",
     "submit-feedback": "https://forms.microsoft.com/r/vQ2NHk7tRb",
-
 }
 for name in (
-    "high-level-overview", "faq", "textfsm-generator-settings-guide",
+    "high-level-overview",
+    "faq",
+    "textfsm-generator-settings-guide",
     "how-to-use-regex-suggester",
     "how-to-use-regex-builder",
     "how-to-use-textfsm-tester",
-    "demo-regex-suggester", "demo-ios-show-clock",
+    "demo-regex-suggester",
+    "demo-ios-show-clock",
     "demo-listing-files-in-long-format-on-linux",
-    "demo-listing-files-on-powershell", "demo-linux-file-status-information",
+    "demo-listing-files-on-powershell",
+    "demo-linux-file-status-information",
 ):
     urls[name] = f"{wiki_url}/{name}"
 
@@ -116,12 +116,11 @@ def get_dependency():
     dependencies = dict(
         textfsm=dict(
             package=f"textfsm v{textfsm.__version__}",
-            url="https://pypi.org/project/textfsm/"
+            url="https://pypi.org/project/textfsm/",
         ),
         pyyaml=dict(
             package=f"pyyaml v{yaml.__version__}",
-            url="https://pypi.org/project/PyYAML/"
-        )
+            url="https://pypi.org/project/PyYAML/",
+        ),
     )
     return dependencies
-

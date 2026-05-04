@@ -15,6 +15,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import textfsmgen.config as config
 
+
 # Shared session for connection reuse
 @pytest.fixture(scope="session")
 def http_session():
@@ -28,10 +29,19 @@ PAGES = [
     ("how-to-use-textfsm-tester", ["TextFSM Tester Tool", "Interface Overview"]),
     ("how-to-use-regex-suggester", ["Regex Suggester Tool", "Interface Overview"]),
     ("high-level-overview", ["Free‑Form Workflow", "Semi‑Structured Workflow"]),
-    ("textfsm-generator-settings-guide", ["General Arguments Settings", "Category Translator Arguments"]),
-    ("demo-regex-suggester", ["Demo Regex Suggester", "The current Regex Suggester settings"]),
+    (
+        "textfsm-generator-settings-guide",
+        ["General Arguments Settings", "Category Translator Arguments"],
+    ),
+    (
+        "demo-regex-suggester",
+        ["Demo Regex Suggester", "The current Regex Suggester settings"],
+    ),
     ("demo-ios-show-clock", ["Demo IOS show clock"]),
-    ("demo-listing-files-in-long-format-on-linux", ["Demo Listing Files in Long Format on Linux"]),
+    (
+        "demo-listing-files-in-long-format-on-linux",
+        ["Demo Listing Files in Long Format on Linux"],
+    ),
     ("demo-listing-files-on-powershell", ["Demo Listing Files on Powershell"]),
     ("demo-linux-file-status-information", ["Demo Linux File Status Information"]),
     ("faq", ["FAQ"]),

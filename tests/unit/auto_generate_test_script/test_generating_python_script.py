@@ -83,8 +83,8 @@ class TestTemplateBuilderPythonScript:
                 test_textfsm_template(template, test_data)
         ''')
 
-        dt_str = format(datetime.now(), '%Y-%m-%d')
-        expected_script = expected_script.replace('_datetime_', dt_str)
+        dt_str = format(datetime.now(), "%Y-%m-%d")
+        expected_script = expected_script.replace("_datetime_", dt_str)
 
         factory = TemplateBuilder(user_data=user_data, test_data=test_data)
         pytest_script = factory.create_python_test()

@@ -13,18 +13,15 @@ import pytest
 
 from textfsmgen.engine.translate import (
     make_translator,
-
     DigitsTranslator,
     NumberTranslator,
     MixedNumberTranslator,
-
     WordTranslator,
     WordsTranslator,
     MixedWordTranslator,
     MixedWordsTranslator,
-
     NonWSSTranslator,
-    NonWSSGroupTranslator
+    NonWSSGroupTranslator,
 )
 
 from tests.unit.engine.translate import to_list
@@ -40,15 +37,15 @@ class TestDigitsTranslatorClass:
     @pytest.mark.parametrize(
         "other",
         [
-            "123",              # digits are a subset of digits
-            "1.1",              # digits are a subset of number
-            "-1.1",             # digits are a subset of mixed number
-            "abc123",           # digits are a subset of word
-            "a1 b12",           # digits are a subset of words
-            "abc.123",          # digits are a subset of mixed word
-            "a.1 b.2",          # digits are a subset of mixed words
-            "abc\xc8",          # digits are a subset of non-whitespaces
-            "abc\xc8 xyz",      # digits are a subset of non-whitespace group
+            "123",  # digits are a subset of digits
+            "1.1",  # digits are a subset of number
+            "-1.1",  # digits are a subset of mixed number
+            "abc123",  # digits are a subset of word
+            "a1 b12",  # digits are a subset of words
+            "abc.123",  # digits are a subset of mixed word
+            "a.1 b.2",  # digits are a subset of mixed words
+            "abc\xc8",  # digits are a subset of non-whitespaces
+            "abc\xc8 xyz",  # digits are a subset of non-whitespace group
         ],
     )
     def test_is_subset_of(self, other):
@@ -63,12 +60,12 @@ class TestDigitsTranslatorClass:
     @pytest.mark.parametrize(
         "other",
         [
-            "1",                # digits are not a subset of digit
-            "abc",              # digits are not a subset of letter(s)
-            "-",                # digits are not a subset of punctuation
-            "++--",             # digits are not a subset of punctuation(s)
-            "++ -- ==",         # digits are not a subset of punctuation group
-            "\xc8",             # digits are not a subset of non-whitespace
+            "1",  # digits are not a subset of digit
+            "abc",  # digits are not a subset of letter(s)
+            "-",  # digits are not a subset of punctuation
+            "++--",  # digits are not a subset of punctuation(s)
+            "++ -- ==",  # digits are not a subset of punctuation group
+            "\xc8",  # digits are not a subset of non-whitespace
         ],
     )
     def test_is_not_subset_of(self, other):
@@ -83,7 +80,7 @@ class TestDigitsTranslatorClass:
     @pytest.mark.parametrize(
         "other",
         [
-            "1",                # digit is a superset of digit
+            "1",  # digit is a superset of digit
         ],
     )
     def test_is_superset_of(self, other):
@@ -99,39 +96,39 @@ class TestDigitsTranslatorClass:
         [
             (
                 "123",  # digits
-                DigitsTranslator # (digits, digits) => digits
+                DigitsTranslator,  # (digits, digits) => digits
             ),
             (
                 "1.1",  # number
-                NumberTranslator # (digits, number) => number
+                NumberTranslator,  # (digits, number) => number
             ),
             (
                 "-1.1",  # mixed-number
-                MixedNumberTranslator    # (digits, mixed-number) => mixed-number
+                MixedNumberTranslator,  # (digits, mixed-number) => mixed-number
             ),
             (
                 "abc123",  # word
-                WordTranslator   # (digits, word) => word
+                WordTranslator,  # (digits, word) => word
             ),
             (
                 "a1 a12",  # words
-                WordsTranslator  # (digits, words) => words
+                WordsTranslator,  # (digits, words) => words
             ),
             (
                 "abc.123",  # mixed-word
-                MixedWordTranslator  # (digits, mixed-word) => mixed-word
+                MixedWordTranslator,  # (digits, mixed-word) => mixed-word
             ),
             (
                 "a.1 b.1",  # mixed-words
-                MixedWordsTranslator # (digits, mixed-words) => mixed-words
+                MixedWordsTranslator,  # (digits, mixed-words) => mixed-words
             ),
             (
                 "abc\xc8",  # non-whitespaces
-                NonWSSTranslator # (digits, non-whitespaces) => non-whitespaces
+                NonWSSTranslator,  # (digits, non-whitespaces) => non-whitespaces
             ),
             (
                 "abc\xc8 xyz",  # non-whitespace-group
-                NonWSSGroupTranslator    # (digits, non-whitespace-group) => non-whitespace-group
+                NonWSSGroupTranslator,  # (digits, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -150,7 +147,7 @@ class TestDigitsTranslatorClass:
         [
             (
                 "1",  # digit
-                DigitsTranslator # (digits, digit) => digits
+                DigitsTranslator,  # (digits, digit) => digits
             ),
         ],
     )
@@ -169,19 +166,19 @@ class TestDigitsTranslatorClass:
         [
             (
                 "ab",  # letters
-                WordTranslator   # (digits, letters) => word
+                WordTranslator,  # (digits, letters) => word
             ),
             (
                 "+",  # punctuation
-                NonWSSTranslator # (digits, punct) => non-whitespaces
+                NonWSSTranslator,  # (digits, punct) => non-whitespaces
             ),
             (
                 "++",  # punctuations
-                NonWSSTranslator # (digits, puncts) => non-whitespaces
+                NonWSSTranslator,  # (digits, puncts) => non-whitespaces
             ),
             (
                 "++ -- ==",  # punctuation-group
-                NonWSSGroupTranslator    # (digits, punct-group) => non-whitespace-group
+                NonWSSGroupTranslator,  # (digits, punct-group) => non-whitespace-group
             ),
         ],
     )

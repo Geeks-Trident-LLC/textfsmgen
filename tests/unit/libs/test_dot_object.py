@@ -8,6 +8,7 @@ Run pytest in the project root to execute these tests:
     or
     $ python -m pytest tests/unit/libs/test_dot_object.py
 """
+
 import pytest
 from textfsmgen.libs.generic import DotObject
 
@@ -144,7 +145,7 @@ def test_setattr_dash_normalized_key():
         "__getattr__",
         "__setattr__",
         "__delattr__",
-    ]
+    ],
 )
 def tet_raise_exception_by_overwrite_dot_object_attribute(attr):
     obj = DotObject()

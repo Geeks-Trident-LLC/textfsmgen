@@ -13,6 +13,7 @@ class LineData:
     Line wrapper for string input with utilities to
     inspect leading and trailing whitespace.
     """
+
     def __init__(self, data):
         self.raw_data = str(data)
         self.data = self.raw_data.strip()

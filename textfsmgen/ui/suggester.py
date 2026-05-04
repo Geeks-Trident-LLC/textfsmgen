@@ -28,11 +28,13 @@ from textfsmgen.ui.common import (
     make_modal,
     clear_text,
     extract_text,
-    set_text, set_window_icon
+    set_text,
+    set_window_icon,
 )
 
 window_width = 960 if ui.is_macos else 820 if ui.is_linux else 740
 window_height = 770 if ui.is_macos else 780 if ui.is_linux else 720
+
 
 def show_dialog(app):
     """Show the dialog window."""
@@ -63,8 +65,12 @@ def create_window(parent: Optional[Union[ui.Tk, ui.Toplevel]]):
 
     if parent:
         center_window(
-            parent, window, window_width, window_height,
-            x_resizable=True, y_resizable=True
+            parent,
+            window,
+            window_width,
+            window_height,
+            x_resizable=True,
+            y_resizable=True,
         )
 
     return window
@@ -78,9 +84,7 @@ def build_pane_window(parent):
 
 def build_input_frame(parent, app):
     frame = ui.Frame(
-        parent, width=window_width,
-        height=int(window_height / 10),
-        relief="ridge"
+        parent, width=window_width, height=int(window_height / 10), relief="ridge"
     )
     parent.add(frame, weight=1)
 
@@ -89,38 +93,34 @@ def build_input_frame(parent, app):
     frame.columnconfigure(0, weight=1)
 
     textarea = ui.TextArea(
-        frame, width=20, height=3, wrap='none',
-        name='suggester_input_text',
+        frame,
+        width=20,
+        height=3,
+        wrap="none",
+        name="suggester_input_text",
     )
 
-    textarea.grid(row=0, column=0, sticky='nswe')  # noqa
+    textarea.grid(row=0, column=0, sticky="nswe")  # noqa
 
     # Add vertical scrollbar
-    vscrollbar = ui.Scrollbar(
-        frame, orient="vertical",
-        command=textarea.yview
-    )
-    vscrollbar.grid(row=0, column=1, sticky='ns')
+    vscrollbar = ui.Scrollbar(frame, orient="vertical", command=textarea.yview)
+    vscrollbar.grid(row=0, column=1, sticky="ns")
 
     # Add horizontal scrollbar
-    hscrollbar = ui.Scrollbar(
-        frame, orient="horizontal",
-        command=textarea.xview
-    )
-    hscrollbar.grid(row=1, column=0, sticky='ew')
+    hscrollbar = ui.Scrollbar(frame, orient="horizontal", command=textarea.xview)
+    hscrollbar.grid(row=1, column=0, sticky="ew")
 
     # Link scrollbars to text area
-    textarea.config(
-        yscrollcommand=vscrollbar.set,
-        xscrollcommand=hscrollbar.set
-    )
+    textarea.config(yscrollcommand=vscrollbar.set, xscrollcommand=hscrollbar.set)
 
     app.tools.suggester.in_textarea = textarea
 
 
 def build_controls_frame(parent, app):
     """Create the control button row (Clear, Copy, Paste)."""
-    frame = ui.Frame(parent, width=window_width, height=10, relief="ridge", borderwidth=2)
+    frame = ui.Frame(
+        parent, width=window_width, height=10, relief="ridge", borderwidth=2
+    )
     parent.add(frame)
 
     top = ui.Frame(frame, width=window_width, height=5)
@@ -142,20 +142,15 @@ def build_top_controls(parent, app):
     """Build the top control bar with action buttons and a vertical separator."""
     controls = [
         ("Suggest", lambda: perform_suggest_action(app)),
-        ("Test",  lambda: perform_test_action(app)),
-        ("Iterate",   lambda: perform_iterate_action(app)),
-        ("Default",   lambda: reset_default(app)),
-
+        ("Test", lambda: perform_test_action(app)),
+        ("Iterate", lambda: perform_iterate_action(app)),
+        ("Default", lambda: reset_default(app)),
         ("SEPARATOR", None),
-
-        ("Copy",      lambda: perform_copy_action(app)),
-        ("Paste",     lambda: perform_paste_action(app)),
-        ("Clear",     lambda: perform_clear_action(app)),
-
+        ("Copy", lambda: perform_copy_action(app)),
+        ("Paste", lambda: perform_paste_action(app)),
+        ("Clear", lambda: perform_clear_action(app)),
         ("SEPARATOR", None),
-
         ("Help", lambda: usage.show_help(app, "suggester")),
-
     ]
 
     btn_width = 6 if ui.is_macos else 7 if ui.is_linux else 8
@@ -186,11 +181,9 @@ def build_bottom_controls(parent, app):
     controls = [
         ("Variable", app.tools.suggester.variable_flag),
         ("Surrounding Notation", app.tools.suggester.notation_flag),
-
         ("SEPARATOR", None),
-
-        ("Group",    app.tools.suggester.group_flag),
-        ("Generic",  app.tools.suggester.generic_flag),
+        ("Group", app.tools.suggester.group_flag),
+        ("Generic", app.tools.suggester.generic_flag),
     ]
 
     padding = dict(padx=(2, 0), pady=(2, 2))
@@ -233,9 +226,7 @@ def build_bottom_controls(parent, app):
 
 def build_output_frame(parent, app):
     frame = ui.Frame(
-        parent, width=window_width,
-        height=int(window_height / 10),
-        relief="ridge"
+        parent, width=window_width, height=int(window_height / 10), relief="ridge"
     )
     parent.add(frame, weight=1)
 
@@ -244,40 +235,32 @@ def build_output_frame(parent, app):
     frame.columnconfigure(0, weight=1)
 
     textarea = ui.TextArea(
-        frame, width=20, height=3, wrap='none',
-        name='translator_output_text',
+        frame,
+        width=20,
+        height=3,
+        wrap="none",
+        name="translator_output_text",
     )
 
-    textarea.grid(row=0, column=0, sticky='nswe')  # noqa
+    textarea.grid(row=0, column=0, sticky="nswe")  # noqa
 
     # Add vertical scrollbar
-    vscrollbar = ui.Scrollbar(
-        frame, orient="vertical",
-        command=textarea.yview
-    )
-    vscrollbar.grid(row=0, column=1, sticky='ns')
+    vscrollbar = ui.Scrollbar(frame, orient="vertical", command=textarea.yview)
+    vscrollbar.grid(row=0, column=1, sticky="ns")
 
     # Add horizontal scrollbar
-    hscrollbar = ui.Scrollbar(
-        frame, orient="horizontal",
-        command=textarea.xview
-    )
-    hscrollbar.grid(row=1, column=0, sticky='ew')
+    hscrollbar = ui.Scrollbar(frame, orient="horizontal", command=textarea.xview)
+    hscrollbar.grid(row=1, column=0, sticky="ew")
 
     # Link scrollbars to text area
-    textarea.config(
-        yscrollcommand=vscrollbar.set,
-        xscrollcommand=hscrollbar.set
-    )
+    textarea.config(yscrollcommand=vscrollbar.set, xscrollcommand=hscrollbar.set)
 
     app.tools.suggester.out_textarea = textarea
 
 
 def build_python_code_frame(parent, app):
     frame = ui.Frame(
-        parent, width=window_width,
-        height=int(window_height / 10) * 7,
-        relief="ridge"
+        parent, width=window_width, height=int(window_height / 10) * 7, relief="ridge"
     )
     parent.add(frame, weight=7)
 
@@ -286,32 +269,26 @@ def build_python_code_frame(parent, app):
     frame.columnconfigure(0, weight=1)
 
     textarea = ui.TextArea(
-        frame, width=20, height=3, wrap='none',
+        frame,
+        width=20,
+        height=3,
+        wrap="none",
         bg=ui.readonly_text_bg_color,
-        name='translator_code_text',
+        name="translator_code_text",
     )
 
-    textarea.grid(row=0, column=0, sticky='nswe')  # noqa
+    textarea.grid(row=0, column=0, sticky="nswe")  # noqa
 
     # Add vertical scrollbar
-    vscrollbar = ui.Scrollbar(
-        frame, orient="vertical",
-        command=textarea.yview
-    )
-    vscrollbar.grid(row=0, column=1, sticky='ns')
+    vscrollbar = ui.Scrollbar(frame, orient="vertical", command=textarea.yview)
+    vscrollbar.grid(row=0, column=1, sticky="ns")
 
     # Add horizontal scrollbar
-    hscrollbar = ui.Scrollbar(
-        frame, orient="horizontal",
-        command=textarea.xview
-    )
-    hscrollbar.grid(row=1, column=0, sticky='ew')
+    hscrollbar = ui.Scrollbar(frame, orient="horizontal", command=textarea.xview)
+    hscrollbar.grid(row=1, column=0, sticky="ew")
 
     # Link scrollbars to text area
-    textarea.config(
-        yscrollcommand=vscrollbar.set,
-        xscrollcommand=hscrollbar.set
-    )
+    textarea.config(yscrollcommand=vscrollbar.set, xscrollcommand=hscrollbar.set)
     textarea.config(state="disabled")
 
     app.tools.suggester.code_textarea = textarea
@@ -319,9 +296,7 @@ def build_python_code_frame(parent, app):
 
 def build_test_result_frame(parent, app):
     frame = ui.Frame(
-        parent, width=window_width,
-        height=int(window_height / 10),
-        relief="ridge"
+        parent, width=window_width, height=int(window_height / 10), relief="ridge"
     )
     parent.add(frame, weight=1)
 
@@ -330,32 +305,26 @@ def build_test_result_frame(parent, app):
     frame.columnconfigure(0, weight=1)
 
     textarea = ui.TextArea(
-        frame, width=20, height=3, wrap='none',
+        frame,
+        width=20,
+        height=3,
+        wrap="none",
         bg=ui.readonly_text_bg_color,
-        name='translator_result_text',
+        name="translator_result_text",
     )
 
-    textarea.grid(row=0, column=0, sticky='nswe')  # noqa
+    textarea.grid(row=0, column=0, sticky="nswe")  # noqa
 
     # Add vertical scrollbar
-    vscrollbar = ui.Scrollbar(
-        frame, orient="vertical",
-        command=textarea.yview
-    )
-    vscrollbar.grid(row=0, column=1, sticky='ns')
+    vscrollbar = ui.Scrollbar(frame, orient="vertical", command=textarea.yview)
+    vscrollbar.grid(row=0, column=1, sticky="ns")
 
     # Add horizontal scrollbar
-    hscrollbar = ui.Scrollbar(
-        frame, orient="horizontal",
-        command=textarea.xview
-    )
-    hscrollbar.grid(row=1, column=0, sticky='ew')
+    hscrollbar = ui.Scrollbar(frame, orient="horizontal", command=textarea.xview)
+    hscrollbar.grid(row=1, column=0, sticky="ew")
 
     # Link scrollbars to text area
-    textarea.config(
-        yscrollcommand=vscrollbar.set,
-        xscrollcommand=hscrollbar.set
-    )
+    textarea.config(yscrollcommand=vscrollbar.set, xscrollcommand=hscrollbar.set)
     textarea.config(state="disabled")
 
     app.tools.suggester.result_textarea = textarea
@@ -375,8 +344,16 @@ def perform_clear_action(app):
     t = app.tools.suggester
 
     readonly = [
-        (t.code_textarea,  "Readonly Code Window",   "Cannot clear readonly Python code window"),
-        (t.result_textarea, "Readonly Result Window", "Cannot clear readonly result window"),
+        (
+            t.code_textarea,
+            "Readonly Code Window",
+            "Cannot clear readonly Python code window",
+        ),
+        (
+            t.result_textarea,
+            "Readonly Result Window",
+            "Cannot clear readonly result window",
+        ),
     ]
 
     prev = app.prev_widget
@@ -428,8 +405,8 @@ def perform_paste_action(app):
             show_message_dialog(
                 title="Paste Action",
                 info="Your clipboard contains only whitespace. "
-                     "The paste action will still run, but the "
-                     "result is not visually noticeable."
+                "The paste action will still run, but the "
+                "result is not visually noticeable.",
             )
 
     except Exception as ex:
@@ -439,7 +416,7 @@ def perform_paste_action(app):
                 f"There is no text available to paste from the clipboard.\n"
                 f"{'-' * 70}\n"
                 f"{type(ex).__name__}: {ex}"
-                )
+            ),
         )
         return
 
@@ -447,8 +424,16 @@ def perform_paste_action(app):
 
     editable = [t.in_textarea, t.out_textarea]
     readonly = [
-        (t.code_textarea, "Readonly Code Window", "Cannot paste readonly Python code window"),
-        (t.result_textarea, "Readonly Result Window", "Cannot paste readonly result window"),
+        (
+            t.code_textarea,
+            "Readonly Code Window",
+            "Cannot paste readonly Python code window",
+        ),
+        (
+            t.result_textarea,
+            "Readonly Result Window",
+            "Cannot paste readonly result window",
+        ),
     ]
 
     prev = app.prev_widget
@@ -456,7 +441,6 @@ def perform_paste_action(app):
     for widget in editable:
         widget.update_idletasks()
         if widget is prev:
-
             if widget.tag_ranges(ui.tk.SEL):
                 widget.delete(ui.tk.SEL_FIRST, ui.tk.SEL_LAST)
                 insert_pos = widget.index(ui.tk.INSERT)
@@ -492,8 +476,8 @@ def perform_copy_action(app):
             widget.update_idletasks()
             content = (
                 widget.selection_get()
-                if widget.tag_ranges(ui.tk.SEL) else
-                extract_text(widget)
+                if widget.tag_ranges(ui.tk.SEL)
+                else extract_text(widget)
             )
 
             if not content:
@@ -524,8 +508,7 @@ def perform_suggest_action(app):
     if not any(get_list_of_lines(data)):
         show_message_dialog(
             title="Suggest Action- No Input",
-            info="No text was found to suggest.\n"
-                 "Please enter or paste content first.",
+            info="No text was found to suggest.\nPlease enter or paste content first.",
         )
         return
 

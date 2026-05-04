@@ -15,7 +15,6 @@ from textfsmgen.ui import (
     suggester,
     builder,
     textfsm_tester,
-
 )
 
 
@@ -24,13 +23,21 @@ def build_action_buttons(app) -> None:
 
     parent = app.frames.controls
 
-    top = ui.Frame(parent, width=600, height=5,)
+    top = ui.Frame(
+        parent,
+        width=600,
+        height=5,
+    )
     top.pack(side="top", fill="x", padx=2, pady=2)
 
     sep = ui.ttk.Separator(parent, orient="horizontal")
     sep.pack(fill="x", padx=4)
 
-    bottom = ui.Frame(parent, width=600, height=5,)
+    bottom = ui.Frame(
+        parent,
+        width=600,
+        height=5,
+    )
     bottom.pack(side="bottom", fill="x", padx=2, pady=2)
 
     build_primary_buttons(app, top)
@@ -41,7 +48,11 @@ def build_primary_buttons(app, parent) -> None:
     """Create the first-row action buttons for the main UI."""
     btn_width = 6 if ui.is_macos else 8
     button_lst = (
-        (app.settings.test_data_btn_name, "normal", lambda: callback.perform_toggle_test_data_mode_action(app),),
+        (
+            app.settings.test_data_btn_name,
+            "normal",
+            lambda: callback.perform_toggle_test_data_mode_action(app),
+        ),
         ("SEPARATOR", None, None),
         ("open", "normal", lambda: callback.perform_open_action(app)),
         ("save", "disabled", lambda: callback.perform_save_action(app)),
@@ -128,4 +139,3 @@ def build_secondary_buttons(app, parent) -> None:
 
         if name not in mapping:
             app.buttons.update({text: button})
-

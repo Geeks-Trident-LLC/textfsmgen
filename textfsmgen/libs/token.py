@@ -5,7 +5,6 @@ textfsmgen.libs.common
 Token classes and tokenizer for parsing keyword calls and text segments.
 """
 
-
 import re
 
 
@@ -13,6 +12,7 @@ class BaseText(str):
     """
     Lightweight string wrapper that normalizes input into a UTF‑8 string.
     """
+
     def __new__(cls, value):
         if isinstance(value, bytes):
             data = value.decode("utf-8")
@@ -25,22 +25,27 @@ class BaseText(str):
         return super().__new__(cls, data)
 
     @property
-    def is_empty(self): return self == ""
+    def is_empty(self):
+        return self == ""
 
     @property
-    def is_whitespace(self): return bool(re.fullmatch(r"\s+", self))
+    def is_whitespace(self):
+        return bool(re.fullmatch(r"\s+", self))
 
     @property
-    def has_data(self): return bool(self.strip())
+    def has_data(self):
+        return bool(self.strip())
 
     @property
-    def is_plain(self): return isinstance(self, TextNode)
+    def is_plain(self):
+        return isinstance(self, TextNode)
 
 
 class TextNode(BaseText):
     """
     Represents a plain text token (non‑call).
     """
+
     def __init__(self, value: str):
         self.value = value
 
@@ -53,6 +58,7 @@ class CallNode(BaseText):
     Represents a keyword-style call: name(param1, param2, ...).
     Parameters remain raw strings (not recursively parsed).
     """
+
     _name_pattern = re.compile(r"[A-Za-z_][A-Za-z0-9_]*$")
 
     def __init__(self, raw: str):
@@ -62,25 +68,31 @@ class CallNode(BaseText):
         self._parsed = False
         self._parse()
 
-    def __bool__(self): return self._parsed
+    def __bool__(self):
+        return self._parsed
 
     def __repr__(self):
         return f"CallNode(name={self._name!r}, params={self._params!r})"
 
     @property
-    def name(self): return self._name
+    def name(self):
+        return self._name
 
     @property
-    def params(self): return self._params
+    def params(self):
+        return self._params
 
     @property
-    def has_no_parameters(self): return not self._params
+    def has_no_parameters(self):
+        return not self._params
 
     @property
-    def raw(self): return self._raw
+    def raw(self):
+        return self._raw
 
     @property
-    def value(self): return self._raw
+    def value(self):
+        return self._raw
 
     @property
     def new(self):
@@ -113,7 +125,7 @@ class CallNode(BaseText):
         self._params = self._split_params(param_text)
         self._parsed = True
 
-    def _split_params(self, text: str) -> list[str]:    # noqa
+    def _split_params(self, text: str) -> list[str]:  # noqa
         """
         Split parameters by commas at top level (ignore commas inside nested calls).
         """
@@ -220,7 +232,7 @@ def tokenize(text: str):
                     elif text[j] == ")":
                         depth -= 1
                         if depth == 0:
-                            tokens.append(CallNode(text[start:j + 1]))
+                            tokens.append(CallNode(text[start : j + 1]))
                             i = j + 1
                             break
                     j += 1

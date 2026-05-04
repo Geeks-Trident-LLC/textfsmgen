@@ -26,6 +26,7 @@ def test_raise_with_runtime_error():
     assert exc.__class__.__name__ == "RuntimeError"
     assert str(exc) == "generic failure"
 
+
 def test_raise_with_string():
     """
     Verify that `raise_runtime_error` raises a custom exception when
@@ -36,6 +37,7 @@ def test_raise_with_string():
     exc = exc_info.value
     assert exc.__class__.__name__ == "AnotherError"
     assert str(exc) == "bad input"
+
 
 def test_raise_with_object():
     """

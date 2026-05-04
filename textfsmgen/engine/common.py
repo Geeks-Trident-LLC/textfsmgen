@@ -20,9 +20,9 @@ from textfsmgen.engine.translate import make_translator
 
 from textfsmgen.exceptions import raise_runtime_error, raise_exception
 
+
 def get_line_position_by(
-    lines: list[str],
-    item: Optional[Union[str, int, None]]
+    lines: list[str], item: Optional[Union[str, int, None]]
 ) -> Optional[int]:
     """
     Determine the position of a line in `lines` based on a string
@@ -35,7 +35,7 @@ def get_line_position_by(
     if is_number:
         return None if index >= len(lines) else index
 
-    regex_prefix = r'(?i)^\s*--regex\s+'
+    regex_prefix = r"(?i)^\s*--regex\s+"
 
     if re.match(regex_prefix, str(item)):
         pattern = re.sub(regex_prefix, "", str(item))
@@ -49,7 +49,9 @@ def get_line_position_by(
     return None
 
 
-def get_fixed_line_snippet(lines: list[str], line: str = "", index: Optional[int] = None) -> str:   # noqa
+def get_fixed_line_snippet(
+    lines: list[str], line: str = "", index: Optional[int] = None
+) -> str:  # noqa
     """
     Generate a normalized snippet representation of a line.
     """
@@ -58,7 +60,7 @@ def get_fixed_line_snippet(lines: list[str], line: str = "", index: Optional[int
         is_number, converted_index = number.try_to_get_number(index, return_type=int)
         if is_number:
             try:
-                line = lines[converted_index]   # noqa
+                line = lines[converted_index]  # noqa
             except IndexError as ex:
                 total = len(lines)
                 msg = (
@@ -141,7 +143,7 @@ def apply_replacements(data: str, rules=None) -> str:
     - A list/tuple of [old, new] pairs
     - A dict whose values are {old, new} mappings
     """
-    if not data or not rules:   # noqa
+    if not data or not rules:  # noqa
         return data
 
     # Normalize rules: YAML string -> Python object
@@ -153,19 +155,25 @@ def apply_replacements(data: str, rules=None) -> str:
         if not parsed:
             return data
         if not isinstance(parsed, (list, tuple)):
-            raise ValueError("YAML must define a list of pairs or a dict of {old,new} mappings.")
+            raise ValueError(
+                "YAML must define a list of pairs or a dict of {old,new} mappings."
+            )
         rules = parsed
 
     # Validate and normalize list/tuple of pairs
     if isinstance(rules[0], (list, tuple)):
-        if not all(isinstance(pair, (list, tuple)) and len(pair) == 2 for pair in rules):
+        if not all(
+            isinstance(pair, (list, tuple)) and len(pair) == 2 for pair in rules
+        ):
             raise ValueError("Expected a list/tuple of [old, new] pairs.")
         pairs = [(old, new) for old, new in rules]
 
     # Validate and normalize dict of {key: {old,new}}
     elif isinstance(rules[0], dict):
         if not all(isinstance(v, dict) and "curr" in v and "new" in v for v in rules):
-            raise ValueError("Expected element of the list form {'curr': ..., 'new': ...}.")
+            raise ValueError(
+                "Expected element of the list form {'curr': ..., 'new': ...}."
+            )
         pairs = [(v["curr"], v["new"]) for v in rules]
 
     elif isinstance(rules, (list, tuple)) and len(rules) == 2:
@@ -178,7 +186,7 @@ def apply_replacements(data: str, rules=None) -> str:
         raise ValueError("Rules must be a YAML string, list/tuple of pairs.")
 
     # Apply replacements line-by-line
-    output_lines = []   # noqa
+    output_lines = []  # noqa
     for line in data.splitlines():
         for old, new in pairs:
             if old in line:

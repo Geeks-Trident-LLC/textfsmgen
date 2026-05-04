@@ -21,18 +21,20 @@ from textfsmgen.exceptions import EscapePatternError
 
 class BaseText(str):
     """A string subclass that provides enhanced text representation."""
+
     def __new__(cls, *args, **kwargs):
         arg0 = args[0] if args else None
         if args and isinstance(arg0, BaseException):
-            txt = super().__new__(cls, f'{type(arg0).__name__}: {arg0}')    # noqa
+            txt = super().__new__(cls, f"{type(arg0).__name__}: {arg0}")  # noqa
             return txt
         else:
-            txt = super().__new__(cls, *args, **kwargs)     # noqa
+            txt = super().__new__(cls, *args, **kwargs)  # noqa
             return txt
 
 
 class Text(BaseText):
     """A string subclass with extended text formatting and utility methods."""  # noqa
+
     @classmethod
     def format(cls, *args, **kwargs):
         """
@@ -40,7 +42,7 @@ class Text(BaseText):
         string formatting.
         """
         if not args:
-            text = ''
+            text = ""
             return text
         else:
             if kwargs:
@@ -72,7 +74,7 @@ class Text(BaseText):
                             text = str(fmt).format(*t_args)
                             return text
                         except Exception as ex2:
-                            text = '%s\n%s' % (cls(ex1), cls(ex2))
+                            text = "%s\n%s" % (cls(ex1), cls(ex2))
                             return text
 
     @classmethod
@@ -86,14 +88,14 @@ class Text(BaseText):
         if attributes:
             attrs_txt = " ".join(attributes)
             if data.strip():
-                result = '<{0} {1}>{2}</{0}>'.format(tag, attrs_txt, data)
+                result = "<{0} {1}>{2}</{0}>".format(tag, attrs_txt, data)
             else:
-                result = '<{0} {1}/>'.format(tag, attrs_txt)
+                result = "<{0} {1}/>".format(tag, attrs_txt)
         else:
             if data.strip():
-                result = '<{0}>{1}</{0}>'.format(tag, data)
+                result = "<{0}>{1}</{0}>".format(tag, data)
             else:
-                result = '<{0}/>'.format(tag)
+                result = "<{0}/>".format(tag)
         return result
 
     def do_finditer_split(self, pattern):
@@ -104,14 +106,14 @@ class Text(BaseText):
         start = 0
         m = None
         for m in re.finditer(pattern, self):
-            pre_match = self[start:m.start()]
+            pre_match = self[start : m.start()]
             match = m.group()
             result.append(pre_match)
             result.append(match)
             start = m.end()
 
         if m:
-            post_match = self[m.end():]
+            post_match = self[m.end() :]
             result.append(post_match)
         else:
             result.append(str(self))
@@ -122,6 +124,7 @@ class BaseLine(str):
     """
     A string subclass representing a single line of text with preserved metadata.
     """
+
     def __new__(cls, data, *args):
         line_obj = super().__new__(cls, data)  # noqa
         lines = line_obj.splitlines(keepends=True)
@@ -140,58 +143,72 @@ class BaseLine(str):
         return line_obj
 
 
-class Line(BaseLine):   # noqa
+class Line(BaseLine):  # noqa
     """
     A specialized string subclass representing a single line of text with
     additional utilities for whitespace handling, validation, and regex-based
     pattern conversion.
     """
-    @property
-    def joiner(self): return self._joiner
 
     @property
-    def raw_data(self): return self._raw_data
+    def joiner(self):
+        return self._joiner
 
     @property
-    def raw(self): return self._raw_data
+    def raw_data(self):
+        return self._raw_data
 
     @property
-    def data(self): return self.strip()
+    def raw(self):
+        return self._raw_data
 
     @property
-    def clean_line(self): return self.strip()
+    def data(self):
+        return self.strip()
 
     @property
-    def is_empty(self): return self == ""
+    def clean_line(self):
+        return self.strip()
 
     @property
-    def is_optional_empty(self): return bool(re.fullmatch(r"\s+", self))
+    def is_empty(self):
+        return self == ""
 
     @property
-    def leading(self): return self[:len(self) - len(self.lstrip())]
+    def is_optional_empty(self):
+        return bool(re.fullmatch(r"\s+", self))
 
     @property
-    def trailing(self): return self[len(self.rstrip()):] if self.clean_line else ""
+    def leading(self):
+        return self[: len(self) - len(self.lstrip())]
 
     @property
-    def is_leading(self) -> bool: return len(self.leading) > 0
+    def trailing(self):
+        return self[len(self.rstrip()) :] if self.clean_line else ""
 
     @property
-    def is_trailing(self) -> bool: return len(self.trailing) > 0
+    def is_leading(self) -> bool:
+        return len(self.leading) > 0
+
+    @property
+    def is_trailing(self) -> bool:
+        return len(self.trailing) > 0
 
     @property
     def is_whitespace_leading(self):
         return bool(re.search(r"\s+", self.leading))
 
     @property
-    def is_ws_leading(self): return self.is_whitespace_leading
+    def is_ws_leading(self):
+        return self.is_whitespace_leading
 
     @property
     def is_whitespace_trailing(self):
         return bool(re.search(r"\s+", self.trailing))
 
     @property
-    def is_ws_trailing(self): return self.is_whitespace_trailing
+    def is_ws_trailing(self):
+        return self.is_whitespace_trailing
 
     @classmethod
     def is_line(cls, data, on_failure=False):
@@ -201,35 +218,30 @@ class Line(BaseLine):   # noqa
             return True
 
         if on_failure:
-            error = ("The 'data' argument contains multiple lines; "
-                     "it must be a single line.")
+            error = (
+                "The 'data' argument contains multiple lines; it must be a single line."
+            )
             raise LineArgumentError(error)
 
         return False
 
     @classmethod
     def has_leading(
-        cls, line: str,
-        start: Optional[int] = None,
-        end: Optional[int] = None
+        cls, line: str, start: Optional[int] = None, end: Optional[int] = None
     ) -> bool:
         """Return True if line has leading whitespace."""
         return cls.get_leading(line, start=start, end=end) != ""
 
     @classmethod
     def has_trailing(
-        cls, line: str,
-        start: Optional[int] = None,
-        end: Optional[int] = None
+        cls, line: str, start: Optional[int] = None, end: Optional[int] = None
     ) -> bool:
         """Return True if line has trailing whitespace."""
         return cls.get_trailing(line, start=start, end=end) != ""
 
     @classmethod
     def get_leading(
-        cls, line: str,
-        start: Optional[int] = None,
-        end: Optional[int] = None
+        cls, line: str, start: Optional[int] = None, end: Optional[int] = None
     ) -> str:
         """Extract leading whitespace from line."""
         _, line_ = try_to_str(line, allow_none=True)
@@ -238,9 +250,7 @@ class Line(BaseLine):   # noqa
 
     @classmethod
     def get_trailing(
-        cls, line: str,
-        start: Optional[int] = None,
-        end: Optional[int] = None
+        cls, line: str, start: Optional[int] = None, end: Optional[int] = None
     ) -> str:
         """Extract trailing whitespace from line."""
         _, line_ = try_to_str(line, allow_none=True)
@@ -251,7 +261,7 @@ class Line(BaseLine):   # noqa
     def has_data(cls, line):
         """Check whether a line of text contains non-whitespace characters."""
         _, line_ = try_to_str(line, allow_none=True)
-        return bool(re.search(r'\S+', str(line_)))
+        return bool(re.search(r"\S+", str(line_)))
 
     @classmethod
     def has_whitespace_in_line(cls, line):
@@ -263,8 +273,8 @@ class Line(BaseLine):   # noqa
         """Convert the line into a regex-compatible pattern string."""  # noqa
         result = []
         punct_pat = BaseMatchedObject.punctuation_pattern
-        pat = f'({punct_pat}+ +)\\1+'
-        other_pat = r'\s+'
+        pat = f"({punct_pat}+ +)\\1+"
+        other_pat = r"\s+"
         if re.search(pat, self):
             items = self.do_finditer_split(self, pattern=pat)
             for item in items:
@@ -277,12 +287,12 @@ class Line(BaseLine):   # noqa
             result = self.do_finditer_split(self, pattern=other_pat)
         else:
             result = [BaseMatchedObject(self)]
-        text_pattern = ''.join(elmt.to_pattern() for elmt in result)
+        text_pattern = "".join(elmt.to_pattern() for elmt in result)
         return text_pattern
 
-    def do_finditer_split(self, data, pattern=r'\s+'):  # noqa
+    def do_finditer_split(self, data, pattern=r"\s+"):  # noqa
         """Split a string into matched and unmatched segments
-        using regex finditer."""    # noqa
+        using regex finditer."""  # noqa
         result = []
         start = 0
         match = None
@@ -302,27 +312,28 @@ class Line(BaseLine):   # noqa
         return result
 
 
-class BaseMatchedObject:    # noqa
+class BaseMatchedObject:  # noqa
     """
     Represents a fragment of matched text and converts it into the most
     appropriate regular‑expression pattern.
     """
-    punctuation_pattern = r'[!\"#$%&\'()*+,./:;<=>?@\[\\\]\^_`{|}~-]'
-    repeated_punctuation_pattern = f'({punctuation_pattern}+?)\\1+'
-    repeated_punctuations_space_pattern = f'({punctuation_pattern}+ +)\\1+'
-    default_separator = ''
-    user_separator = ''
+
+    punctuation_pattern = r"[!\"#$%&\'()*+,./:;<=>?@\[\\\]\^_`{|}~-]"
+    repeated_punctuation_pattern = f"({punctuation_pattern}+?)\\1+"
+    repeated_punctuations_space_pattern = f"({punctuation_pattern}+ +)\\1+"
+    default_separator = ""
+    user_separator = ""
 
     def __init__(self, match):
         self.match = match if isinstance(match, re.Match) else None
-        self.data = match if isinstance(match, str) else ''
+        self.data = match if isinstance(match, str) else ""
 
     @property
     def is_empty(self):
         """Indicates whether the data of matched object contains any text."""
-        return self.data == ''
+        return self.data == ""
 
-    def change_separator(self, separator=' ', user_pattern=''):
+    def change_separator(self, separator=" ", user_pattern=""):
         """
         Updates the whitespace‑normalization behavior for this matched object.
         """
@@ -335,7 +346,7 @@ class BaseMatchedObject:    # noqa
         object.
         """
         result = dict()
-        result.update(self.get_whitespace_pattern())    # noqa
+        result.update(self.get_whitespace_pattern())  # noqa
         result.update(self.get_repeated_puncts_space_pattern())
         result.update(self.get_repeated_puncts_pattern())
         result.update(self.get_text_pattern())
@@ -346,19 +357,19 @@ class BaseMatchedObject:    # noqa
         """
         Generates a regex fragment representing a run of whitespace characters.
         """
-        if not re.match(r'\s+$', self.data):
-            return {'': False}
+        if not re.match(r"\s+$", self.data):
+            return {"": False}
 
         if self.user_separator:
             return self.user_separator, True
 
         total = len(self.data)
-        is_space = self.data[0] == ' ' and len(set(self.data)) == 1
+        is_space = self.data[0] == " " and len(set(self.data)) == 1
         if self.default_separator:
             pattern = self.default_separator
         else:
-            pattern = ' ' if is_space else r'\s'
-        pattern = f'{pattern}+' if total > 1 else pattern
+            pattern = " " if is_space else r"\s"
+        pattern = f"{pattern}+" if total > 1 else pattern
 
         return {pattern: True}
 
@@ -374,20 +385,20 @@ class BaseMatchedObject:    # noqa
         Generates a regex fragment for sequences composed entirely of punctuation,
         with special handling for repeated punctuation runs.
         """
-        if not re.match(f'{self.punctuation_pattern}+$', self.data):
-            return {'': False}
+        if not re.match(f"{self.punctuation_pattern}+$", self.data):
+            return {"": False}
         else:
-            start, m, pattern = 0, None, ''
+            start, m, pattern = 0, None, ""
             for m in re.finditer(self.repeated_punctuation_pattern, self.data):
-                pattern += do_soft_regex_escape(self.data[start:m.start()])
+                pattern += do_soft_regex_escape(self.data[start : m.start()])
                 found = m.group()
-                repeated = str.join('', dict(zip(found, found)))
-                fmt = '%s{2,}' if len(repeated) == 1 else '(%s){2,}'
+                repeated = str.join("", dict(zip(found, found)))
+                fmt = "%s{2,}" if len(repeated) == 1 else "(%s){2,}"
                 pattern += fmt % do_soft_regex_escape(repeated)
                 start = m.end()
             else:
                 if m:
-                    pattern += do_soft_regex_escape(self.data[m.end():])
+                    pattern += do_soft_regex_escape(self.data[m.end() :])
                     return {pattern: True}
                 else:
                     pattern = do_soft_regex_escape(self.data)
@@ -398,13 +409,13 @@ class BaseMatchedObject:    # noqa
         Generates a regex fragment for sequences where punctuation characters are
         repeatedly followed by one or more spaces.
         """
-        match = re.match(f'{self.repeated_punctuations_space_pattern}$', self.data)
+        match = re.match(f"{self.repeated_punctuations_space_pattern}$", self.data)
         if not match:
-            return {'': False}
+            return {"": False}
         found = match.groups()[0]
         puncts_pat = do_soft_regex_escape(found.strip())
-        space_pat = ' +' if '  ' in found else ' '
-        pattern = '(%s%s){2,}' % (puncts_pat, space_pat)
+        space_pat = " +" if "  " in found else " "
+        pattern = "(%s%s){2,}" % (puncts_pat, space_pat)
         return {pattern: True}
 
 
@@ -413,6 +424,7 @@ class MatchedObject(BaseMatchedObject):
     Specialized matched‑text wrapper that always derives its content from a
     regular‑expression match object.
     """
+
     def __init__(self, match):
         super().__init__(match)
         self.data = match.group()
@@ -420,15 +432,17 @@ class MatchedObject(BaseMatchedObject):
 
 class PreMatchedObject(BaseMatchedObject):
     """Represents the text that appears immediately before a regex match."""
+
     def __init__(self, match, start):
         super().__init__(match)
-        self.data = match.string[start: match.start()]
+        self.data = match.string[start : match.start()]
 
 
 class PostMatchedObject(BaseMatchedObject):
     """
     Represents the text that appears immediately after a regex match.
     """
+
     def __init__(self, match, start):
         super().__init__(match)
         self.data = match.string[start:]
@@ -438,9 +452,9 @@ def get_generic_error_msg(instance, fmt, *other):
     """
     Constructs a standardized error message string for the given instance.
     """
-    args = ['%sError' % instance.__class__.__name__]
+    args = ["%sError" % instance.__class__.__name__]
     args.extend(other)
-    new_fmt = '%%s - %s' % fmt
+    new_fmt = "%%s - %s" % fmt
     err_msg = new_fmt % tuple(args)
     return err_msg
 
@@ -451,7 +465,7 @@ def get_whitespace_chars(k=8, to_list=True):
     recognized as whitespace by the regular‑expression engine.
     """
     lst = [chr(i) for i in range(pow(2, k)) if re.search(r"\s", chr(i))]
-    return frozenset(lst) if to_list else str.join('', lst)
+    return frozenset(lst) if to_list else str.join("", lst)
 
 
 ASCII_WHITESPACE_CHARS = get_whitespace_chars(k=8, to_list=True)
@@ -466,7 +480,7 @@ def get_non_whitespace_chars(k=8, to_list=True):
     recognized as whitespace by the regular‑expression engine.
     """
     lst = [chr(i) for i in range(pow(2, k)) if not re.search(r"\s", chr(i))]
-    return frozenset(lst) if to_list else str.join('', lst)
+    return frozenset(lst) if to_list else str.join("", lst)
 
 
 ASCII_NON_WHITESPACE_CHARS = get_non_whitespace_chars(k=8, to_list=True)
@@ -515,7 +529,11 @@ def enclose_string(text: Any, quote: str = '"', is_new_line: bool = False) -> st
     escaped_text = text.replace(quote, "\\" + quote)
 
     if "\n" in text or "\r" in text:
-        fmt = f"{quote*3}\n%s\n{quote*3}" if is_new_line else f"{quote*3}%s{quote*3}"
+        fmt = (
+            f"{quote * 3}\n%s\n{quote * 3}"
+            if is_new_line
+            else f"{quote * 3}%s{quote * 3}"
+        )
         return fmt % escaped_text
     return f"{quote}{escaped_text}{quote}"
 
@@ -546,8 +564,7 @@ def decorate_text(*parts: str) -> str:
 
 
 def list_to_text(*args: Any) -> str:
-    """Convert one or more items into a newline-separated string.
-    """
+    """Convert one or more items into a newline-separated string."""
     result: list[str] = []
 
     def flatten(item: Any) -> None:
@@ -641,7 +658,9 @@ def join_string(*inputs: Any, separator: str = "") -> str:
     return separator.join(parts)
 
 
-def indent(*inputs: Any, width: int = 4, prefix_newline=False, suffix_newline=False) -> str:
+def indent(
+    *inputs: Any, width: int = 4, prefix_newline=False, suffix_newline=False
+) -> str:
     """Indent one or more inputs by a specified number of spaces."""
     prefix = "\n" if prefix_newline else ""
     suffix = "\n" if suffix_newline else ""
@@ -651,7 +670,9 @@ def indent(*inputs: Any, width: int = 4, prefix_newline=False, suffix_newline=Fa
     return textwrap.indent(block, " " * indent_width)
 
 
-def indent_level2(*inputs: Any, width: int = 2, start_pos: int = 1, other_width: int = 4) -> str:
+def indent_level2(
+    *inputs: Any, width: int = 2, start_pos: int = 1, other_width: int = 4
+) -> str:
     """Indent text with two different indentation levels."""
     start_pos = max(start_pos, 0)
     other_width = max(other_width, width)
@@ -746,11 +767,11 @@ def join_text_block(text: str) -> str:
         prev = merged[-1]
         curr = curr.strip()
         if prev.endswith(".") or curr.startswith("."):
-            sep = "  "      # two spaces
+            sep = "  "  # two spaces
         elif prev.endswith("-") or curr.startswith("-"):
-            sep = ""       # no space
+            sep = ""  # no space
         else:
-            sep = " "      # one space
+            sep = " "  # one space
 
         merged.append(sep + curr)
 

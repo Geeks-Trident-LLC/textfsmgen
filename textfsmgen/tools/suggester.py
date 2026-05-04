@@ -4,6 +4,7 @@ textfsmgen.tools.translator
 
 Utilities for building and applying translator nodes used in snippet parsing.
 """
+
 import re
 import io
 
@@ -12,26 +13,24 @@ import random
 import traceback
 from contextlib import redirect_stdout, redirect_stderr
 
-from textfsmgen.libs.text import (
-    get_list_of_lines,
-    enclose_string
-)
+from textfsmgen.libs.text import get_list_of_lines, enclose_string
 
 from textfsmgen.core.patterns import LinePattern
 from textfsmgen.libs.utils import split_by_matches
 from textfsmgen.libs.token import tokenize, CallNode
 
-from textfsmgen.tools.token import (
-    WhitespaceSnippet,
-    TokenSnippet,
-    LineSnippet
-)
+from textfsmgen.tools.token import WhitespaceSnippet, TokenSnippet, LineSnippet
 
 
 class SnippetSuggester:
     def __init__(
-        self, raw, variable_flag=True, notation_flag=False,
-        group_flag=False, generic_flag=False, split_arg="/",
+        self,
+        raw,
+        variable_flag=True,
+        notation_flag=False,
+        group_flag=False,
+        generic_flag=False,
+        split_arg="/",
     ):
         self._raw = raw
 
@@ -45,32 +44,43 @@ class SnippetSuggester:
         self._translator = None
         self.parse()
 
-    def __bool__(self): return self._parsed
+    def __bool__(self):
+        return self._parsed
 
     @property
-    def raw(self): return self._raw
+    def raw(self):
+        return self._raw
 
     @property
-    def parsed(self): return self._parsed
+    def parsed(self):
+        return self._parsed
 
     @property
-    def snippet(self): return self._translator.snippet if self else ""
+    def snippet(self):
+        return self._translator.snippet if self else ""
 
     @property
-    def pattern(self): return  self._translator.pattern if self else ""
+    def pattern(self):
+        return self._translator.pattern if self else ""
 
     @property
-    def pattern_statement(self): return self._translator.pattern_statement if self else ""
+    def pattern_statement(self):
+        return self._translator.pattern_statement if self else ""
 
     @property
-    def explanation(self): return self._translator.explanation if self else ""
+    def explanation(self):
+        return self._translator.explanation if self else ""
 
     def parse(self):
         """Run available parsers and stop at the first successful match."""
         if not self._raw:
             return
 
-        parsers = [self._parse_whitespace, self._parse_group, self._parse_line,]
+        parsers = [
+            self._parse_whitespace,
+            self._parse_group,
+            self._parse_line,
+        ]
         for parser in parsers:
             if parser():
                 return
@@ -149,30 +159,36 @@ class IterateSuggester:
 
         self.translate_snippet()
 
-
     def __bool__(self):
         return bool(self._snippet) or not any([self._error, self._warning])
 
     @property
-    def raw(self): return self._raw
+    def raw(self):
+        return self._raw
 
     @property
-    def original_snippet(self): return self._original_snippet
+    def original_snippet(self):
+        return self._original_snippet
 
     @property
-    def warning(self): return self._warning
+    def warning(self):
+        return self._warning
 
     @property
-    def error(self): return self._error
+    def error(self):
+        return self._error
 
     @property
-    def snippet(self): return self._snippet
+    def snippet(self):
+        return self._snippet
 
     @property
-    def script(self): return self._script
+    def script(self):
+        return self._script
 
     @property
-    def result(self): return self._result
+    def result(self):
+        return self._result
 
     def build_test_data(self):
         """
@@ -202,10 +218,11 @@ class IterateSuggester:
         """Return True if any token contains a 'keep' parameter."""
         return any(
             p.has_parameter("keep")
-            for p in tokenize(self._original_snippet) if not p.is_plain
+            for p in tokenize(self._original_snippet)
+            if not p.is_plain
         )
 
-    def token_has_non_default_var(self, token): # noqa
+    def token_has_non_default_var(self, token):  # noqa
         """Return True if the token has var_* parameters excluding var_v<number>."""
         if not isinstance(token, CallNode):
             return False
@@ -215,7 +232,7 @@ class IterateSuggester:
 
         return var_any and not var_default
 
-    def token_has_default_var(self, token): # noqa
+    def token_has_default_var(self, token):  # noqa
         """Return True if the token has a default var_v<number> parameter."""
         if not isinstance(token, CallNode):
             return False
@@ -260,7 +277,7 @@ class IterateSuggester:
                     )
                     return
 
-        except Exception:   # noqa
+        except Exception:  # noqa
             self._error = traceback.format_exc()
             return
 
@@ -299,13 +316,17 @@ class IterateSuggester:
         # Special-case: whitespace/group-style snippet
         if self._is_wss_or_group:
             self.translate_wss_or_group()
-            builder = ScriptBuilder(self._raw, self._snippet, group_flag=self._group_flag)
+            builder = ScriptBuilder(
+                self._raw, self._snippet, group_flag=self._group_flag
+            )
             self._script = builder.script
             self._result = builder.result
             return
 
         if not self.should_keep_in_snippet() and not self.has_non_default_var():
-            builder = ScriptBuilder(self._raw, self._original_snippet, group_flag=self._group_flag)
+            builder = ScriptBuilder(
+                self._raw, self._original_snippet, group_flag=self._group_flag
+            )
             self._snippet = self._original_snippet
             self._script = builder.script
             self._result = builder.result
@@ -329,7 +350,9 @@ class IterateSuggester:
 
             # No parameters → inject data variable
             if token.has_no_parameters:
-                result = token if self.has_default_var() else token.with_parameters(var_name)
+                result = (
+                    token if self.has_default_var() else token.with_parameters(var_name)
+                )
                 rewritten.append(result)
                 continue
 
@@ -400,10 +423,12 @@ class ScriptBuilder:
         self._result = ""
 
     @property
-    def raw(self): return self._raw
+    def raw(self):
+        return self._raw
 
     @property
-    def snippet(self): return self._snippet
+    def snippet(self):
+        return self._snippet
 
     @property
     def script(self):
@@ -414,7 +439,8 @@ class ScriptBuilder:
         return self._script
 
     @property
-    def result(self): return self._result
+    def result(self):
+        return self._result
 
     def is_whitespaces_test_data(self):
         if not any(self._lines):
@@ -532,7 +558,7 @@ class ScriptBuilder:
                     assert match is not None
                     print(match.groupdict() or match)
 
-            except Exception:   # noqa
+            except Exception:  # noqa
                 trace_text = traceback.format_exc()
 
         # Combine captured output

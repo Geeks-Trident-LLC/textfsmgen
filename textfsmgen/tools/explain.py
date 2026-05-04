@@ -17,7 +17,7 @@ from textfsmgen.libs.text import (
     decorate_text,
     enclose_string,
     wrap_text_block,
-    center_fixed_width
+    center_fixed_width,
 )
 
 from textfsmgen.libs.pattern import ParsedKeywordMappingName
@@ -47,26 +47,32 @@ class SnippetExplanation:
 
         self.explain()
 
-    def __bool__(self): return self._ready
+    def __bool__(self):
+        return self._ready
 
     @property
-    def raw_snippet(self): return self._raw_snippet
+    def raw_snippet(self):
+        return self._raw_snippet
 
     @property
-    def data(self): return self._normalized
+    def data(self):
+        return self._normalized
 
     @property
-    def status(self): return self._status
+    def status(self):
+        return self._status
 
     @property
-    def test_samples(self): return self._test_samples
+    def test_samples(self):
+        return self._test_samples
 
     @property
     def explanation(self):
         return self._explanation if self else str(self._status)
 
     @property
-    def is_ready(self): return self._ready
+    def is_ready(self):
+        return self._ready
 
     def explain(self):
         """Validate, parse, and build the explanation for this snippet."""
@@ -82,15 +88,14 @@ class SnippetExplanation:
         """Validate snippet and test data before attempting explanation."""
         if not self._normalized:
             self._status = StatusString(
-                "Provided snippet is empty.  Cannot explain.",
-                status="incomplete"
+                "Provided snippet is empty.  Cannot explain.", status="incomplete"
             )
             return False
 
         if not any(self._test_samples):
             self._status = StatusString(
                 "Provided test data are empty.  Cannot explain without test data.",
-                status="incomplete"
+                status="incomplete",
             )
             return False
 
@@ -99,7 +104,7 @@ class SnippetExplanation:
 
         header = decorate_text(center_fixed_width(self._snippet))
         usage = dedent_and_strip(
-                """
+            """
                 Provided snippet does not match the expected keyword format:
                 
                   [<quantity>_]<keyword>[_<group>]([<param>])
@@ -120,7 +125,7 @@ class SnippetExplanation:
                   3. one_to_three_words(var_v2)
                      Matches one to three whitespace‑separated words and captures "v2".
                 """
-            )
+        )
         self._status = StatusString(f"{header}\n{usage}\n", status="invalid")
 
         return False
@@ -133,10 +138,7 @@ class SnippetExplanation:
 
         if not parser:
             header = decorate_text(center_fixed_width(f"Undefined {self._snippet!r}"))
-            self._status = StatusString(
-                f"{header}\n{parser.status}",
-                status="invalid"
-            )
+            self._status = StatusString(f"{header}\n{parser.status}", status="invalid")
             return False
 
         params = re.split(r"\s*,\s*", raw_params.lower())
@@ -169,8 +171,7 @@ class SnippetExplanation:
                 reason=f"{type(ex).__name__}: {ex}",
             )
 
-        results = [bool(re.fullmatch(pattern, sample)) for sample in
-                   self._test_samples]
+        results = [bool(re.fullmatch(pattern, sample)) for sample in self._test_samples]
 
         if all(results):
             return StatusString(str(results), status="passed")
@@ -203,7 +204,6 @@ class SnippetExplanation:
         parts.append("    ]\n")
         return "\n".join(parts)
 
-
     def build_explanation(self):
         """Assemble the full explanation block for the snippet."""
         pattern = ElementPattern(self._normalized)
@@ -218,7 +218,7 @@ class SnippetExplanation:
             self.generate_sample_section(),
             "Evaluating:",
             "    [bool(re.fullmatch(pattern, item)) for item in lst]",
-            ""
+            "",
         ]
 
         result = self.generate_result_section()
@@ -236,17 +236,17 @@ class SnippetExplanation:
         if result.error == "error":
             error_header = decorate_text(result.reason)
             self._ready = False
-            self._status = StatusString(
-                f"{error_header}\n\n{result}", status="error"
-            )
+            self._status = StatusString(f"{error_header}\n\n{result}", status="error")
             return
 
         # Failed Match
-        lines.extend([
-            decorate_text(center_fixed_width("Failed Match")),
-            "Expected:",
-            f"    {result.reason}",
-            "Received:",
-            f"    {result}"
-        ])
+        lines.extend(
+            [
+                decorate_text(center_fixed_width("Failed Match")),
+                "Expected:",
+                f"    {result.reason}",
+                "Received:",
+                f"    {result}",
+            ]
+        )
         self._status = StatusString("\n".join(lines), status="failed")

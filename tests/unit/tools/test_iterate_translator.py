@@ -18,47 +18,41 @@ from textfsmgen.tools.suggester import IterateSuggester
     "data, snippet, group_flag, expected",
     [
         (
-            'orange is good color.',
-            'word(var_name) word(var_v1) word(var_v2) word(var_v3).',
+            "orange is good color.",
+            "word(var_name) word(var_v1) word(var_v2) word(var_v3).",
             False,
-            "word(var_name) is good color."
+            "word(var_name) is good color.",
         ),
-
         (
-            'yellow is good color.',
-            'word(var_name) word(var_v1) word(var_v2) word().',
+            "yellow is good color.",
+            "word(var_name) word(var_v1) word(var_v2) word().",
             False,
-            "word(var_name) is good word()."
+            "word(var_name) is good word().",
         ),
-
         (
-            'red is good color.',
-            'word(var_v0, keep) word(var_v1) word(var_v2) word(var_v3).',
+            "red is good color.",
+            "word(var_v0, keep) word(var_v1) word(var_v2) word(var_v3).",
             False,
-            "word(var_cv0) is good color."
+            "word(var_cv0) is good color.",
         ),
-
         (
-            'green is good color.',
-            'word(keep, var_v0) word(var_v1) word(var_v2) word(var_v3).',
+            "green is good color.",
+            "word(keep, var_v0) word(var_v1) word(var_v2) word(var_v3).",
             False,
-            "word(var_cv0) is good color."
+            "word(var_cv0) is good color.",
         ),
-
         (
-            'blue is good color.',
-            'word(keep) word(var_v1) word(var_v2) word(var_v3).',
+            "blue is good color.",
+            "word(keep) word(var_v1) word(var_v2) word(var_v3).",
             False,
-            "word() is good color."
+            "word() is good color.",
         ),
-
         (
-            'white is good color.',
-            'word() word(var_v1) word(var_v2) word(var_v3).',
+            "white is good color.",
+            "word() word(var_v1) word(var_v2) word(var_v3).",
             False,
-            "word() word(var_v1) word(var_v2) word(var_v3)."
+            "word() word(var_v1) word(var_v2) word(var_v3).",
         ),
-
     ],
 )
 def test(data, snippet, group_flag, expected):

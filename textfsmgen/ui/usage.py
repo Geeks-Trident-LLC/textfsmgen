@@ -14,11 +14,7 @@ import textfsmgen.config as config
 from textfsmgen import ui
 from textfsmgen.ui import common
 
-from textfsmgen.ui.common import (
-    center_window,
-    make_modal,
-    render_formatted_text
-)
+from textfsmgen.ui.common import center_window, make_modal, render_formatted_text
 
 
 window_width = 960 if ui.is_macos else 820 if ui.is_linux else 740
@@ -36,8 +32,12 @@ def show_help(app, category):
 
     if parent:
         center_window(
-            parent, dialog, int(window_width * 0.9), int(window_height * 0.95),
-            x_resizable=True, y_resizable=True
+            parent,
+            dialog,
+            int(window_width * 0.9),
+            int(window_height * 0.95),
+            x_resizable=True,
+            y_resizable=True,
         )
 
     # Frame to hold textarea + scrollbar
@@ -45,7 +45,7 @@ def show_help(app, category):
     frame.pack(fill="both", expand=True)
 
     # Allow frame to expand
-    frame.rowconfigure(0, weight=1)     # textarea grows vertically
+    frame.rowconfigure(0, weight=1)  # textarea grows vertically
     frame.rowconfigure(1, weight=0)  # fixed rows do NOT grow vertically
     frame.columnconfigure(0, weight=1)
 
@@ -53,30 +53,23 @@ def show_help(app, category):
     frame.rowconfigure(0, weight=1)
     frame.columnconfigure(0, weight=1)
 
-    textarea = ui.TextArea(frame, wrap='none', state="disabled", bg=ui.readonly_text_bg_color)
-    textarea.grid(row=0, column=0, sticky='nswe')  # noqa
+    textarea = ui.TextArea(
+        frame, wrap="none", state="disabled", bg=ui.readonly_text_bg_color
+    )
+    textarea.grid(row=0, column=0, sticky="nswe")  # noqa
 
     render_formatted_text(textarea, get_usage(category))
 
     # Add vertical scrollbar
-    vscrollbar = ui.Scrollbar(
-        frame, orient="vertical",
-        command=textarea.yview
-    )
-    vscrollbar.grid(row=0, column=1, sticky='ns')
+    vscrollbar = ui.Scrollbar(frame, orient="vertical", command=textarea.yview)
+    vscrollbar.grid(row=0, column=1, sticky="ns")
 
     # Add horizontal scrollbar
-    hscrollbar = ui.Scrollbar(
-        frame, orient="horizontal",
-        command=textarea.xview
-    )
-    hscrollbar.grid(row=1, column=0, sticky='ew')
+    hscrollbar = ui.Scrollbar(frame, orient="horizontal", command=textarea.xview)
+    hscrollbar.grid(row=1, column=0, sticky="ew")
 
     # Link scrollbars to text area
-    textarea.config(
-        yscrollcommand=vscrollbar.set,
-        xscrollcommand=hscrollbar.set
-    )
+    textarea.config(yscrollcommand=vscrollbar.set, xscrollcommand=hscrollbar.set)
 
     make_modal(dialog)
 

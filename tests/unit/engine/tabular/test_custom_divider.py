@@ -32,16 +32,14 @@ def test_parses_two_column_table():
     """).strip()
 
     expected_result = [
-        {'lastwritetime': '9/1/2021 6:13:50 AM', 'name': 'reference'},
-        {'lastwritetime': '10/5/2021 9:13:50 PM', 'name': 'dsc'},
-        {'lastwritetime': '11/2/2021 11:58:45 PM', 'name': 'README.md'},
-        {'lastwritetime': '12/16/2021 12:30:59 PM', 'name': 'CONTRIBUTING.md'}
+        {"lastwritetime": "9/1/2021 6:13:50 AM", "name": "reference"},
+        {"lastwritetime": "10/5/2021 9:13:50 PM", "name": "dsc"},
+        {"lastwritetime": "11/2/2021 11:58:45 PM", "name": "README.md"},
+        {"lastwritetime": "12/16/2021 12:30:59 PM", "name": "CONTRIBUTING.md"},
     ]
 
     translator = VarColumnTabularTranslator(
-        test_data,
-        column_divider='|',
-        column_count=2
+        test_data, column_divider="|", column_count=2
     )
     table = translator.parse_table()
     assert table
@@ -65,15 +63,13 @@ def test_parses_with_empty_cell():
         start() word(var_fruits)optional_spaces()|optional_spaces()word(var_meat, or_empty)optional_spaces()|optional_spaces()words(var_drinks) end() -> record
     """).strip()
 
-    expected_result = [     # noqa
-        {'fruits': 'orange', 'meat': 'pork', 'drinks': 'water'},
-        {'fruits': 'peach', 'meat': '', 'drinks': 'pepsi soda'}
+    expected_result = [  # noqa
+        {"fruits": "orange", "meat": "pork", "drinks": "water"},
+        {"fruits": "peach", "meat": "", "drinks": "pepsi soda"},
     ]
 
     translator = VarColumnTabularTranslator(
-        test_data,
-        column_divider='|',
-        column_count=3
+        test_data, column_divider="|", column_count=3
     )
     table = translator.parse_table()
     assert table
@@ -100,15 +96,13 @@ def test_parses_with_full_enclosing_divider():
         start() |optional_spaces()word(var_fruits)optional_spaces()|optional_spaces()word(var_meat, or_empty)optional_spaces()|optional_spaces()words(var_drinks)optional_spaces()| end() -> record
     """).strip()
 
-    expected_result = [     # noqa
-        {'fruits': 'orange', 'meat': 'pork', 'drinks': 'water'},
-        {'fruits': 'peach', 'meat': '', 'drinks': 'pepsi soda'}
+    expected_result = [  # noqa
+        {"fruits": "orange", "meat": "pork", "drinks": "water"},
+        {"fruits": "peach", "meat": "", "drinks": "pepsi soda"},
     ]
 
     translator = VarColumnTabularTranslator(
-        test_data,
-        column_divider='|',
-        column_count=3
+        test_data, column_divider="|", column_count=3
     )
     table = translator.parse_table()
     assert table
@@ -135,15 +129,13 @@ def test_parses_with_left_enclosing_divider():
         start() |optional_spaces()word(var_fruits)optional_spaces()|optional_spaces()word(var_meat, or_empty)optional_spaces()|optional_spaces()words(var_drinks) end(space) -> record
     """).strip()
 
-    expected_result = [     # noqa
-        {'fruits': 'orange', 'meat': 'pork', 'drinks': 'water'},
-        {'fruits': 'peach', 'meat': '', 'drinks': 'pepsi soda'}
+    expected_result = [  # noqa
+        {"fruits": "orange", "meat": "pork", "drinks": "water"},
+        {"fruits": "peach", "meat": "", "drinks": "pepsi soda"},
     ]
 
     translator = VarColumnTabularTranslator(
-        test_data,
-        column_divider='|',
-        column_count=3
+        test_data, column_divider="|", column_count=3
     )
     table = translator.parse_table()
     assert table
@@ -170,15 +162,13 @@ def test_parses_with_right_enclosing_divider():
         start() word(var_fruits)optional_spaces()|optional_spaces()word(var_meat, or_empty)optional_spaces()|optional_spaces()words(var_drinks)optional_spaces()| end() -> record
     """).strip()
 
-    expected_result = [     # noqa
-        {'fruits': 'orange', 'meat': 'pork', 'drinks': 'water'},
-        {'fruits': 'peach', 'meat': '', 'drinks': 'pepsi soda'}
+    expected_result = [  # noqa
+        {"fruits": "orange", "meat": "pork", "drinks": "water"},
+        {"fruits": "peach", "meat": "", "drinks": "pepsi soda"},
     ]
 
     translator = VarColumnTabularTranslator(
-        test_data,
-        column_divider='|',
-        column_count=3
+        test_data, column_divider="|", column_count=3
     )
     table = translator.parse_table()
     assert table
@@ -203,15 +193,12 @@ def test_parses_with_purge_divider():
     """).strip()
 
     expected_result = [
-        {'fruits': 'orange', 'meat': 'pork', 'drinks': 'water'},
-        {'fruits': 'peach', 'meat': '', 'drinks': 'pepsi soda'}
+        {"fruits": "orange", "meat": "pork", "drinks": "water"},
+        {"fruits": "peach", "meat": "", "drinks": "pepsi soda"},
     ]
 
     translator = VarColumnTabularTranslator(
-        test_data,
-        column_divider='|',
-        column_count=3,
-        has_header_row=True
+        test_data, column_divider="|", column_count=3, has_header_row=True
     )
     table = translator.parse_table()
     assert table
@@ -236,16 +223,13 @@ def test_parses_with_left_purge_divider():
         start() |word(var_fruits)|word(var_meat)|words(var_drinks) end() -> record
     """).strip()
 
-    expected_result = [     # noqa
-        {'fruits': 'orange', 'meat': 'pork', 'drinks': 'water'},
-        {'fruits': 'peach', 'meat': 'beef', 'drinks': 'pepsi soda'}
+    expected_result = [  # noqa
+        {"fruits": "orange", "meat": "pork", "drinks": "water"},
+        {"fruits": "peach", "meat": "beef", "drinks": "pepsi soda"},
     ]
 
     translator = VarColumnTabularTranslator(
-        test_data,
-        column_divider='|',
-        column_count=3,
-        has_header_row=True
+        test_data, column_divider="|", column_count=3, has_header_row=True
     )
     table = translator.parse_table()
     assert table
@@ -270,16 +254,13 @@ def test_parses_with_right_purge_divider():
         start() word(var_fruits)|word(var_meat)|words(var_drinks)| end() -> record
     """).strip()
 
-    expected_result = [     # noqa
-        {'fruits': 'orange', 'meat': 'pork', 'drinks': 'water'},
-        {'fruits': 'peach', 'meat': 'beef', 'drinks': 'pepsi soda'}
+    expected_result = [  # noqa
+        {"fruits": "orange", "meat": "pork", "drinks": "water"},
+        {"fruits": "peach", "meat": "beef", "drinks": "pepsi soda"},
     ]
 
     translator = VarColumnTabularTranslator(
-        test_data,
-        column_divider='|',
-        column_count=3,
-        has_header_row=True
+        test_data, column_divider="|", column_count=3, has_header_row=True
     )
     table = translator.parse_table()
     assert table
@@ -304,16 +285,13 @@ def test_parses_with_full_purge_divider():
         start() |word(var_fruits)|word(var_meat)|words(var_drinks)| end() -> record
     """).strip()
 
-    expected_result = [     # noqa
-        {'fruits': 'orange', 'meat': 'pork', 'drinks': 'water'},
-        {'fruits': 'peach', 'meat': 'beef', 'drinks': 'pepsi soda'}
+    expected_result = [  # noqa
+        {"fruits": "orange", "meat": "pork", "drinks": "water"},
+        {"fruits": "peach", "meat": "beef", "drinks": "pepsi soda"},
     ]
 
     translator = VarColumnTabularTranslator(
-        test_data,
-        column_divider='|',
-        column_count=3,
-        has_header_row=True
+        test_data, column_divider="|", column_count=3, has_header_row=True
     )
     table = translator.parse_table()
     assert table

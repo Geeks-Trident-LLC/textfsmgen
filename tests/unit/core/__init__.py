@@ -61,7 +61,7 @@ def get_expected_template(case="case1"):
               ^Title +Price +Genre
               ^${title} +${price} +${genre} -> Record
         """)
-        template = template.replace('_datetime_', dt_str)
+        template = template.replace("_datetime_", dt_str)
         return template
     elif case == "case2":
         template = dedent_and_strip("""
@@ -81,7 +81,7 @@ def get_expected_template(case="case1"):
               ^=+ +=+ +=+
               ^${title} +${price} +${genre} -> Record
         """)
-        template = template.replace('_datetime_', dt_str)
+        template = template.replace("_datetime_", dt_str)
         return template
     else:
         return "NO-TEMPLATE"

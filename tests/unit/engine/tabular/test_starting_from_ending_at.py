@@ -34,6 +34,8 @@ def test_starting_from_and_ending_at_arguments():
         start() digits(var_index)  non_wss(var_col1)  mixed_word(var_col2) end() -> record
         line k: digits() blab blab -> EOF
     """).strip()
-    translator = TabularTranslator(text, column_widths="10, 15,", starting_from=2, ending_at=6)
+    translator = TabularTranslator(
+        text, column_widths="10, 15,", starting_from=2, ending_at=6
+    )
     snippet = translator.to_snippet()
     assert snippet == exp_snippet

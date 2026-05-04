@@ -5,7 +5,6 @@ textfsmgen.core.patterns
 Core regex pattern definitions for the TextFSM generator.
 """
 
-
 import re
 
 from copy import copy
@@ -24,27 +23,27 @@ from textfsmgen.libs.pattern import (
 from textfsmgen.libs.text import WHITESPACE_CHARS
 from textfsmgen.libs.text import Line
 
-pattern_registry = PatternRegistry()    # noqa
+pattern_registry = PatternRegistry()  # noqa
 
 SYMBOL = SymbolCls()
 
 
 class VarCls:
-
-    def __init__(self, name='', pattern='', option=''):
+    def __init__(self, name="", pattern="", option=""):
         self.name = str(name).strip()
         self.pattern = str(pattern)
         option = str(option).strip()
         if option:
-            option = ','.join(re.split(r'\s*_\s*', option.title()))
-            option = option.replace(' ', '')
+            option = ",".join(re.split(r"\s*_\s*", option.title()))
+            option = option.replace(" ", "")
         self.option = option
 
-    def __bool__(self): return self.name != ""
+    def __bool__(self):
+        return self.name != ""
 
     @property
     def is_empty(self):
-        return self.name == ''
+        return self.name == ""
 
     @property
     def value(self):
@@ -64,9 +63,9 @@ class TextPattern(str):
     def __new__(cls, text, as_is=False):
         data = str(text)
         if as_is:
-            return super().__new__(cls, data)       # noqa
-        text_pattern = cls.get_pattern(data) if data else ''
-        return super().__new__(cls, text_pattern)   # noqa
+            return super().__new__(cls, data)  # noqa
+        text_pattern = cls.get_pattern(data) if data else ""
+        return super().__new__(cls, text_pattern)  # noqa
 
     def __init__(self, text, as_is=False):
         self.text = text
@@ -86,15 +85,15 @@ class TextPattern(str):
 
     @property
     def is_empty(self):
-        if self == '':
+        if self == "":
             return True
         else:
-            result = re.match(str(self), '')
+            result = re.match(str(self), "")
             return bool(result)
 
     @property
     def is_space(self):
-        is_space = bool(re.match(self, ' '))
+        is_space = bool(re.match(self, " "))
         return is_space
 
     @property
@@ -116,18 +115,18 @@ class TextPattern(str):
 
     @classmethod
     def get_pattern(cls, text):
-        text_pattern = ''   # noqa
+        text_pattern = ""  # noqa
         start = 0
         m = None
-        for m in re.finditer(r'[\r\n]+', text):
-            pre_match = text[start:m.start()]
+        for m in re.finditer(r"[\r\n]+", text):
+            pre_match = text[start : m.start()]
             if pre_match:
                 text_pattern += Line(pre_match).convert_to_regex_pattern()
             match = m.group()
-            multi = '{1,2}' if len(match) == len(set(match)) else '{2,}'
-            text_pattern += f'[\\r\\n]{multi}'
+            multi = "{1,2}" if len(match) == len(set(match)) else "{2,}"
+            text_pattern += f"[\\r\\n]{multi}"
         if m:
-            post_match = text[m.end():]
+            post_match = text[m.end() :]
             if post_match:
                 text_pattern += Line(post_match).convert_to_regex_pattern()
         else:
@@ -138,17 +137,17 @@ class TextPattern(str):
 
     @classmethod
     def get_pattern_bak(cls, text):
-        start = 0       # noqa
+        start = 0  # noqa
         result = []
-        for item in re.finditer(r'\s+', text):
-            before_matched = text[start: item.start()]
+        for item in re.finditer(r"\s+", text):
+            before_matched = text[start : item.start()]
             before_matched and result.append(soft_escape(before_matched))
             matched = item.group()
             total = len(matched)
             lst = list(matched)
-            is_space = lst[0] == ' ' and len(set(lst)) == 1
-            is_space and result.append(' ' if total == 1 else ' +')
-            not is_space and result.append(r'\s' if total == 1 else r'\s+')
+            is_space = lst[0] == " " and len(set(lst)) == 1
+            is_space and result.append(" " if total == 1 else " +")
+            not is_space and result.append(r"\s" if total == 1 else r"\s+")
             start = item.end()
         else:
             if result:
@@ -157,7 +156,7 @@ class TextPattern(str):
             else:
                 result.append(soft_escape(text))
 
-        text_pattern = ''.join(result)
+        text_pattern = "".join(result)
 
         validate_pattern(text_pattern, exception_cls=TextPatternError)
         return text_pattern
@@ -178,7 +177,7 @@ class TextPattern(str):
         return pattern
 
     def add(self, other, as_is=True):
-        if isinstance(other, TextPattern):      # noqa
+        if isinstance(other, TextPattern):  # noqa
             result = self + other
         else:
             if isinstance(other, (list, tuple)):
@@ -204,24 +203,24 @@ class TextPattern(str):
 
 class ElementPattern(str):
     # patterns
-    word_bound_pattern = r'word_bound(_left|_right|_raw)?$'
-    head_pattern = r'head(_raw|((_just)?_(whitespaces?|ws|spaces?)(_plus)?))?$'
-    tail_pattern = r'tail(_raw|((_just)?_(whitespaces?|ws|spaces?)(_plus)?))?$'
-    meta_data_pattern = r'^meta_data_\w+'
+    word_bound_pattern = r"word_bound(_left|_right|_raw)?$"
+    head_pattern = r"head(_raw|((_just)?_(whitespaces?|ws|spaces?)(_plus)?))?$"
+    tail_pattern = r"tail(_raw|((_just)?_(whitespaces?|ws|spaces?)(_plus)?))?$"
+    meta_data_pattern = r"^meta_data_\w+"
     _variable = None
 
     def __new__(cls, text, as_is=False):
-        cls._variable = VarCls()    # noqa
+        cls._variable = VarCls()  # noqa
         cls._or_empty = False
-        cls._prepended_pattern = ''
-        cls._appended_pattern = ''
+        cls._prepended_pattern = ""
+        cls._appended_pattern = ""
         data = str(text)
 
         if as_is:
-            return super().__new__(cls, data)   # noqa
+            return super().__new__(cls, data)  # noqa
 
-        pattern = cls.get_pattern(data) if data else ''
-        return super().__new__(cls, pattern)    # noqa
+        pattern = cls.get_pattern(data) if data else ""
+        return super().__new__(cls, pattern)  # noqa
 
     def __init__(self, text, as_is=False):
         self.text = text
@@ -234,16 +233,16 @@ class ElementPattern(str):
         # clear class variable after initialization
         self._variable = VarCls()
         self._or_empty = False
-        self._prepended_pattern = ''
-        self._appended_pattern = ''
+        self._prepended_pattern = ""
+        self._appended_pattern = ""
 
     @classmethod
     def get_pattern(cls, text):
-        sep_pat = r'(?P<keyword>\w+)[(](?P<params>.*)[)]$'  # noqa
+        sep_pat = r"(?P<keyword>\w+)[(](?P<params>.*)[)]$"  # noqa
         match = re.match(sep_pat, text.strip())
         if match:
-            keyword = match.group('keyword')
-            params = match.group('params').strip()
+            keyword = match.group("keyword")
+            params = match.group("params").strip()
             pattern = cls.build_pattern(keyword, params)
         else:
             pattern = soft_escape(text)
@@ -286,51 +285,51 @@ class ElementPattern(str):
 
     @classmethod
     def build_custom_pattern(cls, keyword, params):
-        if not pattern_registry.has_keyword(keyword):   # noqa
-            return False, ''
+        if not pattern_registry.has_keyword(keyword):  # noqa
+            return False, ""
 
-        arguments = re.split(r' *, *', params) if params else []
+        arguments = re.split(r" *, *", params) if params else []
 
         lst = [pattern_registry.resolve_pattern(keyword)]
 
-        name, vpat = '', r'var_(?P<name>\w+)$'
-        or_pat = r'or_(?P<case>[^,]+)'
+        name, vpat = "", r"var_(?P<name>\w+)$"
+        or_pat = r"or_(?P<case>[^,]+)"
         is_empty = False
-        word_bound = ''
-        head = ''
-        tail = ''
+        word_bound = ""
+        head = ""
+        tail = ""
         is_or_either = False
-        spaces_occurrence_pat = ''      # noqa
+        spaces_occurrence_pat = ""  # noqa
 
         for arg in arguments:
             match = re.match(vpat, arg, flags=re.I)
             if match:
-                name = match.group('name') if not name else name
+                name = match.group("name") if not name else name
             elif re.match(cls.word_bound_pattern, arg):
-                if arg == 'word_bound_raw':
-                    'word_bound' not in lst and lst.append('word_bound')
+                if arg == "word_bound_raw":
+                    "word_bound" not in lst and lst.append("word_bound")
                 else:
                     word_bound = arg
             elif re.match(cls.head_pattern, arg):
-                if arg == 'head_raw':
-                    'head' not in lst and lst.append('head')
+                if arg == "head_raw":
+                    "head" not in lst and lst.append("head")
                 else:
                     head = arg
             elif re.match(cls.tail_pattern, arg):
-                if arg == 'tail_raw':
-                    'tail' not in lst and lst.append('tail')
+                if arg == "tail_raw":
+                    "tail" not in lst and lst.append("tail")
                 else:
                     tail = arg
             elif re.match(cls.meta_data_pattern, arg):
-                if arg == 'meta_data_raw':
-                    'meta_data' not in lst and lst.append('meta_data')
+                if arg == "meta_data_raw":
+                    "meta_data" not in lst and lst.append("meta_data")
                 else:
-                    cls._variable.option = arg.lstrip('meta_data_')
+                    cls._variable.option = arg.lstrip("meta_data_")
             else:
                 match = re.match(or_pat, arg, flags=re.I)
                 if match:
-                    case = match.group('case')
-                    if case == 'empty':
+                    case = match.group("case")
+                    if case == "empty":
                         is_empty = True
                         cls._or_empty = is_empty
                     else:
@@ -340,80 +339,80 @@ class ElementPattern(str):
                     pat = soft_escape(arg)
                     pat not in lst and lst.append(pat)
 
-        is_empty and lst.append('')
+        is_empty and lst.append("")
         is_multiple = len(lst) > 1
         pattern = cls.join_list(lst)
         pattern = cls.add_word_bound(
             pattern, word_bound=word_bound, added_parentheses=is_multiple
         )
         if spaces_occurrence_pat:
-            fmt = '(%s)|( *%s *)' if is_or_either else '(%s)|(%s)'
+            fmt = "(%s)|( *%s *)" if is_or_either else "(%s)|(%s)"
             pattern = fmt % (spaces_occurrence_pat, pattern)
 
         pattern = cls.add_var_name(pattern, name=name)
         pattern = cls.add_head_of_string(pattern, head=head)
         pattern = cls.add_tail_of_string(pattern, tail=tail)
-        pattern = pattern.replace('__comma__', ',')
+        pattern = pattern.replace("__comma__", ",")
         return True, pattern
 
     @classmethod
     def build_symbol_pattern(cls, keyword, params):
-        if keyword != 'symbol' or not params.strip():   # noqa
-            return False, ''
+        if keyword != "symbol" or not params.strip():  # noqa
+            return False, ""
 
-        arguments = re.split(r' *, *', params) if params else []
-        symbol_name, removed_items = '', []
+        arguments = re.split(r" *, *", params) if params else []
+        symbol_name, removed_items = "", []
         for arg in arguments:
-            if arg.startswith('name='):
+            if arg.startswith("name="):
                 symbol_name = arg[5:]
                 removed_items.append(arg)
 
         if not removed_items:
-            return False, ''
+            return False, ""
         else:
             for item in removed_items:
                 if item in arguments:
                     arguments.remove(item)
 
-        val = SYMBOL.get(symbol_name, soft_escape(symbol_name))     # noqa
+        val = SYMBOL.get(symbol_name, soft_escape(symbol_name))  # noqa
         lst = [val]
 
-        name, vpat = '', r'var_(?P<name>\w+)$'      # noqa
-        or_pat = r'or_(?P<case>[^,]+)'
+        name, vpat = "", r"var_(?P<name>\w+)$"  # noqa
+        or_pat = r"or_(?P<case>[^,]+)"
         is_empty = False
-        word_bound = ''
-        head = ''
-        tail = ''
+        word_bound = ""
+        head = ""
+        tail = ""
 
         for arg in arguments:
             match = re.match(vpat, arg, flags=re.I)
             if match:
-                name = match.group('name') if not name else name
+                name = match.group("name") if not name else name
             elif re.match(cls.word_bound_pattern, arg):
-                if arg == 'word_bound_raw':
-                    'word_bound' not in lst and lst.append('word_bound')
+                if arg == "word_bound_raw":
+                    "word_bound" not in lst and lst.append("word_bound")
                 else:
                     word_bound = arg
             elif re.match(cls.head_pattern, arg):
-                if arg == 'head_raw':
-                    'head' not in lst and lst.append('head')
+                if arg == "head_raw":
+                    "head" not in lst and lst.append("head")
                 else:
                     head = arg
             elif re.match(cls.tail_pattern, arg):
-                if arg == 'tail_raw':
-                    'tail' not in lst and lst.append('tail')
+                if arg == "tail_raw":
+                    "tail" not in lst and lst.append("tail")
                 else:
                     tail = arg
             elif re.match(cls.meta_data_pattern, arg):
-                if arg == 'meta_data_raw':
-                    'meta_data' not in lst and lst.append('meta_data')
+                if arg == "meta_data_raw":
+                    "meta_data" not in lst and lst.append("meta_data")
                 else:
-                    cls._variable.option = arg.lstrip('meta_data_')
+                    cls._variable.option = arg.lstrip("meta_data_")
             else:
                 match = re.match(or_pat, arg, flags=re.I)
                 if match:
-                    case = match.group('case')
-                    if case == 'empty':
+                    case = match.group("case")
+                    if case == "empty":
                         is_empty = True
                         cls._or_empty = is_empty
                     else:
@@ -423,7 +422,7 @@ class ElementPattern(str):
                     pat = soft_escape(arg)
                     pat not in lst and lst.append(pat)
 
-        is_empty and lst.append('')
+        is_empty and lst.append("")
         is_multiple = len(lst) > 1
         pattern = cls.join_list(lst)
         pattern = cls.add_word_bound(
@@ -432,53 +431,53 @@ class ElementPattern(str):
         pattern = cls.add_var_name(pattern, name=name)
         pattern = cls.add_head_of_string(pattern, head=head)
         pattern = cls.add_tail_of_string(pattern, tail=tail)
-        pattern = pattern.replace('__comma__', ',')
+        pattern = pattern.replace("__comma__", ",")
         return True, pattern
 
     @classmethod
     def build_choice_pattern(cls, keyword, params):
-        if keyword != 'choice':     # noqa
-            return False, ''
+        if keyword != "choice":  # noqa
+            return False, ""
 
-        arguments = re.split(r' *, *', params) if params else []    # noqa
+        arguments = re.split(r" *, *", params) if params else []  # noqa
         lst = []
 
-        name, vpat = '', r'var_(?P<name>\w+)$'
-        or_pat = r'or_(?P<case>[^,]+)'
+        name, vpat = "", r"var_(?P<name>\w+)$"
+        or_pat = r"or_(?P<case>[^,]+)"
         is_empty = False
-        word_bound = ''
-        head = ''
-        tail = ''
+        word_bound = ""
+        head = ""
+        tail = ""
 
         for arg in arguments:
             match = re.match(vpat, arg, flags=re.I)
             if match:
-                name = match.group('name') if not name else name
+                name = match.group("name") if not name else name
             elif re.match(cls.word_bound_pattern, arg):
-                if arg == 'word_bound_raw':
-                    'word_bound' not in lst and lst.append('word_bound')
+                if arg == "word_bound_raw":
+                    "word_bound" not in lst and lst.append("word_bound")
                 else:
                     word_bound = arg
             elif re.match(cls.head_pattern, arg):
-                if arg == 'head_raw':
-                    'head' not in lst and lst.append('head')
+                if arg == "head_raw":
+                    "head" not in lst and lst.append("head")
                 else:
                     head = arg
             elif re.match(cls.tail_pattern, arg):
-                if arg == 'tail_raw':
-                    'tail' not in lst and lst.append('tail')
+                if arg == "tail_raw":
+                    "tail" not in lst and lst.append("tail")
                 else:
                     tail = arg
             elif re.match(cls.meta_data_pattern, arg):
-                if arg == 'meta_data_raw':
-                    'meta_data' not in lst and lst.append('meta_data')
+                if arg == "meta_data_raw":
+                    "meta_data" not in lst and lst.append("meta_data")
                 else:
-                    cls._variable.option = arg.lstrip('meta_data_')
+                    cls._variable.option = arg.lstrip("meta_data_")
             else:
                 match = re.match(or_pat, arg, flags=re.I)
                 if match:
-                    case = match.group('case')
-                    if case == 'empty':
+                    case = match.group("case")
+                    if case == "empty":
                         is_empty = True
                         cls._or_empty = is_empty
                     else:
@@ -488,59 +487,59 @@ class ElementPattern(str):
                     pat = soft_escape(arg)
                     pat not in lst and lst.append(pat)
 
-        is_empty and lst.append('')
+        is_empty and lst.append("")
         pattern = cls.join_list(lst)
         pattern = cls.add_word_bound(pattern, word_bound=word_bound)
         pattern = cls.add_var_name(pattern, name=name)
         pattern = cls.add_head_of_string(pattern, head=head)
         pattern = cls.add_tail_of_string(pattern, tail=tail)
-        pattern = pattern.replace('__comma__', ',')
+        pattern = pattern.replace("__comma__", ",")
         return True, pattern
 
     @classmethod
     def build_data_pattern(cls, keyword, params):
-        if keyword != 'data':       # noqa
-            return False, ''
+        if keyword != "data":  # noqa
+            return False, ""
 
-        arguments = re.split(r' *, *', params) if params else []    # noqa
+        arguments = re.split(r" *, *", params) if params else []  # noqa
         lst = []
 
-        name, vpat = '', r'var_(?P<name>\w+)$'
-        or_pat = r'or_(?P<case>[^,]+)'
+        name, vpat = "", r"var_(?P<name>\w+)$"
+        or_pat = r"or_(?P<case>[^,]+)"
         is_empty = False
-        word_bound = ''
-        head = ''
-        tail = ''
+        word_bound = ""
+        head = ""
+        tail = ""
 
         for arg in arguments:
             match = re.match(vpat, arg, flags=re.I)
             if match:
-                name = match.group('name') if not name else name
+                name = match.group("name") if not name else name
             elif re.match(cls.word_bound_pattern, arg):
-                if arg == 'word_bound_raw':
-                    'word_bound' not in lst and lst.append('word_bound')
+                if arg == "word_bound_raw":
+                    "word_bound" not in lst and lst.append("word_bound")
                 else:
                     word_bound = arg
             elif re.match(cls.head_pattern, arg):
-                if arg == 'head_raw':
-                    'head' not in lst and lst.append('head')
+                if arg == "head_raw":
+                    "head" not in lst and lst.append("head")
                 else:
                     head = arg
             elif re.match(cls.tail_pattern, arg):
-                if arg == 'tail_raw':
-                    'tail' not in lst and lst.append('tail')
+                if arg == "tail_raw":
+                    "tail" not in lst and lst.append("tail")
                 else:
                     tail = arg
             elif re.match(cls.meta_data_pattern, arg):
-                if arg == 'meta_data_raw':
-                    'meta_data' not in lst and lst.append('meta_data')
+                if arg == "meta_data_raw":
+                    "meta_data" not in lst and lst.append("meta_data")
                 else:
-                    cls._variable.option = arg.lstrip('meta_data_')
+                    cls._variable.option = arg.lstrip("meta_data_")
             else:
                 match = re.match(or_pat, arg, flags=re.I)
                 if match:
-                    case = match.group('case')
-                    if case == 'empty':
+                    case = match.group("case")
+                    if case == "empty":
                         is_empty = True
                         cls._or_empty = is_empty
                     else:
@@ -550,51 +549,63 @@ class ElementPattern(str):
                     pat = soft_escape(arg)
                     pat not in lst and lst.append(pat)
 
-        is_empty and lst.append('')
+        is_empty and lst.append("")
         pattern = cls.join_list(lst)
         pattern = cls.add_word_bound(pattern, word_bound=word_bound)
         pattern = cls.add_var_name(pattern, name=name)
         pattern = cls.add_head_of_string(pattern, head=head)
         pattern = cls.add_tail_of_string(pattern, tail=tail)
-        pattern = pattern.replace('__comma__', ',')
+        pattern = pattern.replace("__comma__", ",")
         return True, pattern
 
     @classmethod
     def build_start_pattern(cls, keyword, params):
-        if keyword != 'start':
-            return False, ''
+        if keyword != "start":
+            return False, ""
 
-        table = dict(space=r'^ *', spaces=r'^ +', space_plus=r'^ +',
-                     ws=r'^\s*', ws_plus=r'^\s+',
-                     whitespace=r'^\s*', whitespaces=r'^\s+',
-                     whitespace_plus=r'^\s+')
-        pat = table.get(params, r'^')
+        table = dict(
+            space=r"^ *",
+            spaces=r"^ +",
+            space_plus=r"^ +",
+            ws=r"^\s*",
+            ws_plus=r"^\s+",
+            whitespace=r"^\s*",
+            whitespaces=r"^\s+",
+            whitespace_plus=r"^\s+",
+        )
+        pat = table.get(params, r"^")
         return True, pat
 
     @classmethod
     def build_end_pattern(cls, keyword, params):
-        if keyword != 'end':
-            return False, ''
+        if keyword != "end":
+            return False, ""
 
-        table = dict(space=r' *$', spaces=r' +$', space_plus=r' +$',
-                     ws=r'\s*$', ws_plus=r'\s+$',
-                     whitespace=r'\s*$', whitespaces=r'\s+$',
-                     whitespace_plus=r'\s+$')
-        pat = table.get(params, r'$')
+        table = dict(
+            space=r" *$",
+            spaces=r" +$",
+            space_plus=r" +$",
+            ws=r"\s*$",
+            ws_plus=r"\s+$",
+            whitespace=r"\s*$",
+            whitespaces=r"\s+$",
+            whitespace_plus=r"\s+$",
+        )
+        pat = table.get(params, r"$")
         return True, pat
 
     @classmethod
     def build_raw_pattern(cls, keyword, params):
-        if not params.startswith('raw>>>'):
-            return False, ''
-        params = re.sub(r'raw>+', '', params, count=1)
+        if not params.startswith("raw>>>"):
+            return False, ""
+        params = re.sub(r"raw>+", "", params, count=1)
         new_params = soft_escape(params)
-        pattern = r'{}\({}\)'.format(keyword, new_params)
+        pattern = r"{}\({}\)".format(keyword, new_params)
         return True, pattern
 
     @classmethod
     def build_default_pattern(cls, keyword, params):
-        pattern = soft_escape('{}({})'.format(keyword, params))
+        pattern = soft_escape("{}({})".format(keyword, params))
         return True, pattern
 
     @classmethod
@@ -606,7 +617,7 @@ class ElementPattern(str):
         if not parts:
             raise_runtime_error(
                 obj="ElementPatternJoinListError",
-                msg="Internal logic error — please report this to the developers."
+                msg="Internal logic error — please report this to the developers.",
             )
 
         # Single non-empty item
@@ -619,195 +630,195 @@ class ElementPattern(str):
         return f"({body})?" if has_empty else f"({body})"
 
     @classmethod
-    def add_var_name(cls, pattern, name=''):
+    def add_var_name(cls, pattern, name=""):
         if not name:
             return pattern
 
-        cls._variable.name = name   # noqa
+        cls._variable.name = name  # noqa
         cls._variable.pattern = pattern
-        if pattern.startswith('(') and pattern.endswith(')'):
+        if pattern.startswith("(") and pattern.endswith(")"):
             sub_pat = pattern[1:-1]
-            if pattern.endswith('|)'):
-                new_pattern = '(?P<{}>{})'.format(name, sub_pat)
+            if pattern.endswith("|)"):
+                new_pattern = "(?P<{}>{})".format(name, sub_pat)
             else:
                 try:
                     re.compile(sub_pat)
                     cls._variable.pattern = sub_pat
-                    new_pattern = '(?P<{}>{})'.format(name, sub_pat)
+                    new_pattern = "(?P<{}>{})".format(name, sub_pat)
                 except Exception as ex:
-                    new_pattern = '(?P<{}>{})'.format(name, pattern)
+                    new_pattern = "(?P<{}>{})".format(name, pattern)
                     raise_exception(ex, is_skipped=True)
         else:
-            new_pattern = '(?P<{}>{})'.format(name, pattern)
+            new_pattern = "(?P<{}>{})".format(name, pattern)
         return new_pattern
 
     @classmethod
-    def add_word_bound(cls, pattern, word_bound='', added_parentheses=True):
+    def add_word_bound(cls, pattern, word_bound="", added_parentheses=True):
         if not word_bound:  # noqa
             return pattern
 
-        has_ws = ' ' in pattern or r'\s' in pattern
-        new_pattern = '({})'.format(pattern) if has_ws else pattern
+        has_ws = " " in pattern or r"\s" in pattern
+        new_pattern = "({})".format(pattern) if has_ws else pattern
         if added_parentheses:
-            if not new_pattern.startswith('(') or not new_pattern.endswith(')'):
-                new_pattern = '({})'.format(new_pattern)
+            if not new_pattern.startswith("(") or not new_pattern.endswith(")"):
+                new_pattern = "({})".format(new_pattern)
 
-        if word_bound == 'word_bound_left':
-            new_pattern = r'\b{}'.format(new_pattern)
-        elif word_bound == 'word_bound_right':
-            new_pattern = r'{}\b'.format(new_pattern)
+        if word_bound == "word_bound_left":
+            new_pattern = r"\b{}".format(new_pattern)
+        elif word_bound == "word_bound_right":
+            new_pattern = r"{}\b".format(new_pattern)
         else:
-            new_pattern = r'\b{}\b'.format(new_pattern)
+            new_pattern = r"\b{}\b".format(new_pattern)
         return new_pattern
 
     @classmethod
-    def add_head_of_string(cls, pattern, head=''):
+    def add_head_of_string(cls, pattern, head=""):
         if not head:
             return pattern
 
-        case1, case2 = r'^\s*', r'^\s+'     # noqa
-        case3, case4 = r'^ *', r'^ +'
-        case5 = r'^'
+        case1, case2 = r"^\s*", r"^\s+"  # noqa
+        case3, case4 = r"^ *", r"^ +"
+        case5 = r"^"
 
-        case6, case7 = r'\s*', r'\s+'
-        case8, case9 = r' *', r' +'
+        case6, case7 = r"\s*", r"\s+"
+        case8, case9 = r" *", r" +"
 
-        case10, case11 = r'^\s*', r'^\s+'
-        case12, case13 = r'\s*', r'\s+'
+        case10, case11 = r"^\s*", r"^\s+"
+        case12, case13 = r"\s*", r"\s+"
 
-        if head == 'head_ws' and not pattern.startswith(case1):
-            new_pattern = '{}{}'.format(case1, pattern)
+        if head == "head_ws" and not pattern.startswith(case1):
+            new_pattern = "{}{}".format(case1, pattern)
             cls._prepended_pattern = case1
-        elif head == 'head_ws_plus' and not pattern.startswith(case2):
-            new_pattern = '{}{}'.format(case2, pattern)
+        elif head == "head_ws_plus" and not pattern.startswith(case2):
+            new_pattern = "{}{}".format(case2, pattern)
             cls._prepended_pattern = case2
-        elif head == 'head_space' and not pattern.startswith(case3):
-            new_pattern = '{}{}'.format(case3, pattern)
+        elif head == "head_space" and not pattern.startswith(case3):
+            new_pattern = "{}{}".format(case3, pattern)
             cls._prepended_pattern = case3
-        elif head == 'head_space_plus' and not pattern.startswith(case4):
-            new_pattern = '{}{}'.format(case4, pattern)
+        elif head == "head_space_plus" and not pattern.startswith(case4):
+            new_pattern = "{}{}".format(case4, pattern)
             cls._prepended_pattern = case4
-        elif head == 'head_spaces' and not pattern.startswith(case4):
-            new_pattern = '{}{}'.format(case4, pattern)
+        elif head == "head_spaces" and not pattern.startswith(case4):
+            new_pattern = "{}{}".format(case4, pattern)
             cls._prepended_pattern = case4
-        elif head == 'head' and not pattern.startswith(case5):
-            new_pattern = '{}{}'.format(case5, pattern)
+        elif head == "head" and not pattern.startswith(case5):
+            new_pattern = "{}{}".format(case5, pattern)
             cls._prepended_pattern = case5
-        elif head == 'head_just_ws' and not pattern.startswith(case6):
-            new_pattern = '{}{}'.format(case6, pattern)
+        elif head == "head_just_ws" and not pattern.startswith(case6):
+            new_pattern = "{}{}".format(case6, pattern)
             cls._prepended_pattern = case6
-        elif head == 'head_just_ws_plus' and not pattern.startswith(case7):
-            new_pattern = '{}{}'.format(case7, pattern)
+        elif head == "head_just_ws_plus" and not pattern.startswith(case7):
+            new_pattern = "{}{}".format(case7, pattern)
             cls._prepended_pattern = case7
-        elif head == 'head_just_space' and not pattern.startswith(case8):
-            new_pattern = '{}{}'.format(case8, pattern)
+        elif head == "head_just_space" and not pattern.startswith(case8):
+            new_pattern = "{}{}".format(case8, pattern)
             cls._prepended_pattern = case8
-        elif head == 'head_just_space_plus' and not pattern.startswith(case9):
-            new_pattern = '{}{}'.format(case9, pattern)
+        elif head == "head_just_space_plus" and not pattern.startswith(case9):
+            new_pattern = "{}{}".format(case9, pattern)
             cls._prepended_pattern = case9
-        elif head == 'head_just_spaces' and not pattern.startswith(case9):
-            new_pattern = '{}{}'.format(case9, pattern)
+        elif head == "head_just_spaces" and not pattern.startswith(case9):
+            new_pattern = "{}{}".format(case9, pattern)
             cls._prepended_pattern = case9
-        elif head == 'head_whitespace' and not pattern.startswith(case10):
-            new_pattern = '{}{}'.format(case10, pattern)
+        elif head == "head_whitespace" and not pattern.startswith(case10):
+            new_pattern = "{}{}".format(case10, pattern)
             cls._prepended_pattern = case10
-        elif head == 'head_whitespace_plus' and not pattern.startswith(case11):
-            new_pattern = '{}{}'.format(case11, pattern)
+        elif head == "head_whitespace_plus" and not pattern.startswith(case11):
+            new_pattern = "{}{}".format(case11, pattern)
             cls._prepended_pattern = case11
-        elif head == 'head_whitespaces' and not pattern.startswith(case11):
-            new_pattern = '{}{}'.format(case11, pattern)
+        elif head == "head_whitespaces" and not pattern.startswith(case11):
+            new_pattern = "{}{}".format(case11, pattern)
             cls._prepended_pattern = case11
-        elif head == 'head_just_whitespace' and not pattern.startswith(case12):
-            new_pattern = '{}{}'.format(case12, pattern)
+        elif head == "head_just_whitespace" and not pattern.startswith(case12):
+            new_pattern = "{}{}".format(case12, pattern)
             cls._prepended_pattern = case12
-        elif head == 'head_just_whitespace_plus' and not pattern.startswith(case13):
-            new_pattern = '{}{}'.format(case13, pattern)
+        elif head == "head_just_whitespace_plus" and not pattern.startswith(case13):
+            new_pattern = "{}{}".format(case13, pattern)
             cls._prepended_pattern = case13
-        elif head == 'head_just_whitespaces' and not pattern.startswith(case13):
-            new_pattern = '{}{}'.format(case13, pattern)
+        elif head == "head_just_whitespaces" and not pattern.startswith(case13):
+            new_pattern = "{}{}".format(case13, pattern)
             cls._prepended_pattern = case13
         else:
             new_pattern = pattern
         return new_pattern
 
     @classmethod
-    def add_tail_of_string(cls, pattern, tail=''):
+    def add_tail_of_string(cls, pattern, tail=""):
         if not tail:
             return pattern
 
-        case1, case2 = r'\s*$', r'\s+$' # noqa
-        case3, case4 = r' *$', r' +$'
-        case5 = r'$'
+        case1, case2 = r"\s*$", r"\s+$"  # noqa
+        case3, case4 = r" *$", r" +$"
+        case5 = r"$"
 
-        case6, case7 = r'\s*', r'\s+'
-        case8, case9 = r' *', r' +'
+        case6, case7 = r"\s*", r"\s+"
+        case8, case9 = r" *", r" +"
 
-        case10, case11 = r'\s*$', r'\s+$'
-        case12, case13 = r'\s*', r'\s+'
+        case10, case11 = r"\s*$", r"\s+$"
+        case12, case13 = r"\s*", r"\s+"
 
-        if tail == 'tail_ws' and not pattern.endswith(case1):
-            new_pattern = '{}{}'.format(pattern, case1)
+        if tail == "tail_ws" and not pattern.endswith(case1):
+            new_pattern = "{}{}".format(pattern, case1)
             cls._appended_pattern = case1
-        elif tail == 'tail_ws_plus' and not pattern.endswith(case2):
-            new_pattern = '{}{}'.format(pattern, case2)
+        elif tail == "tail_ws_plus" and not pattern.endswith(case2):
+            new_pattern = "{}{}".format(pattern, case2)
             cls._appended_pattern = case2
-        elif tail == 'tail_space' and not pattern.endswith(case3):
-            new_pattern = '{}{}'.format(pattern, case3)
+        elif tail == "tail_space" and not pattern.endswith(case3):
+            new_pattern = "{}{}".format(pattern, case3)
             cls._appended_pattern = case3
-        elif tail == 'tail_space_plus' and not pattern.endswith(case4):
-            new_pattern = '{}{}'.format(pattern, case4)
+        elif tail == "tail_space_plus" and not pattern.endswith(case4):
+            new_pattern = "{}{}".format(pattern, case4)
             cls._appended_pattern = case4
-        elif tail == 'tail_spaces' and not pattern.endswith(case4):
-            new_pattern = '{}{}'.format(pattern, case4)
+        elif tail == "tail_spaces" and not pattern.endswith(case4):
+            new_pattern = "{}{}".format(pattern, case4)
             cls._appended_pattern = case4
-        elif tail == 'tail' and not pattern.endswith(case5):
-            new_pattern = '{}{}'.format(pattern, case5)
+        elif tail == "tail" and not pattern.endswith(case5):
+            new_pattern = "{}{}".format(pattern, case5)
             cls._appended_pattern = case5
-        elif tail == 'tail_just_ws' and not pattern.startswith(case6):
-            new_pattern = '{}{}'.format(pattern, case6)
+        elif tail == "tail_just_ws" and not pattern.startswith(case6):
+            new_pattern = "{}{}".format(pattern, case6)
             cls._appended_pattern = case6
-        elif tail == 'tail_just_ws_plus' and not pattern.startswith(case7):
-            new_pattern = '{}{}'.format(pattern, case7)
+        elif tail == "tail_just_ws_plus" and not pattern.startswith(case7):
+            new_pattern = "{}{}".format(pattern, case7)
             cls._appended_pattern = case7
-        elif tail == 'tail_just_space' and not pattern.startswith(case8):
-            new_pattern = '{}{}'.format(pattern, case8)
+        elif tail == "tail_just_space" and not pattern.startswith(case8):
+            new_pattern = "{}{}".format(pattern, case8)
             cls._appended_pattern = case8
-        elif tail == 'tail_just_space_plus' and not pattern.startswith(case9):
-            new_pattern = '{}{}'.format(pattern, case9)
+        elif tail == "tail_just_space_plus" and not pattern.startswith(case9):
+            new_pattern = "{}{}".format(pattern, case9)
             cls._appended_pattern = case9
-        elif tail == 'tail_just_spaces' and not pattern.startswith(case9):
-            new_pattern = '{}{}'.format(pattern, case9)
+        elif tail == "tail_just_spaces" and not pattern.startswith(case9):
+            new_pattern = "{}{}".format(pattern, case9)
             cls._appended_pattern = case9
-        elif tail == 'tail_whitespace' and not pattern.startswith(case10):
-            new_pattern = '{}{}'.format(pattern, case10)
+        elif tail == "tail_whitespace" and not pattern.startswith(case10):
+            new_pattern = "{}{}".format(pattern, case10)
             cls._appended_pattern = case10
-        elif tail == 'tail_whitespace_plus' and not pattern.startswith(case11):
-            new_pattern = '{}{}'.format(pattern, case11)
+        elif tail == "tail_whitespace_plus" and not pattern.startswith(case11):
+            new_pattern = "{}{}".format(pattern, case11)
             cls._appended_pattern = case11
-        elif tail == 'tail_whitespaces' and not pattern.startswith(case11):
-            new_pattern = '{}{}'.format(pattern, case11)
+        elif tail == "tail_whitespaces" and not pattern.startswith(case11):
+            new_pattern = "{}{}".format(pattern, case11)
             cls._appended_pattern = case11
-        elif tail == 'tail_just_whitespace' and not pattern.startswith(case12):
-            new_pattern = '{}{}'.format(pattern, case12)
+        elif tail == "tail_just_whitespace" and not pattern.startswith(case12):
+            new_pattern = "{}{}".format(pattern, case12)
             cls._appended_pattern = case12
-        elif tail == 'tail_just_whitespace_plus' and not pattern.startswith(case13):
-            new_pattern = '{}{}'.format(pattern, case13)
+        elif tail == "tail_just_whitespace_plus" and not pattern.startswith(case13):
+            new_pattern = "{}{}".format(pattern, case13)
             cls._appended_pattern = case13
-        elif tail == 'tail_just_whitespaces' and not pattern.startswith(case13):
-            new_pattern = '{}{}'.format(pattern, case13)
+        elif tail == "tail_just_whitespaces" and not pattern.startswith(case13):
+            new_pattern = "{}{}".format(pattern, case13)
             cls._appended_pattern = case13
         else:
             new_pattern = pattern
         return new_pattern
 
     def remove_head_of_string(self):
-        if self.prepended_pattern and self.startswith('^'):     # noqa
-            pattern = str(self)[len(self.prepended_pattern):]
+        if self.prepended_pattern and self.startswith("^"):  # noqa
+            pattern = str(self)[len(self.prepended_pattern) :]
             new_instance = ElementPattern(pattern, as_is=True)
             new_instance.as_is = False
             new_instance.variable = copy(self.variable)
             new_instance.or_empty = self.or_empty
-            new_instance.prepended_pattern = ''
+            new_instance.prepended_pattern = ""
             new_instance.appended_pattern = self.appended_pattern
         else:
             new_instance = copy(self)
@@ -815,14 +826,14 @@ class ElementPattern(str):
         return new_instance
 
     def remove_tail_of_string(self):
-        if self.appended_pattern and self.endswith('$'):
-            pattern = self[:-len(self.appended_pattern)]
+        if self.appended_pattern and self.endswith("$"):
+            pattern = self[: -len(self.appended_pattern)]
             new_instance = ElementPattern(pattern, as_is=True)
             new_instance.as_is = False
             new_instance.variable = copy(self.variable)
             new_instance.or_empty = self.or_empty
             new_instance.prepended_pattern = self.prepended_pattern
-            new_instance.appended_pattern = ''
+            new_instance.appended_pattern = ""
             return new_instance
 
         return copy(self)
@@ -831,23 +842,22 @@ class ElementPattern(str):
 class LinePattern(str):
     _variables = None
 
-    def __new__(cls, text, prepended_ws=False, appended_ws=False,
-                ignore_case=False):
-        cls._variables = list()     # noqa
+    def __new__(cls, text, prepended_ws=False, appended_ws=False, ignore_case=False):
+        cls._variables = list()  # noqa
         cls._items = list()
         data = str(text)
         if data:
             pattern = cls.get_pattern(
-                data, prepended_ws=prepended_ws,
-                appended_ws=appended_ws, ignore_case=ignore_case
+                data,
+                prepended_ws=prepended_ws,
+                appended_ws=appended_ws,
+                ignore_case=ignore_case,
             )
         else:
-            pattern = r'^\s*$'
-        return super().__new__(cls, pattern)    # noqa
+            pattern = r"^\s*$"
+        return super().__new__(cls, pattern)  # noqa
 
-    def __init__(self, text,
-                 prepended_ws=False, appended_ws=False,
-                 ignore_case=False):
+    def __init__(self, text, prepended_ws=False, appended_ws=False, ignore_case=False):
         self.text = text
         self.prepended_ws = prepended_ws
         self.appended_ws = appended_ws
@@ -862,7 +872,7 @@ class LinePattern(str):
 
     @property
     def statement(self):
-        lst = []    # noqa
+        lst = []  # noqa
         for item in self.items:
             if isinstance(item, ElementPattern):
                 if not item.variable.is_empty:
@@ -871,17 +881,19 @@ class LinePattern(str):
                     lst.append(item)
             else:
                 lst.append(item)
-        return ''.join(lst)
+        return "".join(lst)
 
     @classmethod
-    def get_pattern(cls, text, prepended_ws=False, appended_ws=False, ignore_case=False):
-        line = str(text)    # noqa
+    def get_pattern(
+        cls, text, prepended_ws=False, appended_ws=False, ignore_case=False
+    ):
+        line = str(text)  # noqa
 
         lst = []
         start = 0
         m = None
-        for m in re.finditer(r'\w+[(][^)]*[)]', line):
-            pre_match = m.string[start:m.start()]
+        for m in re.finditer(r"\w+[(][^)]*[)]", line):
+            pre_match = m.string[start : m.start()]
             if pre_match:
                 lst.append(TextPattern(pre_match))
             elm_pat = ElementPattern(m.group())
@@ -895,11 +907,11 @@ class LinePattern(str):
                 if after_match:
                     lst.append(TextPattern(after_match))
 
-        if len(lst) == 1 and lst[0].strip() == '':
-            return r'^\s*$'
+        if len(lst) == 1 and lst[0].strip() == "":
+            return r"^\s*$"
         elif not lst:
-            if line.strip() == '':
-                return r'^\s*$'
+            if line.strip() == "":
+                return r"^\s*$"
             lst.append(TextPattern(line))
 
         if len(lst) >= 2:
@@ -917,36 +929,36 @@ class LinePattern(str):
             cls.append_whitespace(lst)
 
         cls._items = lst
-        pattern = ''.join(lst)
+        pattern = "".join(lst)
         validate_pattern(pattern, exception_cls=LinePatternError)
         return pattern
 
     @classmethod
     def readjust_if_or_empty(cls, lst):
-        if len(lst) < 2:    # noqa
+        if len(lst) < 2:  # noqa
             return
 
         total = len(lst)
-        ws_pat = ElementPattern('optional_wss()')
+        ws_pat = ElementPattern("optional_wss()")
         insert_indices = []
         for index, item in enumerate(lst[1:], 1):
-            prev_item = lst[index-1]
+            prev_item = lst[index - 1]
             is_prev_item_text_pat = isinstance(prev_item, (TextPattern, str))
             is_item_elm_pat = isinstance(item, ElementPattern)
             if is_prev_item_text_pat and is_item_elm_pat:
                 if item.or_empty:
-                    if prev_item.endswith(' '):
-                        lst[index-1] = prev_item.rstrip()
+                    if prev_item.endswith(" "):
+                        lst[index - 1] = prev_item.rstrip()
                         insert_indices.insert(0, index)
-                    elif prev_item.endswith(r'\s'):
-                        lst[index-1] = prev_item[:-2]
+                    elif prev_item.endswith(r"\s"):
+                        lst[index - 1] = prev_item[:-2]
                         insert_indices.insert(0, index)
                     elif index == total - 1:
-                        if prev_item.endswith(' +'):
-                            lst[index-1] = prev_item[:-2]
+                        if prev_item.endswith(" +"):
+                            lst[index - 1] = prev_item[:-2]
                             insert_indices.insert(0, index)
-                        elif prev_item.endswith(r'\s+'):
-                            lst[index-1] = prev_item[:-3]
+                        elif prev_item.endswith(r"\s+"):
+                            lst[index - 1] = prev_item[:-3]
                             insert_indices.insert(0, index)
 
         for index in insert_indices:
@@ -956,18 +968,18 @@ class LinePattern(str):
         is_stopped = False
         insert_indices = []
         while index > 0 and not is_stopped:
-            prev_item, item = lst[index-1], lst[index]
+            prev_item, item = lst[index - 1], lst[index]
             is_prev_item_text_pat = isinstance(prev_item, (TextPattern, str))
             is_item_elm_pat = isinstance(item, ElementPattern)
             if is_prev_item_text_pat and is_item_elm_pat:
                 if item.or_empty:
-                    if prev_item.endswith(' '):
+                    if prev_item.endswith(" "):
                         lst[index - 1] = prev_item.rstrip()
                         insert_indices.insert(0, index)
-                    elif prev_item.endswith(r'\s') or prev_item.endswith(' +'):
+                    elif prev_item.endswith(r"\s") or prev_item.endswith(" +"):
                         lst[index - 1] = prev_item[:-2]
                         insert_indices.insert(0, index)
-                    elif prev_item.endswith(r'\s+'):
+                    elif prev_item.endswith(r"\s+"):
                         lst[index - 1] = prev_item[:-3]
                         insert_indices.insert(0, index)
             else:
@@ -981,16 +993,16 @@ class LinePattern(str):
         is_stopped = False
         is_prev_containing_empty = False
         while index > 0 and not is_stopped:
-            prev_item, item = lst[index-1], lst[index]
+            prev_item, item = lst[index - 1], lst[index]
             is_prev_item_elm_pat = isinstance(prev_item, ElementPattern)
             is_item_text_pat = isinstance(item, (TextPattern, str))
             if is_prev_item_elm_pat and is_item_text_pat:
                 if prev_item.or_empty:
-                    if item in [' ', ' +', r'\s', r'\s+']:
+                    if item in [" ", " +", r"\s", r"\s+"]:
                         lst[index] = ws_pat
                     is_prev_containing_empty = True
                 else:
-                    if item in [' ', ' +', r'\s', r'\s+'] and is_prev_containing_empty:
+                    if item in [" ", " +", r"\s", r"\s+"] and is_prev_containing_empty:
                         lst[index] = ws_pat
                     is_prev_containing_empty = False
             else:
@@ -999,26 +1011,26 @@ class LinePattern(str):
 
     @classmethod
     def ensure_start_of_line_pattern(cls, lst):
-        if len(lst) < 2:    # noqa
+        if len(lst) < 2:  # noqa
             return
 
         curr, nxt = lst[0], lst[1]
 
-        if curr == '^':
+        if curr == "^":
             if isinstance(nxt, TextPattern):
-                if nxt == ' ':
+                if nxt == " ":
                     lst.pop(1)
                     return
-                if re.match(' [^+*]', nxt):
+                if re.match(" [^+*]", nxt):
                     lst[1] = nxt.lstrip()
                     return
 
-        match = re.match(r'(?P<pre_ws>( |\\s)[*+]*)', nxt)
-        if re.match(r'(\^|\\A)( |\\s)[*+]*$', curr):
+        match = re.match(r"(?P<pre_ws>( |\\s)[*+]*)", nxt)
+        if re.match(r"(\^|\\A)( |\\s)[*+]*$", curr):
             if isinstance(nxt, TextPattern) and match:
-                index = len(match.group('pre_ws'))
+                index = len(match.group("pre_ws"))
                 new_val = nxt[index:]
-                if new_val == '':
+                if new_val == "":
                     lst.pop(1)
                 else:
                     lst[1] = new_val
@@ -1030,26 +1042,26 @@ class LinePattern(str):
 
     @classmethod
     def ensure_end_of_line_pattern(cls, lst):
-        if len(lst) < 2:    # noqa
+        if len(lst) < 2:  # noqa
             return
 
         last, prev = lst[-1], lst[-2]
 
-        if last == '$':
+        if last == "$":
             if isinstance(prev, TextPattern):
-                if prev == ' ':
+                if prev == " ":
                     lst.pop(-2)
                     return
-                if not re.search(' [+*]$', prev):
+                if not re.search(" [+*]$", prev):
                     lst[-2] = prev.rstrip()
                     return
 
-        match = re.search(r'(?P<post_ws>( |\\s)[*+]*)$', prev)
-        if re.match(r'( |\\s)[*+]?(\$|\\Z)$', last):
+        match = re.search(r"(?P<post_ws>( |\\s)[*+]*)$", prev)
+        if re.match(r"( |\\s)[*+]?(\$|\\Z)$", last):
             if isinstance(prev, TextPattern) and match:
-                index = len(match.group('post_ws'))
+                index = len(match.group("post_ws"))
                 new_val = prev[:-index]
-                if new_val == '':
+                if new_val == "":
                     lst.pop(-2)
                 else:
                     lst[-2] = new_val
@@ -1064,23 +1076,23 @@ class LinePattern(str):
         if not lst:
             return
 
-        pat = r'(\^|\\A)( |\\s)[*+]?'
+        pat = r"(\^|\\A)( |\\s)[*+]?"
         if not re.match(pat, lst[0]):
-            lst.insert(0, r'^\s*')
+            lst.insert(0, r"^\s*")
 
     @classmethod
     def prepend_ignorecase_flag(cls, lst):
         if not lst:
             return
 
-        pat = r'[(][?]i[)]'
+        pat = r"[(][?]i[)]"
         if not re.match(pat, lst[0]):
-            lst.insert(0, '(?i)')
+            lst.insert(0, "(?i)")
 
     @classmethod
     def append_whitespace(cls, lst):
         if not lst:
             return
-        pat = r'( |\\s)[*+]?(\$|\\Z)$'
+        pat = r"( |\\s)[*+]?(\$|\\Z)$"
         if not re.search(pat, lst[-1]):
-            lst.append(r'\s*$')
+            lst.append(r"\s*$")

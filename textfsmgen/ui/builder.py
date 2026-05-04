@@ -4,6 +4,7 @@ textfsmgen.ui.builder
 
 UI components for the Regex Translator dialog in TextFSMGen.
 """
+
 from typing import Optional, Union
 
 import re
@@ -34,6 +35,7 @@ from textfsmgen.ui.common import (
 window_width = 1020 if ui.is_macos else 820 if ui.is_linux else 740
 window_height = 770 if ui.is_macos else 780 if ui.is_linux else 720
 
+
 def show_dialog(app):
     """Show the dialog window."""
     b = app.tools.builder
@@ -54,8 +56,12 @@ def show_dialog(app):
 
     b.outcomes_group = build_possible_outcomes(app, paned_window, row=3)
 
-    b.pattern_area = create_textarea(paned_window, row=4, name="pattern_area", height_rows=2)
-    b.explain_area = create_textarea(paned_window, row=5, name="explain_area", height_rows=10)
+    b.pattern_area = create_textarea(
+        paned_window, row=4, name="pattern_area", height_rows=2
+    )
+    b.explain_area = create_textarea(
+        paned_window, row=5, name="explain_area", height_rows=10
+    )
     dialog.bind("<Button-1>", lambda e: app.callback_focus(e))
 
     # Make dialog modal
@@ -71,8 +77,12 @@ def create_window(parent: Optional[Union[ui.Tk, ui.Toplevel]]):
 
     if parent:
         center_window(
-            parent, window, window_width, window_height,
-            x_resizable=True, y_resizable=True
+            parent,
+            window,
+            window_width,
+            window_height,
+            x_resizable=True,
+            y_resizable=True,
         )
 
     return window
@@ -115,10 +125,30 @@ def build_semantic_group(app, parent, row=0):
     semantic_group.grid(row=row, column=0, padx=4, pady=(4, 0), sticky="ew")
 
     label_groups = [
-        ["anything",    "something",    "space",        "whitespace",       ],
-        ["dot",         "alnum",        "graph",        "non_whitespace",   ],
-        ["digit",       "number",       "mixed_number", "punctuation",      ],
-        ["letter",      "word",         "mixed_word",   "",                 ],
+        [
+            "anything",
+            "something",
+            "space",
+            "whitespace",
+        ],
+        [
+            "dot",
+            "alnum",
+            "graph",
+            "non_whitespace",
+        ],
+        [
+            "digit",
+            "number",
+            "mixed_number",
+            "punctuation",
+        ],
+        [
+            "letter",
+            "word",
+            "mixed_word",
+            "",
+        ],
     ]
 
     row_pos, col_pos = 0, 0
@@ -137,14 +167,23 @@ def build_semantic_group(app, parent, row=0):
 
             checkbox = common.TriStateCheckBox(semantic_group, **kwargs)
             checkbox.grid(row=row_pos, column=col_pos, sticky="w")
-            checkbox.configure(command=lambda c=checkbox: on_click_tristate_checkbox(c, app))
+            checkbox.configure(
+                command=lambda c=checkbox: on_click_tristate_checkbox(c, app)
+            )
 
     variant_group = ui.LabelFrame(semantic_group, text="Variant / Quantity")
-    variant_group.grid(row=row_pos+1, column=0, columnspan=col_pos+1, padx=4, pady=(2, 0), sticky="w")
+    variant_group.grid(
+        row=row_pos + 1,
+        column=0,
+        columnspan=col_pos + 1,
+        padx=4,
+        pady=(2, 0),
+        sticky="w",
+    )
 
     label_groups = [
-        ["optional",    "optional_group",   "group",        "optional_items",   "items",    "exact"],
-        ["zero_or_one", "zero_or_more",     "one_or_more",  "some",             "",         "range"],
+        ["optional", "optional_group", "group", "optional_items", "items", "exact"],
+        ["zero_or_one", "zero_or_more", "one_or_more", "some", "", "range"],
     ]
 
     for row_pos, group in enumerate(label_groups):
@@ -157,10 +196,14 @@ def build_semantic_group(app, parent, row=0):
                     label = ui.Label(variant_group, text="exact qty:")
                     label.grid(row=row_pos, column=col_pos, sticky="w", padx=(20, 2))
                     textbox = ui.TextBox(
-                        variant_group, width=10, justify="center",
+                        variant_group,
+                        width=10,
+                        justify="center",
                         textvariable=app.tools.builder.exact_quantity,
                     )
-                    textbox.grid(row=row_pos, column=col_pos+1, sticky="w", padx=1, pady=(0, 2))
+                    textbox.grid(
+                        row=row_pos, column=col_pos + 1, sticky="w", padx=1, pady=(0, 2)
+                    )
 
                     continue
 
@@ -168,21 +211,33 @@ def build_semantic_group(app, parent, row=0):
                 label.grid(row=row_pos, column=col_pos, sticky="w", padx=(20, 2))
 
                 textbox = ui.TextBox(
-                    variant_group, width=10, justify="center",
+                    variant_group,
+                    width=10,
+                    justify="center",
                     textvariable=app.tools.builder.range_min_quantity,
                 )
-                textbox.grid(row=row_pos, column=col_pos+1, sticky="w", padx=1, pady=(0, 2))
+                textbox.grid(
+                    row=row_pos, column=col_pos + 1, sticky="w", padx=1, pady=(0, 2)
+                )
                 textbox = ui.TextBox(
-                    variant_group, width=10, justify="center",
+                    variant_group,
+                    width=10,
+                    justify="center",
                     textvariable=app.tools.builder.range_max_quantity,
                 )
-                textbox.grid(row=row_pos, column=col_pos+2, sticky="w", padx=1, pady=(0, 2))
+                textbox.grid(
+                    row=row_pos, column=col_pos + 2, sticky="w", padx=1, pady=(0, 2)
+                )
                 continue
 
-            checkbox = ui.CheckBox(variant_group, text=label,
+            checkbox = ui.CheckBox(
+                variant_group,
+                text=label,
                 variable=app.tools.builder.variant_flag,
-                onvalue=label, offvalue="", cursor="hand2",
-                command=lambda: on_click_for_refresh(app)
+                onvalue=label,
+                offvalue="",
+                cursor="hand2",
+                command=lambda: on_click_for_refresh(app),
             )
             checkbox.grid(row=row_pos, column=col_pos, sticky="w")
 
@@ -206,8 +261,7 @@ def build_data_group(app, parent, row=0):
                 textvariable=app.tools.builder.shared_data_list[index],
             )
             textbox.grid(
-                row=row_pos, column=col_pos,
-                sticky="nsew", padx=1, pady=(0, 2)
+                row=row_pos, column=col_pos, sticky="nsew", padx=1, pady=(0, 2)
             )
             row.append(textbox)
             index += 1
@@ -222,19 +276,25 @@ def build_controls(app, parent, row=0):
     frame.grid(row=row, column=0, padx=4, pady=4, sticky="ew")
 
     labels = [
-        "build", "aggregate", "SEPARATOR",
-        "var_name", "allowed empty", "SEPARATOR",
-        "copy", "paste", "reset", "help",
+        "build",
+        "aggregate",
+        "SEPARATOR",
+        "var_name",
+        "allowed empty",
+        "SEPARATOR",
+        "copy",
+        "paste",
+        "reset",
+        "help",
     ]
 
     mapping = {
         "reset": lambda: perform_reset_action(app),
-        "copy": lambda : perform_copy_action(app),
-        "paste": lambda : perform_paste_action(app),
-        "help": lambda : perform_help_action(app),
-
-        "build": lambda : perform_build_action(app),
-        "aggregate": lambda : perform_aggregate_action(app),
+        "copy": lambda: perform_copy_action(app),
+        "paste": lambda: perform_paste_action(app),
+        "help": lambda: perform_help_action(app),
+        "build": lambda: perform_build_action(app),
+        "aggregate": lambda: perform_aggregate_action(app),
     }
 
     btn_width = 6 if ui.is_macos else 7 if ui.is_linux else 8
@@ -247,10 +307,11 @@ def build_controls(app, parent, row=0):
 
         if label == "var_name":
             label = ui.Label(frame, text="Variable:")
-            label.grid(row=0, column=position.next(), sticky="nswe", padx=(6, 2), pady=4)
+            label.grid(
+                row=0, column=position.next(), sticky="nswe", padx=(6, 2), pady=4
+            )
             textbox = ui.TextBox(
-                frame, width=14, justify="left",
-                textvariable=app.tools.builder.var_name
+                frame, width=14, justify="left", textvariable=app.tools.builder.var_name
             )
             textbox.grid(row=0, column=position.next(), sticky="nswe", pady=4)
             continue
@@ -258,30 +319,34 @@ def build_controls(app, parent, row=0):
         if label == "allowed empty":
             kwargs = {
                 "text": label.title(),
-                "onvalue": True, "offvalue": False,
+                "onvalue": True,
+                "offvalue": False,
                 "variable": app.tools.builder.allowed_empty_flag,
                 "cursor": "hand2",
-                "command": lambda: on_click_for_refresh(app)
+                "command": lambda: on_click_for_refresh(app),
             }
 
             checkbox = ui.CheckBox(frame, **kwargs)
-            checkbox.grid(row=0, column=position.next(), sticky="nswe", padx=(6, 2), pady=4)
+            checkbox.grid(
+                row=0, column=position.next(), sticky="nswe", padx=(6, 2), pady=4
+            )
             continue
 
         kwargs = (
             {"state": "disabled", "width": btn_width + 3, "command": mapping.get(label)}
-            if label == "aggregate" else
-            {"width": btn_width, "command": mapping.get(label)}
+            if label == "aggregate"
+            else {"width": btn_width, "command": mapping.get(label)}
         )
         button = ui.Button(frame, text=label.title(), **kwargs)
-        button.grid(row=0, column=position.next(), sticky='nswe', padx=2, pady=4)
+        button.grid(row=0, column=position.next(), sticky="nswe", padx=2, pady=4)
 
     return frame
 
 
-def build_possible_outcomes(app, parent, row=0):    # noqa
+def build_possible_outcomes(app, parent, row=0):  # noqa
     outcomes_group = common.DynamicCheckboxGroup(
-        parent, title="Possible Outcomes",
+        parent,
+        title="Possible Outcomes",
     )
     outcomes_group.grid(row=row, column=0, padx=4, pady=(4, 0), sticky="ew")
     return outcomes_group
@@ -299,8 +364,8 @@ def create_textarea(parent, row, name, height_rows):
         wrap="none",
         state="disabled",
         background=ui.readonly_text_bg_color,
-        height=height_rows,   # rows of text
-        name=name
+        height=height_rows,  # rows of text
+        name=name,
     )
     textarea.grid(row=0, column=0, sticky="nsew")
 
@@ -310,10 +375,7 @@ def create_textarea(parent, row, name, height_rows):
     hbar = ui.Scrollbar(frame, orient="horizontal", command=textarea.xview)
     hbar.grid(row=1, column=0, sticky="ew")
 
-    textarea.configure(
-        yscrollcommand=vbar.set,
-        xscrollcommand=hbar.set
-    )
+    textarea.configure(yscrollcommand=vbar.set, xscrollcommand=hbar.set)
 
     return textarea
 
@@ -370,7 +432,11 @@ def perform_copy_action(app):
     for widget in widgets:
         if widget is prev:
             widget.update_idletasks()
-            content = widget.selection_get() if widget.tag_ranges("sel") else extract_text(widget)
+            content = (
+                widget.selection_get()
+                if widget.tag_ranges("sel")
+                else extract_text(widget)
+            )
 
             if not content:
                 show_message_dialog(
@@ -406,7 +472,8 @@ def perform_paste_action(app):
             title="Clipboard Empty",
             info=(
                 "There is no text available to paste from the clipboard.\n"
-                + "-" * 70 + "\n"
+                + "-" * 70
+                + "\n"
                 f"{type(ex).__name__}: {ex}"
             ),
         )
@@ -427,7 +494,7 @@ def perform_paste_action(app):
 
     show_message_dialog(
         title="Ambiguous Paste Action",
-        info="Please choose the specific textbox you want to paste."
+        info="Please choose the specific textbox you want to paste.",
     )
 
 
@@ -487,7 +554,6 @@ def perform_build_action(app):
     # Build semantic-based snippets
     if semantic_text:
         for semantic in yaml.safe_load(semantic_text):
-
             # Special-case semantics
             if semantic in ("anything", "something"):
                 snippets.append(f"{semantic}({params_txt})")
@@ -519,7 +585,9 @@ def perform_build_action(app):
                     qty_max = "n"
                 if not qty_min and qty_max:
                     qty_min = "0"
-                add_if_absent(f"{qty_min}_to_{qty_max}_{semantic}({params_txt})", snippets)
+                add_if_absent(
+                    f"{qty_min}_to_{qty_max}_{semantic}({params_txt})", snippets
+                )
                 continue
 
             # Default
@@ -656,7 +724,7 @@ def sync_shared_var(widget):
     """Update the shared StringVar list to reflect the current state."""
     try:
         items = yaml.safe_load(widget.shared_var.get()) or []
-    except Exception:   # noqa
+    except Exception:  # noqa
         items = []
 
     singular = widget.label

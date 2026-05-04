@@ -23,30 +23,28 @@ def get_singular_placeholders():
     """Return a list of singular placeholder description templates."""
     placeholders = {
         # Basic character classes
-        "dot"               : "match %s ASCII or Unicode character.",
-        "space"             : "match %s space character.",
-        "ws"                : "match %s whitespace character.",
-        "whitespace"        : "match %s whitespace character.",
-        "digit"             : "match %s digit character.",
-        "letter"            : "match %s letter character.",
-        "alnum"             : "match %s alphanumeric character.",
-        "punct"             : "match %s punctuation character.",
-        "punctuation"       : "match %s punctuation character.",
-        "graph"             : "match %s visible character (\\x21–\\x7e).",
-        "non_ws"            : "match %s non‑whitespace character.",
-        "non_whitespace"    : "match %s non‑whitespace character.",
-
+        "dot": "match %s ASCII or Unicode character.",
+        "space": "match %s space character.",
+        "ws": "match %s whitespace character.",
+        "whitespace": "match %s whitespace character.",
+        "digit": "match %s digit character.",
+        "letter": "match %s letter character.",
+        "alnum": "match %s alphanumeric character.",
+        "punct": "match %s punctuation character.",
+        "punctuation": "match %s punctuation character.",
+        "graph": "match %s visible character (\\x21–\\x7e).",
+        "non_ws": "match %s non‑whitespace character.",
+        "non_whitespace": "match %s non‑whitespace character.",
         # Space or punctuation
-        "space_or_punct"        : "match %s space or punctuation character.",
-        "punct_or_space"        : "match %s space or punctuation character.",
-        "sop"                   : "match %s space or punctuation character.",
-        "pos"                   : "match %s space or punctuation character.",
-
+        "space_or_punct": "match %s space or punctuation character.",
+        "punct_or_space": "match %s space or punctuation character.",
+        "sop": "match %s space or punctuation character.",
+        "pos": "match %s space or punctuation character.",
         # Letter or punctuation
-        "letter_or_punct"       : "match %s letter or punctuation character.",
-        "punct_or_letter"       : "match %s letter or punctuation character.",
-        "lop"                   : "match %s letter or punctuation character.",
-        "pol"                   : "match %s letter or punctuation character.",
+        "letter_or_punct": "match %s letter or punctuation character.",
+        "punct_or_letter": "match %s letter or punctuation character.",
+        "lop": "match %s letter or punctuation character.",
+        "pol": "match %s letter or punctuation character.",
     }
 
     for singular in PATTERN.singular_keywords:
@@ -56,10 +54,11 @@ def get_singular_placeholders():
                 msg=(
                     f"Missing document description for {singular!r} keyword. "
                     "Report this to the Development Team."
-                )
+                ),
             )
 
     return placeholders
+
 
 def get_plural_placeholders():
     """Return a list of plural placeholder description templates."""
@@ -84,7 +83,6 @@ def get_semantic_placeholders():
             "match %s mixed word containing alphanumeric or punctuation "
             "characters with at least one alphanumeric character."
         ),
-
         # Number‑like tokens
         "number": "match %s sequence of numeric characters or a floating‑point number.",
         "mixed_number": (
@@ -101,7 +99,7 @@ def get_semantic_placeholders():
                 msg=(
                     f"Missing document description for {semantic!r} keyword. "
                     "Report this to the Development Team."
-                )
+                ),
             )
 
     return placeholders
@@ -115,24 +113,25 @@ def get_plural_semantic_placeholders():
         plural_semantic = PATTERN.resolve_plural_semantic(semantic)
         plural_semantic_desc = semantic_desc.replace(" word ", " words ")
         plural_semantic_desc = plural_semantic_desc.replace(
-            ".",
-            ", separated by one or more whitespace characters."
+            ".", ", separated by one or more whitespace characters."
         )
 
         placeholders[plural_semantic] = plural_semantic_desc
     return placeholders
 
+
 def get_grouped_placeholders():
     """Return a list of grouped placeholder description templates."""
+
     # --------------------------------------------------------------------------
     def expand_format_placeholders(text_):
         """Expand %s and trailing dots into descriptive placeholder text."""
         updated = text_.replace("%s", "%s sequences of")
         updated = updated.replace(
-            ".",
-            ", each separated by one or more whitespace characters."
+            ".", ", each separated by one or more whitespace characters."
         )
         return updated
+
     # --------------------------------------------------------------------------
 
     placeholders = {}
@@ -174,15 +173,16 @@ def get_grouped_placeholders():
 
 def get_items_placeholders():
     """Return a list of grouped placeholder description templates."""
+
     # --------------------------------------------------------------------------
     def expand_format_placeholders(text_):
         """Expand %s and trailing dots into descriptive placeholder text."""
         updated = text_.replace("%s", "%s sequences of")
         updated = updated.replace(
-            ".",
-            ", each separated by one or more whitespace characters."
+            ".", ", each separated by one or more whitespace characters."
         )
         return updated
+
     # --------------------------------------------------------------------------
 
     placeholders = {}
@@ -239,7 +239,8 @@ class OperationDoc:
         self.process()
 
     @property
-    def doc(self): return self._doc
+    def doc(self):
+        return self._doc
 
     def singular_placeholder(self, keyword: str) -> str:
         """Return a placeholder description template for singular token types."""
@@ -274,10 +275,13 @@ class OperationDoc:
         or_empty = self.or_empty is True
 
         groups = [
-            ("zero or one"  if or_empty else "one",         self.singular_placeholder),
+            ("zero or one" if or_empty else "one", self.singular_placeholder),
             ("zero or more" if or_empty else "one or more", self.plural_placeholder),
-            ("zero or one"  if or_empty else "one",         self.semantic_placeholder),
-            ("zero or more" if or_empty else "one or more", self.plural_semantic_placeholder),
+            ("zero or one" if or_empty else "one", self.semantic_placeholder),
+            (
+                "zero or more" if or_empty else "one or more",
+                self.plural_semantic_placeholder,
+            ),
         ]
 
         key = self.name
@@ -293,10 +297,10 @@ class OperationDoc:
             return ""
 
         groups = [
-            ("zero or one",     self.singular_placeholder),
-            ("zero or more",    self.plural_placeholder),
-            ("zero or one",     self.semantic_placeholder),
-            ("zero or more",    self.plural_semantic_placeholder),
+            ("zero or one", self.singular_placeholder),
+            ("zero or more", self.plural_placeholder),
+            ("zero or one", self.semantic_placeholder),
+            ("zero or more", self.plural_semantic_placeholder),
         ]
 
         key = self.name.removeprefix("optional_")
@@ -313,8 +317,11 @@ class OperationDoc:
         groups = [
             ("zero or more" if or_empty else "one or more", self.singular_placeholder),
             ("zero or more" if or_empty else "one or more", self.plural_placeholder),
-            ("zero or more"  if or_empty else "one or more", self.semantic_placeholder),
-            ("zero or more" if or_empty else "one or more", self.plural_semantic_placeholder),
+            ("zero or more" if or_empty else "one or more", self.semantic_placeholder),
+            (
+                "zero or more" if or_empty else "one or more",
+                self.plural_semantic_placeholder,
+            ),
         ]
 
         key = self.name.removeprefix("some_")
@@ -340,10 +347,10 @@ class OperationDoc:
         # or_empty = self.or_empty is True
 
         groups = [
-            ("zero or one",     self.singular_placeholder),
-            ("zero or more",    self.plural_placeholder),
-            ("zero or one",     self.semantic_placeholder),
-            ("zero or more",    self.plural_semantic_placeholder),
+            ("zero or one", self.singular_placeholder),
+            ("zero or more", self.plural_placeholder),
+            ("zero or one", self.semantic_placeholder),
+            ("zero or more", self.plural_semantic_placeholder),
         ]
 
         key = self.name.removeprefix("zero_or_one_")
@@ -362,10 +369,10 @@ class OperationDoc:
         # or_empty = self.or_empty is True
 
         groups = [
-            ("zero or more",    self.singular_placeholder),
-            ("zero or more",    self.plural_placeholder),
-            ("zero or more",    self.semantic_placeholder),
-            ("zero or more",    self.plural_semantic_placeholder),
+            ("zero or more", self.singular_placeholder),
+            ("zero or more", self.plural_placeholder),
+            ("zero or more", self.semantic_placeholder),
+            ("zero or more", self.plural_semantic_placeholder),
         ]
 
         key = self.name.removeprefix("zero_or_more_")
@@ -394,7 +401,10 @@ class OperationDoc:
             ("zero or more" if or_empty else "one or more", self.singular_placeholder),
             ("zero or more" if or_empty else "one or more", self.plural_placeholder),
             ("zero or more" if or_empty else "one or more", self.semantic_placeholder),
-            ("zero or more" if or_empty else "one or more", self.plural_semantic_placeholder),
+            (
+                "zero or more" if or_empty else "one or more",
+                self.plural_semantic_placeholder,
+            ),
         ]
 
         key = self.name.removeprefix("one_or_more_")
@@ -415,8 +425,15 @@ class OperationDoc:
     def describe_group(self) -> str:
 
         special = [
-            "dot_group", "dots_group", "space_group", "spaces_group",
-            "ws_group", "wss_group", "whitespace_group", "whitespaces_group"]
+            "dot_group",
+            "dots_group",
+            "space_group",
+            "spaces_group",
+            "ws_group",
+            "wss_group",
+            "whitespace_group",
+            "whitespaces_group",
+        ]
 
         if not self.name.endswith("_group"):
             return ""
@@ -461,8 +478,7 @@ class OperationDoc:
             return m.group("qty"), m.group("keyword")
 
         # --- Word quantity --------------------------------------------------------
-        m = re.fullmatch(r"(?P<qty>[A-Za-z]+(?:-[A-Za-z]+)?)_(?P<keyword>\w+)",
-                         name)
+        m = re.fullmatch(r"(?P<qty>[A-Za-z]+(?:-[A-Za-z]+)?)_(?P<keyword>\w+)", name)
         if m:
             word_qty = m.group("qty")
             value = number.word_to_digit(word_qty)
@@ -478,7 +494,11 @@ class OperationDoc:
             return ""
         qty = int(qty)
         word_qty = number.digit_to_word(qty)
-        replacement = f"either zero or exactly {word_qty}" if self.or_empty else f"exactly {word_qty}"
+        replacement = (
+            f"either zero or exactly {word_qty}"
+            if self.or_empty
+            else f"exactly {word_qty}"
+        )
 
         # Helper: choose singular vs plural placeholder based on qty
         def resolve_placeholder(singular_key, plural_key):
@@ -504,14 +524,14 @@ class OperationDoc:
                 template = self._semantic_placeholders.get(keyword, "")
             else:
                 plural_sem = PATTERN.resolve_plural_semantic(keyword)
-                template = self._plural_semantic_placeholders.get(plural_sem,"")
+                template = self._plural_semantic_placeholders.get(plural_sem, "")
             return template % replacement
 
         # 4. Plural semantic keyword family
         if keyword in self._plural_semantic_placeholders:
             if qty <= 1:
                 plural_sem = PATTERN.resolve_plural_semantic(keyword)
-                template = self._plural_semantic_placeholders.get(plural_sem,"")
+                template = self._plural_semantic_placeholders.get(plural_sem, "")
             else:
                 template = self._plural_semantic_placeholders.get(keyword, "")
             return template % replacement
@@ -548,7 +568,8 @@ class OperationDoc:
         if lo > hi:
             return (
                 f"{self.name} is invalid: range({lo}, {hi + 1}) cannot count "
-                f"forward because start ({lo}) >= end ({hi}+1).")
+                f"forward because start ({lo}) >= end ({hi}+1)."
+            )
 
         size = hi - lo
 
@@ -558,10 +579,16 @@ class OperationDoc:
         # --- EXACT MATCH CASE ----------------------------------------------------
         if size == 0:
             template = ""
-            if keyword in self._singular_placeholders or keyword in self._plural_placeholders:
+            if (
+                keyword in self._singular_placeholders
+                or keyword in self._plural_placeholders
+            ):
                 singular = PATTERN.resolve_singular(keyword)
                 template = self._singular_placeholders.get(singular, "")
-            elif keyword in self._semantic_placeholders or keyword in self._plural_semantic_placeholders:
+            elif (
+                keyword in self._semantic_placeholders
+                or keyword in self._plural_semantic_placeholders
+            ):
                 semantic = PATTERN.resolve_semantic(keyword)
                 template = self._semantic_placeholders.get(semantic, "")
 
@@ -572,29 +599,40 @@ class OperationDoc:
                 elif lo > 1:
                     plural = PATTERN.resolve_plural(keyword)
                     template = self._plural_semantic_placeholders.get(plural, "")
-            elif keyword in self._semantic_placeholders or keyword in self._plural_semantic_placeholders:
+            elif (
+                keyword in self._semantic_placeholders
+                or keyword in self._plural_semantic_placeholders
+            ):
                 if lo == 1:
                     semantic = PATTERN.resolve_semantic(keyword)
                     template = self._semantic_placeholders.get(semantic, "")
                 elif lo > 1:
                     plural_semantic = PATTERN.resolve_plural_semantic(keyword)
-                    template = self._plural_semantic_placeholders.get(plural_semantic, "")
+                    template = self._plural_semantic_placeholders.get(
+                        plural_semantic, ""
+                    )
 
             if template:
                 replacement = (
                     f"either zero or exactly {word_digit_lo}"
-                    if self.or_empty else
-                    f"exactly {word_digit_lo}"
+                    if self.or_empty
+                    else f"exactly {word_digit_lo}"
                 )
                 return template % replacement
             return f"{self.name} is invalid snippet keyword."
 
         # --- RANGE MATCH CASE ----------------------------------------------------
         template = ""
-        if keyword in self._singular_placeholders or keyword in self._plural_placeholders:
+        if (
+            keyword in self._singular_placeholders
+            or keyword in self._plural_placeholders
+        ):
             plural = PATTERN.resolve_plural(keyword)
             template = self._singular_placeholders.get(plural, "")
-        elif keyword in self._semantic_placeholders or keyword in self._plural_semantic_placeholders:
+        elif (
+            keyword in self._semantic_placeholders
+            or keyword in self._plural_semantic_placeholders
+        ):
             plural_semantic = PATTERN.resolve_plural_semantic(keyword)
             template = self._plural_semantic_placeholders.get(plural_semantic, "")
 
@@ -602,14 +640,14 @@ class OperationDoc:
             if self.or_empty:
                 replacement = (
                     "zero or more"
-                    if hi == 99999 else
-                    f"either zero or {word_digit_lo} to {word_digit_hi}"
+                    if hi == 99999
+                    else f"either zero or {word_digit_lo} to {word_digit_hi}"
                 )
             else:
                 replacement = (
                     f"{word_digit_lo} or more"
-                    if hi == 99999 else
-                    f"{word_digit_lo} to {word_digit_hi}"
+                    if hi == 99999
+                    else f"{word_digit_lo} to {word_digit_hi}"
                 )
             return template % replacement
         return f"{self.name} is invalid snippet keyword."
@@ -626,7 +664,7 @@ class OperationDoc:
             self.describe_group,
             self.describe_items,
             self.describe_exact_match,
-            self.describe_range_match
+            self.describe_range_match,
         ]
 
         for method in methods:
@@ -657,44 +695,56 @@ class ExplanationDoc:
 
         self.process()
 
-
-    def __bool__(self): return self._parsed
-
-    @property
-    def doc(self): return self._doc
+    def __bool__(self):
+        return self._parsed
 
     @property
-    def pattern(self): return self._pattern
+    def doc(self):
+        return self._doc
 
     @property
-    def snippet(self): return self._snippet
+    def pattern(self):
+        return self._pattern
 
     @property
-    def keyword(self): return self._keyword
+    def snippet(self):
+        return self._snippet
 
     @property
-    def semantic(self): return self._base_keyword
+    def keyword(self):
+        return self._keyword
 
     @property
-    def quantity(self): return self._quantity
+    def semantic(self):
+        return self._base_keyword
 
     @property
-    def quantity_lo(self): return self._quantity_lo
+    def quantity(self):
+        return self._quantity
 
     @property
-    def quantity_hi(self): return self._quantity_hi
+    def quantity_lo(self):
+        return self._quantity_lo
 
     @property
-    def unit(self): return self._unit
+    def quantity_hi(self):
+        return self._quantity_hi
 
     @property
-    def parsed(self): return self._parsed
+    def unit(self):
+        return self._unit
 
     @property
-    def var_name(self): return self._var_name
+    def parsed(self):
+        return self._parsed
 
     @property
-    def allowed_empty(self): return self._allowed_empty
+    def var_name(self):
+        return self._var_name
+
+    @property
+    def allowed_empty(self):
+        return self._allowed_empty
 
     def parse(self):
         """Parse snippet into keyword, parameters, quantity, and unit metadata."""
@@ -764,9 +814,8 @@ class ExplanationDoc:
             return
 
         # --- Case B: suppressible group or plural base keyword ----------------
-        if (
-            self.is_suppressible_group() or
-            PATTERN.keyword_in(self._base_keyword, plural=True)
+        if self.is_suppressible_group() or PATTERN.keyword_in(
+            self._base_keyword, plural=True
         ):
             desc = case1 if self._quantity == "optional" else case2
             note = wrap_text_block(desc, subject="Note:", limit=68)
@@ -802,16 +851,17 @@ class ExplanationDoc:
         if self._keyword in ("anything", "something"):
             base = "dot"
         elif PATTERN.keyword_in(self._base_keyword, singular=True, plural=True):
-
             if self._unit in ("group", "items"):
                 base = (
                     PATTERN.resolve_singular(self._base_keyword)
-                    if self.is_suppressible_group() else
-                    PATTERN.resolve_plural(self._base_keyword)
+                    if self.is_suppressible_group()
+                    else PATTERN.resolve_plural(self._base_keyword)
                 )
             else:
                 base = PATTERN.resolve_singular(self._base_keyword)
-        elif PATTERN.keyword_in(self._base_keyword, semantic=True, plural_semantic=True):
+        elif PATTERN.keyword_in(
+            self._base_keyword, semantic=True, plural_semantic=True
+        ):
             base = PATTERN.resolve_semantic(self._base_keyword)
         else:
             base = "dot"
@@ -832,11 +882,13 @@ class ExplanationDoc:
         """Return the semantic description for grouped <base> patterns."""
         quantifier = "+" if self._unit == "group" else "*"
         occurrences = "zero-or-more" if quantifier == "*" else "one-or-more"
-        optional = "?" if self._allowed_empty or optional=="?" else ""
+        optional = "?" if self._allowed_empty or optional == "?" else ""
 
         separator_line = r'<sep> is the whitespace separator (r"\s+")'
         repeat_line = f'"{quantifier}" repeats {occurrences} (<sep><{base}>) groups'
-        optional_line = f'"{optional}" allows zero or one occurrence of the entire {base} group'
+        optional_line = (
+            f'"{optional}" allows zero or one occurrence of the entire {base} group'
+        )
 
         if optional:
             lst = [
@@ -855,10 +907,7 @@ class ExplanationDoc:
         return "\n".join(lst)
 
     def get_semantic_description(
-            self, base,
-            quantifier="",
-            optional="",
-            is_group=False
+        self, base, quantifier="", optional="", is_group=False
     ):
         """Return the semantic description for the given base and quantifier."""
         if is_group:
@@ -867,31 +916,31 @@ class ExplanationDoc:
         if quantifier == "+" or quantifier == "*":
             quant, occurrences = (
                 ("+", "one-or-more")
-                if quantifier == "+" and (optional == "" or not self._allowed_empty) else
-                ("*", "zero-or-more")
+                if quantifier == "+" and (optional == "" or not self._allowed_empty)
+                else ("*", "zero-or-more")
             )
         elif quantifier == "?":
             quant, occurrences = "?", "zero-or-one"
         else:
             quant, occurrences = (
-                ("?", "zero-or-one")
-                if self._allowed_empty else
-                ("", "one")
+                ("?", "zero-or-one") if self._allowed_empty else ("", "one")
             )
 
         plural = PATTERN.resolve_plural(base)
         lines = (
             [f"semantic: (<{base}>){quant}"]
-            if quant == "?" and PATTERN.keyword_in(self._base_keyword, semantic=True) else
-            [f"Semantic: <{base}>{quant}"]
+            if quant == "?" and PATTERN.keyword_in(self._base_keyword, semantic=True)
+            else [f"Semantic: <{base}>{quant}"]
         )
         if quant:
             singular_or_plural = base if quant == "?" else plural
-            lines.append(text.indent(f'"{quant}" repeats {occurrences} {singular_or_plural}'))
+            lines.append(
+                text.indent(f'"{quant}" repeats {occurrences} {singular_or_plural}')
+            )
 
         return "\n".join(lines)
 
-    def append_semantic_section_to_list(self, *lines, width: int, items: list[str]):    # noqa
+    def append_semantic_section_to_list(self, *lines, width: int, items: list[str]):  # noqa
         """Format semantic section lines and append the result to items."""
         if not lines:
             return
@@ -996,31 +1045,35 @@ class ExplanationDoc:
         qty = int(self._quantity)
         qty_word = number.digit_to_word(qty)
 
-
         # ----------------------------------------------------------------------
         # Case 1: simple singular/plural (no <sep> groups)
         # ----------------------------------------------------------------------
         if PATTERN.keyword_in(self._base_keyword, singular=True, plural=True):
             singular = PATTERN.resolve_singular(self._base_keyword)
             plural = PATTERN.resolve_plural(self._base_keyword)
-            optional_line = f'"?" allows zero or one occurrence of the entire {singular} group'
+            optional_line = (
+                f'"?" allows zero or one occurrence of the entire {singular} group'
+            )
 
-            qty_txt = f'{{{qty}}}'
+            qty_txt = f"{{{qty}}}"
             width = len(qty_txt) + 2
             repeat_line = f'"{qty_txt}" matches exactly {qty_word} {singular if qty == 1 else plural}'
 
             if self._allowed_empty:
                 self.append_semantic_section_to_list(
                     f"semantic: (<{base}>{qty_txt})?",
-                    repeat_line, optional_line,
-                    width=width, items=items,
+                    repeat_line,
+                    optional_line,
+                    width=width,
+                    items=items,
                 )
                 return
 
             self.append_semantic_section_to_list(
                 f"semantic: <{base}>{qty_txt}",
                 repeat_line,
-                width=width, items=items,
+                width=width,
+                items=items,
             )
             return
 
@@ -1040,25 +1093,31 @@ class ExplanationDoc:
 
             repeat_line = (
                 f'"{qty_txt}" repeats the (<sep><{base}>) pair exact '
-                f'{"once" if k == 1 else f"{k_word} times"},'
+                f"{'once' if k == 1 else f'{k_word} times'},"
             )
 
             separator_line = '<sep> is the whitespace separator (r"\\s+")'
-            total_line = f"{spacers} producing a group containing {qty_word} <{base}> items"
-            optional_line = f'"?" allows zero or one occurrence of the entire {singular} group'
+            total_line = (
+                f"{spacers} producing a group containing {qty_word} <{base}> items"
+            )
+            optional_line = (
+                f'"?" allows zero or one occurrence of the entire {singular} group'
+            )
 
             if qty == 1:
                 if self._allowed_empty:
                     self.append_semantic_section_to_list(
                         f"semantic: (<{base}>)?",
                         optional_line,
-                        width=width, items=items,
+                        width=width,
+                        items=items,
                     )
                     return
 
                 self.append_semantic_section_to_list(
                     f"semantic: <{base}>",
-                    width=width, items=items,
+                    width=width,
+                    items=items,
                 )
                 return
 
@@ -1066,30 +1125,44 @@ class ExplanationDoc:
                 if self._allowed_empty:
                     self.append_semantic_section_to_list(
                         f"semantic: (<{base}>(<sep><{base}>){qty_txt})?",
-                        separator_line, repeat_line, total_line, optional_line,
-                        width=width, items=items,
+                        separator_line,
+                        repeat_line,
+                        total_line,
+                        optional_line,
+                        width=width,
+                        items=items,
                     )
                     return
 
                 self.append_semantic_section_to_list(
                     f"semantic: <{base}>(<sep><{base}>){qty_txt}",
-                    separator_line, repeat_line, total_line,
-                    width=width, items=items,
+                    separator_line,
+                    repeat_line,
+                    total_line,
+                    width=width,
+                    items=items,
                 )
                 return
 
             if self._allowed_empty:
                 self.append_semantic_section_to_list(
                     f"semantic: (<{base}>(<sep><{base}>){qty_txt})?",
-                    separator_line, repeat_line, total_line, optional_line,
-                    width=width, items=items,
+                    separator_line,
+                    repeat_line,
+                    total_line,
+                    optional_line,
+                    width=width,
+                    items=items,
                 )
                 return
 
             self.append_semantic_section_to_list(
                 f"semantic: <{base}>(<sep><{base}>){qty_txt}",
-                separator_line, repeat_line, total_line,
-                width=width, items=items,
+                separator_line,
+                repeat_line,
+                total_line,
+                width=width,
+                items=items,
             )
             return
 
@@ -1117,14 +1190,14 @@ class ExplanationDoc:
         # Case 1: simple singular/plural (no <sep> groups)
         # ----------------------------------------------------------------------
         if PATTERN.keyword_in(self._base_keyword, singular=True, plural=True):
-            range_txt = f'{{{raw_lo},{raw_hi}}}'
+            range_txt = f"{{{raw_lo},{raw_hi}}}"
             width = len(range_txt) + 2
 
             semantic_line = (
-                    f"semantic: (<{base}>{range_txt})?"
-                    if self._allowed_empty else
-                    f"semantic: <{base}>{range_txt}"
-                )
+                f"semantic: (<{base}>{range_txt})?"
+                if self._allowed_empty
+                else f"semantic: <{base}>{range_txt}"
+            )
 
             if raw_hi.isdigit() and raw_lo.isdigit():
                 if hi == lo:
@@ -1133,7 +1206,8 @@ class ExplanationDoc:
                         semantic_line,
                         f'"{range_txt}" matches exact {lo_word} {select_name}',
                         optional_line if self._allowed_empty else "",
-                        width=width, items=items,
+                        width=width,
+                        items=items,
                     )
                     return
 
@@ -1141,7 +1215,8 @@ class ExplanationDoc:
                     semantic_line,
                     f'"{range_txt}" matches {lo_word} to {hi_word} {plural}',
                     optional_line if self._allowed_empty else "",
-                    width=width, items=items,
+                    width=width,
+                    items=items,
                 )
                 return
 
@@ -1153,7 +1228,8 @@ class ExplanationDoc:
                 semantic_line,
                 f'"{range_txt}" matches {select_match} {select_qty} {select_base}',
                 optional_line if self._allowed_empty else "",
-                width=width, items=items,
+                width=width,
+                items=items,
             )
             return
         # ----------------------------------------------------------------------
@@ -1166,30 +1242,36 @@ class ExplanationDoc:
                 m_word = number.digit_to_word(m)
                 n_word = number.digit_to_word(n)
 
-                range_txt = f'{{{m},{m}}}'
+                range_txt = f"{{{m},{m}}}"
                 spacers = " " * (len(range_txt) + 2)
                 width = len(spacers)
 
                 semantic_line = (
                     f"semantic: (<{base}>(<sep><{base}>){range_txt})?"
-                    if self._allowed_empty else
-                    f"semantic: <{base}>(<sep><{base}>){range_txt}"
+                    if self._allowed_empty
+                    else f"semantic: <{base}>(<sep><{base}>){range_txt}"
                 )
 
                 if m == n:
                     choice = "once" if m == 1 else f"{m_word} times"
                     match_line = f'"{range_txt}" repeats the (<sep><{base}>) pair exact {choice},'
-                    choice = f"a single <{base}>" if m == 0 else f"{hi_word} <{base}> items"
+                    choice = (
+                        f"a single <{base}>" if m == 0 else f"{hi_word} <{base}> items"
+                    )
                     total_line = f"{spacers} producing a group containing {choice}"
 
                     self.append_semantic_section_to_list(
-                        semantic_line, separator_line, match_line, total_line,
+                        semantic_line,
+                        separator_line,
+                        match_line,
+                        total_line,
                         optional_line if self._allowed_empty else "",
-                        width=width, items=items,
+                        width=width,
+                        items=items,
                     )
                     return
 
-                range_txt = f'{{{m},{n}}}'
+                range_txt = f"{{{m},{n}}}"
                 spacers = " " * (len(range_txt) + 2)
                 width = len(spacers)
 
@@ -1197,9 +1279,13 @@ class ExplanationDoc:
                 total_line = f"{spacers} producing a group containing {lo_word} to {hi_word} <{base}> items"
 
                 self.append_semantic_section_to_list(
-                    semantic_line, separator_line, match_line, total_line,
+                    semantic_line,
+                    separator_line,
+                    match_line,
+                    total_line,
                     optional_line if self._allowed_empty else "",
-                    width=width, items=items,
+                    width=width,
+                    items=items,
                 )
                 return
 
@@ -1207,49 +1293,64 @@ class ExplanationDoc:
                 n = hi - 1
                 n_word = number.digit_to_word(n)
 
-                range_txt = f'{{,{n}}}'
+                range_txt = f"{{,{n}}}"
                 spacers = " " * (len(range_txt) + 2)
                 width = len(spacers)
 
                 semantic_line = f"semantic: (<{base}>(<sep><{base}>){range_txt})?"
                 if n == 0:
-                    match_line = f'"{range_txt}" repeats the (<sep><{base}>) pair zero times,'
+                    match_line = (
+                        f'"{range_txt}" repeats the (<sep><{base}>) pair zero times,'
+                    )
                     total_line = f"{spacers} producing a single <{base}>"
                 elif n == 1:
-                    match_line = f'"{range_txt}" repeats the (<sep><{base}>) pair at most once,'
-                    total_line = f"{spacers} producing a group of one or two <{base}> items"
+                    match_line = (
+                        f'"{range_txt}" repeats the (<sep><{base}>) pair at most once,'
+                    )
+                    total_line = (
+                        f"{spacers} producing a group of one or two <{base}> items"
+                    )
                 else:
                     match_line = f'"{range_txt}" repeats the (<sep><{base}>) pair at most {n_word} times,'
                     total_line = f"{spacers} producing a group of one to {hi_word} <{base}> items"
 
                 self.append_semantic_section_to_list(
-                    semantic_line, separator_line, match_line,
-                    total_line, optional_line,
-                    width=width, items=items,
+                    semantic_line,
+                    separator_line,
+                    match_line,
+                    total_line,
+                    optional_line,
+                    width=width,
+                    items=items,
                 )
                 return
 
             m = lo - 1
             m_word = number.digit_to_word(m)
-            range_txt = f'{{{m},}}'
+            range_txt = f"{{{m},}}"
             spacers = " " * (len(range_txt) + 2)
             width = len(spacers)
 
             semantic_line = (
                 f"semantic: (<{base}>(<sep><{base}>){{{m},}})?"
-                if self._allowed_empty else
-                f"semantic: <{base}>(<sep><{base}>){{{m},}}"
+                if self._allowed_empty
+                else f"semantic: <{base}>(<sep><{base}>){{{m},}}"
             )
             choice = "once" if m == 1 else f"{m_word} times"
-            match_line = f"{range_txt} repeats the (<sep><{base}>) pair at least {choice},"
+            match_line = (
+                f"{range_txt} repeats the (<sep><{base}>) pair at least {choice},"
+            )
             total_line = f"{spacers} producing a group containing {lo_word} or more <{base}> items"
             self.append_semantic_section_to_list(
-                semantic_line, separator_line, match_line, total_line,
+                semantic_line,
+                separator_line,
+                match_line,
+                total_line,
                 optional_line if self._allowed_empty else "",
-                width=width, items=items,
+                width=width,
+                items=items,
             )
             return
-
 
     def add_semantic_section(self, items):
         """Build the full semantic section by composing base, custom, and core parts."""
@@ -1265,10 +1366,7 @@ class ExplanationDoc:
 
     def create_intro(self):
         """Build the introductory explanation header."""
-        return [
-            "Explanation:",
-            indent(f"Snippet: {self.snippet}", " " * 4)
-        ]
+        return ["Explanation:", indent(f"Snippet: {self.snippet}", " " * 4)]
 
     def process(self):
         lst = self.create_intro()

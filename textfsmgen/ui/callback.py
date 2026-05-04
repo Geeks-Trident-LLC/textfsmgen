@@ -21,12 +21,7 @@ from textfsmgen import TabularTemplateBuilder
 from textfsmgen.exceptions import TemplateBuilderInvalidFormat
 from textfsmgen.libs import file
 from textfsmgen.libs.utils import get_data_as_tabular
-from textfsmgen.ui.common import (
-    extract_text,
-    show_message_dialog,
-    set_text,
-    clear_text
-)
+from textfsmgen.ui.common import extract_text, show_message_dialog, set_text, clear_text
 
 from tkinter import filedialog
 
@@ -39,15 +34,14 @@ def perform_build_action(app):
     if not user_data:
         show_message_dialog(
             title="Missing Input Data",
-            error="Cannot build a TextFSM template because "
-                  "no input data was provided."
+            error="Cannot build a TextFSM template because no input data was provided.",
         )
         return
 
     app.snapshot.update(user_data=user_data)
 
     try:
-        if app.category_translator_enabled():   # noqa
+        if app.category_translator_enabled():  # noqa
             cls = CategoryTemplateBuilder
             kwargs = app.get_category_template_builder_args()
         elif app.tabular_translator_enabled():
@@ -61,12 +55,10 @@ def perform_build_action(app):
 
         # Update snapshot with generated template
         app.snapshot.update(
-            result=builder.template,
-            template=builder.template,
-            is_built=bool(builder)
+            result=builder.template, template=builder.template, is_built=bool(builder)
         )
 
-        app.settings.test_data_btn_name.set('Test Data')
+        app.settings.test_data_btn_name.set("Test Data")
 
         if app.category_translator_enabled() or app.tabular_translator_enabled():
             app.reset_category_translator()
@@ -79,8 +71,12 @@ def perform_build_action(app):
         enable_buttons(app, save=True, copy=True, result=True)  # noqa
         if app.snapshot.test_data:
             enable_buttons(
-                app, test_data=True, python=True,
-                unittest=True, pytest=True, execute=True
+                app,
+                test_data=True,
+                python=True,
+                unittest=True,
+                pytest=True,
+                execute=True,
             )
         set_text(app.textarea.output, app.snapshot.template)
         app.textarea.output.focus()
@@ -89,7 +85,7 @@ def perform_build_action(app):
         show_message_dialog(
             title="Invalid TextFSM Template Format",
             error=f"Your snippet needs correction to produce a valid template.\n\n"
-                  f"{type(ex).__name__}: {ex}"
+            f"{type(ex).__name__}: {ex}",
         )
         return
     except Exception as ex:
@@ -99,26 +95,26 @@ def perform_build_action(app):
         show_message_dialog(
             title="Template Generation Error",
             error=f"Your snippet needs correction to produce a valid template.\n\n"
-                  f"{type(ex).__name__}: {ex}"
+            f"{type(ex).__name__}: {ex}",
         )
         return
 
 
 def perform_toggle_test_data_mode_action(app):
-    """Handle the 'Test Data' button toggle."""     # noqa
+    """Handle the 'Test Data' button toggle."""  # noqa
 
     btn_name = app.settings.test_data_btn_name.get()
-    if btn_name == 'Hide':
+    if btn_name == "Hide":
         # Show user snippet
-        app.root.title('TextFSM Generator CE')
-        app.settings.test_data_btn_name.set('Test Data')
+        app.root.title("TextFSM Generator CE")
+        app.settings.test_data_btn_name.set("Test Data")
         app.snapshot.update(test_data=extract_text(app.textarea.input))
         set_text(app.textarea.input, app.snapshot.user_data)
         app.textarea.input.config(borderwidth=1)
     else:
         # Show test data
-        app.root.title('TextFSM Generator CE (Test Data Mode)')
-        app.settings.test_data_btn_name.set('Hide')
+        app.root.title("TextFSM Generator CE (Test Data Mode)")
+        app.settings.test_data_btn_name.set("Hide")
         app.snapshot.update(user_data=extract_text(app.textarea.input))
         set_text(app.textarea.input, app.snapshot.test_data)
         app.textarea.input.config(borderwidth=3)
@@ -127,16 +123,16 @@ def perform_toggle_test_data_mode_action(app):
 def perform_open_action(app):
     """Handle the "File > Open" menu action."""
 
-    filetypes = (('Text Files', '.txt'), ('All Files', '*'))
+    filetypes = (("Text Files", ".txt"), ("All Files", "*"))
     filename = filedialog.askopenfilename(filetypes=filetypes)
-    if filename:    # noqa
+    if filename:  # noqa
         # Read file content
         content = file.read(filename)
 
         activate_user_data_mode(app)
 
         # Reset and update widgets
-        set_text(app.textarea.output, '')
+        set_text(app.textarea.output, "")
         app.snapshot.update(user_data=content)
         app.snapshot.update(test_data=content)
 
@@ -163,24 +159,24 @@ def perform_save_action(app):  # noqa
     if active not in valid_areas:
         show_message_dialog(
             title="Save Action — Ambiguous Selection",
-            warning="A save target is required. Choose User Input Area or Output Area."
+            warning="A save target is required. Choose User Input Area or Output Area.",
         )
         return
 
-    input_text  = extract_text(app.textarea.input)
+    input_text = extract_text(app.textarea.input)
     output_text = extract_text(app.textarea.output)
 
     if active is app.textarea.input:
         if not input_text.strip():
             show_message_dialog(
                 title="Save Action - Empty User Snippet",
-                warning="There is no input text to save."
+                warning="There is no input text to save.",
             )
             return
 
         filename = filedialog.asksaveasfilename(
             title="Save User Snippet",
-            filetypes=[("Text Files", "*.txt"), ("All Files", "*")]
+            filetypes=[("Text Files", "*.txt"), ("All Files", "*")],
         )
         if filename:
             file.write(filename, input_text)
@@ -191,7 +187,7 @@ def perform_save_action(app):  # noqa
     if not output_text.strip():
         show_message_dialog(
             title="Save Action - Empty Output",
-            warning="There is no output text to save."
+            warning="There is no output text to save.",
         )
         return
 
@@ -209,7 +205,7 @@ def perform_save_action(app):  # noqa
                 ("Python Test Files", "test_*.py *_test.py"),
                 ("All Python Files", "*.py"),
                 ("All Files", "*"),
-            ]
+            ],
         )
         if filename:
             file.write(filename, output_text)
@@ -224,7 +220,7 @@ def perform_save_action(app):  # noqa
                 ("TextFSM Templates", "*.template *.textfsm *.fsm"),
                 ("Text Files", "*.txt"),
                 ("All Files", "*"),
-            ]
+            ],
         )
         if filename:
             file.write(filename, output_text)
@@ -233,7 +229,7 @@ def perform_save_action(app):  # noqa
     # Fallback: save as plain text
     filename = filedialog.asksaveasfilename(
         title="Save Result or Other Data",
-        filetypes=[("Text Files", "*.txt"), ("All Files", "*")]
+        filetypes=[("Text Files", "*.txt"), ("All Files", "*")],
     )
     if filename:
         file.write(filename, output_text)
@@ -247,11 +243,10 @@ def perform_clear_action(app):
     focus = app.root.focus_get()
 
     prev_widget_name = str(app.prev_widget)
-    is_input_area = prev_widget_name.endswith('.input_textarea')
+    is_input_area = prev_widget_name.endswith(".input_textarea")
     # --- Input text area or other ---
-    if (
-        (is_input_area and app.textarea.input.tag_ranges(ui.tk.SEL)) or
-        (focus is app.textarea.input and focus.tag_ranges(ui.tk.SEL))
+    if (is_input_area and app.textarea.input.tag_ranges(ui.tk.SEL)) or (
+        focus is app.textarea.input and focus.tag_ranges(ui.tk.SEL)
     ):
         app.textarea.input.delete(ui.tk.SEL_FIRST, ui.tk.SEL_LAST)
         app.textarea.input.focus()
@@ -262,16 +257,18 @@ def perform_clear_action(app):
     clear_text(app.textarea.output)
 
     # enable buttons
-    enable_buttons(
-        app, test_data=True, open=True, paste=True,
-        clear=True, build=True
-    )
+    enable_buttons(app, test_data=True, open=True, paste=True, clear=True, build=True)
 
     # Disable related buttons
     disable_buttons(
-        app, save=True, copy=True,
-        result=True, python=True, unittest=True,
-        pytest=True, execute=True
+        app,
+        save=True,
+        copy=True,
+        result=True,
+        python=True,
+        unittest=True,
+        pytest=True,
+        execute=True,
     )
 
     # Reset input area state
@@ -287,7 +284,7 @@ def perform_clear_action(app):
     )
 
     # Reset UI variables
-    app.settings.test_data_btn_name.set('Test Data')
+    app.settings.test_data_btn_name.set("Test Data")
     # app.root.clipboard_clear()
 
     app.textarea.input.focus()
@@ -302,7 +299,11 @@ def perform_copy_action(app):
     for widget in widgets:
         if widget is active:
             widget.update_idletasks()
-            content = widget.selection_get() if widget.tag_ranges("sel") else extract_text(widget)
+            content = (
+                widget.selection_get()
+                if widget.tag_ranges("sel")
+                else extract_text(widget)
+            )
 
             if not content:
                 show_message_dialog(
@@ -319,7 +320,7 @@ def perform_copy_action(app):
 
     show_message_dialog(
         title="Copy Action — Ambiguous Selection",
-        info="A copy target is required. Choose Input Area or Output Area."
+        info="A copy target is required. Choose Input Area or Output Area.",
     )
 
 
@@ -336,10 +337,11 @@ def perform_paste_action(app) -> None:
     except Exception as ex:
         show_message_dialog(
             title="Clipboard Empty",
-            info=(f"There is no text available to paste from the clipboard.\n"
-                  f"{'-' * 70}\n"
-                  f"{type(ex).__name__}: {ex}"
-            )
+            info=(
+                f"There is no text available to paste from the clipboard.\n"
+                f"{'-' * 70}\n"
+                f"{type(ex).__name__}: {ex}"
+            ),
         )
         return
 
@@ -374,7 +376,7 @@ def perform_paste_action(app) -> None:
 
         set_text(app.textarea.input, data)
         enable_buttons(app, test_data=True, save=True, copy=True)
-        app.settings.test_data_btn_name.set('Test Data')
+        app.settings.test_data_btn_name.set("Test Data")
         app.textarea.input.focus()
         return
 
@@ -420,7 +422,7 @@ def perform_python_action(app):
         return
 
     # --- Build snippet script ---
-    try:    # noqa
+    try:  # noqa
         user_data = extract_text(app.textarea.input)
         if app.category_translator_enabled():
             cls = CategoryTemplateBuilder
@@ -432,11 +434,7 @@ def perform_python_action(app):
             cls = TemplateBuilder
             kwargs = app.get_template_builder_args()
 
-        builder = cls(
-            user_data=user_data,
-            test_data=app.snapshot.test_data,
-            **kwargs
-        )
+        builder = cls(user_data=user_data, test_data=app.snapshot.test_data, **kwargs)
         script = builder.create_python_test()
 
         if app.category_translator_enabled() or app.tabular_translator_enabled():
@@ -455,8 +453,7 @@ def perform_python_action(app):
             return
 
         show_message_dialog(
-            title='TextFSM Generator Error',
-            error=f"{type(ex).__name__}: {ex}"
+            title="TextFSM Generator Error", error=f"{type(ex).__name__}: {ex}"
         )
 
 
@@ -470,7 +467,7 @@ def perform_unittest_action(app):
 
     # --- Build unittest script ---
     try:
-        user_data = extract_text(app.textarea.input)    # noqa
+        user_data = extract_text(app.textarea.input)  # noqa
         if app.category_translator_enabled():
             cls = CategoryTemplateBuilder
             kwargs = app.get_category_template_builder_args()
@@ -481,14 +478,10 @@ def perform_unittest_action(app):
             cls = TemplateBuilder
             kwargs = app.get_template_builder_args()
 
-        builder = cls(
-            user_data=user_data,
-            test_data=app.snapshot.test_data,
-            **kwargs
-        )
+        builder = cls(user_data=user_data, test_data=app.snapshot.test_data, **kwargs)
         script = builder.create_unittest()
 
-        if app.category_translator_enabled() or app.tabular_translator_enabled():   # noqa
+        if app.category_translator_enabled() or app.tabular_translator_enabled():  # noqa
             app.reset_category_translator()
             app.reset_tabular_translator()
             set_text(app.textarea.input, app.snapshot.user_data)
@@ -504,8 +497,7 @@ def perform_unittest_action(app):
             return
 
         show_message_dialog(
-            title='TextFSM Generator Error',
-            error=f"{type(ex).__name__}: {ex}"
+            title="TextFSM Generator Error", error=f"{type(ex).__name__}: {ex}"
         )
 
 
@@ -517,7 +509,7 @@ def perform_pytest_action(app):
         return
 
     # --- Build pytest script ---
-    try:    # noqa
+    try:  # noqa
         user_data = extract_text(app.textarea.input)
         if app.category_translator_enabled():
             cls = CategoryTemplateBuilder
@@ -529,11 +521,7 @@ def perform_pytest_action(app):
             cls = TemplateBuilder
             kwargs = app.get_template_builder_args()
 
-        builder = cls(
-            user_data=user_data,
-            test_data=app.snapshot.test_data,
-            **kwargs
-        )
+        builder = cls(user_data=user_data, test_data=app.snapshot.test_data, **kwargs)
         script = builder.create_pytest()
 
         if app.category_translator_enabled() or app.tabular_translator_enabled():
@@ -552,8 +540,7 @@ def perform_pytest_action(app):
             return
 
         show_message_dialog(
-            title='TextFSM Generator Error',
-            error=f"{type(ex).__name__}: {ex}"
+            title="TextFSM Generator Error", error=f"{type(ex).__name__}: {ex}"
         )
 
 
@@ -600,7 +587,7 @@ def perform_execute_action(app):
     result = testing.execute_test_script(
         python_interpreter,
         content=test_script,
-        deleted=app.settings.delete_file_after_run_flag.get()
+        deleted=app.settings.delete_file_after_run_flag.get(),
     )
     set_text(app.textarea.output, str(result))
 
@@ -615,7 +602,7 @@ def perform_show_result_action(app):
 
     # --- Build or reuse template ---
     try:
-        user_data = extract_text(app.textarea.input)    # noqa
+        user_data = extract_text(app.textarea.input)  # noqa
         if app.category_translator_enabled():
             cls = CategoryTemplateBuilder
             kwargs = app.get_category_template_builder_args()
@@ -629,7 +616,7 @@ def perform_show_result_action(app):
         builder = cls(user_data=user_data, **kwargs)
         app.snapshot.update(template=builder.template, is_built=bool(builder))
 
-        if app.category_translator_enabled() or app.tabular_translator_enabled():   # noqa
+        if app.category_translator_enabled() or app.tabular_translator_enabled():  # noqa
             app.reset_category_translator()
             app.reset_tabular_translator()
             set_text(app.textarea.input, app.snapshot.user_data)
@@ -644,13 +631,12 @@ def perform_show_result_action(app):
         template = app.snapshot.template.strip()
         if not template:
             show_message_dialog(
-                title='TextFSM Generator Error',
-                error=f"{type(ex).__name__}: {ex}"
+                title="TextFSM Generator Error", error=f"{type(ex).__name__}: {ex}"
             )
             return
 
     # --- Parse test data ---
-    stream = StringIO(template)     # noqa
+    stream = StringIO(template)  # noqa
     parser = TextFSM(stream)
     rows = parser.ParseTextToDicts(app.snapshot.test_data)
 
@@ -686,7 +672,7 @@ def perform_show_result_action(app):
     set_text(app.textarea.output, "\n".join(result_sections))
 
 
-def disable_buttons(app, **states) -> None:     # noqa
+def disable_buttons(app, **states) -> None:  # noqa
     """Disable selected UI buttons based on keyword flags."""
     for name, flag in states.items():
         button = app.buttons.get(name)
@@ -708,7 +694,9 @@ def has_user_data(app, title="Missing User Data", msg=""):
         show_message_dialog(
             title=title,
             error=(
-                f"{msg}\n\n" if msg else ""
+                f"{msg}\n\n"
+                if msg
+                else ""
                 "How to add user data:\n"
                 "  Option 1: File > Open\n"
                 "  Option 2: Click the 'Open' button to load data from a file\n"
@@ -716,7 +704,7 @@ def has_user_data(app, title="Missing User Data", msg=""):
                 "    • If you see a 'Test Data' button, you are already in 'User Data' mode\n"
                 "    • Otherwise, click the 'Hide' button to switch to 'User Data' mode\n"
                 "    • Enter text manually or use the Paste button"
-            )
+            ),
         )
         return False
     return True
@@ -728,14 +716,16 @@ def has_test_data(app, title="Missing Test Data", msg=""):
         show_message_dialog(
             title=title,
             error=(
-                f"{msg}\n\n" if msg else ""
+                f"{msg}\n\n"
+                if msg
+                else ""
                 "How to add test data:\n"
                 "  Option 1: File > Load Test Data\n"
                 "  Option 2:\n"
                 "    • If you see a 'Hide' button, you are already in 'Test Data' mode\n"
                 "    • Otherwise, click the 'Test Data' button to switch to 'Test Data' mode\n"
                 "    • Enter text manually or use the Paste button"
-            )
+            ),
         )
         return False
     return True
@@ -744,7 +734,9 @@ def has_test_data(app, title="Missing Test Data", msg=""):
 def activate_user_data_mode(app, use_test_data=True):
     """Switch to 'User Data' mode and sync snapshot/user data state."""
     current_label = app.settings.test_data_btn_name.get()
-    translators_on = app.category_translator_enabled() or app.tabular_translator_enabled()
+    translators_on = (
+        app.category_translator_enabled() or app.tabular_translator_enabled()
+    )
     if current_label == "Test Data":
         if translators_on and app.snapshot.test_data and use_test_data:
             set_text(app.textarea.input, app.snapshot.test_data)
@@ -777,17 +769,18 @@ def notify_test_execution(app):
             "========================================\n"
             f"Temporary Directory: {testing.get_temp_dir()}\n"
             "========================================"
-        )
+        ),
     )
     return response
+
 
 def validate_prerequisites(app, kind):
     """Validate required test and user data before building scripts or templates."""
     messages = {
-        "python":  "Cannot build a Python test script without %s data.",
+        "python": "Cannot build a Python test script without %s data.",
         "unittest": "Cannot build a Python unittest script without %s data.",
-        "pytest":   "Cannot build a Python pytest script without %s data.",
-        "result":   "Cannot build a TextFSM template and parse test data without %s data.",
+        "pytest": "Cannot build a Python pytest script without %s data.",
+        "result": "Cannot build a TextFSM template and parse test data without %s data.",
         "execute": "Cannot execute a generated test script without %s data.",
     }
 

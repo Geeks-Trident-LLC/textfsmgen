@@ -23,7 +23,7 @@ class TestLineData:
             ("hello", "hello", "hello"),
             ("   hello   ", "   hello   ", "hello"),
             ("   \t", "   \t", ""),  # whitespace-only string
-            ("", "", ""),        # empty string
+            ("", "", ""),  # empty string
         ],
     )
     def test_init_and_strip(self, input_str, expected_raw, expected_data):
@@ -64,7 +64,9 @@ class TestLineData:
             ("hello", "", False),
         ],
     )
-    def test_trailing_properties(self, input_str, expected_trailing, expected_is_trailing):
+    def test_trailing_properties(
+        self, input_str, expected_trailing, expected_is_trailing
+    ):
         """Verify trailing whitespace extraction and boolean flags."""
         line_data = LineData(input_str)
         assert line_data.trailing == expected_trailing

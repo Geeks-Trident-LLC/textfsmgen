@@ -73,11 +73,7 @@ def get_expected_template():
 
 
 def get_expected_result():
-    return [{
-        'fruits': 'orange, peach',
-        'meat': 'pork',
-        'drinks': 'water'
-    }]
+    return [{"fruits": "orange, peach", "meat": "pork", "drinks": "water"}]
 
 
 def test():

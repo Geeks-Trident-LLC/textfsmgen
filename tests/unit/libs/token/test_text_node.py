@@ -13,6 +13,7 @@ import pytest
 
 from textfsmgen.libs.token import TextNode
 
+
 @pytest.mark.parametrize(
     "data,expected",
     [
@@ -22,7 +23,7 @@ from textfsmgen.libs.token import TextNode
         (1, "1"),
         (True, "True"),
         ({"first": "green", "second": "blue"}, "{'first': 'green', 'second': 'blue'}"),
-    ]
+    ],
 )
 def test(data, expected):
     text_node = TextNode(data)

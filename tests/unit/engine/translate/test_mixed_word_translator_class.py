@@ -13,12 +13,10 @@ import pytest
 
 from textfsmgen.engine.translate import (
     make_translator,
-
     MixedWordTranslator,
     MixedWordsTranslator,
-
     NonWSSTranslator,
-    NonWSSGroupTranslator
+    NonWSSGroupTranslator,
 )
 
 from tests.unit.engine.translate import to_list
@@ -34,10 +32,10 @@ class TestMixedWordTranslatorClass:
     @pytest.mark.parametrize(
         "other",
         [
-            "abc.123",          # mixed-word is a subset of mixed-word
-            "a.1 b.2",          # mixed-word is a subset of mixed-words
-            "abc\xc8",          # mixed-word is a subset of non-whitespaces
-            "abc\xc8 xyz",      # mixed-word is a subset of non-whitespace group
+            "abc.123",  # mixed-word is a subset of mixed-word
+            "a.1 b.2",  # mixed-word is a subset of mixed-words
+            "abc\xc8",  # mixed-word is a subset of non-whitespaces
+            "abc\xc8 xyz",  # mixed-word is a subset of non-whitespace group
         ],
     )
     def test_is_subset_of(self, other):
@@ -51,9 +49,9 @@ class TestMixedWordTranslatorClass:
     @pytest.mark.parametrize(
         "other",
         [
-            "-",                # mixed-word is not a subset of punct
-            "--++==",           # mixed-word is not a subset of puncts
-            "-- ++ ==",         # mixed-word is not a subset of punct-group
+            "-",  # mixed-word is not a subset of punct
+            "--++==",  # mixed-word is not a subset of puncts
+            "-- ++ ==",  # mixed-word is not a subset of punct-group
         ],
     )
     def test_is_not_subset_of(self, other):
@@ -68,14 +66,14 @@ class TestMixedWordTranslatorClass:
     @pytest.mark.parametrize(
         "other",
         [
-            "a",                # mixed-word is a superset of letter
-            "abc",              # mixed-word is a superset of letters
-            "1",                # mixed-word is a superset of digit
-            "123",              # mixed-word is a superset of digits
-            "1.1",              # mixed-word is a superset of number
-            "-1.1",             # mixed-word is a superset of mixed-number
-            ["a", "1"],         # mixed-word is a superset of alpha-num
-            "abc123",           # mixed-word is a superset of word
+            "a",  # mixed-word is a superset of letter
+            "abc",  # mixed-word is a superset of letters
+            "1",  # mixed-word is a superset of digit
+            "123",  # mixed-word is a superset of digits
+            "1.1",  # mixed-word is a superset of number
+            "-1.1",  # mixed-word is a superset of mixed-number
+            ["a", "1"],  # mixed-word is a superset of alpha-num
+            "abc123",  # mixed-word is a superset of word
         ],
     )
     def test_is_superset_of(self, other):
@@ -92,19 +90,19 @@ class TestMixedWordTranslatorClass:
         [
             (
                 "abc.123",  # mixed-word
-                MixedWordTranslator  # (mixed-word, mixed-word) => mixed-word
+                MixedWordTranslator,  # (mixed-word, mixed-word) => mixed-word
             ),
             (
                 "a.1 b.1",  # mixed-words
-                MixedWordsTranslator # (mixed-word, mixed-words) => mixed-words
+                MixedWordsTranslator,  # (mixed-word, mixed-words) => mixed-words
             ),
             (
                 "abc\xc8",  # non-whitespaces
-                NonWSSTranslator # (mixed-word, non-whitespaces) => non-whitespaces
+                NonWSSTranslator,  # (mixed-word, non-whitespaces) => non-whitespaces
             ),
             (
                 "abc\xc8 xyz",  # non-whitespace-group
-                NonWSSGroupTranslator    # (mixed-word, non-whitespace-group) => non-whitespace-group
+                NonWSSGroupTranslator,  # (mixed-word, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -123,35 +121,35 @@ class TestMixedWordTranslatorClass:
         [
             (
                 "a",  # letter
-                MixedWordTranslator  # (mixed-word, letter) => mixed-word
+                MixedWordTranslator,  # (mixed-word, letter) => mixed-word
             ),
             (
                 "abc",  # letters
-                MixedWordTranslator  # (mixed-word, letters) => mixed-word
+                MixedWordTranslator,  # (mixed-word, letters) => mixed-word
             ),
             (
                 "1",  # digit
-                MixedWordTranslator  # (mixed-word, digit) => mixed-word
+                MixedWordTranslator,  # (mixed-word, digit) => mixed-word
             ),
             (
                 "123",  # digits
-                MixedWordTranslator  # (mixed-word, digits) => mixed-word
+                MixedWordTranslator,  # (mixed-word, digits) => mixed-word
             ),
             (
                 "1.1",  # number
-                MixedWordTranslator  # (mixed-word, number) => mixed-word
+                MixedWordTranslator,  # (mixed-word, number) => mixed-word
             ),
             (
                 "-1.1",  # mixed-number
-                MixedWordTranslator  # (mixed-word, mixed-number) => mixed-word
+                MixedWordTranslator,  # (mixed-word, mixed-number) => mixed-word
             ),
             (
-                    ["a", "1"],  # alpha-num
-                    MixedWordTranslator  # (mixed-word, alpha-num) => mixed-word
+                ["a", "1"],  # alpha-num
+                MixedWordTranslator,  # (mixed-word, alpha-num) => mixed-word
             ),
             (
                 "abc123",  # word
-                MixedWordTranslator  # (mixed-word, word) => mixed-word
+                MixedWordTranslator,  # (mixed-word, word) => mixed-word
             ),
         ],
     )
@@ -170,27 +168,27 @@ class TestMixedWordTranslatorClass:
         [
             (
                 "abc xyz",  # words
-                MixedWordsTranslator # (mixed-word, words) => mixed-words
+                MixedWordsTranslator,  # (mixed-word, words) => mixed-words
             ),
             (
-                    ["a", "1", "#"],  # graph
-                    NonWSSTranslator # (mixed-word, graph) => non-whitespaces
+                ["a", "1", "#"],  # graph
+                NonWSSTranslator,  # (mixed-word, graph) => non-whitespaces
             ),
             (
                 "\xc8",  # non-whitespace
-                NonWSSTranslator # (mixed-word, non-whitespace) => non-whitespaces
+                NonWSSTranslator,  # (mixed-word, non-whitespace) => non-whitespaces
             ),
             (
                 "-",  # punct
-                NonWSSTranslator # (mixed-word, non-whitespace) => non-whitespaces
+                NonWSSTranslator,  # (mixed-word, non-whitespace) => non-whitespaces
             ),
             (
                 "--++==",  # puncts
-                NonWSSTranslator # (mixed-word, puncts) => non-whitespaces
+                NonWSSTranslator,  # (mixed-word, puncts) => non-whitespaces
             ),
             (
                 "-- ++ ==",  # punct-group
-                NonWSSGroupTranslator    # (mixed-word, punct-group) => non-whitespaces-group
+                NonWSSGroupTranslator,  # (mixed-word, punct-group) => non-whitespaces-group
             ),
         ],
     )

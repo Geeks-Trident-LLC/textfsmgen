@@ -3,7 +3,7 @@ textfsmgen.libs.utils
 =====================
 
 General-purpose utility functions used across TextFSMGen.
-"""     # noqa
+"""  # noqa
 
 import re
 from collections import defaultdict
@@ -23,7 +23,7 @@ def split_by_matches(text, pattern=r"(?u)\s+"):
 
     for m in re.finditer(pattern, text):
         if m.start() > last_end:
-            parts.append(text[last_end:m.start()])
+            parts.append(text[last_end : m.start()])
         parts.append(m.group())
         last_end = m.end()
 
@@ -110,15 +110,17 @@ class TextMatcher:
 
 class Tabular:
     """A utility class for constructing and displaying tabular data."""
-    def __init__(self, data, missing='not_found'):
-        self.result = ''
+
+    def __init__(self, data, missing="not_found"):
+        self.result = ""
         self.data = [data] if isinstance(data, dict) else data
         self.missing = missing
         self.is_tabular = False
-        self.failure = ''
+        self.failure = ""
         self.process()
 
-    def __bool__(self): return self.is_tabular
+    def __bool__(self):
+        return self.is_tabular
 
     def compute_column_widths(self, columns):
         """Return max display width for each column based on data and defaults."""
@@ -194,8 +196,7 @@ class Tabular:
 
         return alignments
 
-
-    def format_cell(self, text, width, align="left"):   # noqa
+    def format_cell(self, text, width, align="left"):  # noqa
         """Return text aligned to the given width using the current justification."""
         align_mapping = {
             "left": str.ljust,
@@ -208,9 +209,9 @@ class Tabular:
         """Return a formatted header row using column names and computed widths."""
         cells = []
         for col in columns:
-            cells.append(self.format_cell(
-                col, widths[col], align=alignments.get(col, "left")
-            ))
+            cells.append(
+                self.format_cell(col, widths[col], align=alignments.get(col, "left"))
+            )
         return f"| {' | '.join(cells)} |"
 
     def format_body_rows(self, columns, widths, alignments):
@@ -220,9 +221,11 @@ class Tabular:
             cells = []
             for col in columns:
                 value = row.get(col, self.missing)
-                cells.append(self.format_cell(
-                    value, widths[col], align=alignments.get(col, "left")
-                ))
+                cells.append(
+                    self.format_cell(
+                        value, widths[col], align=alignments.get(col, "left")
+                    )
+                )
             rows.append(f"| {' | '.join(cells)} |")
 
         return "\n".join(rows)
@@ -240,8 +243,7 @@ class Tabular:
             widths = self.compute_column_widths(columns)
             alignments = self.infer_column_alignments()
 
-            border = "+-{}-+".format(
-                "-+-".join("-" * widths[c] for c in columns))
+            border = "+-{}-+".format("-+-".join("-" * widths[c] for c in columns))
             header = self.format_header_row(columns, widths, alignments)
             body = self.format_body_rows(columns, widths, alignments)
 
@@ -315,7 +317,7 @@ def get_data_as_tabular(data, missing="not_found", with_index=False):
     return table.get()
 
 
-def print_data_as_tabular(data, missing='not_found', with_index=False):
+def print_data_as_tabular(data, missing="not_found", with_index=False):
     """Print structured data in a tabular format."""
     result = get_data_as_tabular(data, missing=missing, with_index=with_index)
     if isinstance(result, (list, tuple, dict)):
@@ -334,7 +336,7 @@ def is_valid_textfsm_template(text):
     try:
         TextFSM(StringIO(template))
         return True
-    except Exception:   # noqa
+    except Exception:  # noqa
         pass  # fall back to structural heuristics
 
     # Heuristic validation for incomplete or partially valid templates

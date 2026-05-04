@@ -26,10 +26,10 @@ from textfsmgen.engine.translate import make_translator
 from textfsmgen.exceptions import raise_runtime_error
 
 from textfsmgen.engine.common import (
-get_line_position_by,
-get_fixed_line_snippet,
-sanitize_identifier,
-apply_replacements
+    get_line_position_by,
+    get_fixed_line_snippet,
+    sanitize_identifier,
+    apply_replacements,
 )
 
 
@@ -38,11 +38,20 @@ class TabularTranslator:
     Represents a tabular text pattern that can be parsed into regex patterns
     or template snippets.
     """
+
     def __init__(
-        self, *lines, column_divider='', column_count=0, column_widths=None,
-        headers=None, header_rows=None, custom_header_text='',
-        starting_from=None, ending_at=None, has_header_row=True,
-        replacing_rules=None
+        self,
+        *lines,
+        column_divider="",
+        column_count=0,
+        column_widths=None,
+        headers=None,
+        header_rows=None,
+        custom_header_text="",
+        starting_from=None,
+        ending_at=None,
+        has_header_row=True,
+        replacing_rules=None,
     ):
         self.lines = text.get_list_of_lines(*lines)
         self.replacing_rules = replacing_rules
@@ -53,7 +62,7 @@ class TabularTranslator:
             headers=headers,
             header_rows=header_rows,
             custom_header_text=custom_header_text,
-            has_header_row=has_header_row
+            has_header_row=has_header_row,
         )
 
         self.starting_from = starting_from
@@ -66,7 +75,8 @@ class TabularTranslator:
         self.prepare_column_widths()
         self.process()
 
-    def __bool__(self): return bool(self.tabular_parser)
+    def __bool__(self):
+        return bool(self.tabular_parser)
 
     def prepare_column_widths(self) -> None:
         """Validate and normalize column widths."""
@@ -80,9 +90,9 @@ class TabularTranslator:
                 column_widths = str(column_widths).strip()
                 widths = re.split(r"[ ,]+", column_widths)
             else:
-                widths = column_widths[:]   # noqa
+                widths = column_widths[:]  # noqa
 
-            for idx, width_ in enumerate(widths):   # noqa
+            for idx, width_ in enumerate(widths):  # noqa
                 is_number, width = number.try_to_get_number(width_, return_type=int)
                 if is_number:
                     normalized.append(width)
@@ -95,7 +105,7 @@ class TabularTranslator:
                             f"Invalid column widths in {self.__class__.__name__}.\n"
                             "Expected: list of integers or string of integers\n"
                             f"Received: {column_widths!r}"
-                        )
+                        ),
                     )
 
             self.kwargs.update(column_widths=normalized, column_count=len(normalized))
@@ -106,17 +116,18 @@ class TabularTranslator:
                     f"Invalid column widths in {self.__class__.__name__}.\n"
                     "Expected: list of integers or string of integers\n"
                     f"Received: {column_widths!r}"
-                )
+                ),
             )
 
     def process(self) -> None:
-        """Initialize the tabular parser with the given lines and configuration."""     # noqa
+        """Initialize the tabular parser with the given lines and configuration."""  # noqa
         self.index_start = get_line_position_by(self.lines, self.starting_from)
         self.index_end = get_line_position_by(self.lines, self.ending_at)
 
         start = (
             self.index_start + 1
-            if isinstance(self.index_start, int) and not self.kwargs.get("has_header_row")
+            if isinstance(self.index_start, int)
+            and not self.kwargs.get("has_header_row")
             else self.index_start
         )
         end = self.index_end
@@ -125,10 +136,8 @@ class TabularTranslator:
         self.tabular_parser = VarColumnTabularTranslator(*lines, **self.kwargs)
 
     def to_snippet(self) -> str:
-        """Return a template snippet generated from the parsed table."""    # noqa
-        tmpl_snippet = (
-            self.tabular_parser.to_snippet() if self else ""
-        )
+        """Return a template snippet generated from the parsed table."""  # noqa
+        tmpl_snippet = self.tabular_parser.to_snippet() if self else ""
 
         if not tmpl_snippet.strip():
             return tmpl_snippet
@@ -166,9 +175,16 @@ class VarColumnTabularTranslator:
     """
 
     def __init__(
-        self, *lines, column_divider='', column_count=0, column_widths=None,
-        headers=None, header_rows=None, custom_header_text='',
-        has_header_row=True, **kwargs
+        self,
+        *lines,
+        column_divider="",
+        column_count=0,
+        column_widths=None,
+        headers=None,
+        header_rows=None,
+        custom_header_text="",
+        has_header_row=True,
+        **kwargs,
     ):
         self._is_start_with_divider = None
         self._is_end_with_divider = None
@@ -196,7 +212,8 @@ class VarColumnTabularTranslator:
         self.parse_headers()
         self.prepare_header_rows()
 
-    def __bool__(self): return bool(self.column_count)
+    def __bool__(self):
+        return bool(self.column_count)
 
     @property
     def is_punct_divider(self):
@@ -205,28 +222,36 @@ class VarColumnTabularTranslator:
 
     @property
     def is_start_with_divider(self):
-        """Check if most lines start with the column_divider symbol."""     # noqa
+        """Check if most lines start with the column_divider symbol."""  # noqa
         if self._is_start_with_divider is None:
             if self.is_punct_divider:
-                count = sum(line.strip().startswith(self.column_divider) for line in self.lines)
-                self._is_start_with_divider = op.gt(count, op.truediv(len(self.lines), 2)) if count else False
+                count = sum(
+                    line.strip().startswith(self.column_divider) for line in self.lines
+                )
+                self._is_start_with_divider = (
+                    op.gt(count, op.truediv(len(self.lines), 2)) if count else False
+                )
             else:
                 self._is_start_with_divider = False
         return self._is_start_with_divider
 
     @property
     def is_end_with_divider(self):
-        """Check if most lines end with the column_divider symbol."""   # noqa
+        """Check if most lines end with the column_divider symbol."""  # noqa
         if self._is_end_with_divider is None:
             if self.is_punct_divider:
-                count = sum(line.strip().endswith(self.column_divider) for line in self.lines)
-                self._is_end_with_divider = op.gt(count, op.truediv(len(self.lines), 2)) if count else False
+                count = sum(
+                    line.strip().endswith(self.column_divider) for line in self.lines
+                )
+                self._is_end_with_divider = (
+                    op.gt(count, op.truediv(len(self.lines), 2)) if count else False
+                )
             else:
                 self._is_end_with_divider = False
         return self._is_end_with_divider
 
     def parse_custom_header(self):
-        """Parse and normalize custom header text into headers and column count."""     # noqa
+        """Parse and normalize custom header text into headers and column count."""  # noqa
         txt = self.custom_header_text
         if not txt:
             return
@@ -251,7 +276,6 @@ class VarColumnTabularTranslator:
 
         # YAML list, tuple, or dict
         if isinstance(result, (list, tuple, dict)):
-
             # YAML dict → keys = headers, values = row
             if isinstance(result, dict):
                 self.headers = list(result.keys())
@@ -262,9 +286,9 @@ class VarColumnTabularTranslator:
             else:
                 # Special case: [[headers], [values]]
                 if (
-                        len(result) == 2
-                        and isinstance(result[0], (list, tuple))
-                        and isinstance(result[1], (list, tuple))
+                    len(result) == 2
+                    and isinstance(result[0], (list, tuple))
+                    and isinstance(result[1], (list, tuple))
                 ):
                     hdrs, vals = result
                     if len(hdrs) != len(vals):
@@ -291,7 +315,7 @@ class VarColumnTabularTranslator:
             for val in values:
                 stripped = val.strip()
                 leading = val[: val.index(stripped)] if stripped else ""
-                trailing = val[len(val.rstrip()):]
+                trailing = val[len(val.rstrip()) :]
                 dash = "-" * len(stripped)
                 masked_items.append(f"{leading}{dash}{trailing}")
 
@@ -318,25 +342,25 @@ class VarColumnTabularTranslator:
         )
 
     def ensure_column_count(self):
-        """Infer column count from lines or raise error if zero."""     # noqa
+        """Infer column count from lines or raise error if zero."""  # noqa
         pat = f"{PATTERN.PUNCTS_GROUP}$"
         for line in self.lines:
             if re.match(pat, line.strip()):
                 self.column_count = len(re.split(PATTERN.WSS, line.strip()))
                 return
         if not self:
-            raise_runtime_error(obj=self, msg='column_count cannot be zero')
+            raise_runtime_error(obj=self, msg="column_count cannot be zero")
 
     def prepare_header_rows(self):
-        """Extract header lines from header_rows (indices or substrings)."""    # noqa
+        """Extract header lines from header_rows (indices or substrings)."""  # noqa
         lst = self.raw_header_rows
         data = self.header_rows
         total_lines = len(self.lines)
 
         if text.is_string(data):
-            pat = r' *[0-9]+([ ,]+[0-9]+)* *$'
+            pat = r" *[0-9]+([ ,]+[0-9]+)* *$"
             if re.match(pat, data):
-                for index in map(int, re.split('[ ,]+', data)):
+                for index in map(int, re.split("[ ,]+", data)):
                     if index < total_lines:
                         hdr_line = self.lines[index]
                         if hdr_line not in lst:
@@ -403,14 +427,16 @@ class VarColumnTabularTranslator:
         # Case 3: string input — attempt to split
         raw = str(headers).strip()
 
-        comma_split = re.split(r"\s*,\s*", raw)     # noqa
+        comma_split = re.split(r"\s*,\s*", raw)  # noqa
         space_split = re.split(r"\s+", raw)
 
         expected = self.column_count
 
         parsed = (
-            comma_split if len(comma_split) == expected
-            else space_split if len(space_split) == expected
+            comma_split
+            if len(comma_split) == expected
+            else space_split
+            if len(space_split) == expected
             else []
         )
 
@@ -436,13 +462,12 @@ class VarColumnTabularTranslator:
     # -------------------------------
 
     def find_reference_row_by_divider(self, custom_line=""):
-        """Find a reference row defined by repeated punctuation dividers."""    # noqa
+        """Find a reference row defined by repeated punctuation dividers."""  # noqa
         repeat = self.column_count - 1
         pattern = rf" *{PATTERN.PUNCTS}( +{PATTERN.PUNCTS}){{{repeat}}} *$"
 
         line = custom_line or next(
-            (ln for ln in self.lines if re.match(pattern, ln)),
-            ""
+            (ln for ln in self.lines if re.match(pattern, ln)), ""
         )
         if not line:
             return None
@@ -456,7 +481,7 @@ class VarColumnTabularTranslator:
         )
 
     def find_reference_row_by_separator(self, custom_line=""):
-        """Find a reference row using the explicit column divider."""   # noqa
+        """Find a reference row using the explicit column divider."""  # noqa
 
         sep = re.escape(self.column_divider)
         cell = rf"[^{self.column_divider}]+"
@@ -465,8 +490,7 @@ class VarColumnTabularTranslator:
         pattern = rf" *{sep}?({cell}{sep}){{{repeat}}}{cell}{sep}? *$"
 
         line = custom_line or next(
-            (ln for ln in self.lines if re.match(pattern, ln)),
-            ""
+            (ln for ln in self.lines if re.match(pattern, ln)), ""
         )
         if not line:
             return None
@@ -480,7 +504,7 @@ class VarColumnTabularTranslator:
         )
 
     def find_reference_row_by_space_divider(self, spaces=" ", custom_line=""):
-        """Find a reference row where columns are separated by one or more spaces."""   # noqa
+        """Find a reference row where columns are separated by one or more spaces."""  # noqa
         # Pattern to detect a valid reference row
         gap = "" if spaces == " " else " "
         cell = PATTERN.NON_WSS_ITEMS
@@ -489,8 +513,7 @@ class VarColumnTabularTranslator:
         detect_pattern = rf" *{cell}({gap} +{cell}){{{repeat}}} *$"
 
         line = custom_line or next(
-            (ln for ln in self.lines if re.match(detect_pattern, ln)),
-            None
+            (ln for ln in self.lines if re.match(detect_pattern, ln)), None
         )
         if not line:
             return None
@@ -523,53 +546,60 @@ class VarColumnTabularTranslator:
             case="variable",
         )
 
-    def find_reference_row_by_single_space(self) -> Optional['Row']:
+    def find_reference_row_by_single_space(self) -> Optional["Row"]:
         """Find reference row using single space column_divider."""
         return self.find_reference_row_by_space_divider()
 
-    def find_reference_row_by_multi_space(self) -> Optional['Row']:
+    def find_reference_row_by_multi_space(self) -> Optional["Row"]:
         """Find reference row using multi-space column_divider."""
-        return self.find_reference_row_by_space_divider(spaces='  ')
+        return self.find_reference_row_by_space_divider(spaces="  ")
 
-    def find_reference_row_from_custom_header(self) -> Optional['Row']:
+    def find_reference_row_from_custom_header(self) -> Optional["Row"]:
         """Find reference row using custom header line."""
         return self.find_reference_row_by_divider(custom_line=self.custom_header_text)
 
-    def find_reference_row_by_column_widths(self, custom_line: str = '') -> Optional['Row']:
-        """Find reference row using fixed column widths."""     # noqa
+    def find_reference_row_by_column_widths(
+        self, custom_line: str = ""
+    ) -> Optional["Row"]:
+        """Find reference row using fixed column widths."""  # noqa
         parts = [
-            f'(?P<v{index:03d}>.{{{width}}})' if index < self.column_count - 1
-            else f'(?P<v{index:03d}>.*)'
+            f"(?P<v{index:03d}>.{{{width}}})"
+            if index < self.column_count - 1
+            else f"(?P<v{index:03d}>.*)"
             for index, width in enumerate(self.column_widths)
         ]
         pattern = text.join_string(*parts)
 
         line = custom_line or next(
-            (ln for ln in self.lines if re.match(pattern, ln)),
-            None
+            (ln for ln in self.lines if re.match(pattern, ln)), None
         )
         if not line:
             return None
 
         return Row.do_creating_reference_row(
-            line, pattern,
+            line,
+            pattern,
             column_count=self.column_count,
-            case='variable',
-            width_mode=True
+            case="variable",
+            width_mode=True,
         )
 
-    def find_reference_row_by_headers(self) -> Optional['Row']:
-        """Find reference row using headers."""     # noqa
+    def find_reference_row_by_headers(self) -> Optional["Row"]:
+        """Find reference row using headers."""  # noqa
         if not self.raw_headers:
             return None
 
         if isinstance(self.raw_headers, (list, tuple)):
-            pattern = r"\s*" + f"{PATTERN.SPACE_PUNCT}+".join(
-               re.escape(hdr) for hdr in self.raw_headers   # noqa
-            ) + r"\s*"
+            pattern = (
+                r"\s*"
+                + f"{PATTERN.SPACE_PUNCT}+".join(
+                    re.escape(hdr)
+                    for hdr in self.raw_headers  # noqa
+                )
+                + r"\s*"
+            )
             header_line = "" or next(
-                (ln for ln in self.lines if re.match(pattern, ln)),
-                ""
+                (ln for ln in self.lines if re.match(pattern, ln)), ""
             )
         elif isinstance(self.raw_headers, str):
             header_line = self.raw_headers
@@ -602,7 +632,7 @@ class VarColumnTabularTranslator:
     # -------------------------------
 
     def try_parse_table_with(self, case: str) -> Tuple[bool, Optional["ParsedTable"]]:
-        """Try parsing the table using the given reference-row strategy."""     # noqa
+        """Try parsing the table using the given reference-row strategy."""  # noqa
         strategies = {
             "column_widths": self.find_reference_row_by_column_widths,
             "symbols": self.find_reference_row_by_divider,
@@ -691,14 +721,14 @@ class VarColumnTabularTranslator:
                     f"Unsupported column_divider {self.column_divider!r} in "
                     f"{self.__class__.__name__}.\n"
                     "Hint: Use space, multi‑space, punctuation, or custom header text."
-                )
+                ),
             )
 
         ok, table = self.try_parse_table_with(str(case))
         if not ok:
             raise_runtime_error(obj=self, msg=str(err_msg))
 
-        return table    # noqa
+        return table  # noqa
 
     def to_snippet(self) -> str:
         """Convert parsed tabular text into a template snippet."""
@@ -709,7 +739,7 @@ class VarColumnTabularTranslator:
                 msg=(
                     f"Unable to build template snippet in {self.__class__.__name__}.\n"
                     "Reason: Provided text is not in a valid tabular format."
-                )
+                ),
             )
         return table.to_snippet()
 
@@ -718,13 +748,16 @@ class ParsedTable:
     """Represents a parsed tabular text structure with rows and columns."""
 
     def __init__(
-        self, *lines: str, reference_row: Optional['Row'] = None,
-        column_divider: str = '', column_widths: Optional[List[int]] = None,
+        self,
+        *lines: str,
+        reference_row: Optional["Row"] = None,
+        column_divider: str = "",
+        column_widths: Optional[List[int]] = None,
         headers: Optional[List[str]] = None,
         raw_header_rows: Optional[List[str]] = None,
         is_start_with_divider: bool = False,
         is_end_with_divider: bool = False,
-        has_header_row: bool = True
+        has_header_row: bool = True,
     ):
         # Column data info
         self.first_column_data_info: Dict[Any, Any] = {}
@@ -737,10 +770,10 @@ class ParsedTable:
         self.column_widths: Optional[List[int]] = column_widths
 
         # Parsed structures
-        self.rows: List['Row'] = []
-        self.columns: List['Column'] = []
+        self.rows: List["Row"] = []
+        self.columns: List["Column"] = []
         self.header_lines: List[str] = []
-        self.header_columns: List['Column'] = []
+        self.header_columns: List["Column"] = []
         self.headers: List[str] = headers or []
         self.raw_header_rows: List[str] = raw_header_rows or []
 
@@ -767,12 +800,15 @@ class ParsedTable:
 
         self.process()
 
-    def __bool__(self) -> bool: return bool(self.rows) and bool(self.columns)
+    def __bool__(self) -> bool:
+        return bool(self.rows) and bool(self.columns)
 
     def __repr__(self) -> str:
         """Return a string representation of the table."""
         cls_name = datatype.get_class_name(self)
-        return f"{cls_name}(rows_count={len(self.rows)}, column_count={len(self.columns)})"
+        return (
+            f"{cls_name}(rows_count={len(self.rows)}, column_count={len(self.columns)})"
+        )
 
     # -------------------------------
     # Properties
@@ -781,7 +817,7 @@ class ParsedTable:
     @property
     def is_leading(self) -> bool:
         """Check if the first column contains leading markers."""
-        if self._is_leading is None:    # noqa
+        if self._is_leading is None:  # noqa
             lst = []
             for cell in self.first_column.cells:
                 if cell.text.strip():
@@ -813,12 +849,12 @@ class ParsedTable:
         return len(self.columns)
 
     @property
-    def first_column(self) -> 'Column':
+    def first_column(self) -> "Column":
         """Return the first column."""
         return self.columns[0]
 
     @property
-    def last_column(self) -> 'Column':
+    def last_column(self) -> "Column":
         """Return the last column."""
         return self.columns[-1]
 
@@ -827,7 +863,7 @@ class ParsedTable:
     # -------------------------------
     def build_divider_snippets(self):
         """Analyze divider patterns in lines and derive leading, middle,
-        and trailing snippets."""   # noqa
+        and trailing snippets."""  # noqa
         if not self.has_divider:
             return
 
@@ -875,13 +911,17 @@ class ParsedTable:
             if len(last_hits) == 1 and last_hits[0] == self.column_divider:
                 self.divider_trailing_snippet = self.column_divider
             else:
-                self.divider_trailing_snippet = f"optional_spaces(){self.column_divider}"
+                self.divider_trailing_snippet = (
+                    f"optional_spaces(){self.column_divider}"
+                )
 
         # Middle snippet
         if len(mid_hits) == 1 and mid_hits[0] == self.column_divider:
             self.divider_snippet = self.column_divider
         else:
-            self.divider_snippet = f"optional_spaces(){self.column_divider}optional_spaces()"
+            self.divider_snippet = (
+                f"optional_spaces(){self.column_divider}optional_spaces()"
+            )
 
     # -------------------------------
     # Line preparation
@@ -891,7 +931,7 @@ class ParsedTable:
         """Normalize and preprocess input lines, handling user markers."""  # noqa
 
         def update_last_column_info(
-                column_info: dict, line_: str, spacers_count_: int, baseline_: int
+            column_info: dict, line_: str, spacers_count_: int, baseline_: int
         ) -> None:
             """Update metadata for the last column with line content
             and spacer information."""
@@ -905,15 +945,14 @@ class ParsedTable:
 
             if not spacers:
                 # Initialize spacers with left and baseline values
-                spacers.extend(
-                    [2 if left_spacer <= 0 else left_spacer, baseline_])
+                spacers.extend([2 if left_spacer <= 0 else left_spacer, baseline_])
             else:
                 # Adjust existing spacer values
                 adjusted_left = min(spacers[0], left_spacer)
                 spacers[0] = 2 if adjusted_left <= 0 else adjusted_left
                 spacers[1] = max(spacers[1], spacers_count_)
 
-        pattern = r'^ *< *user[ ._+-]marker[ ._+-](?P<case>one|multi)[ ._+-]?line *>'
+        pattern = r"^ *< *user[ ._+-]marker[ ._+-](?P<case>one|multi)[ ._+-]?line *>"
         all_lines = text.get_list_of_lines(*lines)
 
         lst: List[str] = []
@@ -930,15 +969,19 @@ class ParsedTable:
                 if baseline_spacers_count is None:
                     baseline_spacers_count = spacers_count
                     update_last_column_info(
-                        self.last_column_data_info, line,
-                        spacers_count, baseline_spacers_count
+                        self.last_column_data_info,
+                        line,
+                        spacers_count,
+                        baseline_spacers_count,
                     )
                     index += 1
                     continue
                 elif spacers_count > 0.8 * baseline_spacers_count:
                     update_last_column_info(
-                        self.last_column_data_info, line,
-                        spacers_count, baseline_spacers_count
+                        self.last_column_data_info,
+                        line,
+                        spacers_count,
+                        baseline_spacers_count,
                     )
                     index += 1
                     continue
@@ -953,22 +996,22 @@ class ParsedTable:
                 index += 1
                 continue
 
-            is_oneline = match.group('case').lower() == 'one'
+            is_oneline = match.group("case").lower() == "one"
             if is_oneline:
-                first_col_data = re.sub(pattern, '', line)
-                next_line = re.sub(pattern, '', all_lines[index + 1])
+                first_col_data = re.sub(pattern, "", line)
+                next_line = re.sub(pattern, "", all_lines[index + 1])
                 leading = text.Line.get_leading(next_line)
 
                 self.first_column_data_info[len(lst)] = first_col_data
-                self.first_column_data_info['spacers_count'] = len(leading)
-                indices = self.first_column_data_info.setdefault('indices', [])
+                self.first_column_data_info["spacers_count"] = len(leading)
+                indices = self.first_column_data_info.setdefault("indices", [])
                 indices.append(next_line)
 
                 lst.append(next_line)
                 index += 1
             else:
-                indices = self.last_column_data_info.setdefault('indices', [])
-                new_line = re.sub(pattern, '', line)
+                indices = self.last_column_data_info.setdefault("indices", [])
+                new_line = re.sub(pattern, "", line)
                 indices.append(new_line)
                 lst.append(new_line)
                 is_continue = True
@@ -982,10 +1025,14 @@ class ParsedTable:
     # -------------------------------
 
     def add_data_to_rows(self) -> None:
-        """Populate rows from lines and attach first column data if available."""   # noqa
+        """Populate rows from lines and attach first column data if available."""  # noqa
         self.rows.clear()
         for index, line in enumerate(self.lines):
-            row = Row(line, reference_row=self.reference_row, column_divider=self.column_divider)
+            row = Row(
+                line,
+                reference_row=self.reference_row,
+                column_divider=self.column_divider,
+            )
             if index in self.first_column_data_info:
                 first_cell = row.cells[0]
                 first_cell.set_data(self.first_column_data_info.get(index))
@@ -998,7 +1045,7 @@ class ParsedTable:
         Each row’s cells are distributed into columns. Columns are linked
         left-to-right, and alignment analysis is performed. Extra metadata
         for the last column is also added.
-        """     # noqa
+        """  # noqa
         self.columns.clear()
         is_created = False
 
@@ -1007,8 +1054,8 @@ class ParsedTable:
             for index, cell in enumerate(row.cells):
                 new_col = Column(
                     index=index,
-                    is_last=index+1==row.cell_count,
-                    column_divider=self.column_divider
+                    is_last=index + 1 == row.cell_count,
+                    column_divider=self.column_divider,
                 )
                 column = self.columns[index] if is_created else new_col
                 if not is_created:
@@ -1027,7 +1074,7 @@ class ParsedTable:
 
         if self.columns:
             last_column = self.columns[-1]
-            last_column.add_extra_data(self.last_column_data_info.get('lst_data'))
+            last_column.add_extra_data(self.last_column_data_info.get("lst_data"))
 
     # -------------------------------
     # Header cleaning and building
@@ -1036,10 +1083,10 @@ class ParsedTable:
     def header_span(self, row_pos):
         """Return start/stop indices of meaningful header lines above row_pos."""
         width_limit = (
-                          len(self.reference_row.line)
-                          if self.reference_row else
-                          max(len(line) for line in self.lines)
-                      ) or 80
+            len(self.reference_row.line)
+            if self.reference_row
+            else max(len(line) for line in self.lines)
+        ) or 80
 
         collected = []
         for line in reversed(self.lines[: row_pos + 1]):
@@ -1067,7 +1114,7 @@ class ParsedTable:
         return 0, 0
 
     def do_cleaning_data(self) -> None:
-        """Clean table data by separating header rows from data rows."""    # noqa
+        """Clean table data by separating header rows from data rows."""  # noqa
         if not self.reference_row or not self.has_header_row:
             return
 
@@ -1079,18 +1126,18 @@ class ParsedTable:
             ref_line = self.reference_row.line
             row_pos = self.lines.index(ref_line)
 
-        self.rows = self.rows[row_pos + 1:]
+        self.rows = self.rows[row_pos + 1 :]
 
         start, stop = self.header_span(row_pos)
-        self.header_lines = self.lines[start:stop + 1]
+        self.header_lines = self.lines[start : stop + 1]
         for col in self.columns:
             hdr_col = Column()
-            hdr_col.cells = col.cells[start:stop + 1]
+            hdr_col.cells = col.cells[start : stop + 1]
             self.header_columns.append(hdr_col)
-            col.cells = col.cells[row_pos + 1:]
+            col.cells = col.cells[row_pos + 1 :]
 
     def assign_column_names(self) -> None:
-        """Assign sanitized, unique column names from headers or header rows."""    # noqa
+        """Assign sanitized, unique column names from headers or header rows."""  # noqa
 
         def build_names(raw_names_):
             names = []
@@ -1172,7 +1219,7 @@ class ParsedTable:
         return text.join_string(*collected, separator="\n")
 
     def to_snippet(self) -> str:
-        """Generate a template snippet representing the table."""       # noqa
+        """Generate a template snippet representing the table."""  # noqa
         if not self:
             return ""
 
@@ -1198,17 +1245,19 @@ class ParsedTable:
         """
         Build template snippets for the case where the first column
         contains special metadata or indices.
-        """     # noqa
+        """  # noqa
         if not self.first_column_data_info:
             return
 
-        leading_snippet = 'start(space)' if self.is_leading else 'start()'
-        trailing_snippet = 'end(space) -> record' if self.is_trailing else 'end() -> record'
+        leading_snippet = "start(space)" if self.is_leading else "start()"
+        trailing_snippet = (
+            "end(space) -> record" if self.is_trailing else "end() -> record"
+        )
 
         first_snippet = self.first_column.to_snippet(skipped_empty=True)
-        first_snippet = f'{leading_snippet} {first_snippet} end(space) -> Next'
+        first_snippet = f"{leading_snippet} {first_snippet} end(space) -> Next"
 
-        indices = self.first_column_data_info.get('indices', [])
+        indices = self.first_column_data_info.get("indices", [])
         layouts = [row.row_layout for row in self.rows if row.line in indices]
 
         for layout in sorted(set(layouts), reverse=True):
@@ -1217,11 +1266,11 @@ class ParsedTable:
 
             parts = []
             for index, bit in enumerate(layout):
-                column = self.columns[index]    # noqa
+                column = self.columns[index]  # noqa
                 m, n = column.width, column.max_width
                 if m == n:
                     m = n - 4 if (n - 4) > 2 else abs(n - 2)
-                space_snippet = f'{m}_{n}_space()'
+                space_snippet = f"{m}_{n}_space()"
 
                 kwargs = {}
                 if self.last_column_data_info and index == self.column_count - 1:
@@ -1239,35 +1288,39 @@ class ParsedTable:
             next_snippet = text.join_string(*parts, separator=sep)
 
             if self.has_divider:
-                next_snippet = f'{self.divider_leading_snippet}{next_snippet}{self.divider_trailing_snippet}'
-                next_snippet = f'start() {next_snippet} {trailing_snippet}'
+                next_snippet = f"{self.divider_leading_snippet}{next_snippet}{self.divider_trailing_snippet}"
+                next_snippet = f"start() {next_snippet} {trailing_snippet}"
             else:
-                if re.search(r' +\d+_\d+_space[(][)] *$', next_snippet):
-                    next_snippet = re.sub(r' +\d+_\d+_space[(][)] *$', ' end(space)', next_snippet)
+                if re.search(r" +\d+_\d+_space[(][)] *$", next_snippet):
+                    next_snippet = re.sub(
+                        r" +\d+_\d+_space[(][)] *$", " end(space)", next_snippet
+                    )
                 else:
-                    next_snippet = f'{next_snippet} {trailing_snippet}'
+                    next_snippet = f"{next_snippet} {trailing_snippet}"
 
-                if re.match(r' *\d+_\d+_space[(][)] *', next_snippet):
-                    next_snippet = f'start() {next_snippet}'
+                if re.match(r" *\d+_\d+_space[(][)] *", next_snippet):
+                    next_snippet = f"start() {next_snippet}"
                 else:
-                    next_snippet = f'{leading_snippet} {next_snippet}'
+                    next_snippet = f"{leading_snippet} {next_snippet}"
 
-            next_snippet = re.sub(r' +(\d+_\d+_space[(][)]) +', r' \1 ', next_snippet)
+            next_snippet = re.sub(r" +(\d+_\d+_space[(][)]) +", r" \1 ", next_snippet)
             snippets.append(first_snippet)
             snippets.append(next_snippet)
 
     def build_last_column_snippet(self, snippets):
-        if not self.last_column_data_info:      # noqa
+        if not self.last_column_data_info:  # noqa
             return
 
-        leading_snippet = 'start(space)' if self.is_leading else 'start()'
+        leading_snippet = "start(space)" if self.is_leading else "start()"
 
         first_snippet = self.first_column.to_snippet(to_bared_snippet=True)
         if self.has_divider:
-            first_snippet = f'{self.divider_leading_snippet}{first_snippet}'
-        snippets.append(f'{leading_snippet} {first_snippet}optional_spaces() -> continue.record')
+            first_snippet = f"{self.divider_leading_snippet}{first_snippet}"
+        snippets.append(
+            f"{leading_snippet} {first_snippet}optional_spaces() -> continue.record"
+        )
 
-        indices = self.last_column_data_info.get('indices', [])
+        indices = self.last_column_data_info.get("indices", [])
         layouts = []
         for row in self.rows:
             if row.line in indices:
@@ -1279,17 +1332,17 @@ class ParsedTable:
 
             parts = []
             for index, bit in enumerate(list(layout)):
-                column = self.columns[index]    # noqa
+                column = self.columns[index]  # noqa
                 m, n = column.width, column.max_width
                 if m == n:
                     m = n - 4 if (n - 4) > 2 else abs(n - 2)
-                space_snippet = f'{m}_{n}_space()'
+                space_snippet = f"{m}_{n}_space()"
 
                 kwargs = dict()
                 if index == self.column_count - 1:
                     kwargs.update(added_list_meta_data=True)
 
-                col_snippet = column.to_snippet(**kwargs)   # noqa
+                col_snippet = column.to_snippet(**kwargs)  # noqa
 
                 if column.has_all_empty_cell:
                     parts.append(col_snippet)
@@ -1304,15 +1357,15 @@ class ParsedTable:
                     continue
 
                 last_item = parts[-1]
-                pat = r'(?P<m>\d+)_(?P<n>\d+)_space[(][)]$'
+                pat = r"(?P<m>\d+)_(?P<n>\d+)_space[(][)]$"
                 match = re.match(pat, last_item)
                 if match:
-                    m, n = int(match.group('m')), int(match.group('n'))
+                    m, n = int(match.group("m")), int(match.group("n"))
                     m += column.width
                     n += column.max_width - column.max_edge_leading_width
                     if m == n:
                         m = n - 4 if (n - 4) > 2 else abs(n - 2)
-                    extend_space_snippet = f'{m}_{n}space()'
+                    extend_space_snippet = f"{m}_{n}space()"
                     if parts:
                         parts.pop()
                     parts.append(extend_space_snippet)
@@ -1322,47 +1375,54 @@ class ParsedTable:
             sep = self.divider_snippet if self.has_divider else "  "
             line_snippet = text.join_string(*parts, separator=sep)
             if self.has_divider:
-                line_snippet = f'{self.divider_leading_snippet}{line_snippet}{self.divider_trailing_snippet}'
+                line_snippet = f"{self.divider_leading_snippet}{line_snippet}{self.divider_trailing_snippet}"
 
-            pat = r' *\d+_\d+_space[(][)] *$'
+            pat = r" *\d+_\d+_space[(][)] *$"
             if re.search(pat, line_snippet):
-                line_snippet = re.sub(pat, ' end(space) -> continue', line_snippet)
+                line_snippet = re.sub(pat, " end(space) -> continue", line_snippet)
             else:
-                line_snippet = f'{line_snippet} end(space) -> continue'
+                line_snippet = f"{line_snippet} end(space) -> continue"
 
-            pat = r' *\d+_\d+_space[(][)] *'
+            pat = r" *\d+_\d+_space[(][)] *"
             if re.match(pat, line_snippet):
-                line_snippet = f'start() {line_snippet}'
+                line_snippet = f"start() {line_snippet}"
             else:
-                line_snippet = f'{leading_snippet} {line_snippet}'
+                line_snippet = f"{leading_snippet} {line_snippet}"
 
-            pat = r' +(\d+_\d+_space[(][)]) +'
-            line_snippet = re.sub(pat, r' \1 ', line_snippet)
+            pat = r" +(\d+_\d+_space[(][)]) +"
+            line_snippet = re.sub(pat, r" \1 ", line_snippet)
             snippets.append(line_snippet)
 
-        last_snippet = self.last_column.to_snippet(skipped_empty=True, added_list_meta_data=True)
-        m, n = self.last_column_data_info.get('spacers')
+        last_snippet = self.last_column.to_snippet(
+            skipped_empty=True, added_list_meta_data=True
+        )
+        m, n = self.last_column_data_info.get("spacers")
         m = n - 4 if (n - 4) > 0 else m
-        spacer_snippet = f'start() {m}_{n+2}_space() {last_snippet} end(space) -> continue'
+        spacer_snippet = (
+            f"start() {m}_{n + 2}_space() {last_snippet} end(space) -> continue"
+        )
         snippets.append(spacer_snippet)
 
     def build_other_column_snippet(self, snippets: List[str]) -> None:
         """
         Build template snippets for rows that are neither first-column
         nor last-column special cases.
-        """     # noqa
-        leading_snippet = 'start(space)' if self.is_leading else 'start()'
-        trailing_snippet = 'end(space) -> record' if self.is_trailing else 'end() -> record'
+        """  # noqa
+        leading_snippet = "start(space)" if self.is_leading else "start()"
+        trailing_snippet = (
+            "end(space) -> record" if self.is_trailing else "end() -> record"
+        )
 
-        first_indices = self.first_column_data_info.get('indices', [])
-        last_indices = self.last_column_data_info.get('indices', [])
+        first_indices = self.first_column_data_info.get("indices", [])
+        last_indices = self.last_column_data_info.get("indices", [])
 
         # Layouts for rows that are not part of either special-case group
         layouts = []
         for row in self.rows:
-            if (row.line in first_indices or
-                row.line in last_indices or
-                row.row_layout in layouts
+            if (
+                row.line in first_indices
+                or row.line in last_indices
+                or row.row_layout in layouts
             ):
                 continue
             layouts.append(row.row_layout)
@@ -1379,7 +1439,7 @@ class ParsedTable:
                 # Adjust equal-width columns
                 m = n - 2 if m == n and m > 1 else m
 
-                space_snippet = f'{m}_{n}_space()'
+                space_snippet = f"{m}_{n}_space()"
 
                 kwargs = dict()
                 if self.last_column_data_info and index == self.column_count - 1:
@@ -1392,7 +1452,7 @@ class ParsedTable:
                     continue
 
                 # If bit is 1 or divider is present → direct append
-                if int(bit) or self.has_divider:    # noqa
+                if int(bit) or self.has_divider:  # noqa
                     parts.append(col_snippet if int(bit) else space_snippet)
                     continue
 
@@ -1402,16 +1462,16 @@ class ParsedTable:
                     continue
 
                 last_item = parts[-1]
-                pat = r'(?P<m>\d+)_(?P<n>\d+)_space[(][)]$'
+                pat = r"(?P<m>\d+)_(?P<n>\d+)_space[(][)]$"
                 match = re.match(pat, last_item)
                 if not match:
                     parts.append(space_snippet)
                     continue
 
-                m, n = int(match.group('m')), int(match.group('n'))
+                m, n = int(match.group("m")), int(match.group("n"))
                 m += column.width
                 n += column.max_width - column.max_edge_leading_width
-                extend_space_snippet = f'{m}_{n}_space()'
+                extend_space_snippet = f"{m}_{n}_space()"
                 parts.pop()
                 parts.append(extend_space_snippet)
 
@@ -1419,41 +1479,47 @@ class ParsedTable:
 
             line_snippet = text.join_string(*parts, separator=sep)
             if self.has_divider:
-                line_snippet = (f'{self.divider_leading_snippet}{line_snippet}'
-                                f'{self.divider_trailing_snippet}')
+                line_snippet = (
+                    f"{self.divider_leading_snippet}{line_snippet}"
+                    f"{self.divider_trailing_snippet}"
+                )
 
             # Ending: end(space) -> record
-            space_end_pat = r' *\d+_\d+_space[(][)] *$'
+            space_end_pat = r" *\d+_\d+_space[(][)] *$"
             line_snippet = (
-                re.sub(space_end_pat, ' end(space) -> record', line_snippet)
-                if re.search(space_end_pat, line_snippet) else
-                f'{line_snippet} {trailing_snippet}'
+                re.sub(space_end_pat, " end(space) -> record", line_snippet)
+                if re.search(space_end_pat, line_snippet)
+                else f"{line_snippet} {trailing_snippet}"
             )
 
             # Leading start()
-            space_any_pat = r' *\d+_\d+_space[(][)] *'
+            space_any_pat = r" *\d+_\d+_space[(][)] *"
             line_snippet = (
-                f'start() {line_snippet}'
-                if re.match(space_any_pat, line_snippet) else
-                f'{leading_snippet} {line_snippet}'
+                f"start() {line_snippet}"
+                if re.match(space_any_pat, line_snippet)
+                else f"{leading_snippet} {line_snippet}"
             )
 
             # Normalize spacing around space() blocks
-            space_between_pat = r' +(\d+_\d+_space[(][)]) +'
-            line_snippet = re.sub(space_between_pat, r' \1 ', line_snippet)
+            space_between_pat = r" +(\d+_\d+_space[(][)]) +"
+            line_snippet = re.sub(space_between_pat, r" \1 ", line_snippet)
 
             # Ensure uniqueness
             is_line_snippet_existed = False
-            pattern = r'(?i) *start\(\w*\) *(?P<chk>.+) *end\(\w*\) -> (record|continue)'
+            pattern = (
+                r"(?i) *start\(\w*\) *(?P<chk>.+) *end\(\w*\) -> (record|continue)"
+            )
             match = re.match(pattern, line_snippet)
             if match:
-                baseline_chk = match.group('chk')
+                baseline_chk = match.group("chk")
                 for snippet_ in snippets:
                     if is_line_snippet_existed:
                         break
                     other_match = re.match(pattern, snippet_)
                     if other_match:
-                        is_line_snippet_existed = other_match.group('chk') == baseline_chk
+                        is_line_snippet_existed = (
+                            other_match.group("chk") == baseline_chk
+                        )
             if not is_line_snippet_existed:
                 snippets.append(line_snippet)
 
@@ -1531,7 +1597,7 @@ class Cell:
             if self.is_empty:
                 self._trailing = ""
             else:
-                matches = re.findall(' +$', self.data)
+                matches = re.findall(" +$", self.data)
                 self._trailing = matches[0] if matches else ""
         return self._trailing or ""
 
@@ -1557,18 +1623,28 @@ class Cell:
     # -----------------------------
 
     @property
-    def is_leading(self) -> bool: return self.leading != ""
-    @property
-    def is_single_leading(self) -> bool: return self.leading == " "
-    @property
-    def is_multi_leading(self) -> bool: return len(self.leading) > 1
+    def is_leading(self) -> bool:
+        return self.leading != ""
 
     @property
-    def is_trailing(self) -> bool: return self.trailing != ""
+    def is_single_leading(self) -> bool:
+        return self.leading == " "
+
     @property
-    def is_single_trailing(self) -> bool: return self.trailing == " "
+    def is_multi_leading(self) -> bool:
+        return len(self.leading) > 1
+
     @property
-    def is_multi_trailing(self) -> bool: return len(self.trailing) > 1
+    def is_trailing(self) -> bool:
+        return self.trailing != ""
+
+    @property
+    def is_single_trailing(self) -> bool:
+        return self.trailing == " "
+
+    @property
+    def is_multi_trailing(self) -> bool:
+        return len(self.trailing) > 1
 
     @property
     def is_just_chars(self) -> bool:
@@ -1578,14 +1654,21 @@ class Cell:
     @property
     def is_group_of_chars(self) -> bool:
         """Return True if the cell contains multiple characters separated by spaces."""
-        return bool(self.text.strip()) and bool(re.findall(PATTERN.WS, self.text.strip()))
+        return bool(self.text.strip()) and bool(
+            re.findall(PATTERN.WS, self.text.strip())
+        )
 
     @property
-    def is_containing_space(self) -> bool: return bool(re.findall(PATTERN.WS, self.text))
+    def is_containing_space(self) -> bool:
+        return bool(re.findall(PATTERN.WS, self.text))
+
     @property
-    def is_not_containing_space(self) -> bool: return not bool(re.findall(PATTERN.WS, self.text))
+    def is_not_containing_space(self) -> bool:
+        return not bool(re.findall(PATTERN.WS, self.text))
+
     @property
-    def is_containing_spaces(self) -> bool: return bool(re.findall(r"\s\s+", self.text))
+    def is_containing_spaces(self) -> bool:
+        return bool(re.findall(r"\s\s+", self.text))
 
     # -----------------------------
     # Position and adjustment
@@ -1605,7 +1688,7 @@ class Cell:
         return "" if chk else prefix
 
     def get_postfix_data(self) -> str:
-        """Return postfix data after the last space or double space."""     # noqa
+        """Return postfix data after the last space or double space."""  # noqa
         if self.is_multi_trailing or not self.is_containing_space:
             return ""
 
@@ -1668,7 +1751,7 @@ class Cell:
         prev_cell.update_position("right", value=self.right - shift)
 
     def process(self) -> None:
-        """Validate positions and initialize cell data."""       # noqa
+        """Validate positions and initialize cell data."""  # noqa
         # Reset cached flags
         self._leading = None
         self._trailing = None
@@ -1677,15 +1760,18 @@ class Cell:
         self.line = line
 
         if ref_cell and ref_cell.width_mode:
-            data = self.line[ref_cell.left:ref_cell.right]
+            data = self.line[ref_cell.left : ref_cell.right]
             self.data = data
             self.left = ref_cell.left
             self.right = ref_cell.right
 
-            self.inner_left = self.left + data.index(data.lstrip()) if data.strip() else self.left
-            self.inner_right = self.left + len(data.strip()) if data.strip() else self.right
+            self.inner_left = (
+                self.left + data.index(data.lstrip()) if data.strip() else self.left
+            )
+            self.inner_right = (
+                self.left + len(data.strip()) if data.strip() else self.right
+            )
             return
-
 
         # Validate numeric boundaries
         left, right = self.validate_numeric_boundary(left_pos, right_pos)
@@ -1698,7 +1784,7 @@ class Cell:
         self.right = len(line) if self.reference and right == 999999 else right
 
         # Extract raw content
-        self.data = self.line[self.left:self.right]
+        self.data = self.line[self.left : self.right]
 
         if not self.width_mode:
             self.adjust_bounds()
@@ -1708,24 +1794,30 @@ class Cell:
         self.inner_right = self.right - len(self.trailing)
 
     def adjust_bounds(self):
-        """Expand left/right bounds to include adjacent non‑space characters."""    # noqa
+        """Expand left/right bounds to include adjacent non‑space characters."""  # noqa
         # Extend right bound leftward if the segment ends inside a word
-        if self.reference and self.right < len(self.line) and self.line[
-            self.right] != " ":
+        if (
+            self.reference
+            and self.right < len(self.line)
+            and self.line[self.right] != " "
+        ):
             for idx in range(self.right - 1, self.left, -1):
                 if self.line[idx] == " ":
                     break
                 self.right = idx
-            self.data = self.line[self.left:self.right]
+            self.data = self.line[self.left : self.right]
 
         # Extend left bound rightward if the segment starts inside a word
-        if self.reference and 0 < self.left < len(self.line) and self.line[
-            self.left - 1] != " ":
+        if (
+            self.reference
+            and 0 < self.left < len(self.line)
+            and self.line[self.left - 1] != " "
+        ):
             for idx in range(self.left - 1, 0, -1):
                 if self.line[idx] == " ":
                     break
                 self.left = idx
-            self.data = self.line[self.left:self.right]
+            self.data = self.line[self.left : self.right]
 
     def validate_reference_cell(self, ref_cell):
         """Validate and assign the reference cell."""
@@ -1741,11 +1833,11 @@ class Cell:
                 f"Invalid reference_cell type detected in {cls_name}.\n"
                 f"Object: {self!r}\n"
                 "Hint: Ensure the reference cell is initialized with a supported type."
-            )
+            ),
         )
 
     def validate_numeric_boundary(self, left_pos, right_pos):
-        """Validate numeric left/right bounds and return them as integers."""   # noqa
+        """Validate numeric left/right bounds and return them as integers."""  # noqa
         ok_left, left = number.try_to_get_number(left_pos, return_type=int)
         ok_right, right = number.try_to_get_number(right_pos, return_type=int)
 
@@ -1756,7 +1848,7 @@ class Cell:
                     f"Invalid left position in {self.__class__.__name__}.\n"
                     f"Expected: integer value\n"
                     f"Received: {left_pos!r}"
-                )
+                ),
             )
 
         if not ok_right:
@@ -1766,7 +1858,7 @@ class Cell:
                     f"Invalid right position in {self.__class__.__name__}.\n"
                     f"Expected: integer value\n"
                     f"Received: {right_pos!r}"
-                )
+                ),
             )
 
         return left, right
@@ -1778,7 +1870,7 @@ class Cell:
         self._trailing = None
 
 
-class Row:    # noqa
+class Row:  # noqa
     """Represents a row in a tabular text structure."""
 
     def __init__(
@@ -1801,11 +1893,14 @@ class Row:    # noqa
         self.cells = []
         self.process()
 
-    def __bool__(self) -> bool: return True if self.cells else False
+    def __bool__(self) -> bool:
+        return True if self.cells else False
 
-    def __len__(self) -> int: return len(self.cells)
+    def __len__(self) -> int:
+        return len(self.cells)
 
-    def __repr__(self) -> str: return str(self)
+    def __repr__(self) -> str:
+        return str(self)
 
     def __str__(self) -> str:
         """Return a string representation with the number of columns."""
@@ -1834,8 +1929,13 @@ class Row:    # noqa
 
         width_mode = ref_row.width_mode if ref_row else self.width_mode
         reference_cell = ref_row.cells[index] if ref_row else None
-        cell = Cell(self.line, left_pos, right_pos,
-                    reference=reference_cell, width_mode=width_mode)
+        cell = Cell(
+            self.line,
+            left_pos,
+            right_pos,
+            reference=reference_cell,
+            width_mode=width_mode,
+        )
 
         if ref_row and ref_row.aligned and not ref_row.width_mode:
             prev_cell = self.cells[-1] if index else None
@@ -1889,8 +1989,7 @@ class Row:    # noqa
             # First cell
             if idx == 0:
                 left = 0
-                right = line.index(segment) + len(
-                    segment) if segment else divider_width
+                right = line.index(segment) + len(segment) if segment else divider_width
 
             # Last cell
             elif idx == seg_count - 1:
@@ -1909,7 +2008,6 @@ class Row:    # noqa
             prev_right = right
 
         return bool(self.cells)
-
 
     def process(self) -> None:
         """Initialize cells based on the reference row."""
@@ -1946,7 +2044,7 @@ class Row:    # noqa
         tokens: list[str],
         aligned: bool = True,
         width_mode: bool = False,
-        column_divider=""
+        column_divider="",
     ) -> "Row":
         """Construct a reference row from parsed tokens and boundary positions."""
         if not tokens:
@@ -1961,8 +2059,7 @@ class Row:    # noqa
             )
 
         ref_row = cls(
-            line, aligned=aligned, width_mode=width_mode,
-            column_divider=column_divider
+            line, aligned=aligned, width_mode=width_mode, column_divider=column_divider
         )
         prev_right, last_cell = 0, None
 
@@ -1989,10 +2086,7 @@ class Row:    # noqa
 
     @classmethod
     def create_reference_row_from_findall(
-        cls,
-        line: str,
-        pattern: str,
-        column_count: int = -1
+        cls, line: str, pattern: str, column_count: int = -1
     ) -> "Row":
         """Create a reference row by extracting tokens with regex findall."""
         tokens = re.findall(pattern, line)
@@ -2076,7 +2170,7 @@ class Row:    # noqa
         result = match.groupdict() if match else {}
         tokens = [result.get(f"v{i:03d}") for i in range(256) if f"v{i:03d}" in result]
 
-        return cls.create_reference_row(line, pattern, tokens, width_mode=width_mode)   # noqa
+        return cls.create_reference_row(line, pattern, tokens, width_mode=width_mode)  # noqa
 
     @classmethod
     def do_creating_reference_row(
@@ -2094,13 +2188,13 @@ class Row:    # noqa
             return cls.create_reference_row_from_findall(line, pattern, column_count)
 
         if case == "variable":
-            return cls.create_reference_row_by_variable(line, pattern, width_mode=width_mode)
+            return cls.create_reference_row_by_variable(
+                line, pattern, width_mode=width_mode
+            )
 
         if case == "split":
             return cls.create_reference_row_from_split(
-                line, pattern,
-                column_count=column_count,
-                column_divider=column_divider
+                line, pattern, column_count=column_count, column_divider=column_divider
             )
 
         return raise_runtime_error(
@@ -2124,7 +2218,7 @@ class Column:
         left_column=None,
         right_column=None,
         is_last=False,
-        column_divider='',
+        column_divider="",
     ):
 
         # Structural relationships
@@ -2150,21 +2244,26 @@ class Column:
         # Alignment state
         self._alignment = "left"
 
-    def __bool__(self) -> bool: return True if self.cells else False
+    def __bool__(self) -> bool:
+        return True if self.cells else False
 
-    def __len__(self) -> int: return len(self.cells)
+    def __len__(self) -> int:
+        return len(self.cells)
 
     def __str__(self) -> str:
         """Return a string representation of the column with name and cell count."""
         return f"{self.__class__.__name__}(name={self.name!r}, cells_count={len(self.cells)})"
 
-    def __repr__(self) -> str: return str(self)
+    def __repr__(self) -> str:
+        return str(self)
 
     @property
-    def cells_count(self) -> int: return len(self.cells)
+    def cells_count(self) -> int:
+        return len(self.cells)
 
     @property
-    def rows_count(self) -> int: return self.cells_count
+    def rows_count(self) -> int:
+        return self.cells_count
 
     @property
     def cell_texts(self):
@@ -2219,7 +2318,11 @@ class Column:
 
         if len(left_positions) == 1:
             common_width, _ = Counter(widths).most_common().pop(0)
-            return max_width if common_width == max_width else math.ceil(statistics.mean(widths))
+            return (
+                max_width
+                if common_width == max_width
+                else math.ceil(statistics.mean(widths))
+            )
         elif len(right_positions) == 1:
             return max_width
         return math.ceil(statistics.mean(widths))

@@ -48,6 +48,6 @@ def test_verify_func():
         template_snippet=user_data,
         test_data=test_data,
         expected_rows_count=expected_rows_count,
-        expected_result=expected_result
+        expected_result=expected_result,
     )
     assert is_verified is True

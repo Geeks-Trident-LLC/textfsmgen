@@ -32,6 +32,7 @@ def test_generate_textfsm_template_with_comment_and_kept_flag():
     factory = TemplateBuilder(user_data=user_data)
     assert factory.template == expected_template
 
+
 def test_template_builder_verify_method():
     user_data = get_user_data()
     test_data = get_test_data()
@@ -46,7 +47,10 @@ def test_template_builder_verify_method_expected_rows_count():
     test_data = get_test_data()
     expected_rows_count = len(get_expected_result())
 
-    factory = TemplateBuilder(user_data=user_data, test_data=test_data,)
+    factory = TemplateBuilder(
+        user_data=user_data,
+        test_data=test_data,
+    )
     is_verified = factory.verify(expected_rows_count=expected_rows_count)
     assert is_verified is True
 
@@ -59,7 +63,6 @@ def test_template_builder_verify_method_expected_result():
 
     factory = TemplateBuilder(user_data=user_data, test_data=test_data)
     is_verified = factory.verify(
-        expected_rows_count=expected_rows_count,
-        expected_result=expected_result
+        expected_rows_count=expected_rows_count, expected_result=expected_result
     )
     assert is_verified is True

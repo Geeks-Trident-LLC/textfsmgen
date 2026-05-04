@@ -9,7 +9,6 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/unit/auto_generate_test_script/test_generating_pytest_script.py
 """
 
-
 from datetime import datetime
 from textfsmgen import TemplateBuilder
 
@@ -67,8 +66,8 @@ class TestTemplateBuilderPytestScript:
                 raise SystemExit(pytest.main(["-v", __file__]))
         ''')
 
-        dt_str = format(datetime.now(), '%Y-%m-%d')
-        expected_script = expected_script.replace('_datetime_', dt_str)
+        dt_str = format(datetime.now(), "%Y-%m-%d")
+        expected_script = expected_script.replace("_datetime_", dt_str)
 
         factory = TemplateBuilder(user_data=user_data, test_data=test_data)
         pytest_script = factory.create_pytest()

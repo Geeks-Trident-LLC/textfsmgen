@@ -3,13 +3,13 @@ textfsmgen.libs.common
 =====================
 
 General-purpose generic classes used across TextFSMGen.
-"""     # noqa
+"""  # noqa
 
 import re
 
 
 class DotObject(dict):
-    """Dictionary with dot-access for valid keys and recursive wrapping."""     # noqa
+    """Dictionary with dot-access for valid keys and recursive wrapping."""  # noqa
 
     _valid_key = re.compile(r"_{,2}[A-Za-z][A-Za-z0-9_]*")
     _dict_members = dir(dict) + ["_valid_key", "_dict_members", "_wrap", "__getattr__"]
@@ -48,16 +48,13 @@ class DotObject(dict):
         if dash_key in self:
             return self._wrap(self[dash_key])
 
-        raise AttributeError(
-            f"Invalid attribute name {name!r}."
-        )
+        raise AttributeError(f"Invalid attribute name {name!r}.")
 
     def __setattr__(self, name, value):
         """Block overriding dict-backed keys; require update() instead."""
         # Built‑in DotObject attributes cannot be overridden
         if name in self._dict_members:
-            raise AttributeError(
-                f"Cannot override DotObject attribute {name!r}.")
+            raise AttributeError(f"Cannot override DotObject attribute {name!r}.")
 
         # Direct key match
         if name in self:
@@ -72,9 +69,9 @@ class DotObject(dict):
 
         # Alternate key forms (space, dot, dash)
         for transformed in (
-                name.replace("_", " ").strip(),
-                name.replace("_", ".").strip("."),
-                name.replace("_", "-").strip("-"),
+            name.replace("_", " ").strip(),
+            name.replace("_", ".").strip("."),
+            name.replace("_", "-").strip("-"),
         ):
             if transformed in self:
                 self.update({transformed: value})
@@ -94,39 +91,48 @@ class StatusString(str):
 
     _ALLOWED_TRUE = {
         # Boolean‑like
-        "true", "yes", "y", "ok", "okay",
-
-        "checked", "on",
-
+        "true",
+        "yes",
+        "y",
+        "ok",
+        "okay",
+        "checked",
+        "on",
         # Success / pass states
-        "pass", "passed",
-        "success", "successful",
-        "good", "valid", "correct",
-        "accepted", "approved",
-        "validated", "verified",
-        "ready", "parsed", "matched", "resolved",
-
+        "pass",
+        "passed",
+        "success",
+        "successful",
+        "good",
+        "valid",
+        "correct",
+        "accepted",
+        "approved",
+        "validated",
+        "verified",
+        "ready",
+        "parsed",
+        "matched",
+        "resolved",
         # Completion states
-        "done", "complete", "completed",
+        "done",
+        "complete",
+        "completed",
     }
 
     def __new__(cls, *args, **kwargs):
         text = (
             args[0]
-            if args else
-            kwargs.pop("text", kwargs.pop("data", kwargs.pop("value", "")))
+            if args
+            else kwargs.pop("text", kwargs.pop("data", kwargs.pop("value", "")))
         )
 
-        status = (
-            args[1]
-            if len(args) > 1 else
-            kwargs.pop("status", False)
-        )
+        status = args[1] if len(args) > 1 else kwargs.pop("status", False)
 
         reason = (
             args[2]
-            if len(args) > 2 else
-            kwargs.pop("reason", kwargs.pop("message", ""))
+            if len(args) > 2
+            else kwargs.pop("reason", kwargs.pop("message", ""))
         )
 
         # Remove consumed kwargs
@@ -139,15 +145,20 @@ class StatusString(str):
         obj.reason = str(reason)
         return obj
 
-    def __bool__(self): return self.status
+    def __bool__(self):
+        return self.status
 
-    def is_good(self): return self.status is True
+    def is_good(self):
+        return self.status is True
 
-    def is_bad(self): return self.status is False
+    def is_bad(self):
+        return self.status is False
 
-    def is_success(self): return self.status is True
+    def is_success(self):
+        return self.status is True
 
-    def is_failure(self): return self.status is False
+    def is_failure(self):
+        return self.status is False
 
 
 class Position:

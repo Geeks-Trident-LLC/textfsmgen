@@ -13,16 +13,13 @@ import pytest
 
 from textfsmgen.engine.translate import (
     make_translator,
-
     LettersTranslator,
-
     WordTranslator,
     WordsTranslator,
     MixedWordTranslator,
     MixedWordsTranslator,
-
     NonWSSTranslator,
-    NonWSSGroupTranslator
+    NonWSSGroupTranslator,
 )
 
 from tests.unit.engine.translate import to_list
@@ -38,13 +35,13 @@ class TestLettersTranslatorClass:
     @pytest.mark.parametrize(
         "other",
         [
-            "ab",               # letters are a subset of letters
-            "abc123",           # letters are a subset of word
-            "a1 b12",           # letters are a subset of words
-            "abc.123",          # letters are a subset of mixed word
-            "a.1 b.2",          # letters are a subset of mixed words
-            "abc\xc8",          # letters are a subset of non-whitespaces
-            "abc\xc8 xyz",      # letters are a subset of non-whitespace group
+            "ab",  # letters are a subset of letters
+            "abc123",  # letters are a subset of word
+            "a1 b12",  # letters are a subset of words
+            "abc.123",  # letters are a subset of mixed word
+            "a.1 b.2",  # letters are a subset of mixed words
+            "abc\xc8",  # letters are a subset of non-whitespaces
+            "abc\xc8 xyz",  # letters are a subset of non-whitespace group
         ],
     )
     def test_is_subset_of(self, other):
@@ -59,13 +56,13 @@ class TestLettersTranslatorClass:
     @pytest.mark.parametrize(
         "other",
         [
-            "1",                # letters are not a subset of digit
-            "123",              # letters are not a subset of digits
-            "1.1",              # letters are not a subset of number
-            "-1.1",             # letters are not a subset of mixed-number
-            "++--",             # letters are not a subset of punctuation(s)
-            "++ -- ==",         # letters are not a subset of punctuation group
-            "\xc8",             # letters are not a subset of non-whitespace
+            "1",  # letters are not a subset of digit
+            "123",  # letters are not a subset of digits
+            "1.1",  # letters are not a subset of number
+            "-1.1",  # letters are not a subset of mixed-number
+            "++--",  # letters are not a subset of punctuation(s)
+            "++ -- ==",  # letters are not a subset of punctuation group
+            "\xc8",  # letters are not a subset of non-whitespace
         ],
     )
     def test_is_not_subset_of(self, other):
@@ -80,7 +77,7 @@ class TestLettersTranslatorClass:
     @pytest.mark.parametrize(
         "other",
         [
-            "a",                # letters are a superset of letter
+            "a",  # letters are a superset of letter
         ],
     )
     def test_is_superset_of(self, other):
@@ -96,35 +93,35 @@ class TestLettersTranslatorClass:
         [
             (
                 "abc",  # letters
-                LettersTranslator    # (letters, letters) => letters
+                LettersTranslator,  # (letters, letters) => letters
             ),
             (
                 "abc123",  # a word
-                WordTranslator   # (letters, word) => word
+                WordTranslator,  # (letters, word) => word
             ),
             (
                 "a1 a12",  # words
-                WordsTranslator  # (letters, words) => words
+                WordsTranslator,  # (letters, words) => words
             ),
             (
                 "abc.123",  # mixed-word
-                MixedWordTranslator  # (letters, mixed-word) => mixed-word
+                MixedWordTranslator,  # (letters, mixed-word) => mixed-word
             ),
             (
                 "a.1 b.1",  # mixed-words
-                MixedWordsTranslator # (letters, mixed-words) => mixed-words
+                MixedWordsTranslator,  # (letters, mixed-words) => mixed-words
             ),
             (
                 "\xc8",  # non-whitespace
-                NonWSSTranslator # (letters, non-whitespace) => non-whitespaces
+                NonWSSTranslator,  # (letters, non-whitespace) => non-whitespaces
             ),
             (
                 "abc\xc8",  # non-whitespaces
-                NonWSSTranslator # (letters, non-whitespaces) => non-whitespaces
+                NonWSSTranslator,  # (letters, non-whitespaces) => non-whitespaces
             ),
             (
                 "abc\xc8 xyz",  # non-whitespace-group
-                NonWSSGroupTranslator    # (letters, non-whitespace-group) => non-whitespace-group
+                NonWSSGroupTranslator,  # (letters, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -143,7 +140,7 @@ class TestLettersTranslatorClass:
         [
             (
                 "a",  # letter
-                LettersTranslator    # (letters, letter) => letters
+                LettersTranslator,  # (letters, letter) => letters
             ),
         ],
     )
@@ -162,43 +159,43 @@ class TestLettersTranslatorClass:
         [
             (
                 "1",  # digit
-                WordTranslator   # (letters, digit) => word
+                WordTranslator,  # (letters, digit) => word
             ),
             (
                 "123",  # digits
-                WordTranslator   # (letters, digits) => word
+                WordTranslator,  # (letters, digits) => word
             ),
             (
-                    ["a", "1"],  # alpha-num
-                    WordTranslator   # (letters, alpha-num) => word
+                ["a", "1"],  # alpha-num
+                WordTranslator,  # (letters, alpha-num) => word
             ),
             (
                 "1.1",  # number
-                MixedWordTranslator  # (letters, number) => mixed-word
+                MixedWordTranslator,  # (letters, number) => mixed-word
             ),
             (
                 "-1.1",  # mixed-number
-                MixedWordTranslator  # (letters, mixed-number) => mixed-word
+                MixedWordTranslator,  # (letters, mixed-number) => mixed-word
             ),
             (
-                    ["a", "1", "#"],  # graph
-                    MixedWordTranslator  # (letters, graph) => mixed-word
+                ["a", "1", "#"],  # graph
+                MixedWordTranslator,  # (letters, graph) => mixed-word
             ),
             (
                 "+",  # punctuation
-                NonWSSTranslator # (letters, punct) => non-whitespaces
+                NonWSSTranslator,  # (letters, punct) => non-whitespaces
             ),
             (
                 "++",  # punctuations
-                NonWSSTranslator # (letters, puncts) => non-whitespaces
+                NonWSSTranslator,  # (letters, puncts) => non-whitespaces
             ),
             (
                 "\xc8",  # non-whitespace
-                NonWSSTranslator # (letters, non-whitespace) => non-whitespaces
+                NonWSSTranslator,  # (letters, non-whitespace) => non-whitespaces
             ),
             (
                 "++ -- ==",  # punctuation-group
-                NonWSSGroupTranslator    # (letters, punct-group) => non-whitespace-group
+                NonWSSGroupTranslator,  # (letters, punct-group) => non-whitespace-group
             ),
         ],
     )

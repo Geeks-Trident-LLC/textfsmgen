@@ -34,10 +34,8 @@ class TestGetLinePositionBy:
         [
             # None input should return None
             (None, None),
-
             # Integer index should return the same index if valid
             (1, 1),
-
             # Regex patterns
             (r"--regex line[0-9]{2,}", 2),
             (r"--regex _\w+ =\w+", 0),
@@ -98,7 +96,6 @@ class TestGetFixedLineSnippet:
         [
             ("", "start() end(space)"),
             (" \t ", "start() end(whitespace)"),
-
             ("line1: _abc 1 23", "line1: _abc digit() digits()"),
             ("line2: 1.1.1.1 a::b", "line2: 1.1.1.1 a::b"),
             ("line3: ++++++++ abc", "line3: puncts() abc"),

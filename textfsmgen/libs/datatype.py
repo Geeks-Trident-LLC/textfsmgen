@@ -3,7 +3,7 @@ textfsmgen.libs.datatype
 ========================
 
 Utility functions for runtime type checking and data handling.
-"""     # noqa
+"""  # noqa
 
 from typing import Optional
 

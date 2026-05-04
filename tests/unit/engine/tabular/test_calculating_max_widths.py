@@ -13,7 +13,6 @@ from textwrap import dedent
 from textfsmgen.engine.tabular import TabularTranslator
 
 
-
 def test():
     text = dedent("""
         a        b

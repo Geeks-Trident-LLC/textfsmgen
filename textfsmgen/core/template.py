@@ -8,7 +8,7 @@ This module provides the foundational logic for building and validating
 TextFSM templates. It defines the primary classes and functions that
 transform user-provided snippets into structured parsing templates,
 support test execution, and integrate with configuration options.
-"""     # noqa
+"""  # noqa
 
 from typing import Optional
 
@@ -36,19 +36,20 @@ from textfsmgen.engine.category import CategoryLinesTranslator
 from textfsmgen.engine.tabular import TabularTranslator
 
 import logging
+
 logger = logging.getLogger(__file__)
 
 
 class LineParser:
     def __init__(self, txt):
         self.text = str(txt)
-        self.line = ''
-        self.template_op = ''
+        self.line = ""
+        self.template_op = ""
         self.ignore_case = False
         self.is_comment = False
-        self.comment = ''
+        self.comment = ""
         self.is_kept = False
-        self.kept = ''
+        self.kept = ""
         self.variables = list()
         self._parse()
 
@@ -60,14 +61,14 @@ class LineParser:
     @property
     def is_word(self) -> bool:
         """Check whether the text represents a single word."""
-        return bool(re.match(r'^[A-Za-z]\w*$', self.text.strip()))
+        return bool(re.match(r"^[A-Za-z]\w*$", self.text.strip()))
 
     @property
     def no_letters(self) -> bool:
         """Check whether the line contains no alphabetic characters."""
         if self.is_empty:
             return False
-        return bool(re.match(r'[^a-z0-9]+$', self.line, flags=re.I))
+        return bool(re.match(r"[^a-z0-9]+$", self.line, flags=re.I))
 
     def statement(self) -> str:
         """Construct the template statement for the current line."""
@@ -88,25 +89,29 @@ class LineParser:
         else:
             try:
                 re.compile(self.line)
-                if re.search(r'\s', self.line):
+                if re.search(r"\s", self.line):
                     statement = line_pattern
                 else:
-                    if '(' in self.line and self.line.endswith(')'):
-                        statement = line_pattern if not line_pattern.endswith(')') else self.line
+                    if "(" in self.line and self.line.endswith(")"):
+                        statement = (
+                            line_pattern
+                            if not line_pattern.endswith(")")
+                            else self.line
+                        )
                     else:
                         statement = self.line
-            except Exception as ex:     # noqa
+            except Exception as ex:  # noqa
                 statement = line_pattern
 
         # Normalize case-insensitive flag placement
-        statement = statement.replace('(?i)^', '^(?i)')
+        statement = statement.replace("(?i)^", "^(?i)")
 
         # Ensure proper start anchor spacing
-        spacer = '  ' if statement.startswith('^') else '  ^'
+        spacer = "  " if statement.startswith("^") else "  ^"
         statement = f"{spacer}{statement}"
 
         # Ensure proper end anchor
-        if statement.endswith('$') and not statement.endswith(r'\$'):
+        if statement.endswith("$") and not statement.endswith(r"\$"):
             statement = f"{statement}$"
 
         # Append template operator if present
@@ -120,12 +125,14 @@ class LineParser:
         lst = self.text.rsplit(" -> ", 1)
         if len(lst) == 2:
             tmpl_op = lst[-1].strip()
-            first, *remaining = tmpl_op.split(' ', 1)
+            first, *remaining = tmpl_op.split(" ", 1)
 
-            mapping = {'norecord': 'NoRecord', 'clearall': 'ClearAll'}
-            if '.' in first:
-                pat = r'(?P<lop>next|continue|error)\.' \
-                      r'(?P<rop>norecord|record|clearall|clear)$'
+            mapping = {"norecord": "NoRecord", "clearall": "ClearAll"}
+            if "." in first:
+                pat = (
+                    r"(?P<lop>next|continue|error)\."
+                    r"(?P<rop>norecord|record|clearall|clear)$"
+                )
                 match = re.match(pat, first, flags=re.I)
                 if match:
                     lop = match.group("lop").title()
@@ -136,7 +143,7 @@ class LineParser:
                     op = first
                 tmpl_op = f"{op} {''.join(remaining)}"
             else:
-                pat = r'(next|continue|error|norecord|record|clearall|clear)$'
+                pat = r"(next|continue|error|norecord|record|clearall|clear)$"
                 if re.match(pat, first, flags=re.I):
                     op = first.title()
                     op = mapping.get(op.lower(), op)
@@ -173,20 +180,21 @@ class TemplateBuilder:
     """
     Build TextFSM templates and generate associated test scripts.
     """
+
     logger = logger
 
     def __init__(
         self,
-        test_data='',
-        test_data_file='',
-        user_data='',
-        user_data_file='',
-        author='',
-        email='',
-        company='',
-        description='',
-        test_script_file='',
-        debug=False
+        test_data="",
+        test_data_file="",
+        user_data="",
+        user_data_file="",
+        author="",
+        email="",
+        company="",
+        description="",
+        test_script_file="",
+        debug=False,
     ):
         test_data_ = file.read(test_data_file) if test_data_file else test_data
         self.test_data = text.list_to_text(test_data_)
@@ -201,12 +209,12 @@ class TemplateBuilder:
         self.test_script_file = str(test_script_file)
         self.variables = []
         self.statements = []
-        self.bare_template = ''
-        self.template = ''
+        self.bare_template = ""
+        self.template = ""
         self.template_parser = None
-        self.verified_message = ''
+        self.verified_message = ""
         self.debug = debug
-        self.bad_template = ''
+        self.bad_template = ""
 
         self.build()
 
@@ -220,11 +228,11 @@ class TemplateBuilder:
 
             parsed_line = LineParser(line)
             statement = parsed_line.statement()
-            if statement.endswith(r'\$$'):
-                statement = '{}$$'.format(statement[:-3])
-            elif r'\$$ -> ' in statement:
-                statement = statement.replace(r'\$$ -> ', '$$ -> ')
-            statement = statement.replace(r'\$', r'\x24')
+            if statement.endswith(r"\$$"):
+                statement = "{}$$".format(statement[:-3])
+            elif r"\$$ -> " in statement:
+                statement = statement.replace(r"\$$ -> ", "$$ -> ")
+            statement = statement.replace(r"\$", r"\x24")
 
             if statement:
                 self.statements.append(statement)
@@ -267,7 +275,7 @@ class TemplateBuilder:
         lines.append("#" * 80)
         return "\n".join(lines)
 
-    def reformat(self, template: str) -> Optional[str]:    # noqa
+    def reformat(self, template: str) -> Optional[str]:  # noqa
         """
         Reformat a TextFSM template for readability.
         """
@@ -280,7 +288,7 @@ class TemplateBuilder:
         last_match = None
 
         for match in re.finditer(pattern, template):
-            before = match.string[start:match.start()]
+            before = match.string[start : match.start()]
             state = match.group().strip()
 
             if before.strip():
@@ -294,7 +302,7 @@ class TemplateBuilder:
             last_match = match
 
         if last_match and lines:
-            after = last_match.string[last_match.end():]
+            after = last_match.string[last_match.end() :]
             if after.strip():
                 for line in after.splitlines():
                     if line.strip():
@@ -342,10 +350,10 @@ class TemplateBuilder:
             self.template = ""
 
     def show_debug_report(
-            self,
-            test_result: Optional[list[dict]] = None,
-            expected_result: Optional[list[dict]] = None,
-            tabular: bool = False,
+        self,
+        test_result: Optional[list[dict]] = None,
+        expected_result: Optional[list[dict]] = None,
+        tabular: bool = False,
     ) -> None:
         """
         Display debug report for template verification.
@@ -369,19 +377,27 @@ class TemplateBuilder:
         # Test Result
         if test_result is not None:
             print(decorate_text(f"{'Test Result:':<16}"))
-            formatted_result = get_data_as_tabular(test_result) if tabular else test_result
+            formatted_result = (
+                get_data_as_tabular(test_result) if tabular else test_result
+            )
             print(f"{formatted_result}\n")
 
         # Verified Message
         verified_msg = f"Verified Message: {self.verified_message}"
         print(decorate_text(verified_msg))
 
-    def verify(self, expected_rows_count=None, expected_result=None,
-               tabular=False, debug=False, ignore_space=False):
+    def verify(
+        self,
+        expected_rows_count=None,
+        expected_result=None,
+        tabular=False,
+        debug=False,
+        ignore_space=False,
+    ):
         """Verify parsed test data against expected results."""
 
         if not self.test_data:
-            self.verified_message = 'test_data is empty.'
+            self.verified_message = "test_data is empty."
             if debug:
                 self.show_debug_report()
             return False
@@ -390,7 +406,7 @@ class TemplateBuilder:
         try:
             rows = self.template_parser.ParseTextToDicts(self.test_data)
             if not rows:
-                self.verified_message = 'There is no record after parsed.'
+                self.verified_message = "There is no record after parsed."
                 if debug:
                     self.show_debug_report()
                 return False
@@ -408,7 +424,9 @@ class TemplateBuilder:
 
             # Validate expected result
             if expected_result is not None:
-                rows_to_compare = datatype.clean_list_of_dicts(rows) if ignore_space else rows
+                rows_to_compare = (
+                    datatype.clean_list_of_dicts(rows) if ignore_space else rows
+                )
                 chk = rows_to_compare == expected_result
                 is_verified &= chk
                 result_msg = (
@@ -420,14 +438,12 @@ class TemplateBuilder:
 
             # Default success message
             if is_verified and not self.verified_message:
-                self.verified_message = 'Parsed result has record(s).'
+                self.verified_message = "Parsed result has record(s)."
 
             # Debug output
             if debug:
                 self.show_debug_report(
-                    test_result=rows,
-                    expected_result=expected_result,
-                    tabular=tabular
+                    test_result=rows, expected_result=expected_result, tabular=tabular
                 )
 
             return is_verified
@@ -445,7 +461,7 @@ class TemplateBuilder:
 
         test_script = test_script_fmt.format(
             template=enclose_string(self.template),
-            test_data=enclose_string(self.test_data)
+            test_data=enclose_string(self.test_data),
         )
 
         if self.test_script_file:
@@ -479,7 +495,7 @@ class TemplateBuilder:
             if __name__ == '__main__':
                 unittest.main()
         ''')
-        error = 'Cannot create Python unittest script without test data.'
+        error = "Cannot create Python unittest script without test data."
         test_script = self.create_test_script(test_script_fmt, error)
         return test_script
 
@@ -558,7 +574,7 @@ class TemplateBuilder:
             if __name__ == "__main__":
                 test_textfsm_template(template, test_data)
         ''')
-        error = 'Cannot create Python snippet script without test data.'
+        error = "Cannot create Python snippet script without test data."
         test_script = self.create_test_script(test_script_fmt, error)
         return test_script
 
@@ -566,21 +582,21 @@ class TemplateBuilder:
 class CategoryTemplateBuilder:
     def __init__(
         self,
-        user_data='',
-        user_data_file='',
-        test_data='',
-        test_data_file='',
+        user_data="",
+        user_data_file="",
+        test_data="",
+        test_data_file="",
         count=1,
         separator=":",
         starting_from=None,
         ending_at=None,
         replacing_rules=None,
-        author='',
-        email='',
-        company='',
-        description='',
-        test_script_file='',
-        debug=False
+        author="",
+        email="",
+        company="",
+        description="",
+        test_script_file="",
+        debug=False,
     ):
         self.translator = CategoryLinesTranslator(
             user_data,
@@ -601,7 +617,7 @@ class CategoryTemplateBuilder:
             company=company,
             description=description,
             test_script_file=test_script_file,
-            debug=debug
+            debug=debug,
         )
 
         self.builder = None
@@ -611,7 +627,8 @@ class CategoryTemplateBuilder:
             self.template_builder_args.update(user_data=snippet)
             self.builder = TemplateBuilder(**self.template_builder_args)
 
-    def __bool__(self): return bool(self.translator)
+    def __bool__(self):
+        return bool(self.translator)
 
     @property
     def snippet(self):
@@ -621,8 +638,14 @@ class CategoryTemplateBuilder:
     def template(self):
         return self.builder.template if self.builder else ""
 
-    def verify(self, expected_rows_count=None, expected_result=None,
-               tabular=False, debug=False, ignore_space=False):
+    def verify(
+        self,
+        expected_rows_count=None,
+        expected_result=None,
+        tabular=False,
+        debug=False,
+        ignore_space=False,
+    ):
         """Verify parsed test data against expected results."""
 
         if not self.builder:
@@ -633,7 +656,7 @@ class CategoryTemplateBuilder:
             expected_result=expected_result,
             tabular=tabular,
             debug=debug,
-            ignore_space=ignore_space
+            ignore_space=ignore_space,
         )
 
     def create_unittest(self):
@@ -652,26 +675,26 @@ class CategoryTemplateBuilder:
 class TabularTemplateBuilder:
     def __init__(
         self,
-        user_data='',
-        user_data_file='',
-        test_data='',
-        test_data_file='',
-        column_divider='',
+        user_data="",
+        user_data_file="",
+        test_data="",
+        test_data_file="",
+        column_divider="",
         column_count=0,
         column_widths=None,
         headers=None,
         header_rows=None,
-        custom_header_text='',
+        custom_header_text="",
         starting_from=None,
         ending_at=None,
         has_header_row=True,
         replacing_rules=None,
-        author='',
-        email='',
-        company='',
-        description='',
-        test_script_file='',
-        debug=False
+        author="",
+        email="",
+        company="",
+        description="",
+        test_script_file="",
+        debug=False,
     ):
         self.translator = TabularTranslator(
             user_data,
@@ -697,7 +720,7 @@ class TabularTemplateBuilder:
             company=company,
             description=description,
             test_script_file=test_script_file,
-            debug=debug
+            debug=debug,
         )
 
         self.builder = None
@@ -707,7 +730,8 @@ class TabularTemplateBuilder:
             self.template_builder_args.update(user_data=snippet)
             self.builder = TemplateBuilder(**self.template_builder_args)
 
-    def __bool__(self): return bool(self.translator)
+    def __bool__(self):
+        return bool(self.translator)
 
     @property
     def snippet(self):
@@ -717,8 +741,14 @@ class TabularTemplateBuilder:
     def template(self):
         return self.builder.template if self.builder else ""
 
-    def verify(self, expected_rows_count=None, expected_result=None,
-               tabular=False, debug=False, ignore_space=False):
+    def verify(
+        self,
+        expected_rows_count=None,
+        expected_result=None,
+        tabular=False,
+        debug=False,
+        ignore_space=False,
+    ):
         """Verify parsed test data against expected results."""
 
         if not self.builder:
@@ -729,7 +759,7 @@ class TabularTemplateBuilder:
             expected_result=expected_result,
             tabular=tabular,
             debug=debug,
-            ignore_space=ignore_space
+            ignore_space=ignore_space,
         )
 
     def create_unittest(self):
@@ -764,5 +794,3 @@ def get_textfsm_template(
     )
     textfsm_template = builder.template
     return textfsm_template
-
-

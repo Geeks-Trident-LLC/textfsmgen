@@ -3,7 +3,7 @@ textfsmgen.libs.common
 ======================
 
 General-purpose common functions used across TextFSMGen.
-"""     # noqa
+"""  # noqa
 
 import sys
 import textwrap
@@ -17,7 +17,8 @@ def dedent_and_strip(txt):
     value = (
         txt.decode("utf-8")
         if isinstance(txt, bytes)
-        else txt if isinstance(txt, str)
+        else txt
+        if isinstance(txt, str)
         else repr(txt)
     )
     return textwrap.dedent(value).strip()
@@ -64,6 +65,7 @@ def ensure_tkinter_available(app_name: str = ""):
 
     try:
         import tkinter as tk
+
         return tk
 
     except ModuleNotFoundError:

@@ -12,6 +12,7 @@ Run pytest in the project root to execute these tests:
 from textfsmgen.tools.explain import SnippetExplanation
 from textfsmgen.libs.text import dedent_and_strip
 
+
 def test_basic():
     expected = dedent_and_strip(r"""
         +------------------------------------------+
@@ -46,7 +47,7 @@ def test_basic():
         Produces:
             [True, True]
     """)
-    node = SnippetExplanation("word(var_v1)",test_samples=["dummy", "other_dummy"])
+    node = SnippetExplanation("word(var_v1)", test_samples=["dummy", "other_dummy"])
     assert node.explanation == expected
 
 
@@ -89,8 +90,7 @@ def test_with_optional():
             [True, True]
     """)
     node = SnippetExplanation(
-        "optional_mixed_words(var_v1)",
-        test_samples=["dummy", "today is good day."]
+        "optional_mixed_words(var_v1)", test_samples=["dummy", "today is good day."]
     )
     assert node.explanation == expected
 
@@ -186,15 +186,19 @@ def test_failure_incorrect_list_of_data():
             [True, True, False]
     """)
     node = SnippetExplanation(
-        "words(var_v3, or_empty)",
-        test_samples=["dummy", "", "Connection* 10:"]
+        "words(var_v3, or_empty)", test_samples=["dummy", "", "Connection* 10:"]
     )
     assert node.explanation == expected
 
 
 def test_failure_because_of_keyword_token():
     expected = "Provided snippet is empty.  Cannot explain."
-    node = SnippetExplanation("", test_samples=["dummy", ])
+    node = SnippetExplanation(
+        "",
+        test_samples=[
+            "dummy",
+        ],
+    )
     assert node.explanation == expected
 
 
@@ -205,7 +209,12 @@ def test_failure_undefined_keyword():
         +------------------------------------------+
         Undefined 'dummy_keyword' keyword.  Request technical support for feature extension.
     """)
-    node = SnippetExplanation("dummy_keyword(var_v0)", test_samples=["dummy", ])
+    node = SnippetExplanation(
+        "dummy_keyword(var_v0)",
+        test_samples=[
+            "dummy",
+        ],
+    )
     assert node.explanation == expected
 
 
@@ -234,5 +243,10 @@ def test_failure_invalid_keyword_syntax():
           3. one_to_three_words(var_v2)
              Matches one to three whitespace‑separated words and captures "v2".
     """)
-    node = SnippetExplanation("word(var_v0", test_samples=["dummy", ])
+    node = SnippetExplanation(
+        "word(var_v0",
+        test_samples=[
+            "dummy",
+        ],
+    )
     assert node.explanation.strip() == expected

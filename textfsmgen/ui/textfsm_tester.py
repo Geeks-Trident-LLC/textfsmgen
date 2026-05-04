@@ -31,7 +31,7 @@ from textfsmgen.ui.common import (
     clear_text,
     set_text,
     extract_text,
-    insert_text
+    insert_text,
 )
 
 window_width = 1100 if ui.is_macos else 860 if ui.is_linux else 720
@@ -53,9 +53,15 @@ def show_dialog(app):
     paned_window = ui.PanedWindow(dialog, orient="vertical")
     paned_window.pack(fill="both", expand=True, padx=2, pady=2)
 
-    template_area = create_textarea_frame(app, paned_window, name="template_area",)
+    template_area = create_textarea_frame(
+        app,
+        paned_window,
+        name="template_area",
+    )
     test_data_area = create_textarea_frame(app, paned_window, name="test_data_area")
-    result_area = create_textarea_frame(app, paned_window, name="result_area", readonly=True)
+    result_area = create_textarea_frame(
+        app, paned_window, name="result_area", readonly=True
+    )
 
     control_area = build_controls_frame(app, paned_window)
     control_area.grid_propagate(False)
@@ -80,20 +86,35 @@ def create_window(parent: Optional[Union[ui.Tk, ui.Toplevel]]):
 
     if parent:
         center_window(
-            parent, window, window_width, window_height,
-            x_resizable=True, y_resizable=True
+            parent,
+            window,
+            window_width,
+            window_height,
+            x_resizable=True,
+            y_resizable=True,
         )
 
     return window
 
 
 def build_controls_frame(app, parent):
-    frame = ui.Frame(parent, width=600, height=32 if ui.is_windows else 38, relief="ridge")
+    frame = ui.Frame(
+        parent, width=600, height=32 if ui.is_windows else 38, relief="ridge"
+    )
     frame.grid(row=0, column=0, padx=4, pady=4, sticky="ew")
 
     labels = [
-        "test", "tabular", "SEPARATOR",
-        "sync", "open", "save", "copy", "paste", "reset", "close", "help",
+        "test",
+        "tabular",
+        "SEPARATOR",
+        "sync",
+        "open",
+        "save",
+        "copy",
+        "paste",
+        "reset",
+        "close",
+        "help",
     ]
 
     mapping = {
@@ -101,11 +122,11 @@ def build_controls_frame(app, parent):
         "sync": lambda: perform_sync_action(app),
         "open": lambda: perform_open_action(app),
         "save": lambda: perform_save_action(app),
-        "copy": lambda : perform_copy_action(app),
-        "paste": lambda : perform_paste_action(app),
+        "copy": lambda: perform_copy_action(app),
+        "paste": lambda: perform_paste_action(app),
         "reset": lambda: perform_reset_action(app),
         "close": lambda: sync_dialog_state_on_close(app),
-        "help": lambda : perform_help_action(app),
+        "help": lambda: perform_help_action(app),
     }
 
     btn_width = 6 if ui.is_macos else 7 if ui.is_linux else 8
@@ -118,22 +139,25 @@ def build_controls_frame(app, parent):
 
         if label == "tabular":
             checkbox = common.TriStateCheckBox(
-                frame, label=label.title(),
+                frame,
+                label=label.title(),
                 state_var=app.tools.tester.checkbox_state_var,
                 shared_var=app.tools.tester.output_flag,
                 width=18,
             )
-            checkbox.grid(row=0, column=position.next(), sticky="nswe", padx=(2, 2), pady=4)
+            checkbox.grid(
+                row=0, column=position.next(), sticky="nswe", padx=(2, 2), pady=4
+            )
             if ui.is_linux:
                 checkbox.configure(anchor="w", justify="left")
             checkbox.configure(
-                command=lambda widget=checkbox: cycle_tristate_checkbox(widget, app)    # noqa
+                command=lambda widget=checkbox: cycle_tristate_checkbox(widget, app)  # noqa
             )
             continue
 
         kwargs = {"width": btn_width, "command": mapping.get(label)}
         button = ui.Button(frame, text=label.title(), **kwargs)
-        button.grid(row=0, column=position.next(), sticky='nswe', padx=1, pady=4)
+        button.grid(row=0, column=position.next(), sticky="nswe", padx=1, pady=4)
 
     return frame
 
@@ -189,14 +213,14 @@ def perform_test_action(app):
     if not template_text:
         show_message_dialog(
             title="Test Action - Empty Template",
-            warning="Cannot run test with an empty TextFSM template."
+            warning="Cannot run test with an empty TextFSM template.",
         )
         return
 
     if not test_data_text:
         proceed = show_message_dialog(
             title="Test Action - Empty Test Data",
-            yesno="Test data is empty. Continue anyway?"
+            yesno="Test data is empty. Continue anyway?",
         )
         if not proceed:
             return
@@ -262,7 +286,7 @@ def perform_save_action(app):
     if active not in valid_areas:
         show_message_dialog(
             title="Save Action — Ambiguous Selection",
-            warning="A save target is required. Choose template, test data, or result area."
+            warning="A save target is required. Choose template, test data, or result area.",
         )
         return
 
@@ -272,7 +296,7 @@ def perform_save_action(app):
         if not template_text:
             show_message_dialog(
                 title="Save Action — Empty Template",
-                warning="Cannot save because the TextFSM template is empty."
+                warning="Cannot save because the TextFSM template is empty.",
             )
             return
 
@@ -293,7 +317,7 @@ def perform_save_action(app):
         if not test_data:
             show_message_dialog(
                 title="Save Action — Empty Test Data",
-                warning="Cannot save because the test data is empty."
+                warning="Cannot save because the test data is empty.",
             )
             return
 
@@ -314,7 +338,7 @@ def perform_save_action(app):
         if not result_text:
             show_message_dialog(
                 title="Save Action — No Test Result",
-                warning="Cannot save because the test result is empty."
+                warning="Cannot save because the test result is empty.",
             )
             return
 
@@ -354,7 +378,11 @@ def perform_copy_action(app):
     for widget in widgets:
         if widget is prev:
             widget.update_idletasks()
-            content = widget.selection_get() if widget.tag_ranges("sel") else extract_text(widget)
+            content = (
+                widget.selection_get()
+                if widget.tag_ranges("sel")
+                else extract_text(widget)
+            )
 
             if not content:
                 show_message_dialog(
@@ -371,7 +399,7 @@ def perform_copy_action(app):
 
     show_message_dialog(
         title="Copy Action — Ambiguous Selection",
-        info="A copy target is required. Choose template, test data, or result area."
+        info="A copy target is required. Choose template, test data, or result area.",
     )
 
 
@@ -385,7 +413,8 @@ def perform_paste_action(app):
             title="Clipboard Empty",
             info=(
                 "There is no text available to paste from the clipboard.\n"
-                + "-" * 70 + "\n"
+                + "-" * 70
+                + "\n"
                 f"{type(ex).__name__}: {ex}"
             ),
         )
@@ -412,7 +441,7 @@ def perform_paste_action(app):
     # --- No valid target ----------------------------------------------------
     show_message_dialog(
         title="Paste Action — Ambiguous Selection",
-        info="Please choose the specific editable area you want to paste."
+        info="Please choose the specific editable area you want to paste.",
     )
 
 
@@ -517,10 +546,10 @@ def cycle_tristate_checkbox(widget, app):
 
     states = (
         (False, "Tabular"),
-        (True,  "Tabular"),
-        (True,  "Tabular with Index"),
-        (True,  "JSON"),
-        (True,  "YAML"),
+        (True, "Tabular"),
+        (True, "Tabular with Index"),
+        (True, "JSON"),
+        (True, "YAML"),
     )
 
     is_checked, label = states[widget.state_index]

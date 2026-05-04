@@ -29,4 +29,3 @@ def test():
     translator = TabularTranslator(text, column_widths="10, 15,")
     snippet = translator.to_snippet()
     assert snippet == exp_snippet
-

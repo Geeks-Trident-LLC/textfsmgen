@@ -6,7 +6,7 @@ Provides category definitions and grouping utilities for grammar patterns
 used in the TextFSM Generator framework. This module centralizes the
 classification of grammar pattern categories, ensuring consistent handling
 across parsing, translation, and validation workflows.
-"""     # noqa
+"""  # noqa
 
 import re
 from typing import Optional, Union
@@ -21,14 +21,14 @@ from textfsmgen.engine.line import LineData
 from textfsmgen.exceptions import raise_runtime_error
 
 from textfsmgen.engine.common import (
-get_line_position_by,
-get_fixed_line_snippet,
-sanitize_identifier,
-apply_replacements
+    get_line_position_by,
+    get_fixed_line_snippet,
+    sanitize_identifier,
+    apply_replacements,
 )
 
 
-PATTERN_CRNL = r'\r?\n|\r'
+PATTERN_CRNL = r"\r?\n|\r"
 
 
 class VarRegistry:
@@ -67,7 +67,9 @@ class VarRegistry:
 
         return False
 
-    def record_duplicate_group(self, base_name: str, value: str, existing_names: list[str]) -> None:
+    def record_duplicate_group(
+        self, base_name: str, value: str, existing_names: list[str]
+    ) -> None:
         """Store a duplicate-name group, including the base name and any existing variants."""
         group = {base_name: value}
         for name in existing_names:
@@ -89,8 +91,11 @@ class VarRegistry:
         if re.match(r"[0-9]", var_txt):
             var_name = f"var_{var_name}"
 
-        exists = [name for name in self._registry.keys() if
-                  re.fullmatch(f"{var_name}(_[0-9]+)?", name)]
+        exists = [
+            name
+            for name in self._registry.keys()
+            if re.fullmatch(f"{var_name}(_[0-9]+)?", name)
+        ]
 
         # First occurrence of this base name
         if not exists:
@@ -171,7 +176,8 @@ class RightDataNode(LineData):
         self.is_duplicate_var = VAR_REGISTRY.has_equivalent_duplicate(self.var_name)
 
     @property
-    def is_empty(self) -> bool: return self.data == ""
+    def is_empty(self) -> bool:
+        return self.data == ""
 
     def to_snippet(self):
         if self.data:
@@ -190,6 +196,7 @@ class CategoryLineTranslator(LineData):
     Represents a category pattern for parsing a line of text into
     left data, separator, and right data components.
     """
+
     def __init__(self, line: str, count: int = 1, separator: str = ":"):
         super().__init__(line)
 
@@ -206,10 +213,12 @@ class CategoryLineTranslator(LineData):
 
         self.process()
 
-    def __bool__(self) -> bool: return True if self._lst else False
+    def __bool__(self) -> bool:
+        return True if self._lst else False
 
     @property
-    def parsed(self) -> bool: return bool(self)
+    def parsed(self) -> bool:
+        return bool(self)
 
     @property
     def actual_count(self):
@@ -256,15 +265,17 @@ class CategoryLineTranslator(LineData):
         for item in self._lst:
             snippet = item.to_snippet()
             if (
-                isinstance(item, SpacerNode) and
-                isinstance(prev_item, RightDataNode) and
-                prev_item.to_snippet().endswith("wss()")
+                isinstance(item, SpacerNode)
+                and isinstance(prev_item, RightDataNode)
+                and prev_item.to_snippet().endswith("wss()")
             ):
                 continue
 
             if (
-                isinstance(item, RightDataNode) and
-                item.is_empty and prev_item and not prev_item.is_trailing
+                isinstance(item, RightDataNode)
+                and item.is_empty
+                and prev_item
+                and not prev_item.is_trailing
             ):
                 snippet = f"optional_spaces(){snippet}"
             result.append(snippet)
@@ -304,8 +315,8 @@ class CategoryLineTranslator(LineData):
         Extract the word at the given character position.
         """
 
-        most_right_pos = self.scan_to_boundary(char_pos, direction='right')
-        most_left_pos = self.scan_to_boundary(char_pos, direction='left')
+        most_right_pos = self.scan_to_boundary(char_pos, direction="right")
+        most_left_pos = self.scan_to_boundary(char_pos, direction="left")
 
         word = self.data[most_left_pos:most_right_pos]
         return word
@@ -327,22 +338,20 @@ class CategoryLineTranslator(LineData):
         """Ensure the line contains a valid category pattern."""
         if self.separator not in self.data:
             raise_runtime_error(
-                obj=self,
-                msg=f"Missing separator '{self.separator}' in data."
+                obj=self, msg=f"Missing separator '{self.separator}' in data."
             )
 
         index = self.data.index(self.separator)
         if index == 0:
             raise_runtime_error(
-                obj=self,
-                msg=f"No variable text before separator '{self.separator}'."
+                obj=self, msg=f"No variable text before separator '{self.separator}'."
             )
 
         chk_word = self.word_at(index)
         if self.is_time_ipv6_or_mac_format(chk_word):
             raise_runtime_error(
                 obj=self,
-                msg=f"Unsupported variable text format detected: '{chk_word}'."
+                msg=f"Unsupported variable text format detected: '{chk_word}'.",
             )
 
     @classmethod
@@ -356,9 +365,9 @@ class CategoryLineTranslator(LineData):
         is_time = bool(re.search(r"\d+(?::\d+)+", data))
         is_mac_addr = bool(re.match(mac_pat, data, re.I))
         is_ipv6 = (
-                data.endswith("::")
-                or data.startswith("::")
-                or bool(re.match(ipv6_pat, data, re.I))
+            data.endswith("::")
+            or data.startswith("::")
+            or bool(re.match(ipv6_pat, data, re.I))
         )
 
         return is_time or is_mac_addr or is_ipv6
@@ -373,7 +382,7 @@ class CategoryLineTranslator(LineData):
         """
         Attempt to extract a value and remaining string from right data.
         """
-        mult_space_pat = '  +'
+        mult_space_pat = "  +"
         spaces_pat = PATTERN.SPACES
         double_spaces = "  "
 
@@ -383,32 +392,30 @@ class CategoryLineTranslator(LineData):
 
         try:
             # Attempt recursive parsing
-            node = self(self.right_data, count=next_count,
-                        separator=self.separator)
+            node = self(self.right_data, count=next_count, separator=self.separator)
             left_data = node.left_data
 
             if left_data.strip() and re.search(r"\s{2,}", left_data):
                 parts = utils.split_by_matches(left_data, r"\s{2,}")
                 val = "".join(parts[:-1])
-                return val, self.right_data[len(val):]
+                return val, self.right_data[len(val) :]
 
             if left_data.strip() and re.search(r"\s+", left_data):
                 parts = utils.split_by_matches(left_data, r"\s+")
                 val = "".join(parts[:-1])
-                return val, self.right_data[len(val):]
+                return val, self.right_data[len(val) :]
 
             return "", self.right_data
 
-        except Exception:     # noqa
+        except Exception:  # noqa
             # Fallback parsing logic
             items = re.split(spaces_pat, self.right_data)
             parts: list[str] = []
 
             for item in items:
                 is_separator = item == self.separator
-                is_valid = (
-                        not self.is_time_ipv6_or_mac_format(item)
-                        and item.endswith(self.separator)
+                is_valid = not self.is_time_ipv6_or_mac_format(item) and item.endswith(
+                    self.separator
                 )
                 parts.append(TextPattern(item))
                 if is_separator and is_valid:
@@ -417,7 +424,7 @@ class CategoryLineTranslator(LineData):
             pattern = spaces_pat.join(parts)
             match = re.search(pattern, self.right_data)
             left_chunk = match.group() if match else ""
-            remaining = self.right_data[len(left_chunk):]
+            remaining = self.right_data[len(left_chunk) :]
 
             if double_spaces in left_chunk:
                 first, last = re.split(mult_space_pat, left_chunk, maxsplit=1)
@@ -433,7 +440,7 @@ class CategoryLineTranslator(LineData):
             pattern = spaces_pat.join(parts)
             match = re.search(pattern, self.right_data)
             left_chunk = match.group() if match else ""
-            remaining = self.right_data[len(left_chunk):]
+            remaining = self.right_data[len(left_chunk) :]
             return left_chunk, remaining
 
     def process(self) -> None:
@@ -465,7 +472,7 @@ class CategoryLineTranslator(LineData):
                 if other_node.parsed:
                     self._lst.append(SpacerNode())
                     self._lst.append(other_node)
-            except Exception:   # noqa
+            except Exception:  # noqa
                 return
 
 
@@ -516,7 +523,8 @@ class CategoryLinesTranslator:
         """
         return any(isinstance(item, CategoryLineTranslator) for item in self._lst)
 
-    def __bool__(self) -> bool: return True if self._lst else False
+    def __bool__(self) -> bool:
+        return True if self._lst else False
 
     def process(self) -> None:
         """
@@ -528,8 +536,10 @@ class CategoryLinesTranslator:
         if self.start_index and self.end_index and self.start_index >= self.end_index:
             self.end_index = None
 
-        start_index = self.start_index + 1 if self.start_index is not None else self.start_index
-        lines = self.lines[start_index:self.end_index]
+        start_index = (
+            self.start_index + 1 if self.start_index is not None else self.start_index
+        )
+        lines = self.lines[start_index : self.end_index]
 
         for index, line in enumerate(lines):
             try:
@@ -559,7 +569,9 @@ class CategoryLinesTranslator:
                 is_duplicated = False if variants else True
                 for variant in variants:
                     for other in self._lst[:index]:
-                        if type(other) is type(node) and other.contains_var_name(variant):
+                        if type(other) is type(node) and other.contains_var_name(
+                            variant
+                        ):
                             is_duplicated = True
                             break
                 if is_duplicated:

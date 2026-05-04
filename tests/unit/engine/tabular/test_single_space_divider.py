@@ -9,7 +9,6 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/unit/engine/tabular/test_single_space_divider.py
 """
 
-
 from textwrap import dedent
 
 from textfsmgen.engine.tabular import VarColumnTabularTranslator
@@ -32,13 +31,15 @@ def test_parses_rows_with_full_cells_per_column():
     """).strip()
 
     expected_result = [
-        {'lastwritetime': '9/1/2021 6:13:50 AM', 'name': 'reference'},
-        {'lastwritetime': '10/5/2021 9:13:50 PM', 'name': 'dsc'},
-        {'lastwritetime': '11/2/2021 11:58:45 PM', 'name': 'README.md'},
-        {'lastwritetime': '12/16/2021 12:30:59 PM', 'name': 'CONTRIBUTING.md'}
+        {"lastwritetime": "9/1/2021 6:13:50 AM", "name": "reference"},
+        {"lastwritetime": "10/5/2021 9:13:50 PM", "name": "dsc"},
+        {"lastwritetime": "11/2/2021 11:58:45 PM", "name": "README.md"},
+        {"lastwritetime": "12/16/2021 12:30:59 PM", "name": "CONTRIBUTING.md"},
     ]
 
-    translator = VarColumnTabularTranslator(test_data, column_divider=' ', column_count=2)
+    translator = VarColumnTabularTranslator(
+        test_data, column_divider=" ", column_count=2
+    )
     table = translator.parse_table()
     assert table
 
@@ -63,11 +64,13 @@ def test_parses_row_with_empty_cell():
     """).strip()
 
     expected_result = [
-        {'fruits': 'orange', 'meat': 'pork', 'drinks': 'water'},
-        {'fruits': 'peach', 'meat': '', 'drinks': 'pepsi soda'}
+        {"fruits": "orange", "meat": "pork", "drinks": "water"},
+        {"fruits": "peach", "meat": "", "drinks": "pepsi soda"},
     ]
 
-    translator = VarColumnTabularTranslator(test_data, column_divider=' ', column_count=3)
+    translator = VarColumnTabularTranslator(
+        test_data, column_divider=" ", column_count=3
+    )
     table = translator.parse_table()
     assert table
 

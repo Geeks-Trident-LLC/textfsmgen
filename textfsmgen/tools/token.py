@@ -5,7 +5,6 @@ textfsmgen.tools.snippet
 Helpers for building and manipulating snippet objects used during parsing.
 """
 
-
 import re
 
 from textfsmgen.libs.pattern import PATTERN
@@ -48,10 +47,12 @@ class SnippetBase:
         self.normalize()
         self.parse()
 
-    def __bool__(self): return self._parsed
+    def __bool__(self):
+        return self._parsed
 
     @property
-    def explanation(self): return self._explanation
+    def explanation(self):
+        return self._explanation
 
     @property
     def raw(self):
@@ -59,26 +60,32 @@ class SnippetBase:
         return self._raw
 
     @property
-    def data_list(self): return self._data_list
+    def data_list(self):
+        return self._data_list
 
     @property
-    def has_data(self): return any(self._data_list)
+    def has_data(self):
+        return any(self._data_list)
 
     @property
-    def leading_list(self): return self._leading_list
+    def leading_list(self):
+        return self._leading_list
 
     @property
-    def is_leading(self): return any(self._leading_list)
+    def is_leading(self):
+        return any(self._leading_list)
 
     @property
     def is_ws_leading(self):
         return any(bool(re.search(r"[^ \r\n]", i)) for i in self._leading_list)
 
     @property
-    def trailing_list(self): return self._trailing_list
+    def trailing_list(self):
+        return self._trailing_list
 
     @property
-    def is_trailing(self): return any(self._trailing_list)
+    def is_trailing(self):
+        return any(self._trailing_list)
 
     @property
     def is_ws_trailing(self):
@@ -103,10 +110,12 @@ class SnippetBase:
         return base if all(self._trailing_list) else f"optional_{base}"
 
     @property
-    def keyword(self): return self._keyword
+    def keyword(self):
+        return self._keyword
 
     @property
-    def bare_snippet(self): return self._bare_snippet
+    def bare_snippet(self):
+        return self._bare_snippet
 
     @property
     def snippet(self):
@@ -190,9 +199,7 @@ class WhitespaceSnippet(SnippetBase):
 
         self._allow_empty = any(item == "" for item in self._items)
 
-        self._parsed = all(
-            re.fullmatch(r"\s+", item) for item in self._items if item
-        )
+        self._parsed = all(re.fullmatch(r"\s+", item) for item in self._items if item)
 
 
 class TokenSnippet(SnippetBase):
@@ -215,12 +222,20 @@ class TokenSnippet(SnippetBase):
         # leading_explanation, trailing_explanation = "", ""
         if re.fullmatch(r"\w+[(][)]", self.leading_snippet):
             leading_explanation = self.explain(self.leading_snippet, self.leading_list)
-            if "Operation: " in leading_explanation and leading_explanation not in explanation:
+            if (
+                "Operation: " in leading_explanation
+                and leading_explanation not in explanation
+            ):
                 explanation = f"{leading_explanation}\n\n{sep}\n\n{explanation}"
 
         if re.fullmatch(r"\w+[(][)]", self.trailing_snippet):
-            trailing_explanation = self.explain(self.trailing_snippet, self.trailing_list)
-            if "Operation: " in trailing_explanation and trailing_explanation not in explanation:
+            trailing_explanation = self.explain(
+                self.trailing_snippet, self.trailing_list
+            )
+            if (
+                "Operation: " in trailing_explanation
+                and trailing_explanation not in explanation
+            ):
                 explanation = f"{explanation}\n\n{sep}\n\n{trailing_explanation}"
 
         self._explanation = explanation
@@ -254,16 +269,20 @@ class LineSnippet:
 
         self.parse_tokens()
 
-    def __bool__(self): return self._parsed
+    def __bool__(self):
+        return self._parsed
 
     @property
-    def raw(self): return self._raw
+    def raw(self):
+        return self._raw
 
     @property
-    def data(self): return self._raw.strip()
+    def data(self):
+        return self._raw.strip()
 
     @property
-    def explanation(self): return self._explanation
+    def explanation(self):
+        return self._explanation
 
     @property
     def snippet(self):
@@ -309,7 +328,7 @@ class LineSnippet:
         puncts = match.group("puncts")
         unique = set(puncts)
         if len(unique) == 1:
-            return puncts, data[len(puncts):]
+            return puncts, data[len(puncts) :]
         return puncts[0], data[1:]
 
     def _split_trailing_notation(self, data):
@@ -334,7 +353,6 @@ class LineSnippet:
 
         # Mixed punctuation: keep only the last char as notation
         return data[:-1], puncts[-1]
-
 
     def _split_by_divider(self, data):
         """Split text using the configured divider, preserving non-empty parts."""
@@ -377,8 +395,9 @@ class LineSnippet:
                 var_name = f"v{index}" if self._with_var else ""
                 index += 1
 
-                snippet = TokenSnippet(segment, var_name=var_name,
-                                       generic=self._generic)
+                snippet = TokenSnippet(
+                    segment, var_name=var_name, generic=self._generic
+                )
                 self._parsed = bool(snippet)
                 tokens.append(snippet)
 
@@ -388,8 +407,7 @@ class LineSnippet:
             var_name = f"v{index}" if self._with_var else ""
             index += 1
 
-            core_token = TokenSnippet(core, var_name=var_name,
-                                      generic=self._generic)
+            core_token = TokenSnippet(core, var_name=var_name, generic=self._generic)
             self._parsed = bool(core_token)
             tokens.append(core_token)
 
@@ -400,8 +418,9 @@ class LineSnippet:
                     var_name = f"v{index}" if self._with_var else ""
                     index += 1
 
-                    trail_token = TokenSnippet(trail, var_name=var_name,
-                                               generic=self._generic)
+                    trail_token = TokenSnippet(
+                        trail, var_name=var_name, generic=self._generic
+                    )
                     self._parsed = bool(trail_token)
                     tokens.append(trail_token)
 
@@ -422,6 +441,6 @@ def create_pattern_statement(snippet: str, pattern: str) -> str:
         "# Equivalent snippet conversion:",
         snippet_comment,
         border,
-        f"pattern = r{enclose_string(pattern)}"
+        f"pattern = r{enclose_string(pattern)}",
     ]
     return "\n".join(lines)

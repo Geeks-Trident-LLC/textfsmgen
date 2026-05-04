@@ -21,35 +21,39 @@ from textfsmgen.exceptions import raise_runtime_error
 
 def require_return_translator(method):
     """Wrap a one‑argument method and raise an error if it returns None."""
+
     def wrapper(self, arg):
         if not isinstance(self, PatternTranslator):
             raise_runtime_error(
                 obj="InvalidPatternTranslatorSubclass",
-                msg=f"Unexpected translator type: {type(self).__name__}"
+                msg=f"Unexpected translator type: {type(self).__name__}",
             )
 
         result = method(self, arg)
         if result is None:
-
             raise_runtime_error(
-                obj=repr(arg.data) if isinstance(arg, PatternTranslator) else "NotImplementTranslator",
+                obj=repr(arg.data)
+                if isinstance(arg, PatternTranslator)
+                else "NotImplementTranslator",
                 msg=(
                     f"Recommended pattern not implemented for {type(self).__name__} "
                     f"with data pair ({self.data!r}, {arg!r})"
-                )
+                ),
             )
 
         return result
+
     return wrapper
 
 
 def require_same_translator_type(method):
     """Ensure both arguments are PatternTranslator instances of compatible type."""
+
     def wrapper(self, arg):
         if not isinstance(self, PatternTranslator):
             raise_runtime_error(
                 obj="InvalidPatternTranslatorSubclass",
-                msg=f"Unexpected translator type: {type(self).__name__}"
+                msg=f"Unexpected translator type: {type(self).__name__}",
             )
 
         if not isinstance(arg, PatternTranslator):
@@ -58,9 +62,10 @@ def require_same_translator_type(method):
                 msg=(
                     f"Recommended pattern not implemented for {type(self).__name__} "
                     f"with data pair ({self.data!r}, {arg!r})"
-                )
+                ),
             )
         return method(self, arg)
+
     return wrapper
 
 
@@ -70,14 +75,26 @@ class PatternTranslator:
     generation, providing utilities to normalize, store, and manipulate
     regex-compatible string patterns.
     """
-    def __init__(self, data, *other, name='',
-                 defined_pattern='', defined_patterns=None, ref_names=None,
-                 singular_name='', singular_pattern='', root_name=''):
+
+    def __init__(
+        self,
+        data,
+        *other,
+        name="",
+        defined_pattern="",
+        defined_patterns=None,
+        ref_names=None,
+        singular_name="",
+        singular_pattern="",
+        root_name="",
+    ):
         self.data = str(data)
         self.lst_of_other_data = list(other)
         self.lst_of_all_data = [self.data] + self.lst_of_other_data
         self.defined_pattern = str(defined_pattern)
-        self.defined_patterns = defined_patterns if isinstance(defined_patterns, list) else []
+        self.defined_patterns = (
+            defined_patterns if isinstance(defined_patterns, list) else []
+        )
         self.ref_names = ref_names if isinstance(ref_names, (list, tuple)) else []
         self.singular_name = singular_name
         self.singular_pattern = singular_pattern
@@ -86,12 +103,15 @@ class PatternTranslator:
         self._pattern = ""
         self.process()
 
-    def __bool__(self): return self._pattern != ""
+    def __bool__(self):
+        return self._pattern != ""
 
-    def __call__(self, *args, **kwargs): return self.__class__(*args, **kwargs)
+    def __call__(self, *args, **kwargs):
+        return self.__class__(*args, **kwargs)
 
     @property
-    def translated(self): return self._pattern != ""
+    def translated(self):
+        return self._pattern != ""
 
     @property
     def actual_name(self):
@@ -115,7 +135,7 @@ class PatternTranslator:
         tbl = dict(
             non_ws=PATTERN.NON_WS,
             non_wss=PATTERN.NON_WSS,
-            non_wss_group=PATTERN.NON_WSS_ITEMS
+            non_wss_group=PATTERN.NON_WSS_ITEMS,
         )
         root_pattern = tbl.get(self.root_name, PATTERN.NON_WSS_ITEMS)
         return root_pattern
@@ -145,48 +165,66 @@ class PatternTranslator:
         is_matched = all(re.match(pat, data) for data in self.lst_of_all_data)
         return is_matched
 
-    def is_digit(self) -> bool: return self.name == "digit"
+    def is_digit(self) -> bool:
+        return self.name == "digit"
 
-    def is_digits(self) -> bool: return self.name == "digits"
+    def is_digits(self) -> bool:
+        return self.name == "digits"
 
-    def is_number(self) -> bool: return self.name == "number"
+    def is_number(self) -> bool:
+        return self.name == "number"
 
-    def is_mixed_number(self) -> bool: return self.name == "mixed_number"
+    def is_mixed_number(self) -> bool:
+        return self.name == "mixed_number"
 
-    def is_letter(self) -> bool: return self.name == "letter"
+    def is_letter(self) -> bool:
+        return self.name == "letter"
 
-    def is_letters(self) -> bool: return self.name == "letters"
+    def is_letters(self) -> bool:
+        return self.name == "letters"
 
-    def is_alnum(self) -> bool: return self.name == "alnum"
+    def is_alnum(self) -> bool:
+        return self.name == "alnum"
 
-    def is_punct(self) -> bool: return self.name == "punct"
+    def is_punct(self) -> bool:
+        return self.name == "punct"
 
-    def is_puncts(self) -> bool: return self.name == "puncts"
+    def is_puncts(self) -> bool:
+        return self.name == "puncts"
 
-    def is_puncts_group(self) -> bool: return self.name == "puncts_group"
+    def is_puncts_group(self) -> bool:
+        return self.name == "puncts_group"
 
-    def is_graph(self) -> bool: return self.name == "graph"
+    def is_graph(self) -> bool:
+        return self.name == "graph"
 
-    def is_word(self) -> bool: return self.name == "word"
+    def is_word(self) -> bool:
+        return self.name == "word"
 
-    def is_words(self) -> bool: return self.name == "words"
+    def is_words(self) -> bool:
+        return self.name == "words"
 
-    def is_mixed_word(self) -> bool: return self.name == "mixed_word"
+    def is_mixed_word(self) -> bool:
+        return self.name == "mixed_word"
 
-    def is_mixed_words(self) -> bool: return self.name == "mixed_words"
+    def is_mixed_words(self) -> bool:
+        return self.name == "mixed_words"
 
-    def is_non_ws(self) -> bool: return self.name == "non_ws"
+    def is_non_ws(self) -> bool:
+        return self.name == "non_ws"
 
-    def is_non_wss(self) -> bool: return self.name == "non_wss"
+    def is_non_wss(self) -> bool:
+        return self.name == "non_wss"
 
-    def is_non_wss_group(self) -> bool: return self.name == "non_wss_group"
+    def is_non_wss_group(self) -> bool:
+        return self.name == "non_wss_group"
 
     def is_group(self):
         chk = (
-                self.is_puncts_group()
-                or self.is_words()
-                or self.is_mixed_words()
-                or self.is_non_wss_group()
+            self.is_puncts_group()
+            or self.is_words()
+            or self.is_mixed_words()
+            or self.is_non_wss_group()
         )
         return chk
 
@@ -194,8 +232,7 @@ class PatternTranslator:
         if not self.is_group():
             return False
 
-        return any("  " in data.strip() for data in
-                   self.lst_of_all_data)
+        return any("  " in data.strip() for data in self.lst_of_all_data)
 
     def is_numeric(self) -> bool:
         return all(data.isnumeric() for data in self.lst_of_all_data)
@@ -207,7 +244,9 @@ class PatternTranslator:
         return all(not data.isalpha() for data in self.lst_of_all_data)
 
     def is_punctuation(self) -> bool:
-        return all(data.isprintable() and not data.isalnum() for data in self.lst_of_all_data)
+        return all(
+            data.isprintable() and not data.isalnum() for data in self.lst_of_all_data
+        )
 
     def is_printable(self) -> bool:
         return all(data.isprintable() for data in self.lst_of_all_data)
@@ -215,13 +254,17 @@ class PatternTranslator:
     def is_subset_of(self, other) -> bool:
         cls_name = datatype.get_class_name(self)
         other_cls_name = datatype.get_class_name(other)
-        error = f"Subset verification not implemented for ({cls_name}, {other_cls_name})"
+        error = (
+            f"Subset verification not implemented for ({cls_name}, {other_cls_name})"
+        )
         raise NotImplementedError(error)
 
     def is_superset_of(self, other) -> bool:
         cls_name = datatype.get_class_name(self)
         other_cls_name = datatype.get_class_name(other)
-        error = f"Superset verification not implemented for ({cls_name}, {other_cls_name})"
+        error = (
+            f"Superset verification not implemented for ({cls_name}, {other_cls_name})"
+        )
         raise NotImplementedError(error)
 
     def get_new_subset(self, other):
@@ -329,36 +372,25 @@ class PatternTranslator:
 
         return f"{min_c}_to_{max_c}_{self.singular_name}({var_txt})"
 
-
     @classmethod
     def do_factory_create(cls, data: str, *other, multiple=False):
         """Factory method to create a translator instance."""
         translator_pairs = [
             (DigitTranslator, DigitsTranslator),
             (DigitsTranslator, DigitsTranslator),
-
             (NumberTranslator, NumberTranslator),
-
             (LetterTranslator, WordTranslator),
             (LettersTranslator, WordTranslator),
-
             (AlnumTranslator, WordTranslator),
             (WordTranslator, WordTranslator),
-
             (PunctTranslator, PunctsTranslator),
             (PunctsTranslator, PunctsTranslator),
             (PunctsGroupTranslator, PunctsGroupTranslator),
-
             (GraphTranslator, NonWSSTranslator),
-
             (MixedNumberTranslator, MixedNumberTranslator),
-
             (MixedWordTranslator, MixedWordTranslator),
-
             (WordsTranslator, WordsTranslator),
-
             (MixedWordsTranslator, MixedWordsTranslator),
-
             (NonWSTranslator, NonWSSTranslator),
             (NonWSSTranslator, NonWSSTranslator),
             (NonWSSGroupTranslator, NonWSSGroupTranslator),
@@ -394,6 +426,7 @@ class DigitTranslator(PatternTranslator):
     """
     A translated pattern class specialized for single-digit inputs.
     """
+
     def __init__(self, data, *other):
         super().__init__(
             data,
@@ -409,19 +442,19 @@ class DigitTranslator(PatternTranslator):
         Check if this digit pattern is a subset of another pattern.
         """
         return (
-                other.is_digit()
-                or other.is_digits()
-                or other.is_number()
-                or other.is_mixed_number()
-                or other.is_alnum()
-                or other.is_graph()
-                or other.is_word()
-                or other.is_mixed_word()
-                or other.is_words()
-                or other.is_mixed_words()
-                or other.is_non_ws()
-                or other.is_non_wss()
-                or other.is_non_wss_group()
+            other.is_digit()
+            or other.is_digits()
+            or other.is_number()
+            or other.is_mixed_number()
+            or other.is_alnum()
+            or other.is_graph()
+            or other.is_word()
+            or other.is_mixed_word()
+            or other.is_words()
+            or other.is_mixed_words()
+            or other.is_non_ws()
+            or other.is_non_wss()
+            or other.is_non_wss_group()
         )
 
     @require_same_translator_type
@@ -460,13 +493,14 @@ class DigitsTranslator(PatternTranslator):
     """
     A translated pattern class specialized for multiple digit inputs.
     """
+
     def __init__(self, data, *other):
         super().__init__(
             data,
             *other,
             name="digits",
             defined_pattern=PATTERN.DIGITS,
-            root_name='non_wss'
+            root_name="non_wss",
         )
 
     @require_same_translator_type
@@ -475,15 +509,15 @@ class DigitsTranslator(PatternTranslator):
         Determine whether this digit pattern is a subset of another translated pattern.
         """
         return (
-                other.is_digits()
-                or other.is_number()
-                or other.is_mixed_number()
-                or other.is_word()
-                or other.is_mixed_word()
-                or other.is_words()
-                or other.is_mixed_words()
-                or other.is_non_wss()
-                or other.is_non_wss_group()
+            other.is_digits()
+            or other.is_number()
+            or other.is_mixed_number()
+            or other.is_word()
+            or other.is_mixed_word()
+            or other.is_words()
+            or other.is_mixed_words()
+            or other.is_non_wss()
+            or other.is_non_wss_group()
         )
 
     @require_same_translator_type
@@ -523,13 +557,14 @@ class NumberTranslator(PatternTranslator):
     """
     Specialized translated pattern for numeric inputs.
     """
+
     def __init__(self, data, *other):
         super().__init__(
             data,
             *other,
             name="number",
             defined_pattern=PATTERN.NUMBER,
-            root_name='non_wss'
+            root_name="non_wss",
         )
 
     @require_same_translator_type
@@ -538,12 +573,12 @@ class NumberTranslator(PatternTranslator):
         Determine whether this number pattern is a subset of another translated pattern.
         """
         return (
-                other.is_number()
-                or other.is_mixed_number()
-                or other.is_mixed_word()
-                or other.is_mixed_words()
-                or other.is_non_wss()
-                or other.is_non_wss_group()
+            other.is_number()
+            or other.is_mixed_number()
+            or other.is_mixed_word()
+            or other.is_mixed_words()
+            or other.is_non_wss()
+            or other.is_non_wss_group()
         )
 
     @require_same_translator_type
@@ -551,11 +586,7 @@ class NumberTranslator(PatternTranslator):
         """
         Determine whether this number pattern is a superset of another translated pattern.
         """
-        return (
-                other.is_digit()
-                or other.is_digits()
-                or other.is_number()
-        )
+        return other.is_digit() or other.is_digits() or other.is_number()
 
     @require_return_translator
     def recommend(self, other):
@@ -568,8 +599,13 @@ class NumberTranslator(PatternTranslator):
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        if (other.is_letter() or other.is_letters() or other.is_alnum()
-                or other.is_graph() or other.is_word()):
+        if (
+            other.is_letter()
+            or other.is_letters()
+            or other.is_alnum()
+            or other.is_graph()
+            or other.is_word()
+        ):
             return MixedWordTranslator(self.data, other.data)
 
         if other.is_words():
@@ -588,6 +624,7 @@ class MixedNumberTranslator(PatternTranslator):
     """
     Specialized translated pattern for mixed numeric inputs.
     """
+
     def __init__(self, data, *other):
         super().__init__(
             data,
@@ -603,11 +640,11 @@ class MixedNumberTranslator(PatternTranslator):
         Determine whether this mixed number pattern is a subset of another translated pattern.
         """
         return (
-                other.is_mixed_number()
-                or other.is_mixed_word()
-                or other.is_mixed_words()
-                or other.is_non_wss()
-                or other.is_non_wss_group()
+            other.is_mixed_number()
+            or other.is_mixed_word()
+            or other.is_mixed_words()
+            or other.is_non_wss()
+            or other.is_non_wss_group()
         )
 
     @require_same_translator_type
@@ -616,10 +653,10 @@ class MixedNumberTranslator(PatternTranslator):
         Determine whether this mixed number pattern is a superset of another translated pattern.
         """
         return (
-                other.is_digit()
-                or other.is_digits()
-                or other.is_number()
-                or other.is_mixed_number()
+            other.is_digit()
+            or other.is_digits()
+            or other.is_number()
+            or other.is_mixed_number()
         )
 
     @require_return_translator
@@ -633,8 +670,13 @@ class MixedNumberTranslator(PatternTranslator):
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        if (other.is_letter() or other.is_letters() or other.is_alnum()
-                or other.is_graph() or other.is_word()):
+        if (
+            other.is_letter()
+            or other.is_letters()
+            or other.is_alnum()
+            or other.is_graph()
+            or other.is_word()
+        ):
             return MixedWordTranslator(self.data, other.data)
 
         if other.is_words():
@@ -669,17 +711,17 @@ class LetterTranslator(PatternTranslator):
         Determine whether this letter pattern is a subset of another translated pattern.
         """
         return (
-                other.is_letter()
-                or other.is_letters()
-                or other.is_alnum()
-                or other.is_graph()
-                or other.is_word()
-                or other.is_words()
-                or other.is_mixed_word()
-                or other.is_mixed_words()
-                or other.is_non_ws()
-                or other.is_non_wss()
-                or other.is_non_wss_group()
+            other.is_letter()
+            or other.is_letters()
+            or other.is_alnum()
+            or other.is_graph()
+            or other.is_word()
+            or other.is_words()
+            or other.is_mixed_word()
+            or other.is_mixed_words()
+            or other.is_non_ws()
+            or other.is_non_wss()
+            or other.is_non_wss_group()
         )
 
     @require_same_translator_type
@@ -736,13 +778,13 @@ class LettersTranslator(PatternTranslator):
         Determine whether this letters pattern is a subset of another translated pattern.
         """
         return (
-                other.is_letters()
-                or other.is_word()
-                or other.is_words()
-                or other.is_mixed_word()
-                or other.is_mixed_words()
-                or other.is_non_wss()
-                or other.is_non_wss_group()
+            other.is_letters()
+            or other.is_word()
+            or other.is_words()
+            or other.is_mixed_word()
+            or other.is_mixed_words()
+            or other.is_non_wss()
+            or other.is_non_wss_group()
         )
 
     @require_same_translator_type
@@ -798,15 +840,15 @@ class AlnumTranslator(PatternTranslator):
         Determine whether this alnum pattern is a subset of another translated pattern.
         """
         return (
-                other.is_alnum()
-                or other.is_graph()
-                or other.is_word()
-                or other.is_words()
-                or other.is_mixed_word()
-                or other.is_mixed_words()
-                or other.is_non_ws()
-                or other.is_non_wss()
-                or other.is_non_wss_group()
+            other.is_alnum()
+            or other.is_graph()
+            or other.is_word()
+            or other.is_words()
+            or other.is_mixed_word()
+            or other.is_mixed_words()
+            or other.is_non_ws()
+            or other.is_non_wss()
+            or other.is_non_wss_group()
         )
 
     @require_same_translator_type
@@ -865,15 +907,15 @@ class PunctTranslator(PatternTranslator):
         Determine whether this punctuation pattern is a subset of another translated pattern.
         """
         return (
-                other.is_punct()
-                or other.is_graph()
-                or other.is_puncts()
-                or other.is_puncts_group()
-                or other.is_mixed_word()
-                or other.is_mixed_words()
-                or other.is_non_ws()
-                or other.is_non_wss()
-                or other.is_non_wss_group()
+            other.is_punct()
+            or other.is_graph()
+            or other.is_puncts()
+            or other.is_puncts_group()
+            or other.is_mixed_word()
+            or other.is_mixed_words()
+            or other.is_non_ws()
+            or other.is_non_wss()
+            or other.is_non_wss_group()
         )
 
     @require_same_translator_type
@@ -897,8 +939,13 @@ class PunctTranslator(PatternTranslator):
         if other.is_letter() or other.is_digit() or other.is_alnum():
             return GraphTranslator(self.data, other.data)
 
-        if (other.is_letters() or other.is_digits() or other.is_number()
-                or other.is_mixed_number() or other.is_word()):
+        if (
+            other.is_letters()
+            or other.is_digits()
+            or other.is_number()
+            or other.is_mixed_number()
+            or other.is_word()
+        ):
             return NonWSSTranslator(self.data, other.data)
 
         if other.is_words():
@@ -927,12 +974,12 @@ class PunctsTranslator(PatternTranslator):
         Determine whether this punctuation sequence is a subset of another translated pattern.
         """
         return (
-                other.is_puncts()
-                or other.is_puncts_group()
-                or other.is_mixed_word()
-                or other.is_mixed_words()
-                or other.is_non_wss()
-                or other.is_non_wss_group()
+            other.is_puncts()
+            or other.is_puncts_group()
+            or other.is_mixed_word()
+            or other.is_mixed_words()
+            or other.is_non_wss()
+            or other.is_non_wss_group()
         )
 
     @require_same_translator_type
@@ -953,10 +1000,18 @@ class PunctsTranslator(PatternTranslator):
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        if (other.is_letter() or other.is_digit() or other.is_alnum()
-                or other.is_graph() or other.is_letters() or other.is_digits()
-                or other.is_number() or other.is_mixed_number()
-                or other.is_word() or other.is_non_ws()):
+        if (
+            other.is_letter()
+            or other.is_digit()
+            or other.is_alnum()
+            or other.is_graph()
+            or other.is_letters()
+            or other.is_digits()
+            or other.is_number()
+            or other.is_mixed_number()
+            or other.is_word()
+            or other.is_non_ws()
+        ):
             return NonWSSTranslator(self.data, other.data)
 
         if other.is_words():
@@ -997,9 +1052,9 @@ class PunctsGroupTranslator(PatternTranslator):
         another translated pattern.
         """
         return (
-                other.is_puncts_group()
-                or other.is_mixed_words()
-                or other.is_non_wss_group()
+            other.is_puncts_group()
+            or other.is_mixed_words()
+            or other.is_non_wss_group()
         )
 
     @require_same_translator_type
@@ -1022,12 +1077,21 @@ class PunctsGroupTranslator(PatternTranslator):
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        if (other.is_letter() or other.is_digit() or other.is_alnum()
-                or other.is_graph() or other.is_letters() or other.is_digits()
-                or other.is_number() or other.is_mixed_number()
-                or other.is_word() or other.is_words()
-                or other.is_mixed_word() or other.is_non_ws()
-                or other.is_non_wss()):
+        if (
+            other.is_letter()
+            or other.is_digit()
+            or other.is_alnum()
+            or other.is_graph()
+            or other.is_letters()
+            or other.is_digits()
+            or other.is_number()
+            or other.is_mixed_number()
+            or other.is_word()
+            or other.is_words()
+            or other.is_mixed_word()
+            or other.is_non_ws()
+            or other.is_non_wss()
+        ):
             return NonWSSGroupTranslator(self.data, other.data)
 
         return None
@@ -1053,12 +1117,12 @@ class GraphTranslator(PatternTranslator):
         Determine whether this graph pattern is a subset of another translated pattern.
         """
         return (
-                other.is_graph()
-                or other.is_mixed_word()
-                or other.is_mixed_words()
-                or other.is_non_ws()
-                or other.is_non_wss()
-                or other.is_non_wss_group()
+            other.is_graph()
+            or other.is_mixed_word()
+            or other.is_mixed_words()
+            or other.is_non_ws()
+            or other.is_non_wss()
+            or other.is_non_wss_group()
         )
 
     @require_same_translator_type
@@ -1067,11 +1131,11 @@ class GraphTranslator(PatternTranslator):
         Determine whether this graph pattern is a superset of another translated pattern.
         """
         return (
-                other.is_letter()
-                or other.is_digit()
-                or other.is_alnum()
-                or other.is_punct()
-                or other.is_graph()
+            other.is_letter()
+            or other.is_digit()
+            or other.is_alnum()
+            or other.is_punct()
+            or other.is_graph()
         )
 
     @require_return_translator
@@ -1085,8 +1149,13 @@ class GraphTranslator(PatternTranslator):
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        if (other.is_letters() or other.is_digits() or other.is_number()
-                or other.is_mixed_number() or other.is_word()):
+        if (
+            other.is_letters()
+            or other.is_digits()
+            or other.is_number()
+            or other.is_mixed_number()
+            or other.is_word()
+        ):
             return MixedWordTranslator(self.data, other.data)
 
         if other.is_words():
@@ -1115,12 +1184,12 @@ class WordTranslator(PatternTranslator):
         Determine whether this word pattern is a subset of another translated pattern.
         """
         return (
-                other.is_word()
-                or other.is_words()
-                or other.is_mixed_word()
-                or other.is_mixed_words()
-                or other.is_non_wss()
-                or other.is_non_wss_group()
+            other.is_word()
+            or other.is_words()
+            or other.is_mixed_word()
+            or other.is_mixed_words()
+            or other.is_non_wss()
+            or other.is_non_wss_group()
         )
 
     @require_same_translator_type
@@ -1141,10 +1210,17 @@ class WordTranslator(PatternTranslator):
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        if (other.is_graph() or other.is_digit() or other.is_digits()
-                or other.is_number() or other.is_mixed_number()
-                or other.is_non_ws() or other.is_punct()
-                or other.is_puncts() or other.is_alnum()):
+        if (
+            other.is_graph()
+            or other.is_digit()
+            or other.is_digits()
+            or other.is_number()
+            or other.is_mixed_number()
+            or other.is_non_ws()
+            or other.is_punct()
+            or other.is_puncts()
+            or other.is_alnum()
+        ):
             return NonWSSTranslator(self.data, other.data)
 
         if other.is_puncts_group():
@@ -1184,11 +1260,7 @@ class WordsTranslator(PatternTranslator):
         """
         Determine whether this words pattern is a subset of another translated pattern.
         """
-        return (
-                other.is_words()
-                or other.is_mixed_words()
-                or other.is_non_wss_group()
-        )
+        return other.is_words() or other.is_mixed_words() or other.is_non_wss_group()
 
     @require_same_translator_type
     def is_superset_of(self, other) -> bool:
@@ -1196,10 +1268,10 @@ class WordsTranslator(PatternTranslator):
         Determine whether this words pattern is a superset of another translated pattern.
         """
         return (
-                other.is_letter()
-                or other.is_letters()
-                or other.is_word()
-                or other.is_words()
+            other.is_letter()
+            or other.is_letters()
+            or other.is_word()
+            or other.is_words()
         )
 
     @require_return_translator
@@ -1213,10 +1285,19 @@ class WordsTranslator(PatternTranslator):
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        if (other.is_alnum() or other.is_graph() or other.is_digit()
-                or other.is_digits() or other.is_number() or other.is_mixed_number()
-                or other.is_non_ws() or other.is_non_wss() or other.is_punct()
-                or other.is_puncts() or other.is_puncts_group()):
+        if (
+            other.is_alnum()
+            or other.is_graph()
+            or other.is_digit()
+            or other.is_digits()
+            or other.is_number()
+            or other.is_mixed_number()
+            or other.is_non_ws()
+            or other.is_non_wss()
+            or other.is_punct()
+            or other.is_puncts()
+            or other.is_puncts_group()
+        ):
             return NonWSSGroupTranslator(self.data, other.data)
 
         return None
@@ -1242,10 +1323,10 @@ class MixedWordTranslator(PatternTranslator):
         Determine whether this mixed word pattern is a subset of another translated pattern.
         """
         return (
-                other.is_mixed_word()
-                or other.is_mixed_words()
-                or other.is_non_wss()
-                or other.is_non_wss_group()
+            other.is_mixed_word()
+            or other.is_mixed_words()
+            or other.is_non_wss()
+            or other.is_non_wss_group()
         )
 
     @require_same_translator_type
@@ -1254,15 +1335,15 @@ class MixedWordTranslator(PatternTranslator):
         Determine whether this mixed word pattern is a superset of another translated pattern.
         """
         return (
-                other.is_letter()
-                or other.is_letters()
-                or other.is_digit()
-                or other.is_digits()
-                or other.is_number()
-                or other.is_mixed_number()
-                or other.is_alnum()
-                or other.is_word()
-                or other.is_mixed_word()
+            other.is_letter()
+            or other.is_letters()
+            or other.is_digit()
+            or other.is_digits()
+            or other.is_number()
+            or other.is_mixed_number()
+            or other.is_alnum()
+            or other.is_word()
+            or other.is_mixed_word()
         )
 
     @require_return_translator
@@ -1279,7 +1360,12 @@ class MixedWordTranslator(PatternTranslator):
         if other.is_words():
             return MixedWordsTranslator(self.data, other.data)
 
-        if other.is_graph() or other.is_non_ws() or other.is_punct() or other.is_puncts():
+        if (
+            other.is_graph()
+            or other.is_non_ws()
+            or other.is_punct()
+            or other.is_puncts()
+        ):
             return NonWSSTranslator(self.data, other.data)
 
         if other.is_puncts_group():
@@ -1327,17 +1413,17 @@ class MixedWordsTranslator(PatternTranslator):
         Determine whether this mixed words pattern is a superset of another translated pattern.
         """
         return (
-                other.is_letter()
-                or other.is_letters()
-                or other.is_digit()
-                or other.is_digits()
-                or other.is_number()
-                or other.is_mixed_number()
-                or other.is_alnum()
-                or other.is_word()
-                or other.is_words()
-                or other.is_mixed_word()
-                or other.is_mixed_words()
+            other.is_letter()
+            or other.is_letters()
+            or other.is_digit()
+            or other.is_digits()
+            or other.is_number()
+            or other.is_mixed_number()
+            or other.is_alnum()
+            or other.is_word()
+            or other.is_words()
+            or other.is_mixed_word()
+            or other.is_mixed_words()
         )
 
     @require_return_translator
@@ -1351,8 +1437,14 @@ class MixedWordsTranslator(PatternTranslator):
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        if (other.is_graph() or other.is_non_ws() or other.is_non_wss()
-                or other.is_punct() or other.is_puncts() or other.is_puncts_group()):
+        if (
+            other.is_graph()
+            or other.is_non_ws()
+            or other.is_non_wss()
+            or other.is_punct()
+            or other.is_puncts()
+            or other.is_puncts_group()
+        ):
             return NonWSSGroupTranslator(self.data, other.data)
 
         return None
@@ -1385,12 +1477,12 @@ class NonWSTranslator(PatternTranslator):
         Determine whether this non-whitespace pattern is a superset of another translated pattern.
         """
         return (
-                other.is_letter()
-                or other.is_digit()
-                or other.is_alnum()
-                or other.is_punct()
-                or other.is_graph()
-                or other.is_non_ws()
+            other.is_letter()
+            or other.is_digit()
+            or other.is_alnum()
+            or other.is_punct()
+            or other.is_graph()
+            or other.is_non_ws()
         )
 
     @require_return_translator
@@ -1404,9 +1496,15 @@ class NonWSTranslator(PatternTranslator):
         if self.is_superset_of(other):
             return self.get_new_superset(other)
 
-        if (other.is_letters() or other.is_digits() or other.is_puncts()
-                or other.is_number() or other.is_mixed_number()
-                or other.is_word() or other.is_mixed_word()):
+        if (
+            other.is_letters()
+            or other.is_digits()
+            or other.is_puncts()
+            or other.is_number()
+            or other.is_mixed_number()
+            or other.is_word()
+            or other.is_mixed_word()
+        ):
             return NonWSSTranslator(self.data, other.data)
 
         if other.is_words() or other.is_mixed_words() or other.is_puncts_group():
@@ -1444,20 +1542,20 @@ class NonWSSTranslator(PatternTranslator):
         another translated pattern.
         """
         return (
-                other.is_digit()
-                or other.is_digits()
-                or other.is_number()
-                or other.is_mixed_number()
-                or other.is_letter()
-                or other.is_letters()
-                or other.is_alnum()
-                or other.is_graph()
-                or other.is_punct()
-                or other.is_puncts()
-                or other.is_word()
-                or other.is_mixed_word()
-                or other.is_non_ws()
-                or other.is_non_wss()
+            other.is_digit()
+            or other.is_digits()
+            or other.is_number()
+            or other.is_mixed_number()
+            or other.is_letter()
+            or other.is_letters()
+            or other.is_alnum()
+            or other.is_graph()
+            or other.is_punct()
+            or other.is_puncts()
+            or other.is_word()
+            or other.is_mixed_word()
+            or other.is_non_ws()
+            or other.is_non_wss()
         )
 
     @require_return_translator
@@ -1486,7 +1584,6 @@ class NonWSSGroupTranslator(PatternTranslator):
         defined_patterns = [
             PATTERN.NON_WSS_ITEMS,
             PATTERN.NON_WSS_GROUP,
-
         ]
         ref_names = [
             "non_wss_items",
@@ -1518,24 +1615,24 @@ class NonWSSGroupTranslator(PatternTranslator):
         another translated pattern.
         """
         return (
-                other.is_digit()
-                or other.is_digits()
-                or other.is_number()
-                or other.is_mixed_number()
-                or other.is_letter()
-                or other.is_letters()
-                or other.is_alnum()
-                or other.is_graph()
-                or other.is_punct()
-                or other.is_puncts()
-                or other.is_puncts_group()
-                or other.is_word()
-                or other.is_mixed_word()
-                or other.is_words()
-                or other.is_mixed_words()
-                or other.is_non_ws()
-                or other.is_non_wss()
-                or other.is_non_wss_group()
+            other.is_digit()
+            or other.is_digits()
+            or other.is_number()
+            or other.is_mixed_number()
+            or other.is_letter()
+            or other.is_letters()
+            or other.is_alnum()
+            or other.is_graph()
+            or other.is_punct()
+            or other.is_puncts()
+            or other.is_puncts_group()
+            or other.is_word()
+            or other.is_mixed_word()
+            or other.is_words()
+            or other.is_mixed_words()
+            or other.is_non_ws()
+            or other.is_non_wss()
+            or other.is_non_wss_group()
         )
 
     @require_return_translator
@@ -1561,39 +1658,43 @@ class TokenAggregator:
 
         self._parsed = False
 
-    def __bool__(self): return self._parsed
+    def __bool__(self):
+        return self._parsed
 
     @property
-    def tokens(self): return self._tokens
+    def tokens(self):
+        return self._tokens
 
     @property
-    def line(self): return self._line
+    def line(self):
+        return self._line
 
     @property
-    def var_name(self): return self._var_name
+    def var_name(self):
+        return self._var_name
 
     @property
-    def allowed_empty(self): return self._allowed_empty
+    def allowed_empty(self):
+        return self._allowed_empty
 
 
 def validate_translator_value(value: str):
     """Validate a translator input value: must be a non-empty, trimmed string."""
     if not isinstance(value, str):
         raise_runtime_error(
-            obj="TranslatorValueTypeError",
-            msg="Translator value must be a string."
+            obj="TranslatorValueTypeError", msg="Translator value must be a string."
         )
 
     if not value.strip():
         raise_runtime_error(
             obj="TranslatorValueEmptyError",
-            msg="Translator value must contain at least one non-whitespace character."
+            msg="Translator value must contain at least one non-whitespace character.",
         )
 
     if value != value.strip():
         raise_runtime_error(
             obj="TranslatorValueSurroundingWhitespaceError",
-            msg="Translator value must not have leading or trailing whitespace."
+            msg="Translator value must not have leading or trailing whitespace.",
         )
 
 

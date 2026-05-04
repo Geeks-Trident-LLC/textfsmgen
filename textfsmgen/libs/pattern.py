@@ -3,7 +3,7 @@ textfsmgen.libs.pattern
 =======================
 
 General-purpose Patter class and functions used across TextFSMGen.
-"""     # noqa
+"""  # noqa
 
 import re
 import string
@@ -90,34 +90,26 @@ class KeywordPatternMappingRegister:
         letter_or_punct_pat = r"[a-zA-Z\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]"
 
         self.singular_map = {
-            "dot"           : ".",
-
-            "space"         : " ",
-            "ws"            : r"\s",
-            "whitespace"    : r"\s",
-
-            "digit"         : r"\d",
-            "letter"        : r"[a-zA-Z]",
-
-            "alnum"         : r"[a-zA-Z0-9]",
-
-            "punct"         : punct_pat,
-            "punctuation"   : punct_pat,
-
-            "graph"         : r"[\x21-\x7e]",
-
-            "non_ws"        : r"\S",
+            "dot": ".",
+            "space": " ",
+            "ws": r"\s",
+            "whitespace": r"\s",
+            "digit": r"\d",
+            "letter": r"[a-zA-Z]",
+            "alnum": r"[a-zA-Z0-9]",
+            "punct": punct_pat,
+            "punctuation": punct_pat,
+            "graph": r"[\x21-\x7e]",
+            "non_ws": r"\S",
             "non_whitespace": r"\S",
-
-            "sop"                   : space_or_punct_pat,
-            "pos"                   : space_or_punct_pat,
-            "space_or_punct"        : space_or_punct_pat,
-            "punct_or_space"        : space_or_punct_pat,
-
-            "lop"                   : letter_or_punct_pat,
-            "pol"                   : letter_or_punct_pat,
-            "letter_or_punct"       : letter_or_punct_pat,
-            "punct_or_letter"       : letter_or_punct_pat,
+            "sop": space_or_punct_pat,
+            "pos": space_or_punct_pat,
+            "space_or_punct": space_or_punct_pat,
+            "punct_or_space": space_or_punct_pat,
+            "lop": letter_or_punct_pat,
+            "pol": letter_or_punct_pat,
+            "letter_or_punct": letter_or_punct_pat,
+            "punct_or_letter": letter_or_punct_pat,
         }
 
         self.singular_keywords = list(self.singular_map.keys())
@@ -185,8 +177,8 @@ class KeywordPatternMappingRegister:
             # their plural form, not to whitespace‑separated multi‑unit groups.
             variants[f"{name}_group"] = (
                 f"{pattern}+"
-                if key in special_case else
-                f"{pattern}+({sep}{pattern}+)+"
+                if key in special_case
+                else f"{pattern}+({sep}{pattern}+)+"
             )
 
             # optional_<singular>_group: represents zero or more plural
@@ -195,8 +187,8 @@ class KeywordPatternMappingRegister:
             # of the singular token.
             variants[f"optional_{name}_group"] = (
                 f"{pattern}*"
-                if key in special_case else
-                f"({pattern}+({sep}{pattern}+)+)?"
+                if key in special_case
+                else f"({pattern}+({sep}{pattern}+)+)?"
             )
 
             # <singular>_items: represents one or more plural
@@ -205,8 +197,8 @@ class KeywordPatternMappingRegister:
             # their plural form, not to whitespace‑separated multi‑unit groups.
             variants[f"{name}_items"] = (
                 f"{pattern}+"
-                if key in special_case else
-                f"{pattern}+({sep}{pattern}+)*"
+                if key in special_case
+                else f"{pattern}+({sep}{pattern}+)*"
             )
 
             # optional_<singular>_items: represents zero or more plural
@@ -214,8 +206,8 @@ class KeywordPatternMappingRegister:
             # Special cases (dot, space, whitespace) become zero more unit.
             variants[f"optional_{name}_items"] = (
                 f"{pattern}*"
-                if key in special_case else
-                f"({pattern}+({sep}{pattern}+)*)?"
+                if key in special_case
+                else f"({pattern}+({sep}{pattern}+)*)?"
             )
 
         return variants
@@ -248,30 +240,26 @@ class KeywordPatternMappingRegister:
 
             # <plural>_group: two or more plural units separated by whitespace.
             variants[f"{name}_group"] = (
-                f"{pattern}"
-                if key in special_case else
-                f"{pattern}({sep}{pattern})+"
+                f"{pattern}" if key in special_case else f"{pattern}({sep}{pattern})+"
             )
 
             # optional_<plural>_group: zero or more plural units separated by whitespace.
             variants[f"optional_{name}_group"] = (
                 f"{pattern[:-1]}*"
-                if key in special_case else
-                f"({pattern}({sep}{pattern})+)?"
+                if key in special_case
+                else f"({pattern}({sep}{pattern})+)?"
             )
 
             # <plural>_items: one or more plural units separated by whitespace.
             variants[f"{name}_items"] = (
-                f"{pattern}"
-                if key in special_case else
-                f"{pattern}({sep}{pattern})*"
+                f"{pattern}" if key in special_case else f"{pattern}({sep}{pattern})*"
             )
 
             # optional_<plural>_items: zero or more plural units separated by whitespace.
             variants[f"optional_{name}_items"] = (
                 f"{pattern[:-1]}*"
-                if key in special_case else
-                f"({pattern}({sep}{pattern})*)?"
+                if key in special_case
+                else f"({pattern}({sep}{pattern})*)?"
             )
 
         return variants
@@ -369,9 +357,11 @@ class Pattern(DotObject):
 
     def __init__(self):
         register = KeywordPatternMappingRegister()
-        kwargs = dict(zip(
-            map(str.upper, register.all_keywords),  # noqa
-            register.all_map.values())
+        kwargs = dict(
+            zip(
+                map(str.upper, register.all_keywords),  # noqa
+                register.all_map.values(),
+            )
         )
 
         super().__init__(**kwargs)
@@ -389,7 +379,6 @@ class Pattern(DotObject):
         self.semantic_to_plural_semantic = register.semantic_to_plural_semantic.copy()
         self.plural_semantic_to_semantic = register.plural_semantic_to_semantic.copy()
 
-
         self.all_map = register.all_map.copy()
 
     @staticmethod
@@ -399,18 +388,29 @@ class Pattern(DotObject):
 
         for base in bases:
             if keyword in (
-                f"{base}_group", f"{base}s_group",
-                f"{base}_items", f"{base}s_items",
-                f"optional_{base}_group", f"optional_{base}s_group",
-                f"optional_{base}_items", f"optional_{base}s_items",
+                f"{base}_group",
+                f"{base}s_group",
+                f"{base}_items",
+                f"{base}s_items",
+                f"optional_{base}_group",
+                f"optional_{base}s_group",
+                f"optional_{base}_items",
+                f"optional_{base}s_items",
             ):
                 return True
 
         return False
 
     def keyword_in(
-        self, key, singular=False, plural=False, semantic=False,
-        plural_semantic=False, core=False, group=False, items=False,
+        self,
+        key,
+        singular=False,
+        plural=False,
+        semantic=False,
+        plural_semantic=False,
+        core=False,
+        group=False,
+        items=False,
     ):
         """Return True if the keyword belongs to any enabled keyword group."""
         pairs = [
@@ -469,11 +469,20 @@ class Pattern(DotObject):
                 qty = suffix or ""
                 return StatusString(core, status="ok", reason=qty)
 
-            prefixes = ("some", "optional", "zero_or_one",
-                        "zero_or_more", "one_or_more")
+            prefixes = (
+                "some",
+                "optional",
+                "zero_or_one",
+                "zero_or_more",
+                "one_or_more",
+            )
             for prefix in prefixes:
                 if name == f"{prefix}_{core}":
-                    qty = f"optional_{suffix}" if prefix == "optional" and suffix else prefix
+                    qty = (
+                        f"optional_{suffix}"
+                        if prefix == "optional" and suffix
+                        else prefix
+                    )
                     return StatusString(core, status="ok", reason=qty)
 
         return StatusString()
@@ -514,7 +523,6 @@ class Pattern(DotObject):
 
         # No keyword found → fallback: allow empty
         if not keyword:
-
             allowed = rf"({pattern})?"
             status = check_pattern(allowed)
 
@@ -524,10 +532,9 @@ class Pattern(DotObject):
                     msg=(
                         "Expected a valid pattern, but received "
                         f"{allowed!r} (error: {status})"
-                    )
+                    ),
                 )
             return allowed
-
 
         if keyword in ("anything", "something"):
             return self.all_map["anything"]
@@ -537,7 +544,6 @@ class Pattern(DotObject):
 
         if re.match("optional_|zero_or_one_|zero_or_more_", keyword):
             return self.all_map[keyword]
-
 
         # Default allowed-empty form
         allowed = rf"({pattern})?"
@@ -549,7 +555,7 @@ class Pattern(DotObject):
                 msg=(
                     "Expected a valid pattern, but received "
                     f"{allowed!r} (error: {status})"
-                )
+                ),
             )
         return allowed
 
@@ -576,31 +582,40 @@ class ParsedKeywordMappingName:
 
         self.resolve()
 
-    def __bool__(self): return self._is_resolved
+    def __bool__(self):
+        return self._is_resolved
 
     @property
-    def status(self): return self._status
+    def status(self):
+        return self._status
 
     @property
-    def quantity(self): return self._quantity
+    def quantity(self):
+        return self._quantity
 
     @property
-    def quantity_lo(self): return self._quantity_lo
+    def quantity_lo(self):
+        return self._quantity_lo
 
     @property
-    def quantity_hi(self): return self._quantity_hi
+    def quantity_hi(self):
+        return self._quantity_hi
 
     @property
-    def name(self): return self._name
+    def name(self):
+        return self._name
 
     @property
-    def keyword(self): return self._keyword
+    def keyword(self):
+        return self._keyword
 
     @property
-    def base_keyword(self): return self._base_keyword
+    def base_keyword(self):
+        return self._base_keyword
 
     @property
-    def pattern(self): return self._pattern or PATTERN.get("non_wss_items")
+    def pattern(self):
+        return self._pattern or PATTERN.get("non_wss_items")
 
     def update_base_keyword(self):
         if not self._is_resolved or self._base_keyword:
@@ -627,8 +642,10 @@ class ParsedKeywordMappingName:
         self.update_base_keyword()
 
         if not self._is_resolved:
-            msg = (f"Undefined {self._name!r} keyword.  Request technical "
-                   f"support for feature extension.")
+            msg = (
+                f"Undefined {self._name!r} keyword.  Request technical "
+                f"support for feature extension."
+            )
             self._status = StatusString(msg, status="unresolved")
             return
         self._status = StatusString(status="approved")
@@ -643,8 +660,7 @@ class ParsedKeywordMappingName:
         if self._is_resolved:
             return
 
-        m = re.fullmatch(r"(?i)(?P<count>[0-9]+|[a-z]+)_?(?P<base>\w+)",
-                         self._name)
+        m = re.fullmatch(r"(?i)(?P<count>[0-9]+|[a-z]+)_?(?P<base>\w+)", self._name)
         if not m:
             return
 
@@ -852,8 +868,10 @@ def validate_pattern(pattern: str, flags: int = 0, exception_cls=None):
 def check_pattern(pattern):
     """Return a StatusString describing whether the pattern is a valid regex."""
     if not isinstance(pattern, str):
-        msg = (f"Pattern must be a string, "
-               f"but received <{type(pattern).__name__}:{pattern}> instead.)")
+        msg = (
+            f"Pattern must be a string, "
+            f"but received <{type(pattern).__name__}:{pattern}> instead.)"
+        )
         return StatusString(msg, False)
     try:
         result = re.compile(pattern)

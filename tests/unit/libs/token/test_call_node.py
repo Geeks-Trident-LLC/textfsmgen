@@ -13,13 +13,14 @@ import pytest
 
 from textfsmgen.libs.token import CallNode
 
+
 @pytest.mark.parametrize(
     "data, exp_name, exp_params",
     [
         ("word()", "word", []),
         ("word(var_name, or_empty)", "word", ["var_name", "or_empty"]),
         ("word(var_name, digits())", "word", ["var_name", "digits()"]),
-    ]
+    ],
 )
 def test(data, exp_name, exp_params):
     call_node = CallNode(data)

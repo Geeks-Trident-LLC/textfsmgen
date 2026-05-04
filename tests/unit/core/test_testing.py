@@ -16,27 +16,25 @@ from pathlib import Path, PurePath
 from textfsmgen.libs import is_windows
 from textfsmgen.core import testing
 
-venv_python_path = Path(PurePath(
-    Path.home(),
-    'workspace',
-    'venv_test',
-    'Scripts' if is_windows else 'bin',
-    'python.exe' if is_windows else 'python'
-))
+venv_python_path = Path(
+    PurePath(
+        Path.home(),
+        "workspace",
+        "venv_test",
+        "Scripts" if is_windows else "bin",
+        "python.exe" if is_windows else "python",
+    )
+)
 
-file_path = Path(PurePath(
-    Path.home(),
-    'workspace',
-    'venv_test',
-    'Scripts',
-    'python.exe'
-))
+file_path = Path(
+    PurePath(Path.home(), "workspace", "venv_test", "Scripts", "python.exe")
+)
 
 
 # Skip marker if python virtual environment is not installed
 skip_if_venv_unavailable = pytest.mark.skipif(
     not venv_python_path.exists(),
-    reason="Skipping: python virtual environment is setup."
+    reason="Skipping: python virtual environment is setup.",
 )
 
 

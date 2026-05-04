@@ -38,4 +38,3 @@ def replace_dates_with_placeholder(text: str, placeholder: str = "YYYY-mm-dd") -
 
 class DummyClass:
     """Simple class used to test object-based exception naming."""
-

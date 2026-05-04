@@ -35,9 +35,8 @@ start() mixed_word(var_one) end(space) -> record
 start() 8_10_space() mixed_word(var_two)  mixed_word(var_three) end() -> record
 start() 8_10_space() mixed_word(var_two) end(space) -> record
 start() 18_20_space() mixed_word(var_three) end() -> record
-    """).strip()    # noqa
+    """).strip()  # noqa
 
     translator = TabularTranslator(text)
     snippet = translator.to_snippet()
     assert snippet == exp_snippet
-

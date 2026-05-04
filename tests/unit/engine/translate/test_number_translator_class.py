@@ -13,15 +13,12 @@ import pytest
 
 from textfsmgen.engine.translate import (
     make_translator,
-
     NumberTranslator,
     MixedNumberTranslator,
-
     MixedWordTranslator,
     MixedWordsTranslator,
-
     NonWSSTranslator,
-    NonWSSGroupTranslator
+    NonWSSGroupTranslator,
 )
 
 from tests.unit.engine.translate import to_list
@@ -37,10 +34,10 @@ class TestNumberTranslatorClass:
     @pytest.mark.parametrize(
         "other",
         [
-            "1.1",              # number is a subset of number
-            "-1.1",             # number is a subset of mixed number
-            "abc\xc8",          # number is a subset of non-whitespaces
-            "abc\xc8 xyz",      # number is a subset of non-whitespace group
+            "1.1",  # number is a subset of number
+            "-1.1",  # number is a subset of mixed number
+            "abc\xc8",  # number is a subset of non-whitespaces
+            "abc\xc8 xyz",  # number is a subset of non-whitespace group
         ],
     )
     def test_is_subset_of(self, other):
@@ -55,14 +52,14 @@ class TestNumberTranslatorClass:
     @pytest.mark.parametrize(
         "other",
         [
-            "1",                # number is not a subset of digit
-            "123",              # number is not a subset of digits
-            "a",                # number is not a subset of letter
-            "abc",              # number is not a subset of letter(s)
-            "+",                # number is not a subset of punctuation
-            "++--",             # number is not a subset of punctuation(s)
-            "++ -- ==",         # number is not a subset of punctuation group
-            "\xc8",             # number is not a subset of non-whitespace
+            "1",  # number is not a subset of digit
+            "123",  # number is not a subset of digits
+            "a",  # number is not a subset of letter
+            "abc",  # number is not a subset of letter(s)
+            "+",  # number is not a subset of punctuation
+            "++--",  # number is not a subset of punctuation(s)
+            "++ -- ==",  # number is not a subset of punctuation group
+            "\xc8",  # number is not a subset of non-whitespace
         ],
     )
     def test_is_not_subset_of(self, other):
@@ -77,8 +74,8 @@ class TestNumberTranslatorClass:
     @pytest.mark.parametrize(
         "other",
         [
-            "1",                # number is a superset of digit
-            "123",              # number is a superset of digits
+            "1",  # number is a superset of digit
+            "123",  # number is a superset of digits
         ],
     )
     def test_is_superset_of(self, other):
@@ -94,19 +91,19 @@ class TestNumberTranslatorClass:
         [
             (
                 "1.1",  # number
-                NumberTranslator # (number, number) => number
+                NumberTranslator,  # (number, number) => number
             ),
             (
                 "-1.1",  # mixed-number
-                MixedNumberTranslator    # (number, mixed-number) => mixed-number
+                MixedNumberTranslator,  # (number, mixed-number) => mixed-number
             ),
             (
                 "abc\xc8",  # non-whitespaces
-                NonWSSTranslator # (number, non-whitespaces) => non-whitespaces
+                NonWSSTranslator,  # (number, non-whitespaces) => non-whitespaces
             ),
             (
                 "abc\xc8 xyz",  # non-whitespace-group
-                NonWSSGroupTranslator # (number, non-whitespace-group) => non-whitespace-group
+                NonWSSGroupTranslator,  # (number, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -125,11 +122,11 @@ class TestNumberTranslatorClass:
         [
             (
                 "1",  # digit
-                NumberTranslator # (number, digit) => number
+                NumberTranslator,  # (number, digit) => number
             ),
             (
                 "12",  # digits
-                NumberTranslator # (number, digits) => number
+                NumberTranslator,  # (number, digits) => number
             ),
         ],
     )
@@ -148,49 +145,48 @@ class TestNumberTranslatorClass:
         [
             (
                 "a",  # letter
-                MixedWordTranslator  # (number, letter) => mixed-word
+                MixedWordTranslator,  # (number, letter) => mixed-word
             ),
             (
                 "ab",  # letters
-                MixedWordTranslator  # (number, letters) => mixed-word
+                MixedWordTranslator,  # (number, letters) => mixed-word
             ),
             (
-                    ["a", "1"],  # alphabet-numeric
-                    MixedWordTranslator  # (number, alphabet-numeric) => mixed-word
+                ["a", "1"],  # alphabet-numeric
+                MixedWordTranslator,  # (number, alphabet-numeric) => mixed-word
             ),
             (
-                    ["a", "1", "#"],  # graph
-                    MixedWordTranslator  # (number, graph) => mixed-word
+                ["a", "1", "#"],  # graph
+                MixedWordTranslator,  # (number, graph) => mixed-word
             ),
             (
                 "abc123",  # word
-                MixedWordTranslator  # (number, word) => mixed-word
+                MixedWordTranslator,  # (number, word) => mixed-word
             ),
             (
-                    "a1 b1",  # words
-                    MixedWordsTranslator # (number, words) => mixed-words
+                "a1 b1",  # words
+                MixedWordsTranslator,  # (number, words) => mixed-words
             ),
             (
                 "+",  # punctuation
-                NonWSSTranslator # (number, punct) => non-whitespaces
+                NonWSSTranslator,  # (number, punct) => non-whitespaces
             ),
             (
                 "++--==",  # punctuations
-                NonWSSTranslator # (number, puncts) => non-whitespaces
+                NonWSSTranslator,  # (number, puncts) => non-whitespaces
             ),
             (
                 "\xc8",  # non-whitespace
-                NonWSSTranslator # (number, non-whitespace) => non-whitespaces
+                NonWSSTranslator,  # (number, non-whitespace) => non-whitespaces
             ),
             (
                 "abc\xc8",  # non-whitespaces
-                NonWSSTranslator # (number, non-whitespaces) => non-whitespaces
+                NonWSSTranslator,  # (number, non-whitespaces) => non-whitespaces
             ),
             (
-                    "++ -- ** ==",  # punctuation-group
-                    NonWSSGroupTranslator # (number, non-whitespace-group) => non-whitespace-group
+                "++ -- ** ==",  # punctuation-group
+                NonWSSGroupTranslator,  # (number, non-whitespace-group) => non-whitespace-group
             ),
-
         ],
     )
     def test_recommend_method_case_aggregating(self, number, expected_class):

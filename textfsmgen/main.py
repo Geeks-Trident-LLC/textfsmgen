@@ -41,14 +41,14 @@ def show_dependency(options):
     py_ver = python_version()
     lst = [
         config.main_app_text,
-        f'Platform: {os_name} {os_release} - Python {py_ver}',
-        '--------------------',
-        'Dependencies:'
+        f"Platform: {os_name} {os_release} - Python {py_ver}",
+        "--------------------",
+        "Dependencies:",
     ]
 
     for pkg in config.get_dependency().values():
-        lst.append(f'  + Package: {pkg["package"]}')
-        lst.append(f'             {pkg["url"]}')
+        lst.append(f"  + Package: {pkg['package']}")
+        lst.append(f"             {pkg['url']}")
 
     msg = decorate_list_of_line(lst)
     sys_exit(success=True, msg=msg)
@@ -60,6 +60,7 @@ def show_version(options):
         return
 
     from textfsmgen import version
+
     sys_exit(success=True, msg=f"textfsmgen {version}")
 
 
@@ -70,77 +71,99 @@ class Cli:
 
     def __init__(self):
         parser = argparse.ArgumentParser(
-            prog='textfsmgen',
-            usage='%(prog)s [options]',
-            description='%(prog)s application',
+            prog="textfsmgen",
+            usage="%(prog)s [options]",
+            description="%(prog)s application",
         )
 
         parser.add_argument(
-            '--gui', action='store_true',
-            help="Launch the TextFSM Template Generator GUI application"
+            "--gui",
+            action="store_true",
+            help="Launch the TextFSM Template Generator GUI application",
         )
 
         parser.add_argument(
-            '--user-data', type=str, dest='user_data',
-            default='',
-            help="User snippet text used to generate a TextFSM template"
+            "--user-data",
+            type=str,
+            dest="user_data",
+            default="",
+            help="User snippet text used to generate a TextFSM template",
         )
 
         parser.add_argument(
-            '--user-data-file', type=str, dest='user_data_file',
-            default='',
-            help="Load snippet text from file to generate a TextFSM template"
+            "--user-data-file",
+            type=str,
+            dest="user_data_file",
+            default="",
+            help="Load snippet text from file to generate a TextFSM template",
         )
 
         parser.add_argument(
-            '--test-data', type=str, dest='test_data',
-            default='',
-            help="Optional: test data for validating the generated template"
+            "--test-data",
+            type=str,
+            dest="test_data",
+            default="",
+            help="Optional: test data for validating the generated template",
         )
 
         parser.add_argument(
-            '--test-data-file', type=str, dest='test_data_file',
-            default='',
-            help="Optional: Load test data from file for template validation"
+            "--test-data-file",
+            type=str,
+            dest="test_data_file",
+            default="",
+            help="Optional: Load test data from file for template validation",
         )
 
         parser.add_argument(
-            '--run-test', action='store_true', dest='tested',
-            help="Run validation: compare test data against the generated template"
+            "--run-test",
+            action="store_true",
+            dest="tested",
+            help="Run validation: compare test data against the generated template",
         )
 
         parser.add_argument(
-            '--platform', type=str,
-            choices=['unittest', 'pytest', 'snippet'],
-            default='',
-            help="Select output format: generate a unittest, pytest, or snippet script"
+            "--platform",
+            type=str,
+            choices=["unittest", "pytest", "snippet"],
+            default="",
+            help="Select output format: generate a unittest, pytest, or snippet script",
         )
 
         parser.add_argument(
-            '--save-template', type=str, dest='template_file',
-            default='',
-            help="Optional: Save the generated TextFSM template to a file"
+            "--save-template",
+            type=str,
+            dest="template_file",
+            default="",
+            help="Optional: Save the generated TextFSM template to a file",
         )
 
         parser.add_argument(
-            '--save-test-script', type=str, dest='test_script_file',
-            default='',
-            help="Optional: Save the generated test script to a file"
+            "--save-test-script",
+            type=str,
+            dest="test_script_file",
+            default="",
+            help="Optional: Save the generated test script to a file",
         )
 
         parser.add_argument(
-            '--options-file', type=str, dest='options_file', default='',
-            help="Optional: load a YAML file containing keyword arguments for template building and verification"
+            "--options-file",
+            type=str,
+            dest="options_file",
+            default="",
+            help="Optional: load a YAML file containing keyword arguments for template building and verification",
         )
 
         parser.add_argument(
-            '--dependency', action='store_true',
-            help="Display TextFSM Generator dependencies and package information"
+            "--dependency",
+            action="store_true",
+            help="Display TextFSM Generator dependencies and package information",
         )
 
         parser.add_argument(
-            '-v', '--version', action='store_true',
-            help="Show the current TextFSM Generator version"
+            "-v",
+            "--version",
+            action="store_true",
+            help="Show the current TextFSM Generator version",
         )
 
         self.parser = parser
@@ -159,8 +182,15 @@ class Cli:
     def _update_builder_arg(self, key: str, value) -> None:
         """Update a builder keyword argument if it is supported."""
         allowed = {
-            "user_data", "user_data_file", "test_data", "test_data_file",
-            "author", "email", "company", "description", "debug"
+            "user_data",
+            "user_data_file",
+            "test_data",
+            "test_data_file",
+            "author",
+            "email",
+            "company",
+            "description",
+            "debug",
         }
         if key not in allowed or not value or not str(value).strip():
             return
@@ -172,7 +202,9 @@ class Cli:
             return
 
         # Normalize debug flag
-        debug = value.strip().lower() == "true" if isinstance(value, str) else bool(value)
+        debug = (
+            value.strip().lower() == "true" if isinstance(value, str) else bool(value)
+        )
         self.template_kwargs[key] = debug
         self.category_template_kwargs[key] = debug
         self.tabular_template_kwargs[key] = debug
@@ -182,14 +214,17 @@ class Cli:
         if key == "use_category_translator":
             self.category_translator_enabled = (
                 value.strip().lower() == "true"
-                if isinstance(value, str) else bool(value)
+                if isinstance(value, str)
+                else bool(value)
             )
             return
 
         allowed = {
-            "count", "separator",
-            "starting_from", "ending_at",
-            "replacing_rules"
+            "count",
+            "separator",
+            "starting_from",
+            "ending_at",
+            "replacing_rules",
         }
         if key not in allowed or not value or not str(value).strip():
             return
@@ -201,16 +236,22 @@ class Cli:
         if key == "use_tabular_translator":
             self.tabular_translator_enabled = (
                 value.strip().lower() == "true"
-                if isinstance(value, str) else bool(value)
+                if isinstance(value, str)
+                else bool(value)
             )
             return
 
         allowed = {
-            "column_divider", "column_count",
-            "column_widths", "headers", "header_rows",
+            "column_divider",
+            "column_count",
+            "column_widths",
+            "headers",
+            "header_rows",
             "custom_header_text",
-            "starting_from", "ending_at",
-            "has_header_row", "replacing_rules"
+            "starting_from",
+            "ending_at",
+            "has_header_row",
+            "replacing_rules",
         }
 
         if key == "column_divider":
@@ -223,18 +264,21 @@ class Cli:
         if key == "has_header_row":
             self.tabular_template_kwargs[key] = (
                 value.strip().lower() == "true"
-                if isinstance(value, str) else bool(value)
+                if isinstance(value, str)
+                else bool(value)
             )
             return
 
         self.tabular_template_kwargs[key] = value
 
-
     def _update_verify_arg(self, key: str, value) -> None:
         """Update a verification keyword argument if it is supported."""
         allowed = {
-            "expected_rows_count", "expected_result",
-            "tabular", "debug", "ignore_space"
+            "expected_rows_count",
+            "expected_result",
+            "tabular",
+            "debug",
+            "ignore_space",
         }
         if key not in allowed:
             return
@@ -250,8 +294,7 @@ class Cli:
 
         # expected_result → list of dicts with uniform dict length
         if key == "expected_result":
-            if isinstance(value, list) and all(
-                    isinstance(i, dict) for i in value):
+            if isinstance(value, list) and all(isinstance(i, dict) for i in value):
                 lengths = {len(d) for d in value}
                 self.verified_kwargs[key] = value if len(lengths) == 1 else None
             else:
@@ -260,16 +303,12 @@ class Cli:
 
         # Boolean flags: tabular, debug, ignore_space
         self.verified_kwargs[key] = (
-            value.strip().lower() == "true"
-            if isinstance(value, str) else bool(value)
+            value.strip().lower() == "true" if isinstance(value, str) else bool(value)
         )
 
     def _update_other_option(self, key, value):
         """Update miscellaneous template options such as run mode, platform, and file paths."""
-        allowed = {
-            "run_test", "platform",
-            "save_template", "save_test_script"
-        }
+        allowed = {"run_test", "platform", "save_template", "save_test_script"}
         if key not in allowed:
             return
 
@@ -277,7 +316,8 @@ class Cli:
         if key == "run_test":
             self.tested = (
                 value.strip().lower() == "true"
-                if isinstance(value, str) else bool(value)
+                if isinstance(value, str)
+                else bool(value)
             )
             return
 
@@ -307,7 +347,7 @@ class Cli:
                 if not isinstance(data, dict):
                     sys_exit(
                         success=False,
-                        msg=f"*** YAML-format of {yaml_file!r} MUST be a dictionary."
+                        msg=f"*** YAML-format of {yaml_file!r} MUST be a dictionary.",
                     )
                 self.apply_kwargs(data)
             except Exception as ex:
@@ -326,7 +366,9 @@ class Cli:
                 if value:
                     self._update_builder_arg(key, value)
 
-        if self.template_kwargs.get("user_data") or self.template_kwargs.get("user_data_file"):
+        if self.template_kwargs.get("user_data") or self.template_kwargs.get(
+            "user_data_file"
+        ):
             return
 
         self.parser.print_help()
@@ -368,8 +410,11 @@ class Cli:
 
         if script_path and tb.test_data:
             platform = (self.options.platform or self.platform or "snippet").lower()
-            method = f"create_{platform}" if platform in ("unittest",
-                                                          "pytest") else "create_python_test"
+            method = (
+                f"create_{platform}"
+                if platform in ("unittest", "pytest")
+                else "create_python_test"
+            )
             script = getattr(tb, method)()
             file.write(script_path, script)
             messages.append(f"+++ {platform.title()} script saved to {script_path!r}.")
@@ -393,7 +438,11 @@ class Cli:
         if not platform:
             return
 
-        method = f"create_{platform}" if platform in ("unittest", "pytest") else "create_python_test"
+        method = (
+            f"create_{platform}"
+            if platform in ("unittest", "pytest")
+            else "create_python_test"
+        )
         test_script = getattr(tb, method, "create_python_test")()
         sys_exit(success=True, msg=test_script)
 
@@ -404,14 +453,14 @@ class Cli:
         run_gui_application(self.options)
         self.validate_cli_flags()
         tb = self.create_builder()
-        self.save_outputs(tb)   # noqa
-        self.execute_test(tb)   # noqa
+        self.save_outputs(tb)  # noqa
+        self.execute_test(tb)  # noqa
         self.display_test_script(tb)
 
         if self.category_translator_enabled or self.tabular_translator_enabled:
-            msg = f"{tb.snippet}\n\n\n{tb.template}"    # noqa
+            msg = f"{tb.snippet}\n\n\n{tb.template}"  # noqa
         else:
-            msg = tb.template   # noqa
+            msg = tb.template  # noqa
         sys_exit(success=True, msg=msg)
 
 

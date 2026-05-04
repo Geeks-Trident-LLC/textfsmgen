@@ -13,15 +13,12 @@ import pytest
 
 from textfsmgen.engine.translate import (
     make_translator,
-
     PunctsTranslator,
     PunctsGroupTranslator,
-
     MixedWordTranslator,
     MixedWordsTranslator,
-
     NonWSSTranslator,
-    NonWSSGroupTranslator
+    NonWSSGroupTranslator,
 )
 
 from tests.unit.engine.translate import to_list
@@ -37,12 +34,12 @@ class TestPunctsTranslatorClass:
     @pytest.mark.parametrize(
         "other",
         [
-            "==",               # puncts are a subset of puncts
-            "-- ++ =="          # puncts are a subset of punct-group
-            "abc.123",          # puncts are a subset of mixed-word
-            "a.1 b.2",          # puncts are a subset of mixed-words
-            "abc\xc8",          # puncts are a subset of non-whitespaces
-            "abc\xc8 xyz",      # puncts are a subset of non-whitespace group
+            "==",  # puncts are a subset of puncts
+            "-- ++ =="  # puncts are a subset of punct-group
+            "abc.123",  # puncts are a subset of mixed-word
+            "a.1 b.2",  # puncts are a subset of mixed-words
+            "abc\xc8",  # puncts are a subset of non-whitespaces
+            "abc\xc8 xyz",  # puncts are a subset of non-whitespace group
         ],
     )
     def test_is_subset_of(self, other):
@@ -57,14 +54,13 @@ class TestPunctsTranslatorClass:
     @pytest.mark.parametrize(
         "other",
         [
-            "1",                # puncts are not a subset of digit
-            "123",              # puncts are not a subset of digits
-            "1.1",              # puncts are not a subset of number
-            "-1.1",             # puncts are not a subset of mixed-number
-            "a",                # puncts are not a subset of letter
-            "abc",              # puncts are not a subset of letters
-            "a1 b1",            # puncts are not a subset of words
-
+            "1",  # puncts are not a subset of digit
+            "123",  # puncts are not a subset of digits
+            "1.1",  # puncts are not a subset of number
+            "-1.1",  # puncts are not a subset of mixed-number
+            "a",  # puncts are not a subset of letter
+            "abc",  # puncts are not a subset of letters
+            "a1 b1",  # puncts are not a subset of words
         ],
     )
     def test_is_not_subset_of(self, other):
@@ -79,7 +75,7 @@ class TestPunctsTranslatorClass:
     @pytest.mark.parametrize(
         "other",
         [
-            ".",                # puncts are a superset of punct
+            ".",  # puncts are a superset of punct
         ],
     )
     def test_is_superset_of(self, other):
@@ -95,27 +91,27 @@ class TestPunctsTranslatorClass:
         [
             (
                 "--++==",  # puncts
-                PunctsTranslator # (puncts, puncts) => puncts
+                PunctsTranslator,  # (puncts, puncts) => puncts
             ),
             (
                 "-- ++ ==",  # punct-group
-                PunctsGroupTranslator # (puncts, punct-group) => punct-group
+                PunctsGroupTranslator,  # (puncts, punct-group) => punct-group
             ),
             (
                 "abc.123",  # mixed-word
-                MixedWordTranslator  # (puncts, mixed-word) => mixed-word
+                MixedWordTranslator,  # (puncts, mixed-word) => mixed-word
             ),
             (
                 "a.1 b.1",  # mixed-words
-                MixedWordsTranslator # (puncts, mixed-words) => mixed-words
+                MixedWordsTranslator,  # (puncts, mixed-words) => mixed-words
             ),
             (
                 "abc\xc8",  # non-whitespaces
-                NonWSSTranslator # (puncts, non-whitespaces) => non-whitespaces
+                NonWSSTranslator,  # (puncts, non-whitespaces) => non-whitespaces
             ),
             (
                 "abc\xc8 xyz",  # non-whitespace-group
-                NonWSSGroupTranslator    # (puncts, non-whitespace-group) => non-whitespace-group
+                NonWSSGroupTranslator,  # (puncts, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -134,7 +130,7 @@ class TestPunctsTranslatorClass:
         [
             (
                 "-",  # punct
-                PunctsTranslator # (puncts, punct) => punct
+                PunctsTranslator,  # (puncts, punct) => punct
             ),
         ],
     )
@@ -153,35 +149,35 @@ class TestPunctsTranslatorClass:
         [
             (
                 "a",  # letter
-                NonWSSTranslator # (puncts, letter) => non-whitespaces
+                NonWSSTranslator,  # (puncts, letter) => non-whitespaces
             ),
             (
                 "1",  # digit
-                NonWSSTranslator # (puncts, digit) => non-whitespaces
+                NonWSSTranslator,  # (puncts, digit) => non-whitespaces
             ),
             (
-                    ["a", "1"],  # alpha-num
-                    NonWSSTranslator # (puncts, alpha-num) => non-whitespaces
+                ["a", "1"],  # alpha-num
+                NonWSSTranslator,  # (puncts, alpha-num) => non-whitespaces
             ),
             (
-                    ["a", "1", "#"],  # graph
-                    NonWSSTranslator # (puncts, graph) => non-whitespaces
+                ["a", "1", "#"],  # graph
+                NonWSSTranslator,  # (puncts, graph) => non-whitespaces
             ),
             (
                 "abc",  # letters
-                NonWSSTranslator # (puncts, letters) => non-whitespaces
+                NonWSSTranslator,  # (puncts, letters) => non-whitespaces
             ),
             (
                 "123",  # digits
-                NonWSSTranslator # (puncts, digits) => non-whitespaces
+                NonWSSTranslator,  # (puncts, digits) => non-whitespaces
             ),
             (
                 "1.1",  # number
-                NonWSSTranslator # (puncts, number) => non-whitespaces
+                NonWSSTranslator,  # (puncts, number) => non-whitespaces
             ),
             (
                 "-1.1",  # mixed-number
-                NonWSSTranslator # (puncts, mixed-number) => non-whitespaces
+                NonWSSTranslator,  # (puncts, mixed-number) => non-whitespaces
             ),
             # (
             #     "abc123",  # word
@@ -189,11 +185,11 @@ class TestPunctsTranslatorClass:
             # ),
             (
                 "\xc8",  # non-whitespace
-                NonWSSTranslator # (puncts, non-whitespace) => non-whitespaces
+                NonWSSTranslator,  # (puncts, non-whitespace) => non-whitespaces
             ),
             (
                 "a1 b1",  # words
-                NonWSSGroupTranslator    # (puncts, words) => non-whitespace-group
+                NonWSSGroupTranslator,  # (puncts, words) => non-whitespace-group
             ),
         ],
     )

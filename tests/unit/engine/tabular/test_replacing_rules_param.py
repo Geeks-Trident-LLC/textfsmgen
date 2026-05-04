@@ -8,6 +8,7 @@ Run pytest in the project root to execute these tests:
     or
     $ python -m pytest tests/unit/engine/tabular/test_replacing_rules_param.py
 """
+
 from textfsmgen.engine.tabular import TabularTranslator
 
 test_data = (
@@ -34,7 +35,7 @@ def test_yaml_list_of_pairs():
         column_count=9,
         headers="fperm, links, uname, gid, fsize, month, date, time, fpath",
         has_header_row=False,
-        replacing_rules=rules
+        replacing_rules=rules,
     )
     assert translator.to_snippet() == expected
 
@@ -51,7 +52,7 @@ def test_yaml_dict_of_pairs():
         column_count=9,
         headers="fperm, links, uname, gid, fsize, month, date, time, fpath",
         has_header_row=False,
-        replacing_rules=rules
+        replacing_rules=rules,
     )
     assert translator.to_snippet() == expected
 
@@ -70,7 +71,7 @@ def test_list_of_pairs():
         column_count=9,
         headers="fperm, links, uname, gid, fsize, month, date, time, fpath",
         has_header_row=False,
-        replacing_rules=rules
+        replacing_rules=rules,
     )
     assert translator.to_snippet() == expected
 
@@ -89,6 +90,6 @@ def test_list_of_dict_pairs():
         column_count=9,
         headers="fperm, links, uname, gid, fsize, month, date, time, fpath",
         has_header_row=False,
-        replacing_rules=rules
+        replacing_rules=rules,
     )
     assert translator.to_snippet() == expected

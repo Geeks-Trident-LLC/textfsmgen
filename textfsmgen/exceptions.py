@@ -45,7 +45,7 @@ class InvalidExceptionType(Exception):
     """Raised when an invalid exception type is encountered."""
 
 
-class TemplateError(Exception):     # noqa
+class TemplateError(Exception):  # noqa
     """
     Base class for all template-related errors in the TextFSM Generator.
 
@@ -88,7 +88,7 @@ def raise_exception(
     cls: Optional[Type[Exception]] = None,
     fmt: str = "{} - {}",
     msg: str = "",
-    is_skipped: bool = False
+    is_skipped: bool = False,
 ):
     """
     Raise a formatted exception or skip raising.
@@ -97,9 +97,11 @@ def raise_exception(
     if not is_skipped:
         fmt = str(fmt)
 
-        if not isinstance(ex, Exception):   # if ex is NOT instance of Exception
+        if not isinstance(ex, Exception):  # if ex is NOT instance of Exception
             ex_type_name = ex.__name__ if isinstance(ex, type) else type(ex).__name__
-            failure = f"Invalid argument: expected an Exception instance, got {ex_type_name}."
+            failure = (
+                f"Invalid argument: expected an Exception instance, got {ex_type_name}."
+            )
             raise InvalidExceptionType(failure)
 
         # Determine which exception class to use
@@ -117,7 +119,7 @@ def raise_exception(
             raise other_ex.__class__(other_failure)
 
 
-def create_runtime_error(obj=None, msg=''):
+def create_runtime_error(obj=None, msg=""):
     """
     Dynamically create a custom runtime exception instance.
     """
@@ -134,7 +136,7 @@ def create_runtime_error(obj=None, msg=''):
     return exc_cls(msg)
 
 
-def raise_runtime_error(obj=None, msg=''):
+def raise_runtime_error(obj=None, msg=""):
     """
     Raise a dynamically created runtime exception.
     """

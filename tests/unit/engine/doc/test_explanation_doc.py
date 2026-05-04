@@ -17,48 +17,32 @@ from textfsmgen.engine.doc import ExplanationDoc
 @pytest.mark.parametrize(
     "snippet, expected",
     [
-        (
-            "word()",
-            {"semantic": "word", "quantity": "", "unit": ""}
-        ),
-        (
-            "word_group()",
-            {"semantic": "word", "quantity": "", "unit": "group"}
-        ),
-        (
-            "word_items()",
-            {"semantic": "word", "quantity": "", "unit": "items"}
-        ),
-        (
-            "some_word()",
-            {"semantic": "word", "quantity": "some", "unit": ""}
-        ),
+        ("word()", {"semantic": "word", "quantity": "", "unit": ""}),
+        ("word_group()", {"semantic": "word", "quantity": "", "unit": "group"}),
+        ("word_items()", {"semantic": "word", "quantity": "", "unit": "items"}),
+        ("some_word()", {"semantic": "word", "quantity": "some", "unit": ""}),
         (
             "zero_or_one_word()",
-            {"semantic": "word", "quantity": "zero_or_one", "unit": ""}
+            {"semantic": "word", "quantity": "zero_or_one", "unit": ""},
         ),
         (
             "zero_or_more_word()",
-            {"semantic": "word", "quantity": "zero_or_more", "unit": ""}
+            {"semantic": "word", "quantity": "zero_or_more", "unit": ""},
         ),
         (
             "one_or_more_word()",
-            {"semantic": "word", "quantity": "one_or_more", "unit": ""}
+            {"semantic": "word", "quantity": "one_or_more", "unit": ""},
         ),
-        (
-            "optional_word()",
-            {"semantic": "word", "quantity": "optional", "unit": ""}
-        ),
+        ("optional_word()", {"semantic": "word", "quantity": "optional", "unit": ""}),
         (
             "optional_word_group()",
-            {"semantic": "word", "quantity": "optional", "unit": "group"}
+            {"semantic": "word", "quantity": "optional", "unit": "group"},
         ),
         (
             "optional_word_items()",
-            {"semantic": "word", "quantity": "optional", "unit": "items"}
+            {"semantic": "word", "quantity": "optional", "unit": "items"},
         ),
-
-    ]
+    ],
 )
 def test_parse(snippet, expected):
     doc = ExplanationDoc(snippet)

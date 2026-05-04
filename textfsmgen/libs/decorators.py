@@ -4,7 +4,7 @@ textfsmgen.libs.decorators
 
 This module provides reusable decorators that simplify common text‑processing
 tasks across the codebase.
-"""     # noqa
+"""  # noqa
 
 import functools
 from textwrap import dedent
@@ -15,6 +15,7 @@ import traceback
 
 def normalize_output(func: Callable) -> Callable:
     """Decorator that converts a function's return value into a clean, unindented string."""
+
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> str:
         result = func(*args, **kwargs)
@@ -35,6 +36,7 @@ def normalize_output(func: Callable) -> Callable:
 
 def try_and_catch(handler: Callable[[Exception], Any] = None) -> Callable:
     """Decorator that wraps a function and optionally handles raised exceptions."""
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -44,12 +46,15 @@ def try_and_catch(handler: Callable[[Exception], Any] = None) -> Callable:
                 if handler:
                     return handler(exc)
                 raise exc
+
         return wrapper
+
     return decorator
 
 
 def catch_debug_break(debug_flag):
     """Decorator: catch exceptions only when debug is enabled, then break."""
+
     def wrap(func):
         @functools.wraps(func)
         def call(*args, **kwargs):
@@ -63,6 +68,7 @@ def catch_debug_break(debug_flag):
                 print(f"[DEBUG] {func.__name__} raised: {exc}")
                 traceback.print_exc()
                 return None
-        return call
-    return wrap
 
+        return call
+
+    return wrap

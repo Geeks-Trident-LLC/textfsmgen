@@ -3,7 +3,7 @@ textfsmgen.libs.shell
 =====================
 
 General-purpose shell (CLI interaction) functions used across TextFSMGen.
-"""     # noqa
+"""  # noqa
 
 from typing import Optional
 
@@ -106,15 +106,15 @@ def execute_command(cmdline: str) -> DotObject:
 
 def is_macos_dark_mode() -> bool:
     """Return True if macOS is currently using Dark Mode."""
-    if platform.system() != 'Darwin':
+    if platform.system() != "Darwin":
         return False
 
     try:
         result = subprocess.run(
             ["defaults", "read", "-g", "AppleInterfaceStyle"],
             capture_output=True,
-            text=True
+            text=True,
         )
         return result.stdout.strip() == "Dark"
-    except Exception:   # noqa
+    except Exception:  # noqa
         return False  # key doesn't exist → Light Mode

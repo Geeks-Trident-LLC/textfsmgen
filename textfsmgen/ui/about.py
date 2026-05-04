@@ -22,7 +22,7 @@ from textfsmgen.ui.common import (
 import textfsmgen.config as config
 
 
-def show_dialog(app):   # noqa
+def show_dialog(app):  # noqa
     parent = app.root
     about = create_window(parent)
 
@@ -51,9 +51,7 @@ def show_dialog(app):   # noqa
 
 
 def create_window(
-    parent: Union[ui.Tk, ui.Toplevel],
-    width: int = 460,
-    height: int = 480
+    parent: Union[ui.Tk, ui.Toplevel], width: int = 460, height: int = 480
 ) -> ui.Toplevel:
     """Create and center the About dialog window within the given parent."""
     about = ui.Toplevel(parent)
@@ -62,9 +60,7 @@ def create_window(
     return about
 
 
-def create_main_frame(
-    parent: Union[ui.Tk, ui.Toplevel, ui.Frame]
-) -> ui.Frame:
+def create_main_frame(parent: Union[ui.Tk, ui.Toplevel, ui.Frame]) -> ui.Frame:
     """Create and pack a main frame that fills and expands within the given container."""
     frame = ui.Frame(parent)
     frame.pack(fill="both", expand=True)
@@ -78,45 +74,49 @@ def create_panel_window(parent: Any) -> ttk.PanedWindow:
     return paned_window
 
 
-def add_main_panel(parent: ui.PanedWindow, width: int = 450, height: int = 20) -> ui.Frame:
+def add_main_panel(
+    parent: ui.PanedWindow, width: int = 450, height: int = 20
+) -> ui.Frame:
     """Add the main application panel with a styled header label to a PanedWindow."""
     frame = ui.Frame(parent, width=width, height=height)
     parent.add(frame, weight=4)
 
     create_styled_label(
-        frame, text=config.software_release + " " * 30,
+        frame,
+        text=config.software_release + " " * 30,
         options=dict(foreground="navy", background="lightgray"),
-        increased_size=8, bold=True, italic=True,
-        layout=("grid", dict(row=0, column=0, columnspan=2, sticky="nwe"))
+        increased_size=8,
+        bold=True,
+        italic=True,
+        layout=("grid", dict(row=0, column=0, columnspan=2, sticky="nwe")),
     )
 
     return frame
 
 
-def add_repository_link(
-    parent: ui.Frame,
-    width: int = 450,
-    height: int = 5
-) -> None:
+def add_repository_link(parent: ui.Frame, width: int = 450, height: int = 5) -> None:
     """Add a repository link section with labels to the given container."""
     cell_frame = ui.Frame(parent, width=width, height=height)
     cell_frame.grid(row=1, column=0, sticky=tk.W, columnspan=2)
 
     create_styled_label(
-        cell_frame, text="Repository:", bold=True,
-        layout=("pack", dict(side=tk.LEFT))
+        cell_frame, text="Repository:", bold=True, layout=("pack", dict(side=tk.LEFT))
     )
     create_styled_label(
-        cell_frame, text=config.repo_url, link=config.repo_url,
-        layout=("pack", dict(side=tk.LEFT))
+        cell_frame,
+        text=config.repo_url,
+        link=config.repo_url,
+        layout=("pack", dict(side=tk.LEFT)),
     )
 
 
 def add_dependency_panel(parent: Any) -> None:
     """Add a panel displaying PyPI dependencies with clickable package links."""
     create_styled_label(
-        parent, text="PyPI Dependencies:", bold=True,
-        layout=("grid", dict(row=2, column=0, sticky=tk.W))
+        parent,
+        text="PyPI Dependencies:",
+        bold=True,
+        layout=("grid", dict(row=2, column=0, sticky=tk.W)),
     )
 
     row, column = 3, 0
@@ -125,7 +125,10 @@ def add_dependency_panel(parent: Any) -> None:
             parent,
             text=pkg.get("package", pkg_name),
             link=pkg.get("url", ""),
-            layout=("grid", dict(row=row, column=column % 2, padx=(20, 0), sticky=tk.W))
+            layout=(
+                "grid",
+                dict(row=row, column=column % 2, padx=(20, 0), sticky=tk.W),
+            ),
         )
 
         row += column % 2
@@ -133,7 +136,7 @@ def add_dependency_panel(parent: Any) -> None:
 
 
 def add_license_panel(parent, width: int = 450, height: int = 200) -> None:
-    """Create a scrollable license_text panel and add it to the given container.""" # noqa
+    """Create a scrollable license_text panel and add it to the given container."""  # noqa
 
     label_frame = ui.LabelFrame(
         parent, height=height, width=width, text=config.license_name
@@ -144,7 +147,9 @@ def add_license_panel(parent, width: int = 450, height: int = 200) -> None:
     text_width = 58 if ui.is_macos else 51
     text_height = 18 if ui.is_macos else 14 if ui.is_linux else 15
 
-    text_area = ui.TextArea(label_frame, width=text_width, height=text_height, wrap="word")
+    text_area = ui.TextArea(
+        label_frame, width=text_width, height=text_height, wrap="word"
+    )
     text_area.grid(row=0, column=0, padx=5, pady=5)
 
     scrollbar = ui.Scrollbar(label_frame, orient="vertical", command=text_area.yview)
@@ -157,21 +162,25 @@ def add_license_panel(parent, width: int = 450, height: int = 200) -> None:
 
 
 def create_footer(parent, width: int = 450, height: int = 20) -> None:
-    """Create and add a footer with copyright and company info to the given container."""   # noqa
+    """Create and add a footer with copyright and company info to the given container."""  # noqa
     frame = ui.Frame(parent, width=width, height=height)
     parent.add(frame, weight=1)
 
     create_styled_label(
-        frame, text=config.copyright_text,
+        frame,
+        text=config.copyright_text,
         layout=("pack", dict(side=tk.LEFT, pady=(10, 10))),
     )
 
     create_styled_label(
-        frame, text=config.company, link=config.company_url,
+        frame,
+        text=config.company,
+        link=config.company_url,
         layout=("pack", dict(side=tk.LEFT, pady=(10, 10))),
     )
 
     create_styled_label(
-        frame, text=".  All rights reserved.",
+        frame,
+        text=".  All rights reserved.",
         layout=("pack", dict(side=tk.LEFT, pady=(10, 10))),
     )

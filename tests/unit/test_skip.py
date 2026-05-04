@@ -18,11 +18,20 @@ import pytest
 @pytest.mark.parametrize(
     "mod_class_or_func",
     [
-        mod__main__, mode_main, mod_application.Application,
-        mod_ui_about, mod_ui_builder, mod_ui_common,
-        mod_ui_callback, mod_ui_controls, mod_ui_menu,
-        mod_ui_settings, mod_ui_suggester, mod_textfsm_tester, mod_ui_usage,
-    ]
+        mod__main__,
+        mode_main,
+        mod_application.Application,
+        mod_ui_about,
+        mod_ui_builder,
+        mod_ui_common,
+        mod_ui_callback,
+        mod_ui_controls,
+        mod_ui_menu,
+        mod_ui_settings,
+        mod_ui_suggester,
+        mod_textfsm_tester,
+        mod_ui_usage,
+    ],
 )
 def test(mod_class_or_func):
     assert mod_class_or_func is not None

@@ -15,9 +15,9 @@ from textfsmgen.config import version
 __version__ = version
 
 __all__ = [
-    'LineParser',
-    'TemplateBuilder',
-    'CategoryTemplateBuilder',
-    'TabularTemplateBuilder',
-    'version',
+    "LineParser",
+    "TemplateBuilder",
+    "CategoryTemplateBuilder",
+    "TabularTemplateBuilder",
+    "version",
 ]

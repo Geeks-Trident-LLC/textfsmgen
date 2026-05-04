@@ -53,7 +53,7 @@ class Application:
             # frame widget
             input=None,
             controls=None,
-            output=None
+            output=None,
         )
 
         self.textarea = DotObject(
@@ -70,26 +70,22 @@ class Application:
             paste=None,
             save=None,
             copy=None,
-
             build=None,
             result=None,
             settings=None,
-
             python=None,
             unittest=None,
             pytest=None,
-            execute=None
+            execute=None,
         )
 
         self.settings = DotObject(
             test_data_btn_name=ui.tk.StringVar(value="Test Data"),
-
             # general arguments for TemplateBuilder
             author=ui.tk.StringVar(),
             email=ui.tk.StringVar(),
             company=ui.tk.StringVar(),
             description=ui.tk.StringVar(),
-
             # Category translator arguments
             use_category_translator_flag=ui.tk.BooleanVar(),
             category_arg_count=ui.tk.IntVar(value=1),
@@ -97,7 +93,6 @@ class Application:
             category_arg_starting_from=ui.tk.StringVar(),
             category_arg_ending_at=ui.tk.StringVar(),
             category_arg_replacing_rules=ui.tk.StringVar(),
-
             # Tabular Translator arguments
             use_tabular_translator_flag=ui.tk.BooleanVar(),
             tabular_arg_has_header_row_flag=ui.tk.BooleanVar(value=True),
@@ -110,17 +105,15 @@ class Application:
             tabular_arg_starting_from=ui.tk.StringVar(),
             tabular_arg_ending_at=ui.tk.StringVar(),
             tabular_arg_replacing_rules=ui.tk.StringVar(),
-
             # Test execution settings
             always_ask_flag=ui.tk.BooleanVar(value=True),
             delete_file_after_run_flag=ui.tk.BooleanVar(value=True),
             python_interpreter=ui.tk.StringVar(),
-
             # Output Display Options
             test_data_flag=ui.tk.BooleanVar(),
             template_flag=ui.tk.BooleanVar(),
             tabular_flag=ui.tk.BooleanVar(value=True),
-            index_flag=ui.tk.BooleanVar()
+            index_flag=ui.tk.BooleanVar(),
         )
 
         self.snapshot = DotObject(
@@ -132,65 +125,61 @@ class Application:
         )
 
         self.tools = DotObject(
-            suggester = DotObject(
+            suggester=DotObject(
                 # flag or variable
                 variable_flag=ui.tk.BooleanVar(value=True),
                 group_flag=ui.tk.BooleanVar(),
                 generic_flag=ui.tk.BooleanVar(value=True),
                 notation_flag=ui.tk.BooleanVar(),
                 split_arg=ui.tk.StringVar(value="/"),
-
                 # widget
                 in_textarea=None,
                 out_textarea=None,
                 code_textarea=None,
                 result_textarea=None,
             ),
-            builder = DotObject(
+            builder=DotObject(
                 # widget
-                semantic_group = None,
+                semantic_group=None,
                 outcomes_group=None,
                 pattern_area=None,
                 explain_area=None,
-
                 # widget-variable
                 shared_semantic_list=ui.tk.StringVar(),
-
                 exact_quantity=ui.tk.StringVar(),
                 range_min_quantity=ui.tk.StringVar(),
                 range_max_quantity=ui.tk.StringVar(),
                 variant_flag=ui.tk.StringVar(),
-
                 allowed_empty_flag=ui.tk.BooleanVar(),
                 var_name=ui.tk.StringVar(),
-
                 outcomes_value=ui.tk.StringVar(),
-
                 # data
-                shared_data_list = [
-                    ui.tk.StringVar(), ui.tk.StringVar(),
-                    ui.tk.StringVar(), ui.tk.StringVar(),
-                    ui.tk.StringVar(), ui.tk.StringVar(),
-                    ui.tk.StringVar(), ui.tk.StringVar(),
+                shared_data_list=[
+                    ui.tk.StringVar(),
+                    ui.tk.StringVar(),
+                    ui.tk.StringVar(),
+                    ui.tk.StringVar(),
+                    ui.tk.StringVar(),
+                    ui.tk.StringVar(),
+                    ui.tk.StringVar(),
+                    ui.tk.StringVar(),
                 ],
-                snippet_and_samples=None
+                snippet_and_samples=None,
             ),
-            tester = DotObject(
+            tester=DotObject(
                 # widget
                 dialog=None,
                 template_area=None,
                 test_data_area=None,
                 result_area=None,
-
                 # shared variables
                 checkbox_state_var=ui.tk.BooleanVar(),
                 output_flag=ui.tk.StringVar(),
-
                 # data
                 template_text=ui.tk.StringVar(),
                 test_data_text=ui.tk.StringVar(),
-                result_text=ui.tk.StringVar()
-            )
+                result_text=ui.tk.StringVar(),
+            ),
         )
 
     def category_translator_enabled(self):
@@ -215,7 +204,7 @@ class Application:
             author=self.settings.author.get(),
             email=self.settings.email.get(),
             company=self.settings.company.get(),
-            description=self.settings.description.get()
+            description=self.settings.description.get(),
         )
 
     def get_category_template_builder_args(self):
@@ -233,7 +222,7 @@ class Application:
             author=self.settings.author.get(),
             email=self.settings.email.get(),
             company=self.settings.company.get(),
-            description=self.settings.description.get()
+            description=self.settings.description.get(),
         )
 
     def get_tabular_template_builder_args(self):
@@ -257,7 +246,9 @@ class Application:
             column_widths=column_widths if column_widths.strip() else None,
             headers=headers if headers.strip() else None,
             header_rows=header_rows if headers.strip() else None,
-            custom_header_text=custom_header_text if custom_header_text.strip() else None,
+            custom_header_text=custom_header_text
+            if custom_header_text.strip()
+            else None,
             starting_from=starting_from if starting_from.strip() else None,
             ending_at=ending_at if ending_at.strip() else None,
             has_header_row=self.settings.tabular_arg_has_header_row_flag.get(),
@@ -266,7 +257,7 @@ class Application:
             author=self.settings.author.get(),
             email=self.settings.email.get(),
             company=self.settings.company.get(),
-            description=self.settings.description.get()
+            description=self.settings.description.get(),
         )
 
     def callback_focus(self, event):
@@ -277,18 +268,20 @@ class Application:
             if widget and widget != self.curr_widget:
                 self.prev_widget = self.curr_widget
                 self.curr_widget = widget
-        except Exception as ex:     # noqa
+        except Exception as ex:  # noqa
             print(f"... skip {getattr(event, 'widget', event)}")
 
     def build_main_window(self):
         self.root = ui.tk.Tk()
-        width, height = (1200, 750) if ui.is_macos else (1100, 650) if ui.is_linux else (900, 600)
+        width, height = (
+            (1200, 750) if ui.is_macos else (1100, 650) if ui.is_linux else (900, 600)
+        )
         # self.root.geometry('1000x750+100+100' if ui.is_macos else '900x600+100+100')
         self.root.geometry(f"{width}x{height}+100+100")
         self.root.minsize(200, 200)
-        self.root.option_add('*tearOff', False)
+        self.root.option_add("*tearOff", False)
 
-        self.root.title('TextFSM Generator CE')
+        self.root.title("TextFSM Generator CE")
         common.set_window_icon(self.root)
         self.root.bind("<Button-1>", lambda e: self.callback_focus(e))
 
@@ -307,7 +300,9 @@ class Application:
             self.paned_window, width=600, height=300, relief="ridge"
         )
         self.frames.controls = ui.Frame(
-            self.paned_window, width=600, relief="ridge",
+            self.paned_window,
+            width=600,
+            relief="ridge",
             height=70 if ui.is_macos else 74 if ui.is_linux else 62,
         )
         self.frames.controls.pack_propagate(False)  # keep the height
@@ -331,29 +326,29 @@ class Application:
 
         # Create main input text area
         self.textarea.input = ui.TextArea(
-            self.frames.input, width=20, height=5, wrap='none',
-            name='input_textarea',
+            self.frames.input,
+            width=20,
+            height=5,
+            wrap="none",
+            name="input_textarea",
         )
-        self.textarea.input.grid(row=0, column=0, sticky='nswe')    # noqa
+        self.textarea.input.grid(row=0, column=0, sticky="nswe")  # noqa
 
         # Add vertical scrollbar
         vscrollbar = ui.Scrollbar(
-            self.frames.input, orient="vertical",
-            command=self.textarea.input.yview
+            self.frames.input, orient="vertical", command=self.textarea.input.yview
         )
-        vscrollbar.grid(row=0, column=1, sticky='ns')
+        vscrollbar.grid(row=0, column=1, sticky="ns")
 
         # Add horizontal scrollbar
         hscrollbar = ui.Scrollbar(
-            self.frames.input, orient="horizontal",
-            command=self.textarea.input.xview
+            self.frames.input, orient="horizontal", command=self.textarea.input.xview
         )
-        hscrollbar.grid(row=1, column=0, sticky='ew')
+        hscrollbar.grid(row=1, column=0, sticky="ew")
 
         # Link scrollbars to text area
         self.textarea.input.config(
-            yscrollcommand=vscrollbar.set,
-            xscrollcommand=hscrollbar.set
+            yscrollcommand=vscrollbar.set, xscrollcommand=hscrollbar.set
         )
 
     def build_output_textarea(self):
@@ -367,25 +362,26 @@ class Application:
 
         # Create result text area
         self.textarea.output = ui.TextArea(
-            self.frames.output, width=20, height=5, wrap='none',
+            self.frames.output,
+            width=20,
+            height=5,
+            wrap="none",
             state="disabled",
-            name='output_textarea',
+            name="output_textarea",
             bg=ui.readonly_text_bg_color,
         )
-        self.textarea.output.grid(row=0, column=0, sticky='nswe')   # noqa
+        self.textarea.output.grid(row=0, column=0, sticky="nswe")  # noqa
 
         # Attach scrollbars
         vscrollbar = ui.Scrollbar(
-            self.frames.output, orient="vertical",
-            command=self.textarea.output.yview
+            self.frames.output, orient="vertical", command=self.textarea.output.yview
         )
-        vscrollbar.grid(row=0, column=1, sticky='ns')
+        vscrollbar.grid(row=0, column=1, sticky="ns")
 
         hscrollbar = ui.Scrollbar(
-            self.frames.output, orient="horizontal",
-            command=self.textarea.output.xview
+            self.frames.output, orient="horizontal", command=self.textarea.output.xview
         )
-        hscrollbar.grid(row=1, column=0, sticky='ew')
+        hscrollbar.grid(row=1, column=0, sticky="ew")
 
         # Link scrollbars to text area
         self.textarea.output.config(

@@ -5,6 +5,7 @@ textfsmgen.ui.common
 Utility functions for constructing and managing Tkinter UI components
 in the TextFSMGen GUI application.
 """
+
 import functools
 import re
 from os import path
@@ -83,12 +84,12 @@ class RewriteSync:
         return len(extract_text(app.self.textarea.input).strip()) == 0
 
 
-def is_application_app(app):    # noqa
+def is_application_app(app):  # noqa
     return type(app).__name__ == "Application"
 
 
 def get_center_coordinates(
-        parent: tk.Tk, child_width: int, child_height: int
+    parent: tk.Tk, child_width: int, child_height: int
 ) -> Tuple[int, int]:
     """Calculate coordinates to center a child window within its parent."""
     geometry = parent.winfo_geometry()  # format: "WxH+X+Y"
@@ -101,7 +102,14 @@ def get_center_coordinates(
     return x, y
 
 
-def center_window(parent, window, width: int, height: int, x_resizable: bool = False, y_resizable: bool = False) -> None:
+def center_window(
+    parent,
+    window,
+    width: int,
+    height: int,
+    x_resizable: bool = False,
+    y_resizable: bool = False,
+) -> None:
     """Center a Tkinter window relative to its parent."""
     x, y = get_center_coordinates(parent, width, height)
     window.geometry(f"{width}x{height}+{x}+{y}")
@@ -113,14 +121,14 @@ def make_modal(dialog: Union[tk.Toplevel, tk.Tk]) -> None:
 
     parent = dialog.master
     if parent is not None:
-        dialog.transient(parent)    # noqa
+        dialog.transient(parent)  # noqa
 
     dialog.wait_visibility()
     dialog.grab_set()
     dialog.wait_window()
 
 
-def show_message_dialog(    # noqa
+def show_message_dialog(  # noqa
     title: Optional[str] = None,
     error: Optional[str] = None,
     warning: Optional[str] = None,
@@ -130,7 +138,7 @@ def show_message_dialog(    # noqa
     retrycancel: Optional[str] = None,
     yesno: Optional[str] = None,
     yesnocancel: Optional[str] = None,
-    **options
+    **options,
 ) -> Any:
     """Display a tkinter message dialog based on the provided message type."""
     mapping = {
@@ -154,6 +162,7 @@ def show_message_dialog(    # noqa
 
 def apply_layout(func: Callable) -> Callable:
     """Decorator to apply a Tkinter geometry manager (grid, pack, place) to a widget."""
+
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         widget = func(*args, **kwargs)
@@ -166,6 +175,7 @@ def apply_layout(func: Callable) -> Callable:
                 if callable(layout_method):
                     layout_method(**layout_options)
         return widget
+
     return wrapper
 
 
@@ -179,15 +189,14 @@ def create_styled_label(
     bold: bool = False,
     underline: bool = False,
     italic: bool = False,
-    layout: Optional[Tuple[str, Dict[str, Any]]] = None     # noqa
+    layout: Optional[Tuple[str, Dict[str, Any]]] = None,  # noqa
 ) -> ttk.Label:
     """Create a styled Tkinter label with optional hyperlink behavior."""
 
     def mouse_over(event):
         if "underline" not in event.widget.font:
             event.widget.configure(
-                font=event.widget.font + ["underline"],
-                cursor="hand2"
+                font=event.widget.font + ["underline"], cursor="hand2"
             )
 
     def mouse_out(event):
@@ -231,7 +240,7 @@ def open_app_resource(resource: str) -> None:
         webbrowser.open_new_tab(str(url))
 
 
-def extract_text(widget) -> str:    # noqa
+def extract_text(widget) -> str:  # noqa
     """Return textarea content without the trailing newline added by Tkinter."""
     if not isinstance(widget, ui.TextArea):
         return ""
@@ -358,11 +367,7 @@ class TriStateCheckBox(ui.CheckBox):
         kwargs.pop("cursor", None)
 
         super().__init__(
-            parent,
-            text=label,
-            variable=self.state_var,
-            cursor="hand2",
-            **kwargs
+            parent, text=label, variable=self.state_var, cursor="hand2", **kwargs
         )
 
     def reset(self):
@@ -387,7 +392,7 @@ class DynamicCheckboxGroup(ui.LabelFrame):
 
         for count in [4, 3, 2]:
             if max_len * count <= 100:
-                return [items[i:i+count] for i in range(0, len(items), count)]
+                return [items[i : i + count] for i in range(0, len(items), count)]
 
         rows = []
         for item in items:
@@ -433,8 +438,10 @@ class DynamicCheckboxGroup(ui.LabelFrame):
         for row_pos, row in enumerate(grouped):
             for col_pos, text in enumerate(row):
                 chk = ttk.Checkbutton(
-                    self.body, text=text,
-                    onvalue=text, offvalue="",
+                    self.body,
+                    text=text,
+                    onvalue=text,
+                    offvalue="",
                     variable=state_var,
                     cursor="hand2",
                 )
@@ -468,7 +475,7 @@ def create_widget(
     widget_type: str,
     parent: Optional[Any] = None,
     layout: Optional[tuple] = None,  # noqa
-    **options: Any
+    **options: Any,
 ) -> Any:
     """Instantiate a Tkinter widget by type and optionally apply a layout.
 
@@ -527,5 +534,5 @@ def set_window_icon(widget) -> None:
         else:
             logo = tk.PhotoImage(file=png_path)
             widget.iconphoto(False, logo)
-    except Exception:   # noqa
+    except Exception:  # noqa
         pass

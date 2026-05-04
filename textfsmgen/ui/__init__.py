@@ -65,11 +65,9 @@ __all__ = [
     "is_macos",
     "is_windows",
     "is_linux",
-
     # theme
     "readonly_text_bg_color",
     "hyperlink_fg_color",
-
     # widgets
     "Tk",
     "Toplevel",
@@ -84,7 +82,6 @@ __all__ = [
     "RadioButton",
     "CheckBox",
     "Menu",
-
     # direct Tkinter utilities
     "messagebox",
     "filedialog",

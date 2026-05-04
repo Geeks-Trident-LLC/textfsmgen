@@ -56,13 +56,7 @@ def get_expected_template():
 
 
 def get_expected_result():  # noqa
-    return [
-        {
-            'fruits': 'orange, peach',
-            'meat': 'pork',
-            'drinks': 'water'
-        }
-    ]
+    return [{"fruits": "orange, peach", "meat": "pork", "drinks": "water"}]
 
 
 def test():
@@ -85,8 +79,7 @@ def test():
     raw_textfsm_template = get_textfsm_template(tmpl_snippet)
 
     # Normalize template by replacing actual dates with placeholder
-    normalized_textfsm_template = replace_dates_with_placeholder(
-        raw_textfsm_template)
+    normalized_textfsm_template = replace_dates_with_placeholder(raw_textfsm_template)
 
     # Template matches expected
     assert normalized_textfsm_template == exp_template, (

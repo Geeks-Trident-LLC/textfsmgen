@@ -24,8 +24,7 @@ pkg_info = shell.PackageInfo("textfsmgen")
 
 # Skip marker if textfsmgen is not installed
 skip_if_missing_textfsmgen = pytest.mark.skipif(
-    not pkg_info.is_installed,
-    reason="Skipping: textfsmgen package is not installed."
+    not pkg_info.is_installed, reason="Skipping: textfsmgen package is not installed."
 )
 
 
@@ -38,17 +37,20 @@ def test_version_matches_config():
 
 def test_user_keyword_mapping_file():
     """Check template filename path."""
-    expected = str(PurePath(Path.home(), '.textfsmgen', 'user_keyword_mapping.yaml'))
+    expected = str(PurePath(Path.home(), ".textfsmgen", "user_keyword_mapping.yaml"))
     assert config.user_keyword_mapping_file == expected
+
 
 def test_main_app_text():
     """Check main app text."""
     assert f"v{version}" in config.main_app_text
 
+
 def test_company_info():
     """Check company info."""
     assert config.company == "Geeks Trident LLC"
     assert "geekstrident.com" in config.company_url
+
 
 def test_repo_and_docs_urls():
     """Check repo and docs URLs."""
@@ -56,11 +58,13 @@ def test_repo_and_docs_urls():
     assert config.urls.get("readme").endswith("README.md")
     assert config.urls.get("license").endswith("LICENSE")
 
+
 def test_license_info():
     """Check license info."""
     assert "TextFSM Generator License" in config.license_name
     assert "2022" in config.copyright_text
     assert isinstance(config.license_text, str)
+
 
 @pytest.mark.parametrize(
     "pkg",

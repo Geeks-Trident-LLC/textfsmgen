@@ -13,7 +13,6 @@ import pytest
 
 from textfsmgen.engine.translate import (
     make_translator,
-
     AlnumTranslator,
     WordTranslator,
     WordsTranslator,
@@ -21,7 +20,7 @@ from textfsmgen.engine.translate import (
     MixedWordsTranslator,
     NonWSTranslator,
     NonWSSTranslator,
-    NonWSSGroupTranslator
+    NonWSSGroupTranslator,
 )
 
 from tests.unit.engine.translate import to_list
@@ -37,15 +36,15 @@ class TestAlnumTranslatorClass:
     @pytest.mark.parametrize(
         "other",
         [
-            ["a", "1"],         # alpha-num is a subset of alpha-num
-            ["a", "1", "#"],    # alpha-num is a subset of graph
-            "abc123",           # alpha-num is a subset of word
-            "a1 b12",           # alpha-num is a subset of words
-            "abc.123",          # alpha-num is a subset of mixed word
-            "a.1 b.2",          # alpha-num is a subset of mixed words
-            "\xc8",             # alpha-num is a subset of non-whitespace
-            "abc\xc8",          # alpha-num is a subset of non-whitespaces
-            "abc\xc8 xyz",      # alpha-num is a subset of non-whitespace group
+            ["a", "1"],  # alpha-num is a subset of alpha-num
+            ["a", "1", "#"],  # alpha-num is a subset of graph
+            "abc123",  # alpha-num is a subset of word
+            "a1 b12",  # alpha-num is a subset of words
+            "abc.123",  # alpha-num is a subset of mixed word
+            "a.1 b.2",  # alpha-num is a subset of mixed words
+            "\xc8",  # alpha-num is a subset of non-whitespace
+            "abc\xc8",  # alpha-num is a subset of non-whitespaces
+            "abc\xc8 xyz",  # alpha-num is a subset of non-whitespace group
         ],
     )
     def test_is_subset_of(self, other):
@@ -60,11 +59,11 @@ class TestAlnumTranslatorClass:
     @pytest.mark.parametrize(
         "other",
         [
-            "123",              # alpha-num is not a subset of digits
-            "1.1",              # alpha-num is not a subset of number
-            "-1.1",             # alpha-num is not a subset of mixed-number
-            "++--",             # alpha-num is not a subset of punctuation(s)
-            "++ -- ==",         # alpha-num is not a subset of punctuation group
+            "123",  # alpha-num is not a subset of digits
+            "1.1",  # alpha-num is not a subset of number
+            "-1.1",  # alpha-num is not a subset of mixed-number
+            "++--",  # alpha-num is not a subset of punctuation(s)
+            "++ -- ==",  # alpha-num is not a subset of punctuation group
         ],
     )
     def test_is_not_subset_of(self, other):
@@ -79,8 +78,8 @@ class TestAlnumTranslatorClass:
     @pytest.mark.parametrize(
         "other",
         [
-            "a",                # alpha-num is a superset of letter
-            "1",                # alpha-num is a superset of digit
+            "a",  # alpha-num is a superset of letter
+            "1",  # alpha-num is a superset of digit
         ],
     )
     def test_is_superset_of(self, other):
@@ -95,36 +94,36 @@ class TestAlnumTranslatorClass:
         "data, expected_class",
         [
             (
-                    ["a", "1"],  # alpha-num
-                    AlnumTranslator    # (alpha-num, alpha-num) => alpha-num
+                ["a", "1"],  # alpha-num
+                AlnumTranslator,  # (alpha-num, alpha-num) => alpha-num
             ),
             (
                 "abc123",  # a word
-                WordTranslator   # (alpha-num, word) => word
+                WordTranslator,  # (alpha-num, word) => word
             ),
             (
                 "a1 a12",  # words
-                WordsTranslator  # (alpha-num, words) => words
+                WordsTranslator,  # (alpha-num, words) => words
             ),
             (
                 "abc.123",  # mixed-word
-                MixedWordTranslator  # (alpha-num, mixed-word) => mixed-word
+                MixedWordTranslator,  # (alpha-num, mixed-word) => mixed-word
             ),
             (
                 "a.1 b.1",  # mixed-words
-                MixedWordsTranslator # (alpha-num, mixed-words) => mixed-words
+                MixedWordsTranslator,  # (alpha-num, mixed-words) => mixed-words
             ),
             (
                 "\xc8",  # non-whitespace
-                NonWSTranslator # (alpha-num, non-whitespace) => non-whitespace
+                NonWSTranslator,  # (alpha-num, non-whitespace) => non-whitespace
             ),
             (
                 "abc\xc8",  # non-whitespaces
-                NonWSSTranslator # (alpha-num, non-whitespaces) => non-whitespaces
+                NonWSSTranslator,  # (alpha-num, non-whitespaces) => non-whitespaces
             ),
             (
                 "abc\xc8 xyz",  # non-whitespace-group
-                NonWSSGroupTranslator    # (alpha-num, non-whitespace-group) => non-whitespace-group
+                NonWSSGroupTranslator,  # (alpha-num, non-whitespace-group) => non-whitespace-group
             ),
         ],
     )
@@ -143,11 +142,11 @@ class TestAlnumTranslatorClass:
         [
             (
                 "a",  # letter
-                AlnumTranslator    # (alpha-num, letter) => alpha-num
+                AlnumTranslator,  # (alpha-num, letter) => alpha-num
             ),
             (
                 "1",  # letter
-                AlnumTranslator    # (alpha-num, letter) => alpha-num
+                AlnumTranslator,  # (alpha-num, letter) => alpha-num
             ),
         ],
     )
@@ -166,27 +165,27 @@ class TestAlnumTranslatorClass:
         [
             (
                 "123",  # digits
-                WordTranslator   # (alpha-num, digits) => word
+                WordTranslator,  # (alpha-num, digits) => word
             ),
             (
                 "1.1",  # number
-                MixedWordTranslator  # (alpha-num, number) => mixed-word
+                MixedWordTranslator,  # (alpha-num, number) => mixed-word
             ),
             (
                 "-1.1",  # mixed-number
-                MixedWordTranslator  # (alpha-num, mixed-number) => mixed-word
+                MixedWordTranslator,  # (alpha-num, mixed-number) => mixed-word
             ),
             (
                 "+",  # punctuation
-                NonWSTranslator # (alpha-num, punct) => non-whitespace
+                NonWSTranslator,  # (alpha-num, punct) => non-whitespace
             ),
             (
                 "++",  # punctuations
-                NonWSSTranslator # (alpha-num, puncts) => non-whitespaces
+                NonWSSTranslator,  # (alpha-num, puncts) => non-whitespaces
             ),
             (
                 "++ -- ==",  # punctuation-group
-                NonWSSGroupTranslator    # (alpha-num, punct-group) => non-whitespace-group
+                NonWSSGroupTranslator,  # (alpha-num, punct-group) => non-whitespace-group
             ),
         ],
     )

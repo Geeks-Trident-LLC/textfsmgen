@@ -14,16 +14,26 @@ from textfsmgen.libs.pattern import ParsedKeywordMappingName, PATTERN
 from textfsmgen.core.patterns import LinePattern
 
 from textfsmgen.tools.samples_data import (
-    letter_samples, letters_samples,
-    alnum_samples, alnums_samples,
-    graph_samples, graphs_samples,
-    punct_samples, puncts_samples,
-    word_samples, mixed_word_samples,
-    digit_samples, digits_samples,
-    non_ws_samples, non_wss_samples,
-    space_samples, spaces_samples,
-    ws_samples, wss_samples,
-    dot_samples, dots_samples,
+    letter_samples,
+    letters_samples,
+    alnum_samples,
+    alnums_samples,
+    graph_samples,
+    graphs_samples,
+    punct_samples,
+    puncts_samples,
+    word_samples,
+    mixed_word_samples,
+    digit_samples,
+    digits_samples,
+    non_ws_samples,
+    non_wss_samples,
+    space_samples,
+    spaces_samples,
+    ws_samples,
+    wss_samples,
+    dot_samples,
+    dots_samples,
 )
 
 
@@ -32,7 +42,7 @@ def generate_number_samples(count=1000, prefix="", suffix=""):
     count = max(count, 10)
     total = count * 2
 
-    seen = set()           # O(1) lookups instead of O(n) list search
+    seen = set()  # O(1) lookups instead of O(n) list search
     samples = []
     for item in range(total):
         divisor = random.randint(total // 8, total // 4)
@@ -50,10 +60,10 @@ def generated_mixed_number_samples(count=1000):
     samples = list(base)
 
     patterns = [
-        ("+", ""),   # +123
-        ("-", ""),   # -123
-        ("$", ""),   # $123
-        ("", "%"),   # 123%
+        ("+", ""),  # +123
+        ("-", ""),  # -123
+        ("$", ""),  # $123
+        ("", "%"),  # 123%
         ("(", ")"),  # (123)
     ]
 
@@ -101,20 +111,32 @@ def _get_mixed_number_samples() -> List:
 # Static (non-number) mapping shared across all instances — built once.
 # ---------------------------------------------------------------------------
 _STATIC_MAPPING: Dict[str, List] = {
-    "dot": dot_samples,             "dots": dots_samples,
-    "space": space_samples,         "spaces": spaces_samples,
-    "digit": digit_samples,         "digits": digits_samples,
-    "letter": letter_samples,       "letters": letters_samples,
-    "alnum": alnum_samples,         "alnums": alnums_samples,
-    "graph": graph_samples,         "graphs": graphs_samples,
-    "punct": punct_samples,         "puncts": puncts_samples,
-    "punctuation": punct_samples,   "punctuations": puncts_samples,
+    "dot": dot_samples,
+    "dots": dots_samples,
+    "space": space_samples,
+    "spaces": spaces_samples,
+    "digit": digit_samples,
+    "digits": digits_samples,
+    "letter": letter_samples,
+    "letters": letters_samples,
+    "alnum": alnum_samples,
+    "alnums": alnums_samples,
+    "graph": graph_samples,
+    "graphs": graphs_samples,
+    "punct": punct_samples,
+    "puncts": puncts_samples,
+    "punctuation": punct_samples,
+    "punctuations": puncts_samples,
     "word": word_samples,
     "mixed_word": mixed_word_samples,
-    "ws": ws_samples,               "wss": wss_samples,
-    "whitespace": ws_samples,       "whitespaces": wss_samples,
-    "non_ws": non_ws_samples,       "non_whitespace": non_ws_samples,
-    "non_wss": non_wss_samples,     "non_whitespaces": non_wss_samples,
+    "ws": ws_samples,
+    "wss": wss_samples,
+    "whitespace": ws_samples,
+    "whitespaces": wss_samples,
+    "non_ws": non_ws_samples,
+    "non_whitespace": non_ws_samples,
+    "non_wss": non_wss_samples,
+    "non_whitespaces": non_wss_samples,
 }
 
 _NUMBER_KEYS = frozenset({"number", "mixed_number"})
@@ -144,16 +166,17 @@ class SamplesGenerator:
         self.update_allowed_empty()
         self.parse()
 
-    def __bool__(self): return self._is_parsed
+    def __bool__(self):
+        return self._is_parsed
 
     @property
-    def pattern(self): return LinePattern(self._snippet) if self else ""
+    def pattern(self):
+        return LinePattern(self._snippet) if self else ""
 
     def update_allowed_empty(self):
         keyword, remainder = self._snippet.split("(")
         self._allowed_empty = any(
-            re.match("or_empty", item)
-            for item in re.split(",", remainder)
+            re.match("or_empty", item) for item in re.split(",", remainder)
         )
 
     def parse(self):
@@ -183,9 +206,9 @@ class SamplesGenerator:
         if total is not None and len(source) <= total:
             # Use math instead of a loop: one multiplication gives us enough.
             repeats = (total // len(source)) + 2
-            samples = source * repeats          # no copy overhead until here
+            samples = source * repeats  # no copy overhead until here
         else:
-            samples = list(source)              # single copy, sized just right
+            samples = list(source)  # single copy, sized just right
 
         random.shuffle(samples)
         return samples
@@ -223,7 +246,7 @@ class SamplesGenerator:
         if keyword in ("anything", "something"):
             self._allowed_empty = keyword == "anything"
             keyword = "dots"
-        return self.get_sample(keyword)[:self._count]
+        return self.get_sample(keyword)[: self._count]
 
     def generate_plural_semantic(self):
         keyword = self._parser.keyword
@@ -242,7 +265,7 @@ class SamplesGenerator:
         base = self._parser.base_keyword
         if PATTERN.keyword_in(base, singular=True, plural=True):
             resolved = PATTERN.resolve_plural(base)
-            return self.get_sample(resolved)[:self._count]
+            return self.get_sample(resolved)[: self._count]
         if PATTERN.keyword_in(base, semantic=True, plural_semantic=True):
             semantic = PATTERN.resolve_semantic(base)
             return self.create_sample_group(semantic, starting=1)
@@ -255,7 +278,7 @@ class SamplesGenerator:
         self._allowed_empty = True
         base = self._parser.base_keyword
         if PATTERN.keyword_in(base, singular=True, plural=True, semantic=True):
-            return self.get_sample(base)[:self._count]
+            return self.get_sample(base)[: self._count]
         if PATTERN.keyword_in(base, plural_semantic=True):
             semantic = PATTERN.resolve_semantic(base)
             return self.create_sample_group(semantic, starting=1)
@@ -314,7 +337,7 @@ class SamplesGenerator:
                 part = "".join(self.get_sample(singular, total=hi))[:i]
                 if part and part not in parts:
                     parts.append(part)
-            return parts[:self._count]
+            return parts[: self._count]
         if PATTERN.keyword_in(base, semantic=True, plural_semantic=True):
             semantic = PATTERN.resolve_semantic(base)
             if hi == lo:
@@ -327,9 +350,13 @@ class SamplesGenerator:
     def generate(self):
         """Return the first non-empty result from available generators."""
         for func in (
-            self.generate_core, self.generate_some, self.generate_optional,
+            self.generate_core,
+            self.generate_some,
+            self.generate_optional,
             self.generate_plural_semantic,
-            self.generate_group, self.generate_exact, self.generate_range,
+            self.generate_group,
+            self.generate_exact,
+            self.generate_range,
         ):
             result = func()
             if result:
