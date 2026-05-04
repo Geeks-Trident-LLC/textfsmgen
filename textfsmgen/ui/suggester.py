@@ -15,7 +15,7 @@ from textfsmgen.libs.text import (
 
 from textfsmgen.tools.translator import SnippetSuggester
 from textfsmgen.tools.translator import ScriptBuilder
-from textfsmgen.tools.translator import IterateTranslator
+from textfsmgen.tools.translator import IterateSuggester
 
 from textfsmgen.libs.generic import Position
 
@@ -577,7 +577,7 @@ def perform_iterate_action(app):
         return
 
     # --- Build script --------------------------------------------------------
-    builder = IterateTranslator(
+    builder = IterateSuggester(
         raw_data,
         snippet,
         group_flag=t.group_flag.get(),

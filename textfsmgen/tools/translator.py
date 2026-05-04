@@ -126,7 +126,7 @@ class SnippetSuggester:
         return self._parsed
 
 
-class IterateTranslator:
+class IterateSuggester:
     def __init__(self, raw, snippet, group_flag=False):
         self._raw = raw
         self._original_snippet = snippet

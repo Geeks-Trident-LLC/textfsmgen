@@ -1,5 +1,5 @@
 """
-Unit tests for the `textfsmgen.tools.translator.IterateTranslator` class.
+Unit tests for the `textfsmgen.tools.translator.IterateSuggester` class.
 
 Usage
 -----
@@ -11,7 +11,7 @@ Run pytest in the project root to execute these tests:
 
 import pytest  # noqa
 
-from textfsmgen.tools.translator import IterateTranslator
+from textfsmgen.tools.translator import IterateSuggester
 
 
 @pytest.mark.parametrize(
@@ -62,6 +62,6 @@ from textfsmgen.tools.translator import IterateTranslator
     ],
 )
 def test(data, snippet, group_flag, expected):
-    node = IterateTranslator(data, snippet, group_flag=group_flag)
+    node = IterateSuggester(data, snippet, group_flag=group_flag)
     assert bool(node) == True
     assert node.snippet == expected
