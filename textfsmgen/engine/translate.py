@@ -377,6 +377,7 @@ class PatternTranslator:
             obj="PatternTranslatorFactoryError",
             msg=f"Failed to create translator: data={data!r}, other={other!r}",
         )
+        return None
 
     @classmethod
     def recommend_translator(cls, translator_a, translator_b):

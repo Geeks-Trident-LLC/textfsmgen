@@ -10,7 +10,7 @@ from typing import Optional, Union
 from tkinter import filedialog
 
 from textfsmgen import ui
-from textfsmgen.ui import usage, widget
+from textfsmgen.ui import usage, common
 
 from textfsmgen.ui.common import (
     center_window,
@@ -49,7 +49,7 @@ def create_window(parent: Optional[Union[ui.Tk, ui.Toplevel]]) -> ui.Toplevel:
     window = ui.Toplevel(parent)
     window.title("Settings - TextFSMGen CE")
 
-    widget.set_window_icon(window)
+    common.set_window_icon(window)
 
     width = 982 if ui.is_macos else 880 if ui.is_linux else 680
     height = 604 if ui.is_macos else 615 if ui.is_linux else 564
@@ -68,7 +68,7 @@ def add_general_arguments_fields(app, parent: ui.Frame) -> None:    # noqa
     fields = [
         ("Author",  app.settings.author,    0, 25),
         ("Email",   app.settings.email,     1, 25),
-        ("Company", app.settings.company,   2, 26 if ui.is_window else 30),
+        ("Company", app.settings.company,   2, 26 if ui.is_windows else 30),
     ]
     for label_text, var, pos, w in fields:
         lbl = ui.Label(group, text=label_text)
@@ -188,7 +188,7 @@ def add_running_test_options(app, parent: ui.Frame) -> None:
     def open_():
         filetypes = (
             (('Execute Files', '.exe'), ('All Files', '*'))
-            if ui.is_window else
+            if ui.is_windows else
             (('All Files', '*'), ('Execute Files', '.exe'))
         )
         filename = filedialog.askopenfilename(filetypes=filetypes)

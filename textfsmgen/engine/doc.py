@@ -1031,7 +1031,7 @@ class ExplanationDoc:
         # ----------------------------------------------------------------------
         if PATTERN.keyword_in(self._base_keyword, semantic=True, plural_semantic=True):
             singular = PATTERN.resolve_semantic(self._base_keyword)
-            plural = PATTERN.resolve_plural_semantic(self._base_keyword)
+            # plural = PATTERN.resolve_plural_semantic(self._base_keyword)
 
             k = qty - 1
             k_word = number.digit_to_word(k)

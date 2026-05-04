@@ -15,7 +15,7 @@ from textfsmgen.libs.generic import DotObject
 from textfsmgen import version
 
 from textfsmgen import ui
-from textfsmgen.ui import menu, widget
+from textfsmgen.ui import menu, common
 from textfsmgen.ui import controls
 
 __version__ = version
@@ -297,7 +297,7 @@ class Application:
         self.root.option_add('*tearOff', False)
 
         self.root.title('TextFSM Generator CE')
-        widget.set_window_icon(self.root)
+        common.set_window_icon(self.root)
         self.root.bind("<Button-1>", lambda e: self.callback_focus(e))
 
         self.init_app_variables()

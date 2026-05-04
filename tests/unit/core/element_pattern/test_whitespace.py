@@ -23,7 +23,7 @@ from tests.unit.libs.pattern import (
     space_or_punct, letter_or_punct,            # noqa
     alnum, alnums,                              # noqa
 
-    sep
+    sep                                         # noqa
 )
 
 whitespace = ws

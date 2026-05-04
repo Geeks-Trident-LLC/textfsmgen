@@ -21,7 +21,6 @@ from textfsmgen.libs.generic import Position
 
 from textfsmgen import ui
 from textfsmgen.ui import usage
-from textfsmgen.ui.widget import set_window_icon
 
 from textfsmgen.ui.common import (
     show_message_dialog,
@@ -29,7 +28,7 @@ from textfsmgen.ui.common import (
     make_modal,
     clear_text,
     extract_text,
-    set_text
+    set_text, set_window_icon
 )
 
 window_width = 960 if ui.is_macos else 820 if ui.is_linux else 740

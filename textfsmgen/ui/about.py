@@ -11,7 +11,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from textfsmgen import ui
-from textfsmgen.ui import widget
+from textfsmgen.ui import common
 
 from textfsmgen.ui.common import (
     make_modal,
@@ -27,7 +27,7 @@ def show_dialog(app):   # noqa
     about = create_window(parent)
 
     # load icon logo
-    widget.set_window_icon(about)
+    common.set_window_icon(about)
 
     top_frame = create_main_frame(about)
     paned_window = create_panel_window(top_frame)

@@ -19,7 +19,7 @@ from textfsmgen.libs.text import enclose_string
 from textfsmgen.libs.generic import Position
 
 from textfsmgen import ui
-from textfsmgen.ui import usage, widget
+from textfsmgen.ui import usage, common
 import yaml
 
 from textfsmgen.ui.common import (
@@ -67,7 +67,7 @@ def create_window(parent: Optional[Union[ui.Tk, ui.Toplevel]]):
     window = ui.Toplevel(parent)
     window.title("Regex Builder - TextFSMGen CE")
 
-    widget.set_window_icon(window)
+    common.set_window_icon(window)
 
     if parent:
         center_window(
@@ -135,7 +135,7 @@ def build_semantic_group(app, parent, row=0):
                 "shared_var": app.tools.builder.shared_semantic_list,
             }
 
-            checkbox = widget.TriStateCheckBox(semantic_group, **kwargs)
+            checkbox = common.TriStateCheckBox(semantic_group, **kwargs)
             checkbox.grid(row=row_pos, column=col_pos, sticky="w")
             checkbox.configure(command=lambda c=checkbox: on_click_tristate_checkbox(c, app))
 
@@ -280,7 +280,7 @@ def build_controls(app, parent, row=0):
 
 
 def build_possible_outcomes(app, parent, row=0):    # noqa
-    outcomes_group = widget.DynamicCheckboxGroup(
+    outcomes_group = common.DynamicCheckboxGroup(
         parent, title="Possible Outcomes",
     )
     outcomes_group.grid(row=row, column=0, padx=4, pady=(4, 0), sticky="ew")
@@ -353,7 +353,7 @@ def perform_reset_action(app):
 
     # Reset TriStateCheckBox widgets
     for child in b.semantic_group.winfo_children():
-        if isinstance(child, widget.TriStateCheckBox):
+        if isinstance(child, common.TriStateCheckBox):
             child.reset()
 
     clear_text(b.pattern_area)
