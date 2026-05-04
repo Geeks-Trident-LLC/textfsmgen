@@ -4,3 +4,4 @@
 # Development & testing
 pytest
 requests
+flake8

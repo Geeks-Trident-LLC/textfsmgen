@@ -33,6 +33,7 @@ Notes
   `textfsmgen.__init__`.
 """
 
+
 from textfsmgen.main import Cli
 
 console = Cli()
