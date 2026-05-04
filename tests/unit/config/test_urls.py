@@ -52,7 +52,7 @@ def prefetched_pages(http_session):
     urls = {page: config.urls.get(page) for page, _ in PAGES}
 
     results = {}
-    with ThreadPoolExecutor(max_workers=len(urls)) as executor:
+    with ThreadPoolExecutor(max_workers=min(4, len(urls))) as executor:
         futures = {
             executor.submit(fetch_page, http_session, url): page
             for page, url in urls.items()

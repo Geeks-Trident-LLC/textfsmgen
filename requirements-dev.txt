@@ -1,6 +1,6 @@
 # Core libraries used by RewordApp
-pyyaml
-textfsm
+-r requirements.txt
 
 # Development & testing
 pytest
+requests
