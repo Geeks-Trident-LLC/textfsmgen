@@ -13,8 +13,8 @@ import pytest
 
 from textfsmgen.engine.translate import make_translator
 
+from tests.unit.engine.translate import to_list
 
-to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
 
 class TestGetReadableSnippetMethod:
     """Test suite for PatternTranslator.get_readable_snippet."""

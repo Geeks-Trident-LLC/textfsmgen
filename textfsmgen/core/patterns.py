@@ -34,8 +34,13 @@ class VarCls:
     def __init__(self, name='', pattern='', option=''):
         self.name = str(name).strip()
         self.pattern = str(pattern)
-        self.option = ','.join(re.split(r'\s*_\s*', str(option).title()))
-        self.option = self.option.replace(' ', '')
+        option = str(option).strip()
+        if option:
+            option = ','.join(re.split(r'\s*_\s*', option.title()))
+            option = option.replace(' ', '')
+        self.option = option
+
+    def __bool__(self): return self.name != ""
 
     @property
     def is_empty(self):
@@ -43,14 +48,16 @@ class VarCls:
 
     @property
     def value(self):
+        if not self:
+            return ""
+
         if self.option:
             return f"Value {self.option} {self.name} ({self.pattern})"
-        else:
-            return f"Value {self.name} ({self.pattern})"
+        return f"Value {self.name} ({self.pattern})"
 
     @property
     def var_name(self) -> str:
-        return f"${{{self.name}}}"
+        return f"${{{self.name}}}" if self else ""
 
 
 class TextPattern(str):

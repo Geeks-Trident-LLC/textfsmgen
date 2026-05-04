@@ -24,7 +24,7 @@ from textfsmgen.engine.translate import (
     NonWSSGroupTranslator
 )
 
-to_list = lambda arg: arg if isinstance(arg, (list, tuple)) else [arg]
+from tests.unit.engine.translate import to_list
 
 
 class TestNumberTranslatorClass:

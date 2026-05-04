@@ -1,0 +1,13 @@
+[run]
+omit =
+    textfsmgen/ui/*
+    textfsmgen/application.py
+    textfsmgen/main.py
+    textfsmgen/__main__.py
+    textfsmgen/core/testing.py
+    textfsmgen/libs/utils.py
+
+
+[report]
+exclude_lines =
+    pragma: no cover

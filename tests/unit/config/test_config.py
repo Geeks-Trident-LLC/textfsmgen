@@ -10,7 +10,6 @@ Run pytest in the project root to execute these tests:
 """
 
 import pytest
-import requests
 
 from pathlib import Path
 from pathlib import PurePath

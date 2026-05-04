@@ -63,5 +63,5 @@ from textfsmgen.tools.suggester import IterateSuggester
 )
 def test(data, snippet, group_flag, expected):
     node = IterateSuggester(data, snippet, group_flag=group_flag)
-    assert bool(node) == True
+    assert bool(node) is True
     assert node.snippet == expected

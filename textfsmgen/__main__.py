@@ -36,5 +36,6 @@ Notes
 
 from textfsmgen.main import Cli
 
-console = Cli()
-console.run()
+if __name__ == "__main__":
+    console = Cli()
+    console.run()

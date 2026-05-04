@@ -14,3 +14,7 @@ class TranslatedDummyPattern:
     """
     A lightweight dummy implementation of `PatternTranslator` used for unit testing.
     """
+
+
+def to_list(arg):
+    return arg if isinstance(arg, (list, tuple)) else (arg,)
