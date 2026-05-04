@@ -9,7 +9,7 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/unit/engine/category/test_line_to_template.py
 """
 
-import pytest   # noqa
+import pytest
 
 from textfsmgen.core.verify import verify
 from textfsmgen.core.template import get_textfsm_template

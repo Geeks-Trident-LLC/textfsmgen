@@ -9,7 +9,7 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/unit/libs/pattern/allow_empty_pattern/test_exact_quantity.py
 """
 
-import pytest   # noqa
+import pytest
 
 from textfsmgen.libs.pattern import ParsedKeywordMappingName
 from textfsmgen.libs.pattern import PATTERN

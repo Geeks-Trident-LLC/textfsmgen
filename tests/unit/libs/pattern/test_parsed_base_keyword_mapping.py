@@ -9,7 +9,7 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/unit/libs/pattern/test_parsed_base_keyword_mapping.py
 """
 
-import pytest   # noqa
+import pytest
 
 from textfsmgen.libs.pattern import ParsedKeywordMappingName
 

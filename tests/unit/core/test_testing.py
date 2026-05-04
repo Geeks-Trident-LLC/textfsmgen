@@ -9,7 +9,7 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/unit/core/test_testing.py
 """
 
-import pytest   # noqa
+import pytest
 
 from pathlib import Path, PurePath
 

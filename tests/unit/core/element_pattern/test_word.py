@@ -9,7 +9,7 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/unit/core/element_pattern/test_word.py
 """
 
-import pytest   # noqa
+import pytest
 
 from textfsmgen.core.patterns import ElementPattern
 

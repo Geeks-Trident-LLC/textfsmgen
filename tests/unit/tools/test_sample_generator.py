@@ -9,7 +9,7 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/unit/tools/test_sample_generator.py
 """
 
-import pytest       # noqa
+import pytest
 import re
 from textfsmgen.tools.samples import SamplesGenerator
 

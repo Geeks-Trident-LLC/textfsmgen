@@ -8,7 +8,7 @@ Run pytest in the project root to execute these tests:
     or
     $ python -m pytest tests/unit/engine/doc/test_validate_keyword_doc.py
 """
-import pytest   # noqa
+import pytest
 
 from textfsmgen.engine.doc import OperationDoc
 

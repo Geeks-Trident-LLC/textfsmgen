@@ -9,7 +9,7 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/unit/translate/test_punct_translator_class.py
 """
 
-import pytest   # noqa
+import pytest
 
 from textfsmgen.engine.translate import (
     make_translator,

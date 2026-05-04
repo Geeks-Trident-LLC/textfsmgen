@@ -10,7 +10,7 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/unit/translate/test_raise_runtime_exception.ply
 """
 
-import pytest   # noqa
+import pytest
 
 from textfsmgen.engine.translate import PatternTranslator
 

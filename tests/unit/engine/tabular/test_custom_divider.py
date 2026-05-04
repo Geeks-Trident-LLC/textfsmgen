@@ -9,7 +9,7 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/unit/engine/tabular/test_custom_divider.py
 """
 
-import pytest   # noqa
+import pytest
 
 from textwrap import dedent
 from textfsmgen.engine.tabular import VarColumnTabularTranslator

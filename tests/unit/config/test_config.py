@@ -9,8 +9,8 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/unit/config/test_config.py
 """
 
-import pytest   # noqa
-import requests     # noqa
+import pytest
+import requests
 
 from pathlib import Path
 from pathlib import PurePath

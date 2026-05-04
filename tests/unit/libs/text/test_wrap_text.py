@@ -9,7 +9,7 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/unit/libs/text/wrap_text_block.py
 """
 
-import pytest       # noqa
+import pytest
 
 from textwrap import dedent
 from textfsmgen.libs.text import wrap_text_block

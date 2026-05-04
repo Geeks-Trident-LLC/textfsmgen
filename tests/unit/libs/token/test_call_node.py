@@ -9,7 +9,7 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/unit/libs/token/test_call_node.py
 """
 
-import pytest   # noqa
+import pytest
 
 from textfsmgen.libs.token import CallNode
 

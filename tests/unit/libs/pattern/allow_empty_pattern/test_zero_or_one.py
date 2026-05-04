@@ -9,7 +9,7 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/unit/libs/pattern/allow_empty_pattern/test_zero_or_one.py
 """
 
-import pytest   # noqa
+import pytest
 
 from textfsmgen.libs.pattern import ParsedKeywordMappingName
 

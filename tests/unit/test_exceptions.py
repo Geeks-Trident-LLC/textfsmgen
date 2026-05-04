@@ -9,7 +9,7 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/unit/test_exceptions.py
 """
 
-import pytest   # noqa
+import pytest
 
 from textfsmgen.exceptions import raise_runtime_error
 

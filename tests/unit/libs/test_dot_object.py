@@ -8,7 +8,7 @@ Run pytest in the project root to execute these tests:
     or
     $ python -m pytest tests/unit/libs/test_dot_object.py
 """
-import pytest  # noqa
+import pytest
 from textfsmgen.libs.generic import DotObject
 
 

@@ -9,8 +9,8 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/unit/config/test_urls.py
 """
 
-import pytest       # noqa
-import requests     # noqa
+import pytest
+import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import textfsmgen.config as config
