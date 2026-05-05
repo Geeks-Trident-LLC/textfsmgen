@@ -204,7 +204,8 @@ class Cli:
 
         # Normalize debug flag
         debug = (
-            value.strip().lower() == "true" if isinstance(value, str) else bool(value)
+            value.strip().lower() == "true" if isinstance(value, str) else bool(
+                value)
         )
         self.template_kwargs[key] = debug
         self.category_template_kwargs[key] = debug
@@ -290,12 +291,14 @@ class Cli:
                 self.verified_kwargs[key] = value
             else:
                 text = str(value).strip()
-                self.verified_kwargs[key] = int(text) if text.isdigit() else None
+                self.verified_kwargs[key] = int(
+                    text) if text.isdigit() else None
             return
 
         # expected_result → list of dicts with uniform dict length
         if key == "expected_result":
-            if isinstance(value, list) and all(isinstance(i, dict) for i in value):
+            if isinstance(value, list) and all(
+                    isinstance(i, dict) for i in value):
                 lengths = {len(d) for d in value}
                 self.verified_kwargs[key] = value if len(lengths) == 1 else None
             else:
@@ -304,7 +307,8 @@ class Cli:
 
         # Boolean flags: tabular, debug, ignore_space
         self.verified_kwargs[key] = (
-            value.strip().lower() == "true" if isinstance(value, str) else bool(value)
+            value.strip().lower() == "true" if isinstance(value, str) else bool(
+                value)
         )
 
     def _update_other_option(self, key, value):
@@ -325,7 +329,8 @@ class Cli:
         # platform -> normalized choice
         if key == "platform":
             v = str(value).strip().lower()
-            self.platform = v if v in {"unittest", "pytest", "snippet"} else "snippet"
+            self.platform = v if v in {"unittest", "pytest",
+                                       "snippet"} else "snippet"
             return
 
         setattr(self, key, str(value))
@@ -368,7 +373,7 @@ class Cli:
                     self._update_builder_arg(key, value)
 
         if self.template_kwargs.get("user_data") or self.template_kwargs.get(
-            "user_data_file"
+                "user_data_file"
         ):
             return
 
@@ -410,7 +415,8 @@ class Cli:
             messages.append(f"+++ TextFSM template saved to {template_path!r}.")
 
         if script_path and tb.test_data:
-            platform = (self.options.platform or self.platform or "snippet").lower()
+            platform = (
+                        self.options.platform or self.platform or "snippet").lower()
             method = (
                 f"create_{platform}"
                 if platform in ("unittest", "pytest")
@@ -418,7 +424,8 @@ class Cli:
             )
             script = getattr(tb, method)()
             file.write(script_path, script)
-            messages.append(f"+++ {platform.title()} script saved to {script_path!r}.")
+            messages.append(
+                f"+++ {platform.title()} script saved to {script_path!r}.")
 
         if messages:
             sys_exit(success=False, msg="\n".join(messages))

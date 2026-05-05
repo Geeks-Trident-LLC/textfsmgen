@@ -19,7 +19,6 @@ user_keyword_mapping_file = str(
     PurePath(Path.home(), ".textfsmgen", "user_keyword_mapping.yaml")
 )
 
-
 app_version = version
 
 # main app
@@ -49,20 +48,19 @@ urls = {
     "submit-feedback": "https://forms.microsoft.com/r/vQ2NHk7tRb",
 }
 for name in (
-    "high-level-overview",
-    "faq",
-    "textfsm-generator-settings-guide",
-    "how-to-use-regex-suggester",
-    "how-to-use-regex-builder",
-    "how-to-use-textfsm-tester",
-    "demo-regex-suggester",
-    "demo-ios-show-clock",
-    "demo-listing-files-in-long-format-on-linux",
-    "demo-listing-files-on-powershell",
-    "demo-linux-file-status-information",
+        "high-level-overview",
+        "faq",
+        "textfsm-generator-settings-guide",
+        "how-to-use-regex-suggester",
+        "how-to-use-regex-builder",
+        "how-to-use-textfsm-tester",
+        "demo-regex-suggester",
+        "demo-ios-show-clock",
+        "demo-listing-files-in-long-format-on-linux",
+        "demo-listing-files-on-powershell",
+        "demo-linux-file-status-information",
 ):
     urls[name] = f"{wiki_url}/{name}"
-
 
 # License
 years = "2022"
