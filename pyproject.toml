@@ -1,26 +1,83 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.black]
-line-length = 88
-target-version = ["py310"]
-skip-string-normalization = false
-
-[tool.ruff]
-line-length = 88
-target-version = "py310"
-select = ["E", "F", "W", "I", "B", "UP"]
-ignore = ["E501"]  # handled by black
-exclude = [
-    ".git",
-    ".tox",
-    "build",
-    "dist",
-    "__pycache__",
+[project]
+name = "textfsmgen"
+version = "0.6.2"
+description = "TextFSM Generator is a low‑code, no‑code Python library that transforms simple, readable snippets into TextFSM templates, reducing manual effort and accelerating automation development."
+readme = "README.md"
+license = "BSD-3-Clause"
+requires-python = ">=3.9"
+authors = [
+  { name = "Tuyen Mathew Duong", email = "tuyen@geekstrident.com" }
+]
+maintainers = [
+  { name = "Tuyen Mathew Duong", email = "tuyen@geekstrident.com" }
 ]
 
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-line-ending = "auto"
+dependencies = [
+  "textfsm>=1.1.0",
+  "pyyaml>=6.0",
+]
+
+keywords = [
+  "low-code", "no-code", "citizen developer",
+  "automation", "workflow automation", "process automation",
+  "textfsm", "textfsm generator", "text parsing",
+  "verification", "validation", "qa", "test automation",
+  "robotframework", "test script",
+  "ai integration", "ai-assisted automation", "generative ai"
+]
+
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Natural Language :: English",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Education",
+  "Intended Audience :: End Users/Desktop",
+  "Intended Audience :: Information Technology",
+  "Intended Audience :: Manufacturing",
+  "Intended Audience :: Other Audience",
+  "Intended Audience :: Science/Research",
+  "Operating System :: MacOS :: MacOS X",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: Microsoft :: Windows",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Software Development :: Code Generators",
+  "Topic :: Software Development :: Quality Assurance",
+  "Topic :: Software Development :: Testing",
+  "Topic :: Scientific/Engineering",
+  "Topic :: Text Processing",
+]
+
+[project.urls]
+Documentation = "https://github.com/Geeks-Trident-LLC/textfsmgen/wiki"
+Source = "https://github.com/Geeks-Trident-LLC/textfsmgen"
+Tracker = "https://github.com/Geeks-Trident-LLC/textfsmgen/issues"
+
+[project.scripts]
+textfsmgen = "textfsmgen.main:execute"
+textfsmgen-gui = "textfsmgen.application:execute"
+textfsmgen-app = "textfsmgen.application:execute"
+textfsm-app = "textfsmgen.application:execute"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+exclude = [
+  "tests*", "testing*", "examples*",
+  "build*", "dist*", "docs*", "venv*"
+]
+
+[tool.setuptools.package-data]
+"*" = ["LICENSE", "README.md"]
