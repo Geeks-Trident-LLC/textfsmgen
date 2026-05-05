@@ -1,0 +1,252 @@
+"""
+integration tests for the `textfsmgen.tools.explain.SnippetExplanation` class.
+
+Usage
+-----
+Run pytest in the project root to execute these tests:
+    $ pytest tests/integration/tools/test_token_explanation.py
+    or
+    $ python -m pytest tests/integration/tools/test_token_explanation.py
+"""
+
+from textfsmgen.tools.explain import SnippetExplanation
+from textfsmgen.libs.text import dedent_and_strip
+
+
+def test_basic():
+    expected = dedent_and_strip(r"""
+        +------------------------------------------+
+        |               word(var_v1)               |
+        +------------------------------------------+
+        Pattern:   r"(?P<v1>[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)"
+        Operation: match one word containing alphanumeric or underscore characters
+                   with at least one alphabetic character.
+        Explanation:
+            Snippet: word(var_v1)
+        
+            Parameters
+                var_v1 (v1): capture variable using (?P<v1>...)
+            ------------------------------------------------------------
+        
+            Base (word): r"[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*"
+                match one word containing alphanumeric or underscore characters with at
+                least one alphabetic character.
+        
+            Semantic: <word>
+        
+        +------------------------------------------+
+        |     Validate Samples Against Pattern     |
+        +------------------------------------------+
+        
+        Samples:
+            lst = ['dummy', 'other_dummy']
+        
+        Evaluating:
+            [bool(re.fullmatch(pattern, item)) for item in lst]
+        
+        Produces:
+            [True, True]
+    """)
+    node = SnippetExplanation("word(var_v1)", test_samples=["dummy", "other_dummy"])
+    assert node.explanation == expected
+
+
+def test_with_optional():
+    expected = dedent_and_strip(r"""
+        +------------------------------------------+
+        |       optional_mixed_words(var_v1)       |
+        +------------------------------------------+
+        Pattern:   r"(?P<v1>([\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*(\s+[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*)*)?)"
+        Operation: match zero or more mixed words containing alphanumeric or
+                   punctuation characters with at least one alphanumeric character,
+                   separated by one or more whitespace characters.
+        Explanation:
+            Snippet: optional_mixed_words(var_v1)
+        
+            Parameters
+                var_v1 (v1): capture variable using (?P<v1>...)
+            ------------------------------------------------------------
+        
+            Base (mixed_word): r"[\x21-\x7e]*[a-zA-Z0-9][\x21-\x7e]*"
+                match one mixed word containing alphanumeric or punctuation characters
+                with at least one alphanumeric character.
+        
+            Semantic: (<mixed_word>(<sep><mixed_word>)*)?
+                <sep> is the whitespace separator (r"\s+")
+                "*"   repeats zero-or-more (<sep><mixed_word>) groups
+                "?"   allows zero or one occurrence of the entire mixed_word group
+        
+        +------------------------------------------+
+        |     Validate Samples Against Pattern     |
+        +------------------------------------------+
+        
+        Samples:
+            lst = ['dummy', 'today is good day.']
+        
+        Evaluating:
+            [bool(re.fullmatch(pattern, item)) for item in lst]
+        
+        Produces:
+            [True, True]
+    """)
+    node = SnippetExplanation(
+        "optional_mixed_words(var_v1)", test_samples=["dummy", "today is good day."]
+    )
+    assert node.explanation == expected
+
+
+def test_with_empty_flag():
+    expected = dedent_and_strip(r"""
+        +------------------------------------------+
+        |     non_wss_group(var_v3, or_empty)      |
+        +------------------------------------------+
+        Pattern:   r"(?P<v3>(\S+(\s+\S+)+)?)"
+        Operation: match zero or more sequences of non‑whitespace characters, each
+                   separated by one or more whitespace characters.
+        Explanation:
+            Snippet: non_wss_group(var_v3, or_empty)
+        
+            Parameters
+                var_v3 (v3): capture variable using (?P<v3>...)
+                or_empty (True): allows the entire unit or group to be empty
+            ------------------------------------------------------------
+        
+            Base (non_wss): r"\S+" (match one or more non‑whitespace characters.)
+        
+            Semantic: (<non_wss>(<sep><non_wss>)+)?
+                <sep> is the whitespace separator (r"\s+")
+                "+"   repeats one-or-more (<sep><non_wss>) groups
+                "?"   allows zero or one occurrence of the entire non_wss group
+        
+            Note: enabling allowed‑empty downgrades "+" from one‑or‑more to
+                  zero‑or‑more ("*").
+        
+        +------------------------------------------+
+        |     Validate Samples Against Pattern     |
+        +------------------------------------------+
+        
+        Samples:
+            lst = ['v1 = 5 // 3', '', "lst = {'a': 1}"]
+        
+        Evaluating:
+            [bool(re.fullmatch(pattern, item)) for item in lst]
+        
+        Produces:
+            [True, True, True]
+    """)
+    node = SnippetExplanation(
+        "non_wss_group(var_v3, or_empty)",
+        test_samples=["v1 = 5 // 3", "", "lst = {'a': 1}"],
+    )
+    assert node.explanation == expected
+
+
+def test_failure_incorrect_list_of_data():
+    expected = dedent_and_strip(r"""
+        +------------------------------------------+
+        |         words(var_v3, or_empty)          |
+        +------------------------------------------+
+        Pattern:   r"(?P<v3>([a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*(\s+[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*)*)?)"
+        Operation: match zero or more words containing alphanumeric or underscore
+                   characters with at least one alphabetic character, separated by
+                   one or more whitespace characters.
+        Explanation:
+            Snippet: words(var_v3, or_empty)
+        
+            Parameters
+                var_v3 (v3): capture variable using (?P<v3>...)
+                or_empty (True): allows the entire unit or group to be empty
+            ------------------------------------------------------------
+        
+            Base (word): r"[a-zA-Z0-9_]*[a-zA-Z][a-zA-Z0-9_]*"
+                match one word containing alphanumeric or underscore characters with at
+                least one alphabetic character.
+        
+            Semantic: (<word>(<sep><word>)*)?
+                <sep> is the whitespace separator (r"\s+")
+                "*"   repeats zero-or-more (<sep><word>) groups
+                "?"   allows zero or one occurrence of the entire word group
+        
+        +------------------------------------------+
+        |     Validate Samples Against Pattern     |
+        +------------------------------------------+
+        
+        Samples:
+            lst = ['dummy', '', 'Connection* 10:']
+        
+        Evaluating:
+            [bool(re.fullmatch(pattern, item)) for item in lst]
+        
+        +------------------------------------------+
+        |               Failed Match               |
+        +------------------------------------------+
+        Expected:
+            [True, True, True]
+        Received:
+            [True, True, False]
+    """)
+    node = SnippetExplanation(
+        "words(var_v3, or_empty)", test_samples=["dummy", "", "Connection* 10:"]
+    )
+    assert node.explanation == expected
+
+
+def test_failure_because_of_keyword_token():
+    expected = "Provided snippet is empty.  Cannot explain."
+    node = SnippetExplanation(
+        "",
+        test_samples=[
+            "dummy",
+        ],
+    )
+    assert node.explanation == expected
+
+
+def test_failure_undefined_keyword():
+    expected = dedent_and_strip("""
+        +------------------------------------------+
+        |    Undefined 'dummy_keyword(var_v0)'     |
+        +------------------------------------------+
+        Undefined 'dummy_keyword' keyword.  Request technical support for feature extension.
+    """)
+    node = SnippetExplanation(
+        "dummy_keyword(var_v0)",
+        test_samples=[
+            "dummy",
+        ],
+    )
+    assert node.explanation == expected
+
+
+def test_failure_invalid_keyword_syntax():
+    expected = dedent_and_strip("""
+        +------------------------------------------+
+        |               word(var_v0                |
+        +------------------------------------------+
+        Provided snippet does not match the expected keyword format:
+        
+          [<quantity>_]<keyword>[_<group>]([<param>])
+        
+        Where:
+          <quantity> — one of: optional, some, 3, one_to_three, ...
+          <keyword>  — one of: word, digit, number, mixed_word, non_wss, ...
+          <group>    — the literal string "group"
+          <param>    — empty or a comma‑separated list of text values
+        
+        Examples:
+          1. optional_word(var_v0)
+             Matches zero or one word and captures variable "v0".
+        
+          2. some_words(var_v1)
+             Matches at least one whitespace‑separated word and captures "v1".
+        
+          3. one_to_three_words(var_v2)
+             Matches one to three whitespace‑separated words and captures "v2".
+    """)
+    node = SnippetExplanation(
+        "word(var_v0",
+        test_samples=[
+            "dummy",
+        ],
+    )
+    assert node.explanation.strip() == expected
