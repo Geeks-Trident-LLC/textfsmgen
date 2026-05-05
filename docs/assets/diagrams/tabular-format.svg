@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="520">
+  <style>
+    .box { fill: #ffffff; stroke: #333333; stroke-width: 1.6; }
+    .text { font: 14px sans-serif; fill: #111111; }
+    .note { font: 12px sans-serif; fill: #555555; }
+    .title { font: bold 17px sans-serif; fill: #111111; }
+  </style>
+
+  <!-- Title -->
+  <text x="20" y="35" class="title">Tabular Format Structure</text>
+
+  <!-- Non-tabular line -->
+  <rect x="40" y="60" width="360" height="60" rx="6" class="box"/>
+  <text x="220" y="95" text-anchor="middle" class="text">Non‑tabular line (optional)</text>
+
+  <!-- Header rows -->
+  <rect x="40" y="140" width="360" height="60" rx="6" class="box"/>
+  <text x="220" y="170" text-anchor="middle" class="text">Header row(s)</text>
+  <text x="220" y="190" text-anchor="middle" class="note">usually one, sometimes multiple</text>
+
+  <!-- Header separator -->
+  <rect x="40" y="220" width="360" height="60" rx="6" class="box"/>
+  <text x="220" y="255" text-anchor="middle" class="text">Header separator (optional)</text>
+
+  <!-- Data rows -->
+  <rect x="40" y="300" width="360" height="60" rx="6" class="box"/>
+  <text x="220" y="335" text-anchor="middle" class="text">Data row 1</text>
+
+  <rect x="40" y="370" width="360" height="60" rx="6" class="box"/>
+  <text x="220" y="405" text-anchor="middle" class="text">Data row 2</text>
+
+  <rect x="40" y="440" width="360" height="60" rx="6" class="box"/>
+  <text x="220" y="475" text-anchor="middle" class="text">...</text>
+
+  <!-- Column width note -->
+  <text x="40" y="515" class="note">
+    Columns may be fixed‑width, flex‑width, hybrid, or first‑column‑wide.
+  </text>
+</svg>

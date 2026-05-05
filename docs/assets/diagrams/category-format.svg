@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="260">
+  <style>
+    .box { fill: #ffffff; stroke: #333333; stroke-width: 1.6; }
+    .text { font: 14px sans-serif; fill: #111111; }
+    .note { font: 12px sans-serif; fill: #555555; }
+    .title { font: bold 17px sans-serif; fill: #111111; }
+  </style>
+
+  <!-- Title -->
+  <text x="20" y="35" class="title">Category Format Structure</text>
+
+  <!-- Row 1: Horizontal sequence -->
+  <rect x="20" y="70" width="150" height="60" rx="6" class="box"/>
+  <text x="95" y="105" text-anchor="middle" class="text">&lt;identifier&gt;</text>
+
+  <rect x="180" y="70" width="120" height="60" rx="6" class="box"/>
+  <text x="240" y="105" text-anchor="middle" class="text">&lt;separator&gt;</text>
+
+  <rect x="310" y="70" width="200" height="60" rx="6" class="box"/>
+  <text x="410" y="105" text-anchor="middle" class="text">&lt;value&gt;</text>
+
+  <rect x="520" y="70" width="140" height="60" rx="6" class="box"/>
+  <text x="590" y="105" text-anchor="middle" class="text">&lt;spacer&gt;</text>
+
+  <rect x="670" y="70" width="150" height="60" rx="6" class="box"/>
+  <text x="745" y="105" text-anchor="middle" class="text">&lt;identifier&gt; ...</text>
+
+  <!-- Row 2: Combined explanation (smaller width, left-aligned) -->
+  <rect x="20" y="150" width="700" height="90" rx="6" class="box"/>
+  <text x="40" y="175" class="text">
+    &lt;identifier&gt; is the key or field name
+  </text>
+  <text x="40" y="195" class="text">
+    &lt;separator&gt; is a single punctuation mark (commonly ":" or "=")
+  </text>
+  <text x="40" y="215" class="text">
+    &lt;value&gt; may be single‑token, multi‑token, or multi‑whitespace padded
+  </text>
+  <text x="40" y="235" class="text">
+    &lt;spacer&gt; is the joiner between pairs, typically multiple spaces
+  </text>
+</svg>

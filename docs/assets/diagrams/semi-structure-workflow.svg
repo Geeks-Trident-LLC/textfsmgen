@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="780" height="300">
+  <style>
+    .box { fill: #ffffff; stroke: #333333; stroke-width: 1.5; }
+    .text { font: 13px sans-serif; fill: #111111; }
+    .label { font: 12px sans-serif; fill: #444444; }
+    .title { font: bold 16px sans-serif; fill: #111111; }
+    .arrow { stroke: #333333; stroke-width: 1.5; marker-end: url(#arrowhead); }
+  </style>
+
+  <defs>
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#333333" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="20" y="30" class="title">semi-structured-workflow</text>
+
+  <!-- Semi-Structured Input -->
+  <rect x="40" y="90" width="160" height="60" class="box" />
+  <text x="120" y="115" text-anchor="middle" class="text">Semi-Structured</text>
+  <text x="120" y="135" text-anchor="middle" class="text">Input</text>
+
+  <!-- TextFSM Generator -->
+  <rect x="300" y="80" width="200" height="80" class="box" />
+  <text x="400" y="105" text-anchor="middle" class="text">TextFSM Generator</text>
+  <text x="400" y="125" text-anchor="middle" class="text">Translate ⇒ Snippet</text>
+
+  <!-- Snippet -->
+  <rect x="580" y="90" width="120" height="60" class="box" />
+  <text x="640" y="115" text-anchor="middle" class="text">Snippet</text>
+
+  <!-- TextFSM Template -->
+  <rect x="360" y="210" width="200" height="60" class="box" />
+  <text x="460" y="240" text-anchor="middle" class="text">TextFSM Template</text>
+
+  <!-- Arrow: Semi-Structured Input -> TextFSM Generator -->
+  <line x1="200" y1="120" x2="300" y2="120" class="arrow" />
+
+  <!-- Arrow: TextFSM Generator <-> Snippet -->
+  <line x1="500" y1="105" x2="580" y2="105" class="arrow" />
+  <line x1="580" y1="135" x2="500" y2="135" class="arrow" />
+  <text x="540" y="95" text-anchor="middle" class="label">refine until</text>
+  <text x="540" y="155" text-anchor="middle" class="label">match</text>
+
+  <!-- Arrow: TextFSM Generator -> Template -->
+  <line x1="400" y1="160" x2="460" y2="210" class="arrow" />
+  <text x="430" y="185" text-anchor="middle" class="label">generate</text>
+</svg>

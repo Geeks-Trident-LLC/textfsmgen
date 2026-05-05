@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="260">
+  <style>
+    .box { fill: #ffffff; stroke: #333333; stroke-width: 1.5; }
+    .text { font: 13px sans-serif; fill: #111111; }
+    .label { font: 12px sans-serif; fill: #444444; }
+    .title { font: bold 16px sans-serif; fill: #111111; }
+    .arrow { stroke: #333333; stroke-width: 1.5; marker-end: url(#arrowhead); }
+  </style>
+
+  <defs>
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#333333" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="20" y="30" class="title">free-from-workflow</text>
+
+  <!-- Free-Form Input -->
+  <rect x="40" y="80" width="130" height="50" class="box" />
+  <text x="105" y="102" text-anchor="middle" class="text">Free-Form</text>
+  <text x="105" y="120" text-anchor="middle" class="text">Input</text>
+
+  <!-- Snippet -->
+  <rect x="260" y="80" width="110" height="50" class="box" />
+  <text x="315" y="102" text-anchor="middle" class="text">Snippet</text>
+
+  <!-- TextFSM Generator -->
+  <rect x="450" y="80" width="140" height="50" class="box" />
+  <text x="520" y="102" text-anchor="middle" class="text">TextFSM</text>
+  <text x="520" y="120" text-anchor="middle" class="text">Generator</text>
+
+  <!-- TextFSM Template -->
+  <rect x="460" y="180" width="160" height="50" class="box" />
+  <text x="540" y="202" text-anchor="middle" class="text">TextFSM Template</text>
+
+  <!-- Arrows: Free-Form -> Snippet -->
+  <line x1="170" y1="105" x2="260" y2="105" class="arrow" />
+  <text x="215" y="95" text-anchor="middle" class="label">manually</text>
+  <text x="215" y="112" text-anchor="middle" class="label">edit</text>
+
+  <!-- Arrows: Snippet <-> TextFSM Generator -->
+  <line x1="370" y1="95" x2="450" y2="95" class="arrow" />
+  <line x1="450" y1="115" x2="370" y2="115" class="arrow" />
+  <text x="410" y="88" text-anchor="middle" class="label">refine until</text>
+  <text x="410" y="130" text-anchor="middle" class="label">match</text>
+
+  <!-- Arrow: TextFSM Generator -> Template -->
+  <line x1="520" y1="130" x2="540" y2="180" class="arrow" />
+  <text x="555" y="155" text-anchor="middle" class="label">generate</text>
+</svg>
