@@ -1,0 +1,2 @@
+vboxuser seat0        2026-03-30 18:53 (login screen)
+vboxuser tty2         2026-03-30 18:53 (tty2)

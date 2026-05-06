@@ -1,0 +1,16 @@
+System Information
+------------------
+Chassis type: ISR4451-X
+Main memory: 8192 MB
+Processor ID: FTX1234ABC
+
+Interface Summary
+-----------------
+GigabitEthernet0/0/0 is up, line protocol is up
+  Hardware is iGbE, address is 0011.2233.4455
+GigabitEthernet0/0/1 is administratively down
+
+Routing Protocol Status
+-----------------------
+OSPF process 1 running, router ID 10.1.1.1
+BGP process 65001 active, 3 neighbors established

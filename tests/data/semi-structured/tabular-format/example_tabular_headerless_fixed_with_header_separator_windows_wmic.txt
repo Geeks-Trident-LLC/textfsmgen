@@ -1,0 +1,5 @@
+HandleCount  Name                Priority  ProcessId  ThreadCount  WorkingSetSize
+-----------  ------------------  --------  ---------- ------------  ---------------
+     142     explorer.exe              8       4120            34        51200000
+      89     cmd.exe                   8       5324             5         8200000
+     203     powershell.exe            8       6012            12        34500000

@@ -1,0 +1,8 @@
+Server:  cdns01.comcast.net
+Address:  2001:558:feed::1
+
+Non-authoritative answer:
+Name:    td-ccm-neg-87-45.wixdns.net
+Address:  34.149.87.45
+Aliases:  www.geekstrident.com
+          cdn1.wixdns.net

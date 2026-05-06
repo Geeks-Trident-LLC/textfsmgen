@@ -1,0 +1,6 @@
+Port      Name               Status       Vlan       Duplex  Speed  Type
+Gi1/0/1   uplink-core-sw     connected    trunk      a-full  a-1000 10/100/1000BaseTX
+Gi1/0/2   server-port        notconnect   10         auto    auto   10/100/1000BaseTX
+Gi1/0/3   access-vlan20      connected    20         a-full  a-1000 10/100/1000BaseTX
+
+Total interfaces shown: 3

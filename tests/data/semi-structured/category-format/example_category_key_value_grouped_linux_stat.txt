@@ -1,0 +1,8 @@
+  File: dummy.txt
+  Size: 0         	Blocks: 0          IO Block: 4096   regular empty file
+Device: 8,2	Inode: 1049010     Links: 1
+Access: (0664/-rw-rw-r--)  Uid: ( 1000/vboxuser)   Gid: ( 1000/vboxuser)
+Access: 2026-05-05 21:00:18.039277967 +0000
+Modify: 2026-05-05 21:00:18.039277967 +0000
+Change: 2026-05-05 21:00:18.039277967 +0000
+ Birth: 2026-05-05 21:00:18.039277967 +0000

@@ -1,0 +1,10 @@
+Server:		127.0.0.53
+Address:	127.0.0.53#53
+
+Non-authoritative answer:
+Name:	geekstrident.com
+Address: 185.230.63.186
+Name:	geekstrident.com
+Address: 185.230.63.107
+Name:	geekstrident.com
+Address: 185.230.63.171

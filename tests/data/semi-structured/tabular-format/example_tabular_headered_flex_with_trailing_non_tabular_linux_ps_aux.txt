@@ -1,0 +1,6 @@
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         1  0.0  0.1 167280  1120 ?        Ss   Apr09   0:03 /sbin/init
+tmduo     2345  1.2  2.3 512000 48200 pts/0    Sl   13:22   0:01 /usr/bin/python3 script.py
+tmduo     2378  0.3  0.7 210000 14500 pts/0    S    13:22   0:00 /usr/bin/vim notes.txt
+
+3 processes listed.

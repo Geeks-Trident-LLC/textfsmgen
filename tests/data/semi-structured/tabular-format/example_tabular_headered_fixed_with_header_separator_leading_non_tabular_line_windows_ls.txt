@@ -1,0 +1,13 @@
+
+
+    Directory: C:\Users\user1
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         3/10/2023   1:34 PM                Documents
+d-r---         2/10/2026  11:27 AM                Downloads
+d-r---         9/20/2025   4:43 PM                Favorites
+d-r---         10/6/2025   9:01 PM                Videos
+-a----         1/15/2026   1:37 AM           1355 .viminfo
+-a----         11/7/2025   1:30 AM             53 output.txt

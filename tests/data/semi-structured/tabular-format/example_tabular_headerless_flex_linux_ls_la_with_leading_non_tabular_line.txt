@@ -1,0 +1,5 @@
+total 9532
+drwxr-xr-x 1 user1 197609       0 Dec 19 15:49 ./
+drwxr-xr-x 1 user1 197609       0 Dec 19 15:49 ../
+-rw-r--r-- 1 user1 197609   18765 Nov 17 18:43 LICENSE.txt
+-rw-r--r-- 1 user1 197609  297566 Nov 17 18:43 ReleaseNotes.html

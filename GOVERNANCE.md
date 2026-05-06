@@ -42,7 +42,7 @@ The lead maintainer:
 
 ---
 
-## 2. Decision Making
+## 2. Decision-Making
 
 ### Consensus‑Driven
 Most decisions are made through discussion in:

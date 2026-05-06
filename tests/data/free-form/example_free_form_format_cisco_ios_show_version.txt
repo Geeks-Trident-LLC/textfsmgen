@@ -1,0 +1,5 @@
+Cisco Internetwork Operating System Software
+IOS (tm) GS Software (RSP-JV-M), Experimental Version 11.1(12816)
+[getchell 108]
+Copyright (c) 1986-1996 by cisco Systems, Inc.
+Compiled Mon 03-Jun-96 11:39 by getchell

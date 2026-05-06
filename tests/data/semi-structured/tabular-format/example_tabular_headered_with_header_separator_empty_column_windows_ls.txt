@@ -1,0 +1,9 @@
+
+
+    Directory: C:\Users\tmduo\workspace\dummy_test\dummy_dir
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----          4/9/2026   1:42 PM                dir1
+d-----          4/9/2026   1:42 PM                dir2
