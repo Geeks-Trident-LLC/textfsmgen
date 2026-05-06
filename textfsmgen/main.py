@@ -57,12 +57,9 @@ def show_dependency(options):
 
 def show_version(options):
     """Display the current version of the TextFSM Generator application."""
-    if not textfsmgen.version:
+    if not options.version:
         return
-
-    from textfsmgen import version
-
-    sys_exit(success=True, msg=f"textfsmgen {version}")
+    sys_exit(success=True, msg=f"textfsmgen {textfsmgen.version}")
 
 
 class Cli:

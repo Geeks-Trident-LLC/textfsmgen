@@ -12,14 +12,15 @@ from .token import (WhitespaceSnippet, TokenSnippet, LineSnippet,
                     create_pattern_statement)
 
 __all__ = [
-    'SnippetExplanation',
-    'SamplesGenerator',
+    "SnippetExplanation",
+    "SamplesGenerator",
 
-    'SnippetSuggester',
+    "SnippetSuggester",
+    "IterateSuggester",
+    "ScriptBuilder",
 
-    'TokenSnippet',
-    'LineSnippet',
-    'WhitespaceSnippet',
-    'TokenSnippet',
-    'LineSnippet',
+    "TokenSnippet",
+    "WhitespaceSnippet",
+    "LineSnippet",
+    "create_pattern_statement"
 ]
