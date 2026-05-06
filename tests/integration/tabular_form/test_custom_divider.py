@@ -13,7 +13,7 @@ import pytest
 
 from textwrap import dedent
 from textfsmgen.engine.tabular import VarColumnTabularTranslator
-from textfsmgen.core.verify import verify
+from textfsmgen.core.verify import verify_snippet
 
 
 def test_parses_two_column_table():
@@ -46,7 +46,7 @@ def test_parses_two_column_table():
     snippet = table.to_snippet()
     assert snippet == exp_snippet
 
-    ok = verify(snippet, test_data, expected_result=expected_result)
+    ok = verify_snippet(snippet, test_data, expected_result=expected_result)
     assert ok
 
 
@@ -77,7 +77,7 @@ def test_parses_with_empty_cell():
     snippet = table.to_snippet()
     assert snippet == exp_snippet
 
-    ok = verify(snippet, test_data, expected_result=expected_result)
+    ok = verify_snippet(snippet, test_data, expected_result=expected_result)
     assert ok
 
 
@@ -110,7 +110,7 @@ def test_parses_with_full_enclosing_divider():
     snippet = table.to_snippet()
     assert snippet == exp_snippet
 
-    ok = verify(snippet, test_data, expected_result=expected_result)
+    ok = verify_snippet(snippet, test_data, expected_result=expected_result)
     assert ok
 
 
@@ -143,7 +143,7 @@ def test_parses_with_left_enclosing_divider():
     snippet = table.to_snippet()
     assert snippet == exp_snippet
 
-    ok = verify(snippet, test_data, expected_result=expected_result)
+    ok = verify_snippet(snippet, test_data, expected_result=expected_result)
     assert ok
 
 
@@ -176,7 +176,7 @@ def test_parses_with_right_enclosing_divider():
     snippet = table.to_snippet()
     assert snippet == exp_snippet
 
-    ok = verify(snippet, test_data, expected_result=expected_result)
+    ok = verify_snippet(snippet, test_data, expected_result=expected_result)
     assert ok
 
 
@@ -206,7 +206,7 @@ def test_parses_with_purge_divider():
     snippet = table.to_snippet()
     assert snippet == exp_snippet
 
-    ok = verify(snippet, test_data, expected_result=expected_result)
+    ok = verify_snippet(snippet, test_data, expected_result=expected_result)
     assert ok
 
 
@@ -237,7 +237,7 @@ def test_parses_with_left_purge_divider():
     snippet = table.to_snippet()
     assert snippet == exp_snippet
 
-    ok = verify(snippet, test_data, expected_result=expected_result)
+    ok = verify_snippet(snippet, test_data, expected_result=expected_result)
     assert ok
 
 
@@ -268,7 +268,7 @@ def test_parses_with_right_purge_divider():
     snippet = table.to_snippet()
     assert snippet == exp_snippet
 
-    ok = verify(snippet, test_data, expected_result=expected_result)
+    ok = verify_snippet(snippet, test_data, expected_result=expected_result)
     assert ok
 
 
@@ -299,5 +299,5 @@ def test_parses_with_full_purge_divider():
     snippet = table.to_snippet()
     assert snippet == exp_snippet
 
-    ok = verify(snippet, test_data, expected_result=expected_result)
+    ok = verify_snippet(snippet, test_data, expected_result=expected_result)
     assert ok

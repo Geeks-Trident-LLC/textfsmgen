@@ -15,52 +15,25 @@ from typing import Optional
 from textfsmgen import TemplateBuilder
 
 
-def verify(
+def verify_snippet(
     template_snippet: str,
     test_data: str,
     expected_rows_count: Optional[int] = None,
     expected_result: Optional[list[dict]] = None,
     ignore_space: bool = True,
+    debug: bool = False,
 ) -> bool:
     """
-    Verify a TextFSM template against test data.
-
-    This function creates a `TemplateBuilder` instance using the provided
-    template snippet and test data, then validates the parsed output against
-    optional expectations such as row count and expected results.
-
-    Parameters
-    ----------
-    template_snippet : str
-        Raw user data snippet to be converted into a TextFSM template.
-    test_data : str
-        Input text data to be parsed by the template.
-    expected_rows_count : int, optional
-        Expected number of parsed rows. If provided, the actual row count
-        is compared against this value.
-    expected_result : list of dict, optional
-        Expected parsed result. If provided, the actual parsed rows are
-        compared against this list of dictionaries.
-    ignore_space : bool, default=True
-        If True, strip leading and trailing spaces from parsed data before
-        comparison.
-
-    Returns
-    -------
-    bool
-        True if verification succeeds, False otherwise.
-
-    Raises
-    ------
-    TemplateBuilderError
-        Raised if an exception occurs during parsing or verification.
-    TemplateBuilderInvalidFormat
-        Raised if the provided snippet has an invalid format.
+    Verify a template snippet against test data.
     """
     builder = TemplateBuilder(user_data=template_snippet, test_data=test_data)
     is_verified = builder.verify(
         expected_rows_count=expected_rows_count,
         expected_result=expected_result,
         ignore_space=ignore_space,
+        debug=debug
     )
     return is_verified
+
+
+

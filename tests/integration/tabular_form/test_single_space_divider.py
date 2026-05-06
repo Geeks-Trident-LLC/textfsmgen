@@ -13,7 +13,7 @@ from textwrap import dedent
 
 from textfsmgen.engine.tabular import VarColumnTabularTranslator
 
-from textfsmgen.core.verify import verify
+from textfsmgen.core.verify import verify_snippet
 
 
 def test_parses_rows_with_full_cells_per_column():
@@ -46,7 +46,7 @@ def test_parses_rows_with_full_cells_per_column():
     snippet = table.to_snippet()
     assert snippet == exp_snippet
 
-    ok = verify(snippet, test_data, expected_result=expected_result)
+    ok = verify_snippet(snippet, test_data, expected_result=expected_result)
     assert ok
 
 
@@ -80,5 +80,5 @@ def test_parses_row_with_empty_cell():
     adjust_snippet = snippet.replace(
         "  word(var_meat)  ", "1_8_space()word(var_meat)1_8_space()"
     )
-    ok = verify(adjust_snippet, test_data, expected_result=expected_result)
+    ok = verify_snippet(adjust_snippet, test_data, expected_result=expected_result)
     assert ok

@@ -8,7 +8,7 @@ This module provides the foundational logic for building and validating
 TextFSM templates. It defines the primary classes and functions that
 transform user-provided snippets into structured parsing templates,
 support test execution, and integrate with configuration options.
-"""  # noqa
+"""
 
 from typing import Optional
 
@@ -20,6 +20,7 @@ from io import StringIO
 
 from textfsmgen.libs import text
 from textfsmgen.libs import file
+from textfsmgen.libs.generic import StatusString
 
 from textfsmgen.core.patterns import LinePattern
 from textfsmgen.libs.text import enclose_string
@@ -354,37 +355,45 @@ class TemplateBuilder:
         test_result: Optional[list[dict]] = None,
         expected_result: Optional[list[dict]] = None,
         tabular: bool = False,
-    ) -> None:
-        """
-        Display debug report for template verification.
-        """
+    ):
+        # ---------------------------------------------------------------------
+        def update_and_print(items, data, subject="", append_newline=True):
+            if subject:
+                txt = decorate_text(f"{subject:<16}")
+                items.append(txt)
+                print(txt)
+            new_data = f"{data}\n" if append_newline else data
+            items.append(new_data)
+            print(new_data)
+
+        # ---------------------------------------------------------------------
+        """Display debug report for template verification."""
         if not self.verified_message:
-            return
+            return self.verified_message
+
+        parts = []
 
         # Template
-        print(decorate_text(f"{'Template:':<16}"))
-        print(f"{self.template}\n")
+        update_and_print(parts, self.template, subject="Template:")
 
         # Test Data
-        print(decorate_text(f"{'Test Data:':<16}"))
-        print(f"{self.test_data}\n")
+        update_and_print(parts, self.test_data, subject="Test Data:")
 
         # Expected Result
         if expected_result is not None:
-            print(decorate_text(f"{'Expected Result:':<16}"))
-            print(f"{expected_result}\n")
+            update_and_print(parts, expected_result, subject="Expected Result:")
 
         # Test Result
         if test_result is not None:
-            print(decorate_text(f"{'Test Result:':<16}"))
             formatted_result = (
                 get_data_as_tabular(test_result) if tabular else test_result
             )
-            print(f"{formatted_result}\n")
+            update_and_print(parts, formatted_result, subject="Test Result:")
 
         # Verified Message
         verified_msg = f"Verified Message: {self.verified_message}"
-        print(decorate_text(verified_msg))
+        update_and_print(parts, verified_msg, append_newline=False)
+        return "\n".join(parts)
 
     def verify(
         self,
@@ -399,8 +408,9 @@ class TemplateBuilder:
         if not self.test_data:
             self.verified_message = "test_data is empty."
             if debug:
-                self.show_debug_report()
-            return False
+                report = self.show_debug_report()
+                return StatusString(report, status=False)
+            return StatusString(self.verified_message, status=False)
 
         is_verified = True
         try:
@@ -408,8 +418,9 @@ class TemplateBuilder:
             if not rows:
                 self.verified_message = "There is no record after parsed."
                 if debug:
-                    self.show_debug_report()
-                return False
+                    report = self.show_debug_report()
+                    return StatusString(report, status=False)
+                return StatusString(self.verified_message, status=False)
 
             # Validate row count
             if expected_rows_count is not None:
@@ -442,11 +453,12 @@ class TemplateBuilder:
 
             # Debug output
             if debug:
-                self.show_debug_report(
+                report = self.show_debug_report(
                     test_result=rows, expected_result=expected_result, tabular=tabular
                 )
+                return StatusString(report, status=is_verified)
 
-            return is_verified
+            return StatusString(self.verified_message, status=is_verified)
 
         except Exception as ex:
             raise TemplateBuilderError(f"{type(ex).__name__}: {ex}")

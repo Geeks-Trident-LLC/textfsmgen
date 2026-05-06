@@ -10,7 +10,7 @@ Run pytest in the project root to execute these tests:
 """
 
 from textfsmgen.core.template import get_textfsm_template
-from textfsmgen.core.verify import verify
+from textfsmgen.core.verify import verify_snippet
 
 from textfsmgen.engine.category import CategoryLinesTranslator
 
@@ -105,5 +105,5 @@ def test():
 
     # Verification passes
 
-    is_verified = verify(generated_snippet, test_data, expected_result=exp_result)
+    is_verified = verify_snippet(generated_snippet, test_data, expected_result=exp_result)
     assert is_verified

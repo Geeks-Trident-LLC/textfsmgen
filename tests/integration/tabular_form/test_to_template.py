@@ -15,7 +15,7 @@ from textwrap import dedent
 
 from textfsmgen.engine.tabular import VarColumnTabularTranslator
 
-from textfsmgen.core.verify import verify
+from textfsmgen.core.verify import verify_snippet
 from textfsmgen.core.template import get_textfsm_template
 
 
@@ -66,7 +66,7 @@ def test_parses_rows_with_full_cells_per_column():
     template = re.sub(r"date: \d{4}-\d\d-\d\d", "date: YYYY-mm-dd", template)
     assert template == exp_template
 
-    is_verified = verify(snippet, test_data, expected_result=expected_result)
+    is_verified = verify_snippet(snippet, test_data, expected_result=expected_result)
     assert is_verified
 
 
@@ -116,5 +116,5 @@ def test_parses_row_with_empty_cell():
     template = re.sub(r"date: \d{4}-\d\d-\d\d", "date: YYYY-mm-dd", template)
     assert template == exp_template
 
-    is_verified = verify(snippet, test_data, expected_result=expected_result)
+    is_verified = verify_snippet(snippet, test_data, expected_result=expected_result)
     assert is_verified

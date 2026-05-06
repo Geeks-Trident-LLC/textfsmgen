@@ -437,7 +437,7 @@ class Cli:
             return
 
         args = {**self.verified_kwargs, "debug": True}
-        tb.verify(**args)
+        tb.verify_snippet(**args)
         sys_exit(success=True)
 
     def display_test_script(self, tb):

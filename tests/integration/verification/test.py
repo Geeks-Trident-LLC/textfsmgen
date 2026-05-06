@@ -13,7 +13,7 @@ Run pytest in the project root to execute these tests:
     $ python -m pytest tests/integration/verification/test.py
 """
 
-from textfsmgen.core.verify import verify
+from textfsmgen.core.verify import verify_snippet
 from textfsmgen.core.template import get_textfsm_template
 
 from tests.unit.core import get_user_data
@@ -44,7 +44,7 @@ def test_verify_func():
     expected_result = get_expected_result()
     expected_rows_count = len(expected_result)
 
-    is_verified = verify(
+    is_verified = verify_snippet(
         template_snippet=user_data,
         test_data=test_data,
         expected_rows_count=expected_rows_count,

@@ -38,8 +38,8 @@ def test_template_builder_verify_method():
     test_data = get_test_data()
 
     factory = TemplateBuilder(user_data=user_data, test_data=test_data)
-    is_verified = factory.verify()
-    assert is_verified is True
+    status = factory.verify()
+    assert bool(status) is True
 
 
 def test_template_builder_verify_method_expected_rows_count():
@@ -51,8 +51,8 @@ def test_template_builder_verify_method_expected_rows_count():
         user_data=user_data,
         test_data=test_data,
     )
-    is_verified = factory.verify(expected_rows_count=expected_rows_count)
-    assert is_verified is True
+    status = factory.verify(expected_rows_count=expected_rows_count)
+    assert bool(status) is True
 
 
 def test_template_builder_verify_method_expected_result():
@@ -62,7 +62,7 @@ def test_template_builder_verify_method_expected_result():
     expected_rows_count = len(expected_result)
 
     factory = TemplateBuilder(user_data=user_data, test_data=test_data)
-    is_verified = factory.verify(
+    status = factory.verify(
         expected_rows_count=expected_rows_count, expected_result=expected_result
     )
-    assert is_verified is True
+    assert bool(status) is True
