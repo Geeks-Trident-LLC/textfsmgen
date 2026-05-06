@@ -1,0 +1,14 @@
+
+
+    Directory: C:\samples\mixing-dirs-files
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----          5/5/2026  10:12 PM                dir1
+d-----          5/5/2026  10:12 PM                dir2
+-a----          5/5/2026  10:11 PM              0 +
+-a----          5/5/2026  10:12 PM              0 another dummy file.txt
+-a----          5/5/2026  10:10 PM              0 dummy.txt
+-a----          5/5/2026  10:11 PM              0 other-dummy.txt
+

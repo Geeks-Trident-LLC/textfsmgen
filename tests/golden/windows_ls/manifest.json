@@ -1,0 +1,12 @@
+{
+  "case": "windows_ls",
+  "kind": "tabular",
+  "parameters": {},
+  "canonical": {
+    "sample": "canonical/sample.txt",
+    "snippet": "canonical/expected_snippet.txt",
+    "template": "canonical/expected_textfsm.template",
+    "result": "canonical/expected_result.json"
+  },
+  "inputs": []
+}

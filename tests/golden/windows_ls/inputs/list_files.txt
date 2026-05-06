@@ -1,0 +1,13 @@
+
+
+    Directory: C:\samples\files-only
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----          5/5/2026  10:11 PM              0 +
+-a----          5/5/2026  10:12 PM              0 another dummy file.txt
+-a----          5/5/2026  10:10 PM              0 dummy.txt
+-a----          5/5/2026  10:11 PM              0 other-dummy.txt
+
+

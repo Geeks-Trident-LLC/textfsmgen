@@ -9,9 +9,11 @@ description = "TextFSM Generator is a low‑code, no‑code Python library that 
 readme = "README.md"
 license = "BSD-3-Clause"
 requires-python = ">=3.9"
+
 authors = [
   { name = "Tuyen Mathew Duong", email = "tuyen@geekstrident.com" }
 ]
+
 maintainers = [
   { name = "Tuyen Mathew Duong", email = "tuyen@geekstrident.com" }
 ]
