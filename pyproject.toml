@@ -71,6 +71,7 @@ textfsmgen = "textfsmgen.main:execute"
 textfsmgen-gui = "textfsmgen.application:execute"
 textfsmgen-app = "textfsmgen.application:execute"
 textfsm-app = "textfsmgen.application:execute"
+textfsmgen-golden = "textfsmgen.cli.golden:main"
 
 [tool.setuptools]
 include-package-data = true
@@ -83,3 +84,4 @@ exclude = [
 
 [tool.setuptools.package-data]
 "*" = ["LICENSE", "README.md"]
+

@@ -6,8 +6,11 @@ pytest
 pytest-cov
 requests
 
-# Linting / formatting (optional but recommended)
+# Linting / formatting
 ruff
 
-# Type checking (optional)
+# Type checking
 mypy
+
+# CLI tooling for golden tests
+click

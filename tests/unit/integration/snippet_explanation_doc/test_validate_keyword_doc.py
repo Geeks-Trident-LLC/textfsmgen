@@ -13,7 +13,7 @@ import pytest
 
 from textfsmgen.engine.doc import OperationDoc
 
-from tests.integration.snippet_explanation_doc import get_keywords
+from tests.unit.integration.snippet_explanation_doc import get_keywords
 
 
 @pytest.mark.parametrize(

@@ -1,2 +1,3 @@
-# Empty for now — keep this file clean.
-# Add general test fixtures here if needed.
+pytest_plugins = [
+    "tests.integration.golden.integration_plugin",
+]
