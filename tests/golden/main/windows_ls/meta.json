@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "approved_by": "Tom",
+  "approved_at": "2026-05-07 13:49:28",
+  "description": "",
+  "email": "",
+  "notes": "",
+  "textfsmgen_version": "0.6.2",
+  "textfsm_version": "2.1.0",
+  "python_version": "3.14.3",
+  "operating_system": "Windows 11",
+  "machine": "AMD64",
+  "git_commit": "b2a1f985a3184f9f641e0238dd54f97860470127"
+}
