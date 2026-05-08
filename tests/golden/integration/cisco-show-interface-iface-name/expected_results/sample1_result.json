@@ -1,15 +1,15 @@
 [
   {
-    "admin_status": "up",
-    "description": "Uplink to Core Switch",
-    "duplex": "full",
-    "input_errors": "0",
     "interface": "GigabitEthernet0/1",
-    "last_flap": "00:12:44",
+    "description": "Uplink to Core Switch",
+    "admin_status": "up",
+    "operational_status": "up",
+    "speed": "1000 Mbps",
+    "duplex": "full",
     "mac_address": "aabb.ccdd.eeff",
     "mtu": "1500",
-    "operational_status": "up",
+    "input_errors": "0",
     "output_errors": "12",
-    "speed": "1000 Mbps"
+    "last_flap": "00:12:44"
   }
 ]

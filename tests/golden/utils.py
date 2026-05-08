@@ -1,4 +1,4 @@
-
+import hashlib
 import json
 import platform
 import os
@@ -210,89 +210,120 @@ class DataLoader:
 
         Behavior:
         - For 'main' cases:
-            * Rebuild canonical snippet
-            * Rebuild canonical template
-            * Rebuild canonical result.json
+            * Rebuild canonical result.json (parsed rows from canonical_template + canonical_sample)
         - For 'integration' cases:
-            * Rebuild expected snippet
-            * Rebuild expected template
+            * Rebuild expected_results/*.json (parsed rows from expected_template + inputs)
         - For both kinds:
-            * Rebuild expected_results/*.json for each input
             * Rewrite meta.json
+            * Rewrite golden.hash
         """
 
         # Only regenerate when explicitly requested
         if not os.getenv("GOLDEN_REGEN"):
             return
 
-        Builder = self.get_builder()
-
         # -----------------------------
-        # 1. MAIN CASE: regenerate canonical data
+        # 1. MAIN CASE: regenerate canonical result.json
         # -----------------------------
         if self.kind == "main":
-            builder = Builder(
-                user_data=self.canonical_sample,
-                **self.parameters
-            )
-
-            # snippet
-            write_text_atomic(
-                self.file_path / "canonical" / "snippet.txt",
-                builder.snippet
-            )
-
-            # template
-            write_text_atomic(
-                self.file_path / "canonical" / "textfsm.template",
-                builder.template
-            )
-
-            # canonical parsed result
-            rows = parse_textfsm_to_dicts(builder.template, self.canonical_sample)
+            # Use authoritative canonical_template + canonical_sample
+            rows = parse_textfsm_to_dicts(self.canonical_template,
+                                          self.canonical_sample)
             write_json_atomic(
                 self.file_path / "canonical" / "result.json",
                 rows
             )
+            # Use authoritative canonical_template + each input
+            for input_sample_info, expected_result_info in self.get_input_and_expected_result():
+                input_sample = input_sample_info["data"]
+                out_path = expected_result_info["filename"]
+
+                rows = parse_textfsm_to_dicts(self.canonical_template, input_sample)
+                write_json_atomic(out_path, rows)
 
         # -----------------------------
-        # 2. INTEGRATION CASE: regenerate expected snippet/template
+        # 2. INTEGRATION CASE: regenerate expected_results/*.json
         # -----------------------------
         elif self.kind == "integration":
-            # Use the FIRST input sample to regenerate expected snippet/template
-            # (This is your current convention)
-            first_input_info, _ = next(self.get_input_and_expected_result())
-            first_input = first_input_info.get("data")
+            # Use authoritative expected_template + each input
+            for input_sample_info, expected_result_info in self.get_input_and_expected_result():
+                input_sample = input_sample_info["data"]
+                out_path = expected_result_info["filename"]
 
-            builder = Builder(
-                user_data=first_input,
-                **self.parameters
-            )
-
-            write_text_atomic(
-                self.file_path / "expected" / "snippet.txt",
-                builder.snippet
-            )
-
-            write_text_atomic(
-                self.file_path / "expected" / "textfsm.template",
-                builder.template
-            )
+                rows = parse_textfsm_to_dicts(self.expected_template,
+                                              input_sample)
+                write_json_atomic(out_path, rows)
 
         # -----------------------------
-        # 3. Regenerate expected_results for ALL inputs
-        # -----------------------------
-        for input_sample_info, expected_result_info in self.get_input_and_expected_result():
-            input_sample = input_sample_info.get("data")
-            out_path = expected_result_info.get("filename")
-            rows = parse_textfsm_to_dicts(self.expected_template, input_sample)
-            write_json_atomic(out_path, rows)
-
-        # -----------------------------
-        # 4. Rewrite meta.json
+        # 3. Rewrite meta.json
         # -----------------------------
         meta_out = self.file_path / "meta.json"
         write_json_atomic(meta_out, self.meta)
+
+        # -----------------------------
+        # 4. Rewrite golden.hash
+        # -----------------------------
+        files = self.get_all_golden_files()
+        current_hash = compute_hash_for_files(files)
+        self.write_hash(current_hash)
+
+    def get_all_golden_files(self):
+        files = [
+            self.manifest_path,
+            # meta.json intentionally excluded from hashing
+            # self.file_path / "meta.json",
+        ]
+
+        if self.kind == "main":
+            files += [
+                self.file_path / "canonical" / "snippet.txt",
+                self.file_path / "canonical" / "textfsm.template",
+                self.file_path / "canonical" / "result.json",
+            ]
+        else:
+            files += [
+                self.file_path / "expected" / "snippet.txt",
+                self.file_path / "expected" / "textfsm.template",
+            ]
+
+        for input_path in self.inputs_path.glob("*"):
+            basename = input_path.stem
+            files.append(self.expected_results_path / f"{basename}_result.json")
+
+        return files
+
+    def get_hash_file_path(self):
+        return self.file_path / "golden.hash"
+
+    def load_stored_hash(self):
+        path = self.get_hash_file_path()
+        if not path.exists():
+            return None
+        return path.read_text().strip()
+
+    def write_hash(self, value):
+        path = self.get_hash_file_path()
+        path.write_text(value, encoding="utf-8")
+
+    def check_drift(self):
+        if os.getenv("GOLDEN_REGEN"):
+            return  # skip drift check during regeneration
+
+        files = self.get_all_golden_files()
+        current_hash = compute_hash_for_files(files)
+        stored_hash = self.load_stored_hash()
+
+        if stored_hash is None:
+            raise AssertionError(
+                f"Golden hash file missing for {self.test_case}. "
+                f"Run: pytest --regen-golden"
+            )
+
+        if current_hash != stored_hash:
+            raise AssertionError(
+                f"Golden files drift detected in {self.test_case}.\n"
+                f"Run: pytest --regen-golden"
+            )
 
 
 def get_testcases(parent_path):
@@ -380,14 +411,17 @@ def run_main_case(data_info: DataLoader) -> None:
 
     # Parse each input sample
     for input_sample_info, exp_result_info in data_info.get_input_and_expected_result():
-        input_sample = input_sample_info.get("data")
-        exp_result = exp_result_info.get("data")
+        input_sample = input_sample_info["data"]
+        exp_result = exp_result_info["data"]
         status = verify_textfsm(
-            builder.template,
+            data_info.canonical_template,
             input_sample,
             expected_result=exp_result
         )
         assert bool(status), status
+
+    # check drift
+    data_info.check_drift()
 
 
 def run_integration_case(data_info: DataLoader) -> None:
@@ -412,7 +446,7 @@ def run_integration_case(data_info: DataLoader) -> None:
 
     # Use first input sample to build expected snippet/template
     first_input_info, _ = next(data_info.get_input_and_expected_result())
-    first_input = first_input_info.get("data")
+    first_input = first_input_info["data"]
 
     builder = Builder(
         user_data=first_input,
@@ -432,15 +466,27 @@ def run_integration_case(data_info: DataLoader) -> None:
     ), "Expected template mismatch"
 
     for input_sample_info, exp_result_info in data_info.get_input_and_expected_result():
-        input_sample = input_sample_info.get("data")
-        exp_result = exp_result_info.get("data")
+        input_sample = input_sample_info["data"]
+        exp_result = exp_result_info["data"]
         builder = Builder(
             user_data=input_sample,
             **data_info.parameters
         )
         status = verify_textfsm(
-            builder.template,
+            data_info.expected_template,
             input_sample,
             expected_result=exp_result
         )
         assert bool(status), status
+
+    # check drift
+    data_info.check_drift()
+
+
+def compute_hash_for_files(paths):
+    h = hashlib.sha256()
+    for path in sorted(paths):
+        p = Path(path)
+        if p.is_file():
+            h.update(p.read_bytes())
+    return h.hexdigest()
