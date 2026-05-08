@@ -131,12 +131,16 @@ class DataLoader:
 
     def get_input_and_expected_result(self):
         for input_path in self.inputs_path.glob("*"):
+            input_filename = str(input_path)
             basename = input_path.stem
             exp_result_path = self.expected_results_path / f"{basename}_result.json"
+            exp_result_filename = str(exp_result_path)
 
             input_sample = input_path.read_text(encoding="utf-8")
             exp_result = json.loads(exp_result_path.read_text(encoding="utf-8"))
-            yield input_sample, exp_result
+            input_info = {"filename": input_filename, "data": input_sample}
+            result_info = {"filename": exp_result_filename, "data": exp_result}
+            yield input_info, result_info
 
     def get_builder(self):
         mapping = {
@@ -235,13 +239,13 @@ class DataLoader:
             # snippet
             write_text_atomic(
                 self.file_path / "canonical" / "snippet.txt",
-                builder.snippet.strip() + "\n"
+                builder.snippet
             )
 
             # template
             write_text_atomic(
                 self.file_path / "canonical" / "textfsm.template",
-                builder.template.strip() + "\n"
+                builder.template
             )
 
             # canonical parsed result
@@ -257,7 +261,8 @@ class DataLoader:
         elif self.kind == "integration":
             # Use the FIRST input sample to regenerate expected snippet/template
             # (This is your current convention)
-            first_input, _ = next(self.get_input_and_expected_result())
+            first_input_info, _ = next(self.get_input_and_expected_result())
+            first_input = first_input_info.get("data")
 
             builder = Builder(
                 user_data=first_input,
@@ -266,29 +271,21 @@ class DataLoader:
 
             write_text_atomic(
                 self.file_path / "expected" / "snippet.txt",
-                builder.snippet.strip() + "\n"
+                builder.snippet
             )
 
             write_text_atomic(
                 self.file_path / "expected" / "textfsm.template",
-                builder.template.strip() + "\n"
+                builder.template
             )
 
         # -----------------------------
         # 3. Regenerate expected_results for ALL inputs
         # -----------------------------
-        for input_sample, _ in self.get_input_and_expected_result():
-            builder = Builder(
-                user_data=input_sample,
-                **self.parameters
-            )
-
-            out_path = (
-                    self.expected_results_path
-                    / f"{input_sample}_result.json"
-            )
-
-            rows = parse_textfsm_to_dicts(builder.template, input_sample)
+        for input_sample_info, expected_result_info in self.get_input_and_expected_result():
+            input_sample = input_sample_info.get("data")
+            out_path = expected_result_info.get("filename")
+            rows = parse_textfsm_to_dicts(self.expected_template, input_sample)
             write_json_atomic(out_path, rows)
 
         # -----------------------------
@@ -329,7 +326,29 @@ def is_identical_templates(template1, template2):
     return normalized_template1 == normalized_template2
 
 
+def is_identical_snippet(snippet1, snippet2):
+    return snippet1.strip() and snippet1.strip() == snippet2.strip()
+
+
 def run_main_case(data_info: DataLoader) -> None:
+    """
+    Execute a main golden test case.
+
+    Behavior:
+    - If GOLDEN_REGEN=1: regenerate canonical + expected_results and exit early.
+    - Otherwise: run normal comparisons.
+    """
+
+    # -----------------------------------
+    # Regeneration mode
+    # -----------------------------------
+    if os.getenv("GOLDEN_REGEN"):
+        data_info.regenerate()
+        return  # Do NOT run comparisons during regeneration
+
+    # -----------------------------------
+    # Normal test mode
+    # -----------------------------------
     Builder = data_info.get_builder()
     builder = Builder(user_data=data_info.canonical_sample, **data_info.parameters)
 
@@ -340,63 +359,88 @@ def run_main_case(data_info: DataLoader) -> None:
     )
     assert bool(builder), error
 
-    error = (
-        "Canonical snippet is not as same as generated snippet\n"
-        "====================\n"
-        f"Canonical snippet:\n{data_info.canonical_snippet}\n"
-        "====================\n"
-        f"Generated snippet:\n{builder.snippet}\n"
-    )
-    assert builder.snippet.strip() == data_info.canonical_snippet.strip(), error
+    # Compare snippet
+    assert is_identical_snippet(
+        builder.snippet,
+        data_info.canonical_snippet
+    ), "Canonical snippet mismatch"
 
-    error = (
-        "Canonical TextFSM template is not as same as generated template\n"
-        "====================\n"
-        f"Canonical TextFSM template:\n{data_info.canonical_template}\n"
-        "====================\n"
-        f"Generated TextFSM template:\n{builder.template}\n"
-    )
-    assert is_identical_templates(builder.template, data_info.canonical_template), error
+    # Compare template
+    assert is_identical_templates(
+        builder.template, data_info.canonical_template
+    ), "Canonical template mismatch"
 
-    for input_sample, exp_result in data_info.get_input_and_expected_result():
-        status = verify_textfsm(builder.template, input_sample, expected_result=exp_result)
+    # Parse canonical sample
+    status = verify_textfsm(
+        builder.template,
+        data_info.canonical_sample,
+        expected_result=data_info.canonical_result
+    )
+    assert bool(status), status
+
+    # Parse each input sample
+    for input_sample_info, exp_result_info in data_info.get_input_and_expected_result():
+        input_sample = input_sample_info.get("data")
+        exp_result = exp_result_info.get("data")
+        status = verify_textfsm(
+            builder.template,
+            input_sample,
+            expected_result=exp_result
+        )
         assert bool(status), status
-
-    data_info.generate_meta()
 
 
 def run_integration_case(data_info: DataLoader) -> None:
+    """
+    Execute an integration golden test case.
+
+    Behavior:
+    - If GOLDEN_REGEN=1: regenerate expected + expected_results and exit early.
+    - Otherwise: run normal comparisons.
+    """
+    # -----------------------------------
+    # Regeneration mode
+    # -----------------------------------
+    if os.getenv("GOLDEN_REGEN"):
+        data_info.regenerate()
+        return  # Do NOT run comparisons during regeneration
+
+    # -----------------------------------
+    # Normal test mode
+    # -----------------------------------
     Builder = data_info.get_builder()
 
-    for input_sample, exp_result in data_info.get_input_and_expected_result():
-        builder = Builder(user_data=input_sample, **data_info.parameters)
+    # Use first input sample to build expected snippet/template
+    first_input_info, _ = next(data_info.get_input_and_expected_result())
+    first_input = first_input_info.get("data")
 
-        error = (
-            f"Failed to use user-input {data_info.kind}-format sample to create TextFSM template\n"
-            "====================\n"
-            f"{input_sample}\n"
+    builder = Builder(
+        user_data=first_input,
+        **data_info.parameters
+    )
+
+    # Compare snippet
+    assert is_identical_snippet(
+        builder.snippet,
+        data_info.expected_snippet
+    ), "Expected snippet mismatch"
+
+    # Compare template
+    assert is_identical_templates(
+        builder.template,
+        data_info.expected_template
+    ), "Expected template mismatch"
+
+    for input_sample_info, exp_result_info in data_info.get_input_and_expected_result():
+        input_sample = input_sample_info.get("data")
+        exp_result = exp_result_info.get("data")
+        builder = Builder(
+            user_data=input_sample,
+            **data_info.parameters
         )
-        assert bool(builder), error
-
-        error = (
-            "Expected snippet is not as same as generated snippet\n"
-            "====================\n"
-            f"Expected snippet:\n{data_info.expected_snippet}\n"
-            "====================\n"
-            f"Generated snippet:\n{builder.snippet}\n"
+        status = verify_textfsm(
+            builder.template,
+            input_sample,
+            expected_result=exp_result
         )
-        assert builder.snippet.strip() == data_info.expected_snippet.strip(), error
-
-        error = (
-            "Expected TextFSM template is not as same as generated template\n"
-            "====================\n"
-            f"Expected TextFSM template:\n{data_info.expected_template}\n"
-            "====================\n"
-            f"Generated TextFSM template:\n{builder.template}\n"
-        )
-        assert is_identical_templates(builder.template, data_info.expected_template), error
-
-        status = verify_textfsm(builder.template, input_sample, expected_result=exp_result)
         assert bool(status), status
-
-    data_info.generate_meta()
