@@ -92,7 +92,7 @@ class DataLoader:
 
     def load_manifest(self):
         result = json.loads(self.manifest_path.read_text(encoding="utf-8"))
-        self.builder_type = result["builder_type"].lower().strip()
+        self.builder_type = result["builder"].lower().strip()
         self.parameters = result["parameters"]
         self.meta = result["meta"]
 
