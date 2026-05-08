@@ -1,0 +1,192 @@
+# tester_paths.py
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Optional
+
+
+# ------------------------------------------------------------
+# Public API
+# ------------------------------------------------------------
+
+def resolve_case_creation_path(case: str, category: str) -> Optional[Path]:
+    """
+    Resolve where a NEW case should be created, using the unified path
+    resolution rules documented in the CLI Tester Guide.
+
+    Returns:
+        Path to the new case directory, or None if no rule matches.
+    """
+    pwd = Path.cwd()
+
+    # Rule 5: <case> is a full path
+    if _is_full_path(case):
+        full = Path(case).resolve()
+        return full if _is_valid_full_path(full, category) else None
+
+    # Rule 1: pwd ends with tests/golden/<category>
+    if _ends_with_category_dir(pwd, category):
+        return pwd / case
+
+    # Rule 2: pwd ends with tests/golden
+    if _ends_with_golden_dir(pwd) and _category_exists_in(pwd, category):
+        return pwd / category / case
+
+    # Rule 3: pwd ends with tests
+    if _ends_with_tests_dir(pwd) and _category_exists_in(pwd / "golden", category):
+        return pwd / "golden" / category / case
+
+    # Rule 4: somewhere under project tree
+    found = _find_category_dir_upwards(pwd, category)
+    if found:
+        return found / case
+
+    # Rule 6: no match
+    return None
+
+
+def resolve_existing_case_path(case: str) -> Optional[Path]:
+    """
+    Locate an existing case by scanning upward from cwd for tests/golden/<category>/<case>.
+    Returns the case directory or None if not found.
+    """
+    pwd = Path.cwd()
+
+    for root in _walk_upwards(pwd):
+        golden = root / "tests" / "golden"
+        if not golden.is_dir():
+            continue
+
+        for category_dir in golden.iterdir():
+            if not category_dir.is_dir():
+                continue
+            candidate = category_dir / case
+            if candidate.is_dir():
+                return candidate.resolve()
+
+    return None
+
+
+def generate_duplicate_case_name(case: str) -> str:
+    """
+    Generate <case>-duplicated, <case>-duplicated-2, <case>-duplicated-3, ...
+    """
+    base = f"{case}-duplicated"
+    pwd = Path.cwd()    # noqa
+
+    # First try <case>-duplicated
+    if not _case_exists_anywhere(base):
+        return base
+
+    # Then try numbered suffixes
+    n = 2
+    while True:
+        name = f"{base}-{n}"
+        if not _case_exists_anywhere(name):
+            return name
+        n += 1
+
+
+# ------------------------------------------------------------
+# Internal helpers
+# ------------------------------------------------------------
+
+def _is_full_path(case: str) -> bool:
+    return "/" in case or "\\" in case
+
+
+def _is_valid_full_path(path: Path, category: str) -> bool:
+    """
+    Full path must contain .../tests/golden/<category>/...
+    """
+    parts = list(path.resolve().parts)
+    try:
+        idx = parts.index("golden")
+    except ValueError:
+        return False
+
+    # Expect: .../tests/golden/<category>/...
+    if idx == 0:
+        return False
+    if parts[idx - 1] != "tests":
+        return False
+    if idx + 1 >= len(parts):
+        return False
+    return parts[idx + 1] == category
+
+
+def _ends_with_category_dir(pwd: Path, category: str) -> bool:
+    """
+    Check if pwd ends with tests/golden/<category>.
+    """
+    parts = pwd.parts
+    if len(parts) < 3:
+        return False
+    return parts[-3:] == ("tests", "golden", category)
+
+
+def _ends_with_golden_dir(pwd: Path) -> bool:
+    """
+    Check if pwd ends with tests/golden.
+    """
+    parts = pwd.parts
+    if len(parts) < 2:
+        return False
+    return parts[-2:] == ("tests", "golden")
+
+
+def _ends_with_tests_dir(pwd: Path) -> bool:
+    """
+    Check if pwd ends with tests.
+    """
+    return pwd.name == "tests"
+
+
+def _category_exists_in(parent: Path, category: str) -> bool:
+    """
+    Check if parent/<category> exists.
+    """
+    return (parent / category).is_dir()
+
+
+def _find_category_dir_upwards(start: Path, category: str) -> Optional[Path]:
+    """
+    Search upward for tests/golden/<category>.
+    """
+    for root in _walk_upwards(start):
+        candidate = root / "tests" / "golden" / category
+        if candidate.is_dir():
+            return candidate
+    return None
+
+
+def _walk_upwards(start: Path):
+    """
+    Yield start, parent, parent-of-parent, ... until filesystem root.
+    """
+    current = start.resolve()
+    while True:
+        yield current
+        if current.parent == current:
+            break
+        current = current.parent
+
+
+def _case_exists_anywhere(case: str) -> bool:
+    """
+    Check if <case> exists anywhere under tests/golden/*.
+    """
+    pwd = Path.cwd()
+    for root in _walk_upwards(pwd):
+        golden = root / "tests" / "golden"
+        if not golden.is_dir():
+            continue
+
+        for category_dir in golden.iterdir():
+            if not category_dir.is_dir():
+                continue
+            if (category_dir / case).is_dir():
+                return True
+
+    return False

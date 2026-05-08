@@ -7,6 +7,7 @@ Entry point for the TextFSM Generator command‑line interface (CLI).
 
 import argparse
 
+import sys
 import textfsmgen
 from textfsmgen.libs.common import sys_exit
 from textfsmgen.libs.common import decorate_list_of_line
@@ -68,6 +69,17 @@ class Cli:
     """
 
     def __init__(self):
+
+        # ------------------------------------------------------------
+        # Tester namespace dispatch (textfsmgen tester <action> ...)
+        # ------------------------------------------------------------
+        if len(sys.argv) > 1 and sys.argv[1] == "tester":
+            from .cli.tester.cli_tester import main_tester
+            sys.exit(main_tester(sys.argv[2:]))
+
+        # ------------------------------------------------------------
+        # Normal argparse CLI continues below
+        # ------------------------------------------------------------
         parser = argparse.ArgumentParser(
             prog="textfsmgen",
             usage="%(prog)s [options]",
@@ -473,3 +485,7 @@ def execute():
     """Entry point for executing the TextFSM Generator console CLI."""
     app = Cli()
     app.run()
+
+
+if __name__ == "__main__":
+    execute()

@@ -68,10 +68,10 @@ Tracker = "https://github.com/Geeks-Trident-LLC/textfsmgen/issues"
 
 [project.scripts]
 textfsmgen = "textfsmgen.main:execute"
+# textfsmgen = "textfsmgen.cli:main"
 textfsmgen-gui = "textfsmgen.application:execute"
 textfsmgen-app = "textfsmgen.application:execute"
 textfsm-app = "textfsmgen.application:execute"
-textfsmgen-golden = "textfsmgen.cli.golden:main"
 
 [tool.setuptools]
 include-package-data = true

@@ -463,6 +463,12 @@ class TemplateBuilder:
         except Exception as ex:
             raise TemplateBuilderError(f"{type(ex).__name__}: {ex}")
 
+    def parse(self, sample=""):
+        test_data = sample or self.test_data
+        if not self.template_parser or not test_data:
+            return []
+        return self.template_parser.ParseTextToDicts(test_data)
+
     def create_test_script(self, test_script_fmt: str, error: str) -> str:
         """
         Generate a test script from the current template and test data.
@@ -671,6 +677,12 @@ class CategoryTemplateBuilder:
             ignore_space=ignore_space,
         )
 
+    def parse(self, sample=""):
+        """Parse the test data against expected results."""
+        if self.builder is not None:
+            return self.builder.parse(sample=sample)
+        return []
+
     def create_unittest(self):
         """Generate a Python unittest script for the current template and test data."""
         return self.builder.create_unittest() if self.builder else ""
@@ -773,6 +785,12 @@ class TabularTemplateBuilder:
             debug=debug,
             ignore_space=ignore_space,
         )
+
+    def parse(self, sample=""):
+        """Parse the test data against expected results."""
+        if self.builder is not None:
+            return self.builder.parse(sample=sample)
+        return []
 
     def create_unittest(self):
         """Generate a Python unittest script for the current template and test data."""
