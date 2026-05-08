@@ -11,13 +11,30 @@ from datetime import datetime
 
 from pathlib import Path
 
-from textfsmgen import TabularTemplateBuilder, CategoryTemplateBuilder
+from textfsmgen import (
+    TabularTemplateBuilder,
+    CategoryTemplateBuilder,
+    parse_textfsm_to_dicts
+)
 from textfsmgen import verify_textfsm
 
 from .case_info import GoldenCaseInfo
 
 
 gold_root = Path(__file__).parent
+
+
+def write_text_atomic(path, text):
+    path = Path(path)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(text, encoding="utf-8")
+    tmp.replace(path)
+
+def write_json_atomic(path, obj):
+    path = Path(path)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(obj, indent=2, ensure_ascii=False), encoding="utf-8")
+    tmp.replace(path)
 
 
 class DataLoader:
@@ -182,6 +199,103 @@ class DataLoader:
 
         with file_path.open("w", encoding="utf-8") as f:
             json.dump(meta, f, indent=2, ensure_ascii=False)
+
+    def regenerate(self):
+        """
+        Regenerate golden data for this test case.
+
+        Behavior:
+        - For 'main' cases:
+            * Rebuild canonical snippet
+            * Rebuild canonical template
+            * Rebuild canonical result.json
+        - For 'integration' cases:
+            * Rebuild expected snippet
+            * Rebuild expected template
+        - For both kinds:
+            * Rebuild expected_results/*.json for each input
+            * Rewrite meta.json
+        """
+
+        # Only regenerate when explicitly requested
+        if not os.getenv("GOLDEN_REGEN"):
+            return
+
+        Builder = self.get_builder()
+
+        # -----------------------------
+        # 1. MAIN CASE: regenerate canonical data
+        # -----------------------------
+        if self.kind == "main":
+            builder = Builder(
+                user_data=self.canonical_sample,
+                **self.parameters
+            )
+
+            # snippet
+            write_text_atomic(
+                self.file_path / "canonical" / "snippet.txt",
+                builder.snippet.strip() + "\n"
+            )
+
+            # template
+            write_text_atomic(
+                self.file_path / "canonical" / "textfsm.template",
+                builder.template.strip() + "\n"
+            )
+
+            # canonical parsed result
+            rows = parse_textfsm_to_dicts(builder.template, self.canonical_sample)
+            write_json_atomic(
+                self.file_path / "canonical" / "result.json",
+                rows
+            )
+
+        # -----------------------------
+        # 2. INTEGRATION CASE: regenerate expected snippet/template
+        # -----------------------------
+        elif self.kind == "integration":
+            # Use the FIRST input sample to regenerate expected snippet/template
+            # (This is your current convention)
+            first_input, _ = next(self.get_input_and_expected_result())
+
+            builder = Builder(
+                user_data=first_input,
+                **self.parameters
+            )
+
+            write_text_atomic(
+                self.file_path / "expected" / "snippet.txt",
+                builder.snippet.strip() + "\n"
+            )
+
+            write_text_atomic(
+                self.file_path / "expected" / "textfsm.template",
+                builder.template.strip() + "\n"
+            )
+
+        # -----------------------------
+        # 3. Regenerate expected_results for ALL inputs
+        # -----------------------------
+        for input_sample, _ in self.get_input_and_expected_result():
+            builder = Builder(
+                user_data=input_sample,
+                **self.parameters
+            )
+
+            out_path = (
+                    self.expected_results_path
+                    / f"{input_sample}_result.json"
+            )
+
+            rows = parse_textfsm_to_dicts(builder.template, input_sample)
+            write_json_atomic(out_path, rows)
+
+        # -----------------------------
+        # 4. Rewrite meta.json
+        # -----------------------------
+        meta_out = self.file_path / "meta.json"
+        write_json_atomic(meta_out, self.meta)
 
 
 def get_testcases(parent_path):

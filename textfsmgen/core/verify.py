@@ -152,3 +152,18 @@ def verify_textfsm(
         print(report)
         return StatusString(report, status=is_verified)
     return StatusString(verified_msg, status=is_verified)
+
+
+def parse_textfsm_to_dicts(template: str, test_data: str) -> list[dict]:
+    """
+    Parse test data using TextFSM template and return list of dictionaries.
+    """
+    try:
+        template_stream = StringIO(template)
+        fsm_parser = TextFSM(template_stream)
+        parsed_rows = fsm_parser.ParseTextToDicts(test_data)
+        return parsed_rows
+    except Exception as err:
+        error_title = decorate_text(f"{type(err).__name__}: {err}")
+        error_details = traceback.format_exc()
+        raise Exception(f"{error_title}\n{error_details}")
