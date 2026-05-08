@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from typing import List, Any, Dict, Optional
 
+from .tester_common import find_case_root, load_manifest
+
 from .tester_paths import resolve_existing_case_path
 from .tester_manifest_model import (
     Manifest,
@@ -19,6 +21,23 @@ from .tester_manifest_model import (
 # ------------------------------------------------------------
 # Public API
 # ------------------------------------------------------------
+
+def handle_tester_manifest(argv):
+    if not argv:
+        print("error: missing case name")
+        return 1
+
+    case = argv[0]
+    case_root = find_case_root(case)
+    if not case_root:
+        print(f"error: case not found: {case}")
+        return 1
+
+    manifest = load_manifest(case_root)
+
+    print(json.dumps(manifest_to_dict(manifest), indent=2))
+    return 0
+
 
 def handle_tester_edit_manifest(argv: List[str]) -> int:
     """
@@ -247,3 +266,11 @@ def _default_parameters_for(builder: str) -> Dict[str, Any]:
         }
 
     raise ValueError(f"Unsupported builder: {builder}")
+
+
+def manifest_to_dict(manifest: Manifest) -> dict:
+    return {
+        "builder": manifest.builder,
+        "parameters": manifest.parameters,
+        "meta": manifest.meta.__dict__,
+    }

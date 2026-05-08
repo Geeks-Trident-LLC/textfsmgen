@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional
 
+from .tester_common import find_case_root, load_manifest
 
 # ------------------------------------------------------------
 # Public API
@@ -190,3 +191,55 @@ def _case_exists_anywhere(case: str) -> bool:
                 return True
 
     return False
+
+
+def handle_tester_paths(argv):
+    if not argv:
+        print("error: missing case name")
+        return 1
+
+    case = argv[0]
+    case_root = find_case_root(case)
+    if not case_root:
+        print(f"error: case not found: {case}")
+        return 1
+
+    manifest = load_manifest(case_root)
+
+    print(f"Case: {case}")
+    print(f"Category: {case_root.parent.name}")
+    print()
+    print("Paths:")
+
+    def show(label, path: Path):
+        if path.exists():
+            print(f"  {label:<22} {path}")
+        else:
+            print(f"  {label:<22} (not present)")
+
+    # Always present
+    show("manifest:", case_root / "manifest.json")
+    show("meta:", case_root / "meta.json")
+
+    # MAIN CASES
+    canonical_dir = case_root / "canonical"
+    if canonical_dir.exists():
+        show("canonical dir:", canonical_dir)
+        show("canonical snippet:", canonical_dir / "snippet.txt")
+        show("canonical template:", canonical_dir / "textfsm.template")
+        show("canonical sample:", canonical_dir / "sample.txt")
+        show("canonical result:", canonical_dir / "result.json")
+
+    # INTEGRATION CASES
+    expected_dir = case_root / "expected"
+    if expected_dir.exists():
+        show("expected dir:", expected_dir)
+        show("expected snippet:", expected_dir / "snippet.txt")
+        show("expected template:", expected_dir / "textfsm.template")
+
+    # Shared
+    show("inputs dir:", case_root / "inputs")
+    show("expected_results dir:", case_root / "expected_results")
+
+    return 0
+

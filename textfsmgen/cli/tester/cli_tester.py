@@ -21,6 +21,13 @@ from .tester_maintenance import (
 )
 from .tester_info import handle_tester_list, handle_tester_info
 
+from .tester_paths import handle_tester_paths
+from .tester_manifest import handle_tester_manifest
+from .tester_approve import (
+    handle_tester_approve_results,
+    handle_tester_approve_template,
+)
+
 
 CommandHandler = Callable[[List[str]], int]
 
@@ -29,6 +36,10 @@ def _build_tester_dispatch_table() -> Dict[str, CommandHandler]:
     return {
         "list": handle_tester_list,
         "info": handle_tester_info,
+        "paths": handle_tester_paths,
+        "manifest": handle_tester_manifest,
+        "approve-results": handle_tester_approve_results,
+        "approve-template": handle_tester_approve_template,
         "create": handle_tester_create,
         "copy": handle_tester_copy,
         "duplicate": handle_tester_duplicate,
