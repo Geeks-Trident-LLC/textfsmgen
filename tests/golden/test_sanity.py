@@ -1,6 +1,6 @@
 import os
-from pathlib import Path
-from tests.golden.case_info import GoldenCaseInfo
+
+from textfsmgen.core.data_loader import GoldenCaseInfo
 
 
 class FakeDataLoader:

@@ -84,4 +84,5 @@ exclude = [
 
 [tool.setuptools.package-data]
 "*" = ["LICENSE", "README.md"]
+textfsmgen = ["tests/golden/**/*"]
 

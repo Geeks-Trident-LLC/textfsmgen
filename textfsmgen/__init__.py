@@ -13,8 +13,8 @@ from textfsmgen.core.template import TabularTemplateBuilder
 from textfsmgen.core.verify import (
     verify_snippet,
     verify_textfsm,
-    parse_textfsm_to_dicts,
 )
+from textfsmgen.libs.common import parse_textfsm_to_dicts
 
 __version__ = "0.6.2"
 version = __version__

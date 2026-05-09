@@ -8,8 +8,13 @@ General-purpose common functions used across TextFSMGen.
 import sys
 import textwrap
 import platform
+import traceback
+from io import StringIO
+
+from textfsm import TextFSM
 
 from . import ECODE
+from .text import decorate_text
 
 
 def dedent_and_strip(txt):
@@ -82,3 +87,18 @@ def ensure_tkinter_available(app_name: str = ""):
             f"*** {type(exc).__name__}: {exc}",
         ]
         sys_exit(False, decorate_list_of_line(lines))
+
+
+def parse_textfsm_to_dicts(template: str, test_data: str) -> list[dict]:
+    """
+    Parse test data using TextFSM template and return list of dictionaries.
+    """
+    try:
+        template_stream = StringIO(template)
+        fsm_parser = TextFSM(template_stream)
+        parsed_rows = fsm_parser.ParseTextToDicts(test_data)
+        return parsed_rows
+    except Exception as err:
+        error_title = decorate_text(f"{type(err).__name__}: {err}")
+        error_details = traceback.format_exc()
+        raise Exception(f"{error_title}\n{error_details}")

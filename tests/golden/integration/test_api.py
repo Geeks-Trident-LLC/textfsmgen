@@ -1,7 +1,8 @@
 import pathlib
 import pytest
 
-from tests.golden import get_testcases, DataLoader, run_integration_case
+from tests.golden import get_testcases, run_integration_case
+from textfsmgen.core.data_loader import DataLoader
 
 parent_path = pathlib.Path(__file__).parent
 
