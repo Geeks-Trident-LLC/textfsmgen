@@ -1,9 +1,9 @@
 # test_driff.py
 
-from textfsmgen.cli.tester.tester_drift import handle_tester_drift
-from textfsmgen.cli.tester.tester_quicktest import run_quick_test_for_case
-from textfsmgen.cli.tester.tester_manifest_model import Manifest, write_manifest
-from textfsmgen.cli.tester.tester_files import create_main_case_files
+from textfsmgen.cli_old.tester.tester_drift import handle_tester_drift
+from textfsmgen.cli_old.tester.tester_quicktest import run_quick_test_for_case
+from textfsmgen.cli_old.tester.tester_manifest_model import Manifest, write_manifest
+from textfsmgen.cli_old.tester.tester_files import create_main_case_files
 
 
 def test_drift_none(tmp_project, monkeypatch):

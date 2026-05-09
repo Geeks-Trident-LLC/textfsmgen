@@ -1,9 +1,9 @@
 # test_preview.py
 
-from textfsmgen.cli.tester.tester_preview import handle_tester_preview
-from textfsmgen.cli.tester.tester_manifest_model import Manifest, write_manifest
-from textfsmgen.cli.tester.tester_files import create_main_case_files
-from textfsmgen.cli.tester.tester_quicktest import run_quick_test_for_case
+from textfsmgen.cli_old.tester.tester_preview import handle_tester_preview
+from textfsmgen.cli_old.tester.tester_manifest_model import Manifest, write_manifest
+from textfsmgen.cli_old.tester.tester_files import create_main_case_files
+from textfsmgen.cli_old.tester.tester_quicktest import run_quick_test_for_case
 
 
 def test_preview_results(tmp_project, monkeypatch):

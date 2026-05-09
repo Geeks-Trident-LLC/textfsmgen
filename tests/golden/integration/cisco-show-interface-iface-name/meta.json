@@ -1,8 +1,6 @@
 {
-  "saved": true,
-  "author": "John",
-  "email": "",
-  "description": "",
-  "notes": "",
+  "builder": "category",
+  "category": "integration",
+  "result_count": 1,
   "schema_version": "1.0"
 }

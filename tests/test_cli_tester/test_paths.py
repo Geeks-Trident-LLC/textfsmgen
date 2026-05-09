@@ -1,6 +1,6 @@
 # test_paths.py
 
-from textfsmgen.cli.tester.tester_paths import (
+from textfsmgen.cli_old.tester.tester_paths import (
     resolve_case_creation_path,
     resolve_case_path,
 )

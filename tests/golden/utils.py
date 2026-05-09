@@ -33,6 +33,7 @@ def run_main_case(data_info: DataLoader) -> None:
     # Regeneration mode
     # -----------------------------------
     if os.getenv("GOLDEN_REGEN"):
+        data_info.generate_meta()
         data_info.regenerate()
         return  # Do NOT run comparisons during regeneration
 
@@ -79,6 +80,10 @@ def run_main_case(data_info: DataLoader) -> None:
         )
         assert bool(status), status
 
+    breakpoint()
+    # write meta.json
+    data_info.generate_meta()
+
     # check drift
     data_info.check_drift()
 
@@ -95,6 +100,7 @@ def run_integration_case(data_info: DataLoader) -> None:
     # Regeneration mode
     # -----------------------------------
     if os.getenv("GOLDEN_REGEN"):
+        data_info.generate_meta()
         data_info.regenerate()
         return  # Do NOT run comparisons during regeneration
 

@@ -1,8 +1,8 @@
 # test_manifest_edit.py
 
-from textfsmgen.cli.tester.tester_manifest import handle_tester_set
-from textfsmgen.cli.tester.tester_manifest_model import load_manifest, write_manifest, Manifest
-from textfsmgen.cli.tester.tester_files import create_main_case_files
+from textfsmgen.cli_old.tester.tester_manifest import handle_tester_set
+from textfsmgen.cli_old.tester.tester_manifest_model import load_manifest, write_manifest, Manifest
+from textfsmgen.cli_old.tester.tester_files import create_main_case_files
 
 
 def test_set_manifest_field(tmp_project, monkeypatch):

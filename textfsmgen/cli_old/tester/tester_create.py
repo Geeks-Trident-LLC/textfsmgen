@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 from typing import List, Dict, Any
 
-from textfsmgen.cli.tester.tester_paths import resolve_case_creation_path
+from textfsmgen.cli_old.tester.tester_paths import resolve_case_creation_path
 from .tester_manifest_model import Manifest, load_manifest_config, write_manifest
 from .tester_files import (
     create_main_case_files,

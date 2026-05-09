@@ -1,6 +1,6 @@
 # test_manifest_model.py
 
-from textfsmgen.cli.tester.tester_manifest_model import (
+from textfsmgen.cli_old.tester.tester_manifest_model import (
     Manifest,
     load_manifest,
     write_manifest,

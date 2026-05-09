@@ -74,7 +74,7 @@ class Cli:
         # Tester namespace dispatch (textfsmgen tester <action> ...)
         # ------------------------------------------------------------
         if len(sys.argv) > 1 and sys.argv[1] == "tester":
-            from .cli.tester.cli_tester import main_tester
+            from .cli_old.tester.cli_tester import main_tester
             sys.exit(main_tester(sys.argv[2:]))
 
         # ------------------------------------------------------------

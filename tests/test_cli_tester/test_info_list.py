@@ -1,8 +1,8 @@
 # test_info_list.py
 
-from textfsmgen.cli.tester.tester_info import handle_tester_list, handle_tester_info
-from textfsmgen.cli.tester.tester_manifest_model import Manifest, write_manifest
-from textfsmgen.cli.tester.tester_files import create_main_case_files
+from textfsmgen.cli_old.tester.tester_info import handle_tester_list, handle_tester_info
+from textfsmgen.cli_old.tester.tester_manifest_model import Manifest, write_manifest
+from textfsmgen.cli_old.tester.tester_files import create_main_case_files
 
 
 def test_list_and_info(tmp_project, monkeypatch):

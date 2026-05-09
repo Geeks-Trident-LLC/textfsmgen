@@ -1,6 +1,6 @@
 # test_files.py
 
-from textfsmgen.cli.tester.tester_files import (
+from textfsmgen.cli_old.tester.tester_files import (
     create_main_case_files,
     create_non_main_case_files,
 )

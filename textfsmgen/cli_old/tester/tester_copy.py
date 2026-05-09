@@ -1,15 +1,11 @@
-# tester_duplicate.py
+# tester_copy.py
 
 from __future__ import annotations
 
 import sys
 from typing import List
 
-from textfsmgen.cli.tester.tester_paths import (
-    resolve_case_path,
-    generate_duplicate_case_name,
-    resolve_case_creation_path,
-)
+from textfsmgen.cli_old.tester.tester_paths import resolve_case_path, resolve_case_creation_path
 from .tester_manifest_model import load_manifest, write_manifest
 from .tester_files import (
     copy_main_authoritative_files,
@@ -18,15 +14,15 @@ from .tester_files import (
 from .tester_quicktest import run_quick_test_for_case
 
 
-def handle_tester_duplicate(argv: List[str]) -> int:
+def handle_tester_copy(argv: List[str]) -> int:
     """
-    textfsmgen tester duplicate author=<author> <target-case>
+    textfsmgen tester copy author=<author> <target-case> <new-case>
     """
-    if len(argv) < 2:
-        print("error: usage: tester duplicate author=<author> <target-case>", file=sys.stderr)
+    if len(argv) < 3:
+        print("error: usage: tester copy author=<author> <target-case> <new-case>", file=sys.stderr)
         return 1
 
-    author_token, target_case = argv[0], argv[1]
+    author_token, target_case, new_case = argv[0], argv[1], argv[2]
     if not author_token.startswith("author="):
         print("error: first argument must be author=<author>", file=sys.stderr)
         return 1
@@ -44,10 +40,9 @@ def handle_tester_duplicate(argv: List[str]) -> int:
     manifest.meta.description = ""
     manifest.meta.notes = ""
 
-    new_case = generate_duplicate_case_name(target_case)
     new_dir = resolve_case_creation_path(new_case, manifest.category)
     if new_dir is None:
-        print("error: cannot determine creation path for duplicate case", file=sys.stderr)
+        print("error: cannot determine creation path for new case", file=sys.stderr)
         return 1
 
     if manifest.category == "main":
@@ -59,5 +54,5 @@ def handle_tester_duplicate(argv: List[str]) -> int:
 
     run_quick_test_for_case(new_dir)
 
-    print(f"Duplicated case '{target_case}' to '{new_case}' with author='{author}'.")
+    print(f"Copied case '{target_case}' to '{new_case}' with author='{author}'.")
     return 0
