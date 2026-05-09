@@ -6,7 +6,7 @@ import sys
 from typing import List
 
 from textfsmgen.cli.tester.tester_paths import (
-    resolve_existing_case_path,
+    resolve_case_path,
     generate_duplicate_case_name,
     resolve_case_creation_path,
 )
@@ -33,7 +33,7 @@ def handle_tester_duplicate(argv: List[str]) -> int:
 
     author = author_token.split("=", 1)[1]
 
-    target_dir = resolve_existing_case_path(target_case)
+    target_dir = resolve_case_path(target_case)
     if target_dir is None:
         print(f"error: target case not found: {target_case}", file=sys.stderr)
         return 1

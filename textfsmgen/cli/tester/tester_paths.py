@@ -47,26 +47,74 @@ def resolve_case_creation_path(case: str, category: str) -> Optional[Path]:
     return None
 
 
-def resolve_existing_case_path(case: str) -> Optional[Path]:
+def resolve_case_path(path: str) -> Path:
     """
-    Locate an existing case by scanning upward from cwd for tests/golden/<category>/<case>.
-    Returns the case directory or None if not found.
+    Resolve a test case path exactly as provided:
+        tests/golden/<category>/<case>
+
+    Rules:
+    - If 'path' is absolute → use it directly.
+    - If 'path' is relative → resolve relative to current working directory.
+    - No guessing, no inference, no fallback.
     """
-    pwd = Path.cwd()
 
-    for root in _walk_upwards(pwd):
-        golden = root / "tests" / "golden"
-        if not golden.is_dir():
-            continue
+    raw = Path(path)
 
-        for category_dir in golden.iterdir():
-            if not category_dir.is_dir():
-                continue
-            candidate = category_dir / case
-            if candidate.is_dir():
-                return candidate.resolve()
+    # 1. Full path → use as-is
+    if raw.is_absolute():
+        folder = raw
+    else:
+        # 2. Relative path → join with current working directory
+        folder = Path.cwd() / raw
 
-    return None
+    # Normalize
+    folder = folder.resolve()
+
+    # 3. Must exist and be a directory
+    if not folder.exists() or not folder.is_dir():
+        raise ValueError(f"case not found: {path}")
+
+    # 4. Canonical-style case
+    canonical_dir = folder / "canonical"
+    if canonical_dir.exists():
+        required = [
+            folder / "manifest.json",
+            canonical_dir / "sample.txt",
+            canonical_dir / "snippet.txt",
+            canonical_dir / "textfsm.template",
+            canonical_dir / "result.json",
+            folder / "inputs",
+            folder / "expected_results",
+        ]
+        missing = [str(p.relative_to(folder)) for p in required if not p.exists()]
+        if missing:
+            raise ValueError(
+                f"invalid test case: {path}; missing required files: {', '.join(missing)}"
+            )
+        return folder
+
+    # 5. Expected-style case
+    expected_dir = folder / "expected"
+    if expected_dir.exists():
+        required = [
+            folder / "manifest.json",
+            expected_dir / "snippet.txt",
+            expected_dir / "textfsm.template",
+            folder / "inputs",
+            folder / "expected_results",
+        ]
+        missing = [str(p.relative_to(folder)) for p in required if not p.exists()]
+        if missing:
+            raise ValueError(
+                f"invalid test case: {path}; missing required files: {', '.join(missing)}"
+            )
+        return folder
+
+    # 6. Neither canonical/ nor expected/ exists → invalid
+    raise ValueError(
+        f"invalid test case: {path}; expected either 'canonical/' or 'expected/' folder"
+    )
+
 
 
 def generate_duplicate_case_name(case: str) -> str:

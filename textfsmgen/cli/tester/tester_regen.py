@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import List, Optional
 
-from .tester_paths import resolve_existing_case_path, _walk_upwards
+from .tester_paths import resolve_case_path, _walk_upwards
 from .tester_quicktest import run_quick_test_for_case
 
 
@@ -31,7 +31,7 @@ def handle_tester_regen(argv: List[str]) -> int:
         return 1
 
     case = argv[0]
-    case_dir = resolve_existing_case_path(case)
+    case_dir = resolve_case_path(case)
     if case_dir is None:
         print(f"error: case not found: {case}")
         return 1

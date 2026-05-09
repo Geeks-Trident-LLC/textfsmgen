@@ -7,7 +7,7 @@ import hashlib
 from pathlib import Path
 from typing import List
 
-from .tester_paths import resolve_existing_case_path
+from .tester_paths import resolve_case_path
 
 
 # ------------------------------------------------------------
@@ -28,7 +28,7 @@ def handle_tester_drift(argv: List[str]) -> int:
         return 1
 
     case = argv[0]
-    case_dir = resolve_existing_case_path(case)
+    case_dir = resolve_case_path(case)
     if case_dir is None:
         print(f"error: case not found: {case}")
         return 1

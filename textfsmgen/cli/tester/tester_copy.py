@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 from typing import List
 
-from textfsmgen.cli.tester.tester_paths import resolve_existing_case_path, resolve_case_creation_path
+from textfsmgen.cli.tester.tester_paths import resolve_case_path, resolve_case_creation_path
 from .tester_manifest_model import load_manifest, write_manifest
 from .tester_files import (
     copy_main_authoritative_files,
@@ -29,7 +29,7 @@ def handle_tester_copy(argv: List[str]) -> int:
 
     author = author_token.split("=", 1)[1]
 
-    target_dir = resolve_existing_case_path(target_case)
+    target_dir = resolve_case_path(target_case)
     if target_dir is None:
         print(f"error: target case not found: {target_case}", file=sys.stderr)
         return 1

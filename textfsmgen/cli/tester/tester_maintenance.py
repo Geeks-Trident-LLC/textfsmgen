@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 from typing import List, Optional
 
-from .tester_paths import resolve_existing_case_path, _walk_upwards
+from .tester_paths import resolve_case_path, _walk_upwards
 from .tester_manifest_model import (
     load_manifest,
     _validate_builder,
@@ -33,7 +33,7 @@ def handle_tester_validate_manifest(argv: List[str]) -> int:
         return 1
 
     case = argv[0]
-    case_dir = resolve_existing_case_path(case)
+    case_dir = resolve_case_path(case)
     if case_dir is None:
         print(f"error: case not found: {case}")
         return 1
@@ -65,7 +65,7 @@ def handle_tester_clean(argv: List[str]) -> int:
         return 1
 
     case = argv[0]
-    case_dir = resolve_existing_case_path(case)
+    case_dir = resolve_case_path(case)
     if case_dir is None:
         print(f"error: case not found: {case}")
         return 1

@@ -7,7 +7,7 @@ from typing import List, Any, Dict, Optional
 
 from .tester_common import find_case_root, load_manifest
 
-from .tester_paths import resolve_existing_case_path
+from .tester_paths import resolve_case_path
 from .tester_manifest_model import (
     Manifest,
     load_manifest,
@@ -51,7 +51,7 @@ def handle_tester_edit_manifest(argv: List[str]) -> int:
         return 1
 
     case = argv[0]
-    case_dir = resolve_existing_case_path(case)
+    case_dir = resolve_case_path(case)
     if case_dir is None:
         print(f"error: case not found: {case}")
         return 1
@@ -86,7 +86,7 @@ def handle_tester_set(argv: List[str]) -> int:
 
     case, field, raw_value = argv[0], argv[1], argv[2]
 
-    case_dir = resolve_existing_case_path(case)
+    case_dir = resolve_case_path(case)
     if case_dir is None:
         print(f"error: case not found: {case}")
         return 1

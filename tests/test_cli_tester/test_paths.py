@@ -2,7 +2,7 @@
 
 from textfsmgen.cli.tester.tester_paths import (
     resolve_case_creation_path,
-    resolve_existing_case_path,
+    resolve_case_path,
 )
 
 
@@ -19,5 +19,5 @@ def test_resolve_existing_case_path(tmp_project, monkeypatch):
     case_dir.mkdir()
 
     monkeypatch.chdir(tmp_project)
-    found = resolve_existing_case_path("demo")
+    found = resolve_case_path("demo")
     assert found == case_dir

@@ -7,7 +7,7 @@ import difflib
 from pathlib import Path
 from typing import List, Optional, Any, Dict
 
-from .tester_paths import resolve_existing_case_path
+from .tester_paths import resolve_case_path
 from .tester_manifest_model import Manifest
 from .tester_quicktest import _run_builder
 
@@ -32,7 +32,7 @@ def handle_tester_diff(argv: List[str]) -> int:
     diff_type = argv[0]
     case = argv[1]
 
-    case_dir = resolve_existing_case_path(case)
+    case_dir = resolve_case_path(case)
     if case_dir is None:
         print(f"error: case not found: {case}")
         return 1
