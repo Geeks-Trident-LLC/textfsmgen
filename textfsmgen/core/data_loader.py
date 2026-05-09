@@ -51,32 +51,21 @@ class GoldenCaseInfo:
     path: Path
 
 
-@dataclass
-class GoldenPathCache:
-    root: Optional[Path] = None
-    resolved: bool = False
-
-
-GOLDEN_PATH = GoldenPathCache()
-
-
 class DataLoader:
-    def __init__(self, kind, test_case):
-        self.kind = kind
+    def __init__(self, test_case):
+        self.file_path = self.validate_test_case(test_case)
+        self.kind = self.file_path.parent.name
         self.test_case = test_case
 
-        self.golden_root = self._resolve_golden_root()
-
         self.case_info = GoldenCaseInfo(
-            kind=kind,
+            kind=self.kind,
             name=test_case,
-            path=self.golden_root / kind / test_case,
+            path=self.file_path,
         )
 
-        self.file_path = self.golden_root / kind / test_case
-        self.manifest_path = self.golden_root / kind / test_case / "manifest.json"
-        self.inputs_path = self.golden_root / kind / test_case / "inputs"
-        self.expected_results_path = self.golden_root / kind / test_case / "expected_results"
+        self.manifest_path = self.file_path / "manifest.json"
+        self.inputs_path = self.file_path / "inputs"
+        self.expected_results_path = self.file_path / "expected_results"
 
         self.parameters = {}
         self.builder_type = ""
@@ -90,40 +79,91 @@ class DataLoader:
         self.expected_snippet = ""
         self.expected_template = ""
 
-        self.validate()
         self.load_manifest()
         self.load_canonical()
         self.load_expected()
 
-    def _resolve_golden_root(self) -> Path: # noqa
+    @classmethod
+    def validate_test_case(cls, test_case: str) -> Path:
         """
-        Resolve and cache the golden root directory.
-        Raises RuntimeError if not found.
-        """
-        # Already resolved successfully
-        if GOLDEN_PATH.resolved and GOLDEN_PATH.root is not None:
-            return GOLDEN_PATH.root
+        Validate a test case folder.
 
-        # Already resolved unsuccessfully
-        if GOLDEN_PATH.resolved and GOLDEN_PATH.root is None:
+        Rules:
+        - Accept full paths as-is.
+        - Resolve relative paths against the current working directory.
+        - Folder must exist and be a directory.
+        - Folder must contain either:
+            canonical/ + required files
+            OR
+            expected/  + required files
+        """
+
+        raw = Path(test_case)
+
+        # Resolve full vs relative path
+        folder = raw if raw.is_absolute() else Path.cwd() / raw
+        folder = folder.resolve()
+
+        # Must exist and be a directory
+        if not folder.exists() or not folder.is_dir():
             raise_runtime_error(
-                obj="GoldenRootDetectionFailed",
-                msg="Cannot find Golden Root. Cannot use Data Loader.",
+                obj="InvalidTestCaseStructure",
+                msg=(
+                    f"Test case not found or not a directory: {test_case}\n"
+                    f"Resolved path: {folder}"
+                ),
             )
 
-        # First attempt
-        root = get_golden_path()
-        GOLDEN_PATH.root = root
-        GOLDEN_PATH.resolved = True
+        # --- Helper to validate required files ---
+        def check_required(required_paths):
+            missing = [str(p.relative_to(folder)) for p in required_paths if
+                       not p.exists()]
+            if missing:
+                raise_runtime_error(
+                    obj="InvalidTestCaseStructure",
+                    msg=(
+                        f"Invalid test case: {test_case}; "
+                        f"missing required files: {', '.join(missing)}"
+                    ),
+                )
 
-        if root is None:
-            raise_runtime_error(
-                obj="GoldenRootDetectionFailed",
-                msg="Cannot find Golden Root. Cannot use Data Loader.",
-            )
+        # Canonical-style case
+        canonical_dir = folder / "canonical"
+        if canonical_dir.exists():
+            required = [
+                folder / "manifest.json",
+                canonical_dir / "sample.txt",
+                canonical_dir / "snippet.txt",
+                canonical_dir / "textfsm.template",
+                canonical_dir / "result.json",
+                folder / "inputs",
+                folder / "expected_results",
+            ]
+            check_required(required)
+            return folder
 
-        return root
+        # Expected-style case
+        expected_dir = folder / "expected"
+        if expected_dir.exists():
+            required = [
+                folder / "manifest.json",
+                expected_dir / "snippet.txt",
+                expected_dir / "textfsm.template",
+                folder / "inputs",
+                folder / "expected_results",
+            ]
+            check_required(required)
+            return folder
 
+        # Neither canonical/ nor expected/
+        raise_runtime_error(
+            obj="InvalidTestCaseStructure",
+            msg=(
+                f"Invalid test case: {test_case}; "
+                f"expected either 'canonical/' or 'expected/' folder"
+            ),
+        )
+        return None
 
     @classmethod
     def validate_file_path(cls, file_path, prefix=""):
@@ -132,17 +172,6 @@ class DataLoader:
         raise ValueError(
             f"{prefix} {file_path!r} does not exist.  Cannot continue.".strip()
         )
-
-    def validate(self):
-
-        for prefix, file_path in (
-            ("Test case folder", self.file_path),
-            ("Manifest file", self.manifest_path),
-            ("Input folder", self.inputs_path),
-            ("Expected result folder", self.expected_results_path),
-        ):
-            if not file_path.exists():
-                self.validate_file_path(file_path, prefix=prefix)
 
 
     def load_manifest(self):
@@ -227,7 +256,7 @@ class DataLoader:
         if not author:
             raise ValueError("Author name is required to generate metadata.")
 
-        file_path = self.golden_root / self.kind / self.test_case / "meta.json"
+        file_path = self.file_path / "meta.json"
         file_path.parent.mkdir(parents=True, exist_ok=True)
 
         approved_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -379,52 +408,6 @@ class DataLoader:
                 f"Golden files drift detected in {self.test_case}.\n"
                 f"Run: pytest --regen-golden"
             )
-
-
-def get_directory_info(path: Path) -> DirInfo:
-    directory = path if path.is_dir() else path.parent
-    children = [p.name for p in directory.iterdir() if p.is_dir()]
-    return DirInfo(
-        parent=directory.parent.name,
-        name=directory.name,
-        children=children,
-    )
-
-
-def is_golden_root(info: DirInfo) -> bool:
-    return (
-        info.parent == "tests"
-        and info.name == "golden"
-        and "main" in info.children
-        and "integration" in info.children
-    )
-
-
-def get_golden_path() -> Optional[Path]:
-    """
-    Walk upward from CWD to locate tests/golden directory.
-    Fallback: check ./tests/golden relative to CWD.
-    Returns the golden directory path or None.
-    """
-    cwd = Path.cwd()
-
-    # Walk upward up to 10 levels
-    current = cwd
-    for _ in range(10):
-        info = get_directory_info(current)
-        if is_golden_root(info):
-            return current
-        current = current.parent
-
-    # Fallback: direct relative path
-    fallback = cwd / "tests" / "golden"
-    if fallback.exists():
-        info = get_directory_info(fallback)
-        if is_golden_root(info):
-            return fallback
-
-    return None
-
 
 
 def is_identical_templates(template1, template2):

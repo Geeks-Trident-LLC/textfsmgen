@@ -17,7 +17,7 @@ def get_testcases(parent_path):
             (not name.startswith("_") or not name.endswith("_")) and
             name[0].isalpha()
         ):
-            yield name
+            yield str(file_path)
 
 
 def run_main_case(data_info: DataLoader) -> None:

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import difflib
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -94,10 +93,10 @@ def handle_tester_run(argv: List[str]) -> int:
 
     category = case_dir.parent.name
     is_main = (category == "main")
-    tc = f"{category}/{case}"
+    tc = f"{category}/{case_dir.name}"
 
     # Instantiate DataLoader (same as pytest)
-    data_info = DataLoader(category, case)
+    data_info = DataLoader(case)
     Builder = data_info.get_builder()
 
     # -------------------------
