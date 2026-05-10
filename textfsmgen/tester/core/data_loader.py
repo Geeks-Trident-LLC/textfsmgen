@@ -32,8 +32,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-import textfsm  # type: ignore
-import textfsmgen  # type: ignore
+import textfsm
+import textfsmgen
+
+from textfsmgen import (
+    CategoryTemplateBuilder,
+    TabularTemplateBuilder,
+)
+
+from textfsmgen.libs.generic import DotObject
 
 
 META_FILENAME = "meta.json"
@@ -51,6 +58,81 @@ class DataLoader:
     """
 
     case_dir: Path
+
+    def build(self, sample):
+        """
+        Instantiate the correct builder (category/tabular)
+        using manifest.json and sample input.
+        Returns builder with .snippet and .template.
+        """
+        manifest = self.load_manifest()
+        builder_name = manifest.get("builder")
+        params = manifest.get("parameters", {})
+
+        # Instantiate correct builder
+        if builder_name == "category":
+            builder = CategoryTemplateBuilder(user_data=sample, **params)
+
+        elif builder_name == "tabular":
+            builder = TabularTemplateBuilder(user_data=sample, **params)
+
+        else:
+            raise ValueError(f"Unknown builder type: {builder_name}")
+
+        return builder
+
+    def load_canonical(self, root=""):
+        canonical_path = self.case_dir / "canonical"
+        canonical_info = DotObject(
+            sample=load_file_info(canonical_path / "sample.txt", root=root),
+            snippet=load_file_info(canonical_path / "snippet.txt", root=root),
+            template=load_file_info(canonical_path / "textfsm.template", root=root),
+            result=load_file_info(canonical_path / "result.json", root=root),
+        )
+        return canonical_info
+
+    def load_expected(self, root=""):
+        expected_path = self.case_dir / "expected"
+        expected_info = DotObject(
+            snippet=load_file_info(expected_path / "snippet.txt", root=root),
+            template=load_file_info(expected_path / "textfsm.template", root=root),
+        )
+        return expected_info
+
+    def load_inputs(self, root=""):
+        """
+        Yield dictionaries containing input file names (relative to 'golden/')
+        and their raw text content.
+        """
+        inputs_dir = self.case_dir / "inputs"
+
+        for path in inputs_dir.glob("*.txt"):
+            yield load_file_info(path, root=root)
+
+    def load_expected_results(self, root=""):
+        """
+        Yield dictionaries containing expected result file names (relative to 'golden/')
+        and their parsed JSON content.
+        """
+        results_dir = self.case_dir / "expected_results"
+
+        for path in results_dir.glob("*.json"):
+            yield load_file_info(path, root=root)
+
+    def load_input_result_pairs(self, root=""):
+        """
+        Yield (input_info, result_info) tuples where each input file is paired
+        with its corresponding expected result JSON file.
+        """
+        inputs_dir = self.case_dir / "inputs"
+        results_dir = self.case_dir / "expected_results"
+
+        for input_path in inputs_dir.glob("*.txt"):
+            result_path = results_dir / f"{input_path.stem}_result.json"
+            input_info = load_file_info(input_path, root=root)
+            result_info = load_file_info(result_path, root=root)
+
+            yield input_info, result_info
 
     # ----------------------------------------------------------------------
     # Construction
@@ -233,3 +315,55 @@ class DataLoader:
             return result.stdout.strip()
         except Exception:
             return "unknown"
+
+
+def extract_subpath_after(root: str, full_path: Path) -> Path:
+    """
+    Return the portion of `full_path` that appears after the first occurrence
+    of the directory name `root`.
+
+    Example:
+        full_path = /a/b/golden/network/ospf/case1
+        root      = "golden"
+        result    = network/ospf/case1
+    """
+    resolved = full_path.resolve()
+    parts = resolved.parts
+
+    try:
+        index = parts.index(root)
+    except ValueError:
+        raise ValueError(f"'{root}' not found in path: {resolved}")
+
+    return Path(*parts[index + 1:])
+
+
+def load_file_info(path: Path, root: str = ""):
+    """
+    Return a DotObject describing a file, including:
+      - name:     relative name (after `root`, if provided)
+      - fullname: absolute path as string
+      - content:  parsed JSON or raw text
+
+    JSON files are automatically parsed; all others are returned as text.
+    """
+    resolved = path.resolve()
+    fullname = str(resolved)
+
+    # Compute relative name if root is provided
+    if root:
+        rel_name = str(extract_subpath_after(root, resolved))
+    else:
+        rel_name = str(resolved)
+
+    # Parse JSON files
+    if resolved.suffix == ".json":
+        content = json.loads(resolved.read_text(encoding="utf-8"))
+    else:
+        content = resolved.read_text(encoding="utf-8")
+
+    return DotObject(
+        name=rel_name,
+        fullname=fullname,
+        content=content,
+    )
