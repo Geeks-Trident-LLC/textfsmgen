@@ -22,9 +22,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ..core.utils import require_case_dir
+from ..core.utils import catch_path_errors
+
+from ..core.golden_case import GoldenCase
+
+from .shared import run_canonical, run_expected
 
 
+@catch_path_errors
 def quicktest(case_path: Path) -> int:
     """
     Perform a fast, read-only test run for a single golden test case.
@@ -33,14 +38,8 @@ def quicktest(case_path: Path) -> int:
         0 on success
         1 on error
     """
-    try:
-        require_case_dir(case_path)
-    except ValueError as e:
-        print(f"ERROR: {e}")
-        return 1
+    case = GoldenCase.from_path(case_path)
 
-    # Placeholder — real quicktest logic will be implemented later.
-    print(f"[INFO] quicktest for case: {case_path.name}")
-    print("Quicktest functionality not implemented yet (read-only placeholder).")
-
-    return 0
+    if case.is_main():
+        return run_canonical(case, is_quicktest=True)
+    return run_expected(case, is_quicktest=True)
