@@ -1,11 +1,11 @@
 {
-  "builder": "category",
+  "builder": "tabular",
   "parameters": {
 
   },
   "meta": {
-    "author": "John",
-    "email": "",
+    "author": "demo",
+    "email": "demo@demo.com",
     "description": "",
     "notes": "",
     "schema_version": "1.0"

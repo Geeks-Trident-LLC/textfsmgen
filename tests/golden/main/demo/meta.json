@@ -1,9 +1,9 @@
 {
   "schema_version": "1.0",
-  "approved_by": "Tom",
-  "approved_at": "2026-05-09 06:29:23",
+  "approved_by": "demo",
+  "approved_at": "2026-05-09 15:23:52",
   "description": "",
-  "email": "",
+  "email": "demo@demo.com",
   "notes": "",
   "textfsmgen_version": "0.6.2",
   "textfsm_version": "2.1.0",

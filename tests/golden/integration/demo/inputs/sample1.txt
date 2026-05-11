@@ -1,0 +1,11 @@
+Interface:            GigabitEthernet0/1
+Description:          Uplink to Core Switch
+Admin Status:         up
+Operational Status:   up
+Speed:                1000 Mbps
+Duplex:               full
+MAC Address:          aabb.ccdd.eeff
+MTU:                  1500
+Input Errors:         0
+Output Errors:        12
+Last Flap:            00:12:44
