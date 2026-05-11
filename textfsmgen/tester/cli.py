@@ -3,10 +3,10 @@ Unified CLI dispatcher for the tester subsystem.
 
 This module handles commands of the form:
 
-    textfsmgen tester <action> <case>
+    textfsmgen tester <action> <args...>
 
-Each action must accept exactly ONE case. If the user passes
-multiple cases, this dispatcher raises a clear error.
+Most actions accept exactly ONE <case> argument.
+However, actions like COPY and DUPLICATE accept multiple arguments.
 
 All heavy logic lives in textfsmgen/tester/commands/.
 """
@@ -14,7 +14,6 @@ All heavy logic lives in textfsmgen/tester/commands/.
 from __future__ import annotations
 
 import argparse
-import sys
 from pathlib import Path
 
 from .commands import (
@@ -33,15 +32,16 @@ class TesterCLI:
     """
     Unified CLI for the tester subsystem.
 
-    Usage:
-        textfsmgen tester run <case>
-        textfsmgen tester regen <case>
-        textfsmgen tester diff <case>
-        textfsmgen tester drift <case>
-        textfsmgen tester preview <case>
-        textfsmgen tester quicktest <case>
-        textfsmgen tester copy <case>
-        textfsmgen tester duplicate <case>
+    Actions:
+        run <case>
+        regen <case>
+        diff <case>
+        drift <case>
+        preview <case>
+        quicktest <case>
+
+        copy <author> <src> <dst>
+        duplicate <author> <src>
     """
 
     # ------------------------------------------------------------------
@@ -55,7 +55,19 @@ class TesterCLI:
             parser.print_help()
             return 1
 
-        # Enforce exactly one case
+        # --------------------------------------------------------------
+        # Special-case actions: copy, duplicate
+        # These DO NOT use the <case> argument pattern.
+        # --------------------------------------------------------------
+        if args.action == "copy":
+            return self._dispatch_copy(args)
+
+        if args.action == "duplicate":
+            return self._dispatch_duplicate(args)
+
+        # --------------------------------------------------------------
+        # All other actions require exactly ONE <case>
+        # --------------------------------------------------------------
         if args.case is None:
             print("ERROR: Missing <case> argument.")
             return 1
@@ -88,81 +100,92 @@ class TesterCLI:
         # --------------------------------------------------------------
         # run
         # --------------------------------------------------------------
-        p_run = subparsers.add_parser(
-            "run",
-            help="Run a golden test case (non-destructive).",
-        )
-        p_run.add_argument("case", nargs=1, help="Path to test case directory.")
+        p_run = subparsers.add_parser("run", help="Run a golden test case.")
+        p_run.add_argument("case", nargs=1)
         p_run.set_defaults(func=self._dispatch_run)
 
         # --------------------------------------------------------------
         # regen
         # --------------------------------------------------------------
-        p_regen = subparsers.add_parser(
-            "regen",
-            help="Regenerate meta.json and golden.hash for a case.",
-        )
-        p_regen.add_argument("case", nargs=1, help="Path to test case directory.")
+        p_regen = subparsers.add_parser("regen", help="Regenerate meta + hash.")
+        p_regen.add_argument("case", nargs=1)
         p_regen.set_defaults(func=self._dispatch_regen)
 
         # --------------------------------------------------------------
         # diff
         # --------------------------------------------------------------
-        p_diff = subparsers.add_parser(
-            "diff",
-            help="Show differences between expected and actual results.",
-        )
-        p_diff.add_argument("case", nargs=1, help="Path to test case directory.")
+        p_diff = subparsers.add_parser("diff", help="Show differences.")
+        p_diff.add_argument("case", nargs=1)
         p_diff.set_defaults(func=self._dispatch_diff)
 
         # --------------------------------------------------------------
         # drift
         # --------------------------------------------------------------
-        p_drift = subparsers.add_parser(
-            "drift",
-            help="Detect drift between canonical and expected results.",
-        )
-        p_drift.add_argument("case", nargs=1, help="Path to test case directory.")
+        p_drift = subparsers.add_parser("drift", help="Detect drift.")
+        p_drift.add_argument("case", nargs=1)
         p_drift.set_defaults(func=self._dispatch_drift)
 
         # --------------------------------------------------------------
         # preview
         # --------------------------------------------------------------
-        p_preview = subparsers.add_parser(
-            "preview",
-            help="Preview parsing results for a case.",
-        )
-        p_preview.add_argument("case", nargs=1, help="Path to test case directory.")
+        p_preview = subparsers.add_parser("preview", help="Preview parsing.")
+        p_preview.add_argument("case", nargs=1)
         p_preview.set_defaults(func=self._dispatch_preview)
 
         # --------------------------------------------------------------
         # quicktest
         # --------------------------------------------------------------
-        p_quick = subparsers.add_parser(
-            "quicktest",
-            help="Run a quick test without writing any files.",
-        )
-        p_quick.add_argument("case", nargs=1, help="Path to test case directory.")
+        p_quick = subparsers.add_parser("quicktest", help="Quick test.")
+        p_quick.add_argument("case", nargs=1)
         p_quick.set_defaults(func=self._dispatch_quicktest)
 
         # --------------------------------------------------------------
-        # copy
+        # copy (special: 3 positional args)
         # --------------------------------------------------------------
         p_copy = subparsers.add_parser(
             "copy",
-            help="Copy a golden test case to a new location.",
+            help="Copy a golden test case into a new case directory.",
         )
-        p_copy.add_argument("case", nargs=1, help="Path to test case directory.")
+        p_copy.add_argument("author", help="Author name for metadata.")
+        p_copy.add_argument("src", help="Source case directory.")
+        p_copy.add_argument("dst", help="Destination case directory.")
+        # NEW FLAGS
+        p_copy.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Copy into <dst>.temp, run quicktest, delete temp on success.",
+        )
+
+        p_copy.add_argument(
+            "--force",
+            action="store_true",
+            help="Allow overwriting an existing destination directory.",
+        )
         p_copy.set_defaults(func=self._dispatch_copy)
 
         # --------------------------------------------------------------
-        # duplicate
+        # duplicate (special: 2 positional args)
         # --------------------------------------------------------------
         p_dup = subparsers.add_parser(
             "duplicate",
-            help="Duplicate a golden test case.",
+            help="Duplicate a golden test case into an auto-named sibling directory.",
         )
-        p_dup.add_argument("case", nargs=1, help="Path to test case directory.")
+        p_dup.add_argument("author", help="Author name for metadata.")
+        p_dup.add_argument("src", help="Source case directory.")
+
+        # NEW FLAGS
+        p_dup.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Duplicate into <src>_copy.temp, run quicktest, delete temp on success.",
+        )
+
+        p_dup.add_argument(
+            "--force",
+            action="store_true",
+            help="Allow overwriting an existing duplicate directory.",
+        )
+
         p_dup.set_defaults(func=self._dispatch_duplicate)
 
         return parser
@@ -188,8 +211,23 @@ class TesterCLI:
     def _dispatch_quicktest(self, case_path: Path) -> int:
         return cmd_quicktest.quicktest(case_path)
 
-    def _dispatch_copy(self, case_path: Path) -> int:
-        return cmd_copy.copy_case(case_path)
+    # --------------------------------------------------------------
+    # Special-case dispatchers
+    # --------------------------------------------------------------
+    def _dispatch_copy(self, args) -> int:
+        return cmd_copy.copy_case(
+            author=args.author,
+            src=Path(args.src),
+            dst=Path(args.dst),
+            dry_run=args.dry_run,
+            force=args.force,
+        )
 
-    def _dispatch_duplicate(self, case_path: Path) -> int:
-        return cmd_duplicate.duplicate(case_path)
+    def _dispatch_duplicate(self, args) -> int:
+        return cmd_duplicate.duplicate_case(
+            author=args.author,
+            src=Path(args.src),
+            dry_run=args.dry_run,
+            force=args.force,
+        )
+

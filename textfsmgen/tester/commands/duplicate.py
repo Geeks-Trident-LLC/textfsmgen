@@ -24,88 +24,49 @@ Rules:
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 from ..core.utils import require_case_dir
 from .copy import copy_case
 
 
-def duplicate(case_path: Path) -> int:
-    """
-    Entry point for:
+def duplicate_case(
+    author: str,
+    src: Path,
+    dry_run: bool = False,
+    force: bool = False,
+) -> int:
 
-        textfsmgen tester duplicate author=<author> <target-case>
+    if "=" in author:
+        _, author = author.split("=", maxsplit=1)
 
-    The unified CLI passes only <target-case> here.
-    We must parse author=<name> and generate <new-case>.
-    """
-    argv = sys.argv
-    # argv example:
-    #   ['textfsmgen', 'tester', 'duplicate', 'author=Bob', 'oldcase']
-
-    # ------------------------------------------------------------------
-    # Parse author=<name>
-    # ------------------------------------------------------------------
-    author = ""
-    extra_args = []
-
-    for arg in argv[3:]:  # skip: textfsmgen tester duplicate
-        if arg.startswith("author="):
-            author = arg.split("=", 1)[1].strip()
-        else:
-            extra_args.append(arg)
-
-    if not author:
-        print("ERROR: Missing required argument: author=<name>")
-        return 1
-
-    # ------------------------------------------------------------------
-    # Parse <target-case>
-    # ------------------------------------------------------------------
-    if len(extra_args) != 1:
-        print("ERROR: duplicate requires: author=<name> <target-case>")
-        return 1
-
-    target_case = Path(extra_args[0]).resolve()
-
-    # ------------------------------------------------------------------
-    # Validate target case
-    # ------------------------------------------------------------------
     try:
-        require_case_dir(target_case)
-    except ValueError as e:
-        print(f"ERROR: {e}")
+        require_case_dir(src)
+    except Exception as exc:
+        print(
+            "[FAIL]: Duplicate failed because source folder is not a test case folder\n"
+            f"  {type(exc).__name__}: {exc}"
+        )
         return 1
 
-    # ------------------------------------------------------------------
-    # Generate new-case name with suffixes
-    # ------------------------------------------------------------------
-    base_name = target_case.name + "-duplicated"
-    parent = target_case.parent
+    parent = src.parent
+    base = src.name
 
-    new_case = parent / base_name
-    counter = 2
+    # Generate unique destination unless --force
+    if force:
+        dst = parent / f"{base}_copy"
+    else:
+        dst = parent / f"{base}_copy"
+        counter = 1
+        while dst.exists():
+            dst = parent / f"{base}_copy{counter}"
+            counter += 1
 
-    while new_case.exists():
-        new_case = parent / f"{base_name}-{counter}"
-        counter += 1
+    return copy_case(
+        author=author,
+        src=src,
+        dst=dst,
+        dry_run=dry_run,
+        force=force,
+    )
 
-    # ------------------------------------------------------------------
-    # Inject new-case into argv so copy_case() can reuse its logic
-    # ------------------------------------------------------------------
-    # We rewrite argv to:
-    #   textfsmgen tester copy author=<author> <target-case> <new-case>
-    sys.argv = [
-        argv[0],
-        argv[1],
-        "copy",
-        f"author={author}",
-        str(target_case),
-        str(new_case),
-    ]
-
-    # ------------------------------------------------------------------
-    # Delegate to copy_case()
-    # ------------------------------------------------------------------
-    return copy_case(target_case)

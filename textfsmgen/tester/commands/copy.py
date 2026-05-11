@@ -1,163 +1,185 @@
-"""
-Implementation of:
-
-    textfsmgen tester copy author=<author> <target-case> <new-case>
-
-This action creates a NEW golden test case by copying an existing one.
-
-Rules:
-- EXACTLY ONE target-case is allowed (enforced by CLI).
-- Must provide: author=<name>
-- Must provide: <new-case> directory path
-- Copies ONLY authoritative files:
-      canonical/  (if main)
-      expected/   (if integration)
-      inputs/
-- NEVER copies:
-      expected_results/
-      meta.json
-      golden.hash
-- After copying, generates:
-      meta.json
-      golden.hash
-
-NEVER writes inside the source case's:
-      canonical/
-      expected/
-      expected_results/
-      inputs/
-"""
-
 from __future__ import annotations
 
 import shutil
 from pathlib import Path
 
-from ..core.utils import require_case_dir, is_protected_dir
+from ..core.utils import require_case_dir
 from ..core.golden_case import GoldenCase
-from ..core.data_loader import DataLoader
+from ..core.data_loader import DataLoader, extract_subpath_after
 
 
-def copy_case(case_path: Path) -> int:
+def copy_case(
+    author: str = "",
+    src: Path = None,
+    dst: Path = None,
+    dry_run: bool = False,
+    force: bool = False,
+) -> int:
     """
-    Entry point for:
+    Copy an existing golden test case into a new case directory.
 
-        textfsmgen tester copy author=<author> <target-case> <new-case>
+    Rules:
+      - src must be a valid golden test case.
+      - dst must be inside a golden/ directory.
+      - dst must not exist unless --force is used.
 
-    The unified CLI passes only <target-case> here.
-    We must parse the remaining arguments manually.
+      - Copy authoritative content:
+            canonical/  (if main)
+            expected/   (if integration)
+            inputs/
+            expected_results/ (if present)
+
+      - Copy manifest.json, but reset:
+            email, notes, description
+        and update:
+            author=<author>
+
+      - Never copy meta.json or golden.hash.
+      - Never generate golden.hash during copy.
+
+      - --dry-run:
+            Copy into <dst>.temp, run quicktest, delete temp on success.
+            Keep temp on failure.
     """
-    import sys
 
-    argv = sys.argv
-    # argv example:
-    #   ['textfsmgen', 'tester', 'copy', 'author=Bob', 'oldcase', 'newcase']
+    # Normalize author=NAME → NAME
+    if "=" in author:
+        _, author = author.split("=", maxsplit=1)
 
-    # ------------------------------------------------------------------
-    # Parse author=<name>
-    # ------------------------------------------------------------------
-    author = ""
-    extra_args = []
-
-    for arg in argv[3:]:  # skip: textfsmgen tester copy
-        if arg.startswith("author="):
-            author = arg.split("=", 1)[1].strip()
-        else:
-            extra_args.append(arg)
-
-    if not author:
-        print("ERROR: Missing required argument: author=<name>")
-        return 1
-
-    # ------------------------------------------------------------------
-    # Parse <target-case> and <new-case>
-    # ------------------------------------------------------------------
-    if len(extra_args) != 2:
-        print("ERROR: copy requires: author=<name> <target-case> <new-case>")
-        return 1
-
-    target_case = Path(extra_args[0]).resolve()
-    new_case = Path(extra_args[1]).resolve()
-
-    # ------------------------------------------------------------------
-    # Validate target case
-    # ------------------------------------------------------------------
+    # --------------------------------------------------------------
+    # Validate source case
+    # --------------------------------------------------------------
     try:
-        require_case_dir(target_case)
-    except ValueError as e:
-        print(f"ERROR: {e}")
+        require_case_dir(src)
+    except Exception as exc:
+        print(
+            "[FAIL]: Copy failed because source folder is not a test case folder\n"
+            f"  {type(exc).__name__}: {exc}"
+        )
         return 1
 
-    # ------------------------------------------------------------------
-    # Validate new case does not exist
-    # ------------------------------------------------------------------
-    if new_case.exists():
-        print(f"ERROR: New case already exists: {new_case}")
+    # --------------------------------------------------------------
+    # Determine actual destination (dry-run uses temp)
+    # --------------------------------------------------------------
+    real_dst = dst
+    temp_dst = dst.with_name(dst.name + ".temp") if dry_run else None
+    target_dst = temp_dst if dry_run else real_dst
+
+    # --------------------------------------------------------------
+    # Validate destination path
+    # --------------------------------------------------------------
+    if target_dst.exists():
+        if not force:
+            print(f"[FAIL]: Destination already exists: {target_dst}")
+            return 1
+        else:
+            print(f"[WARN]: Overwriting existing destination due to --force: {target_dst}")
+            shutil.rmtree(target_dst)
+
+    if "golden" not in target_dst.parts:
+        print(f"[FAIL]: Destination must be inside a golden/ directory: {target_dst}")
         return 1
 
-    # ------------------------------------------------------------------
-    # Load target case
-    # ------------------------------------------------------------------
-    source = GoldenCase.from_path(target_case)
-    source_loader = DataLoader(target_case)
+    try:
+        target_dst.mkdir(parents=True, exist_ok=False)
+    except Exception as exc:
+        print(f"[FAIL]: Could not create destination directory: {target_dst}\n  {exc}")
+        return 1
 
-    # ------------------------------------------------------------------
-    # Create new case directory
-    # ------------------------------------------------------------------
-    new_case.mkdir(parents=True, exist_ok=False)
+    # --------------------------------------------------------------
+    # Load source case
+    # --------------------------------------------------------------
+    try:
+        source_case = GoldenCase.from_path(src)
+        source_loader = DataLoader(src)
+    except Exception as exc:
+        print(f"[FAIL]: Could not load source case: {src}\n  {exc}")
+        return 1
 
-    # ------------------------------------------------------------------
+    # --------------------------------------------------------------
     # Copy authoritative directories
-    # ------------------------------------------------------------------
+    # --------------------------------------------------------------
     try:
-        if source.is_main():
-            _copy_dir_if_exists(target_case / "canonical", new_case / "canonical")
+        if source_case.is_main():
+            _copy_dir_if_exists(src / "canonical", target_dst / "canonical")
         else:
-            _copy_dir_if_exists(target_case / "expected", new_case / "expected")
+            _copy_dir_if_exists(src / "expected", target_dst / "expected")
 
-        _copy_dir_if_exists(target_case / "inputs", new_case / "inputs")
+        _copy_dir_if_exists(src / "inputs", target_dst / "inputs")
+        _copy_dir_if_exists(src / "expected_results", target_dst / "expected_results")
 
-    except Exception as e:
-        print(f"ERROR: Failed copying authoritative files: {e}")
+    except Exception as exc:
+        print(f"[FAIL]: Failed copying authoritative files\n  {exc}")
         return 1
 
-    # ------------------------------------------------------------------
-    # NEVER copy derived files
-    # ------------------------------------------------------------------
-    # expected_results/
-    # meta.json
-    # golden.hash
-    # (We simply do nothing here.)
-
-    # ------------------------------------------------------------------
-    # Write new meta.json + golden.hash
-    # ------------------------------------------------------------------
+    # --------------------------------------------------------------
+    # Load and rewrite manifest.json
+    # --------------------------------------------------------------
     try:
-        new_loader = DataLoader(new_case)
-        new_loader.write_meta(approved_by=author)
-        new_loader.write_golden_hash()
-    except Exception as e:
-        print(f"ERROR: Failed generating metadata: {e}")
+        manifest = source_loader.load_manifest()
+
+        meta = manifest["meta"]
+        meta["email"] = ""
+        meta["notes"] = ""
+        meta["description"] = ""
+        meta["author"] = author
+
+        new_loader = DataLoader(target_dst)
+        new_loader.write_manifest(manifest)
+
+    except Exception as exc:
+        print(f"[FAIL]: Failed writing manifest.json\n  {exc}")
         return 1
 
-    print(f"[OK] Copied case '{target_case.name}' → '{new_case.name}'")
+    # --------------------------------------------------------------
+    # DRY-RUN MODE: run quicktest on <dst>.temp
+    # --------------------------------------------------------------
+    if dry_run:
+        from . import quicktest as cmd_quicktest
+
+        print(f"[INFO]: Running quicktest on dry-run copy: {temp_dst}")
+        rc = cmd_quicktest.quicktest(temp_dst)
+
+        if rc == 0:
+            src_tc = extract_subpath_after("golden", src)
+            dst_tc = extract_subpath_after("golden", real_dst)
+            print(f"[OK] Dry-run passed. Safe to copy '{src_tc}' -> '{dst_tc}'.")
+            shutil.rmtree(temp_dst)
+            return 0
+        else:
+            print(
+                f"[FAIL]: Dry-run failed. Temp case kept for inspection:\n"
+                f"  {temp_dst}"
+            )
+            return 1
+
+    # --------------------------------------------------------------
+    # Normal success output
+    # --------------------------------------------------------------
+    src_tc = extract_subpath_after("golden", src)
+    dst_tc = extract_subpath_after("golden", real_dst)
+
+    print(f"[OK] Copied case '{src_tc}' -> '{dst_tc}'")
+    print(f"  Author: {author}")
+    print(f"  Copied:")
+    if source_case.is_main():
+        print("    - canonical/")
+    else:
+        print("    - expected/")
+    print("    - inputs/")
+    if (src / "expected_results").exists():
+        print("    - expected_results/")
+    print("  Generated:")
+    print("    - manifest.json")
+
     return 0
 
 
+
 # ----------------------------------------------------------------------
-# Internal helpers
+# Internal helper
 # ----------------------------------------------------------------------
 def _copy_dir_if_exists(src: Path, dst: Path) -> None:
-    """
-    Copy a directory if it exists.
-
-    NEVER copy protected directories from the source case.
-    """
-    if not src.exists():
-        return
-
-    if is_protected_dir(src):
-        # Should never happen because caller controls which dirs are copied.
-        raise RuntimeError(f"Attempted to copy protected directory: {src}")
-
-    shutil.copytree(src, dst)
+    """Copy a directory if it exists."""
+    if src.exists():
+        shutil.copytree(src, dst)

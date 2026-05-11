@@ -154,6 +154,11 @@ class DataLoader:
         with manifest_path.open("r", encoding="utf-8") as f:
             return json.load(f)
 
+    def write_manifest(self, manifest: Dict[str, Any]) -> None:
+        manifest_path = self.case_dir / MANIFEST_FILENAME
+        with open(manifest_path, "w", encoding="utf-8") as f:
+            f.write(json.dumps(manifest, ensure_ascii=False, indent=2))
+
     # ----------------------------------------------------------------------
     # Case type helpers
     # ----------------------------------------------------------------------
