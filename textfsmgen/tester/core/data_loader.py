@@ -274,6 +274,12 @@ class DataLoader:
 
         hasher = hashlib.sha256()
 
+        # Determine authoritative directories
+        if self.is_main_case():
+            dirs = ["canonical", "inputs", "expected_results"]
+        else:
+            dirs = ["expected", "inputs", "expected_results"]
+
         # Include manifest.json if present
         manifest_path = self.case_dir / MANIFEST_FILENAME
         if manifest_path.is_file():
@@ -281,12 +287,18 @@ class DataLoader:
             hasher.update(manifest_path.read_bytes())
             hasher.update(b"\n")
 
-        # Include meta.json if present
-        meta_path = self.case_dir / META_FILENAME
-        if meta_path.is_file():
-            hasher.update(b"meta.json\n")
-            hasher.update(meta_path.read_bytes())
-            hasher.update(b"\n")
+        # Hash authoritative directories
+        for d in dirs:
+            dir_path = self.case_dir / d
+            if not dir_path.exists():
+                continue
+
+            for file in sorted(dir_path.rglob("*")):
+                if file.is_file():
+                    rel = file.relative_to(self.case_dir).as_posix().encode()
+                    hasher.update(rel + b"\n")
+                    hasher.update(file.read_bytes())
+                    hasher.update(b"\n")
 
         return hasher.hexdigest()
 
@@ -300,6 +312,10 @@ class DataLoader:
         hash_path = self.case_dir / HASH_FILENAME
         with hash_path.open("w", encoding="utf-8") as f:
             f.write(digest + "\n")
+
+    def load_golden_hash(self) -> str:
+        hash_path = self.case_dir / HASH_FILENAME
+        return hash_path.read_text(encoding="utf-8").strip()
 
     # ----------------------------------------------------------------------
     # Internal helpers
