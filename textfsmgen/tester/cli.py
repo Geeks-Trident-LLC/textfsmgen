@@ -24,6 +24,7 @@ from .commands import (
     quicktest as cmd_quicktest,
     copy as cmd_copy,
     duplicate as cmd_duplicate,
+    new as cmd_new,
 )
 
 
@@ -62,6 +63,9 @@ class TesterCLI:
 
         if args.action == "duplicate":
             return self._dispatch_duplicate(args)
+
+        if args.action == "new":
+            return self._dispatch_new(args)
 
         # --------------------------------------------------------------
         # All other actions require exactly ONE <case>
@@ -179,6 +183,22 @@ class TesterCLI:
 
         p_dup.set_defaults(func=self._dispatch_duplicate)
 
+        # --------------------------------------------------------------
+        # new
+        # --------------------------------------------------------------
+        # new
+        p_new = subparsers.add_parser(
+            "new",
+            help="Create a new golden test case scaffold (auto-detect main/integration).",
+        )
+        p_new.add_argument("case", nargs=1)
+        p_new.add_argument(
+            "--force",
+            action="store_true",
+            help="Allow overwriting an existing case directory.",
+        )
+        p_new.set_defaults(func=self._dispatch_new)
+
         return parser
 
     # ------------------------------------------------------------------
@@ -218,4 +238,14 @@ class TesterCLI:
             dry_run=args.dry_run,
             force=args.force,
         )
+
+    def _dispatch_new(self, args) -> int:
+        case_path = Path(args.case[0]).resolve()
+
+        if case_path.exists() and not args.force:
+            print(f"[FAIL] Case directory already exists: {case_path}")
+            print("       Use --force to overwrite.")
+            return 1
+
+        return cmd_new.new(case_path)
 
