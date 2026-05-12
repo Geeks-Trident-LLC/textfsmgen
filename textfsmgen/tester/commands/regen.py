@@ -25,6 +25,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import json
+import shutil
 
 from textfsmgen.libs.common import parse_textfsm_to_dicts
 
@@ -34,19 +35,53 @@ from ..core.data_loader import extract_subpath_after
 
 
 @catch_path_errors
-def regen(case_path: Path) -> int:
+def regen(case_path: Path, *, dry_run: bool = False) -> int:
     """
-    Dispatch regen based on case type.
+    Regen with dry-run support.
 
-    Returns:
-        0 on success
-        1 on error
+    dry-run:
+        - Copy <case> → <case>.temp
+        - Run regen inside temp
+        - Delete temp on success
+        - Keep temp on failure
     """
+
+    case_path = case_path.resolve()
+
+    # --------------------------------------------------------------
+    # Dry-run: redirect to <case>.temp
+    # --------------------------------------------------------------
+    if dry_run:
+        temp_path = case_path.with_name(case_path.name + ".temp")
+        print(f"[DRY-RUN] Using temporary directory: {temp_path}")
+
+        if temp_path.exists():
+            shutil.rmtree(temp_path)
+
+        shutil.copytree(case_path, temp_path)
+        case_path = temp_path
+
+    # --------------------------------------------------------------
+    # Dispatch to main/integration logic
+    # --------------------------------------------------------------
     case = GoldenCase.from_path(case_path)
 
     if case.is_main():
-        return regen_main(case)
-    return regen_integration(case)
+        rc = regen_main(case)
+    else:
+        rc = regen_integration(case)
+
+    # --------------------------------------------------------------
+    # Dry-run cleanup
+    # --------------------------------------------------------------
+    if dry_run:
+        if rc == 0:
+            print("[DRY-RUN] Cleaning up temporary directory.")
+            shutil.rmtree(case_path)
+        else:
+            print("[DRY-RUN] Regen failed. Temporary directory preserved for inspection.")
+
+    return rc
 
 
 # ---------------------------------------------------------------------------

@@ -29,6 +29,7 @@ from .commands import (
     new_from_input as cmd_new_from_input,
     generate as cmd_generate,
     batch_generate as cmd_batch_generate,
+    batch_regen as cmd_batch_regen,
 )
 
 
@@ -62,6 +63,15 @@ class TesterCLI:
         # Special-case actions: copy, duplicate
         # These DO NOT use the <case> argument pattern.
         # --------------------------------------------------------------
+        if args.action == "run":
+            return self._dispatch_run(args)
+
+        if args.action == "quicktest":
+            return self._dispatch_quicktest(args)
+
+        if args.action == "regen":
+            return self._dispatch_regen(args)
+
         if args.action == "copy":
             return self._dispatch_copy(args)
 
@@ -79,6 +89,9 @@ class TesterCLI:
 
         if args.action == "batch-generate":
             return self._dispatch_batch_generate(args)
+
+        if args.action == "batch-regen":
+            return self._dispatch_batch_regen(args)
 
         # --------------------------------------------------------------
         # All other actions require exactly ONE <case>
@@ -115,15 +128,45 @@ class TesterCLI:
         # --------------------------------------------------------------
         # run
         # --------------------------------------------------------------
-        p_run = subparsers.add_parser("run", help="Run a golden test case.")
-        p_run.add_argument("case", nargs=1)
+        p_run = subparsers.add_parser(
+            "run",
+            help="Execute a non-destructive test run for a golden test case.",
+        )
+
+        p_run.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Run inside <case>.temp and delete it on success.",
+        )
+
+        p_run.add_argument(
+            "case",
+            nargs=1,
+            help="Path to the case directory.",
+        )
+
         p_run.set_defaults(func=self._dispatch_run)
 
         # --------------------------------------------------------------
         # regen
         # --------------------------------------------------------------
-        p_regen = subparsers.add_parser("regen", help="Regenerate meta + hash.")
-        p_regen.add_argument("case", nargs=1)
+        p_regen = subparsers.add_parser(
+            "regen",
+            help="Regenerate derived artifacts for a golden test case.",
+        )
+
+        p_regen.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Run regen inside <case>.temp and delete it on success.",
+        )
+
+        p_regen.add_argument(
+            "case",
+            nargs=1,
+            help="Path to the case directory.",
+        )
+
         p_regen.set_defaults(func=self._dispatch_regen)
 
         # --------------------------------------------------------------
@@ -143,8 +186,23 @@ class TesterCLI:
         # --------------------------------------------------------------
         # quicktest
         # --------------------------------------------------------------
-        p_quick = subparsers.add_parser("quicktest", help="Quick test.")
-        p_quick.add_argument("case", nargs=1)
+        p_quick = subparsers.add_parser(
+            "quicktest",
+            help="Run quicktest for a golden test case.",
+        )
+
+        p_quick.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Run quicktest inside <case>.temp and delete it on success.",
+        )
+
+        p_quick.add_argument(
+            "case",
+            nargs=1,
+            help="Path to the case directory.",
+        )
+
         p_quick.set_defaults(func=self._dispatch_quicktest)
 
         # --------------------------------------------------------------
@@ -199,7 +257,6 @@ class TesterCLI:
         # --------------------------------------------------------------
         # new
         # --------------------------------------------------------------
-        # new
         p_new = subparsers.add_parser(
             "new",
             help="Create a new golden test case scaffold (auto-detect main/integration).",
@@ -296,7 +353,7 @@ class TesterCLI:
         p_generate.set_defaults(func=self._dispatch_generate)
 
         # --------------------------------------------------------------
-        # batch-generte
+        # batch-generate
         # --------------------------------------------------------------
         p_batch_gen = subparsers.add_parser(
             "batch-generate",
@@ -317,16 +374,41 @@ class TesterCLI:
 
         p_batch_gen.set_defaults(func=self._dispatch_batch_generate)
 
+        # --------------------------------------------------------------
+        # batch-regen
+        # --------------------------------------------------------------
+
+        p_batch_regen = subparsers.add_parser(
+            "batch-regen",
+            help="Run `regen` on all cases under a directory.",
+        )
+
+        p_batch_regen.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Run each case inside <case>.temp and delete temp on success.",
+        )
+
+        p_batch_regen.add_argument(
+            "root",
+            nargs=1,
+            help="Directory containing multiple case folders.",
+        )
+
+        p_batch_regen.set_defaults(func=self._dispatch_batch_regen)
+
         return parser
 
     # ------------------------------------------------------------------
     # Dispatchers
     # ------------------------------------------------------------------
-    def _dispatch_run(self, case_path: Path) -> int:
-        return cmd_run.run(case_path)
+    def _dispatch_run(self, args) -> int:
+        case_path = Path(args.case[0]).resolve()
+        return cmd_run.run(case_path, dry_run=args.dry_run)
 
-    def _dispatch_regen(self, case_path: Path) -> int:
-        return cmd_regen.regen(case_path)
+    def _dispatch_regen(self, args) -> int:
+        case_path = Path(args.case[0]).resolve()
+        return cmd_regen.regen(case_path, dry_run=args.dry_run)
 
     def _dispatch_diff(self, case_path: Path) -> int:
         return cmd_diff.diff(case_path)
@@ -334,8 +416,9 @@ class TesterCLI:
     def _dispatch_drift(self, case_path: Path) -> int:
         return cmd_drift.drift(case_path)
 
-    def _dispatch_quicktest(self, case_path: Path) -> int:
-        return cmd_quicktest.quicktest(case_path)
+    def _dispatch_quicktest(self, args) -> int:
+        case_path = Path(args.case[0]).resolve()
+        return cmd_quicktest.quicktest(case_path, dry_run=args.dry_run)
 
     # --------------------------------------------------------------
     # Special-case dispatchers
@@ -405,6 +488,14 @@ class TesterCLI:
         root_dir = Path(args.root[0]).resolve()
 
         return cmd_batch_generate.batch_generate(
+            root_dir,
+            dry_run=args.dry_run,
+        )
+
+    def _dispatch_batch_regen(self, args) -> int:
+        root_dir = Path(args.root[0]).resolve()
+
+        return cmd_batch_regen.batch_regen(
             root_dir,
             dry_run=args.dry_run,
         )
