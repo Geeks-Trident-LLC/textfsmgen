@@ -30,6 +30,7 @@ from .commands import (
     generate as cmd_generate,
     batch_generate as cmd_batch_generate,
     batch_regen as cmd_batch_regen,
+    batch_quicktest as cmd_batch_quicktest,
 )
 
 
@@ -92,6 +93,9 @@ class TesterCLI:
 
         if args.action == "batch-regen":
             return self._dispatch_batch_regen(args)
+
+        if args.action == "batch-quicktest":
+            return self._dispatch_batch_quicktest(args)
 
         # --------------------------------------------------------------
         # All other actions require exactly ONE <case>
@@ -397,6 +401,29 @@ class TesterCLI:
 
         p_batch_regen.set_defaults(func=self._dispatch_batch_regen)
 
+        # --------------------------------------------------------------
+        # batch-quicktest
+        # --------------------------------------------------------------
+
+        p_batch_qt = subparsers.add_parser(
+            "batch-quicktest",
+            help="Run quicktest on all cases under a directory.",
+        )
+
+        p_batch_qt.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Run each case inside <case>.temp and delete temp on success.",
+        )
+
+        p_batch_qt.add_argument(
+            "root",
+            nargs=1,
+            help="Directory containing multiple case folders.",
+        )
+
+        p_batch_qt.set_defaults(func=self._dispatch_batch_quicktest)
+
         return parser
 
     # ------------------------------------------------------------------
@@ -496,6 +523,15 @@ class TesterCLI:
         root_dir = Path(args.root[0]).resolve()
 
         return cmd_batch_regen.batch_regen(
+            root_dir,
+            dry_run=args.dry_run,
+        )
+
+
+    def _dispatch_batch_quicktest(self, args) -> int:
+        root_dir = Path(args.root[0]).resolve()
+
+        return cmd_batch_quicktest.batch_quicktest(
             root_dir,
             dry_run=args.dry_run,
         )
