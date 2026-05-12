@@ -27,6 +27,7 @@ from .commands import (
     duplicate as cmd_duplicate,
     new as cmd_new,
     new_from_input as cmd_new_from_input,
+    generate as cmd_generate,
 )
 
 
@@ -71,6 +72,9 @@ class TesterCLI:
 
         if args.action == "new-from-input":
             return self._dispatch_new_from_input(args)
+
+        if args.action == "generate":
+            return self._dispatch_generate(args)
 
         # --------------------------------------------------------------
         # All other actions require exactly ONE <case>
@@ -264,6 +268,29 @@ class TesterCLI:
 
         p_new_in.set_defaults(func=self._dispatch_new_from_input)
 
+        # --------------------------------------------------------------
+        # generate
+        # --------------------------------------------------------------
+
+        p_generate = subparsers.add_parser(
+            "generate",
+            help="Generate expected artifacts for an existing case using manifest.json and inputs/.",
+        )
+
+        p_generate.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Run generation inside <case>.temp and delete it on success.",
+        )
+
+        p_generate.add_argument(
+            "case",
+            nargs=1,
+            help="Path to an existing case directory (must contain manifest.json and inputs/).",
+        )
+
+        p_generate.set_defaults(func=self._dispatch_generate)
+
         return parser
 
     # ------------------------------------------------------------------
@@ -334,4 +361,16 @@ class TesterCLI:
             accept=args.accept,
             dry_run=args.dry_run,
             force=args.force,
+        )
+
+    def _dispatch_generate(self, args) -> int:
+        case_path = Path(args.case[0]).resolve()
+
+        if not case_path.exists():
+            print(f"[FAIL] Case directory does not exist: {case_path}")
+            return 1
+
+        return cmd_generate.generate(
+            case_path,
+            dry_run=args.dry_run,
         )

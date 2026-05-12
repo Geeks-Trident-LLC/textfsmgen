@@ -4,8 +4,6 @@ import json
 import shutil
 from pathlib import Path
 
-from ..core.utils import catch_path_errors
-from ..core.data_loader import extract_subpath_after
 from ..core.golden_case import GoldenCase
 from .quicktest import quicktest as run_quicktest
 
