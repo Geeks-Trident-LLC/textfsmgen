@@ -28,6 +28,7 @@ from .commands import (
     new as cmd_new,
     new_from_input as cmd_new_from_input,
     generate as cmd_generate,
+    batch_generate as cmd_batch_generate,
 )
 
 
@@ -75,6 +76,9 @@ class TesterCLI:
 
         if args.action == "generate":
             return self._dispatch_generate(args)
+
+        if args.action == "batch-generate":
+            return self._dispatch_batch_generate(args)
 
         # --------------------------------------------------------------
         # All other actions require exactly ONE <case>
@@ -291,6 +295,28 @@ class TesterCLI:
 
         p_generate.set_defaults(func=self._dispatch_generate)
 
+        # --------------------------------------------------------------
+        # batch-generte
+        # --------------------------------------------------------------
+        p_batch_gen = subparsers.add_parser(
+            "batch-generate",
+            help="Run `generate` on all cases under a directory.",
+        )
+
+        p_batch_gen.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Run each case inside <case>.temp and delete temp on success.",
+        )
+
+        p_batch_gen.add_argument(
+            "root",
+            nargs=1,
+            help="Directory containing multiple case folders.",
+        )
+
+        p_batch_gen.set_defaults(func=self._dispatch_batch_generate)
+
         return parser
 
     # ------------------------------------------------------------------
@@ -372,5 +398,13 @@ class TesterCLI:
 
         return cmd_generate.generate(
             case_path,
+            dry_run=args.dry_run,
+        )
+
+    def _dispatch_batch_generate(self, args) -> int:
+        root_dir = Path(args.root[0]).resolve()
+
+        return cmd_batch_generate.batch_generate(
+            root_dir,
             dry_run=args.dry_run,
         )
