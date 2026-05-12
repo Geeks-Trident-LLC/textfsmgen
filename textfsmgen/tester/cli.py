@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import json
 
 from .commands import (
     run as cmd_run,
@@ -25,6 +26,7 @@ from .commands import (
     copy as cmd_copy,
     duplicate as cmd_duplicate,
     new as cmd_new,
+    new_from_input as cmd_new_from_input,
 )
 
 
@@ -66,6 +68,9 @@ class TesterCLI:
 
         if args.action == "new":
             return self._dispatch_new(args)
+
+        if args.action == "new-from-input":
+            return self._dispatch_new_from_input(args)
 
         # --------------------------------------------------------------
         # All other actions require exactly ONE <case>
@@ -199,6 +204,66 @@ class TesterCLI:
         )
         p_new.set_defaults(func=self._dispatch_new)
 
+        # --------------------------------------------------------------
+        # new-from-input
+        # --------------------------------------------------------------
+        p_new_in = subparsers.add_parser(
+            "new-from-input",
+            help="Create a new integration case from an input folder.",
+        )
+
+        p_new_in.add_argument(
+            "--builder",
+            required=True,
+            help="Name of the builder to use for generating snippet/template (required).",
+        )
+
+        p_new_in.add_argument(
+            "--params",
+            default="{}",
+            help="JSON object of builder parameters (optional). Example: '{\"normalize\": true}'.",
+        )
+
+        p_new_in.add_argument(
+            "--author",
+            required=True,
+            help="Author name recorded in manifest.json (required).",
+        )
+
+        p_new_in.add_argument(
+            "--force",
+            action="store_true",
+            help="Overwrite the existing <case> directory if it already exists.",
+        )
+
+        p_new_in.add_argument(
+            "--accept",
+            action="store_true",
+            help="Keep the generated <case> even if quicktest fails. Without this flag, "
+                 "a failed quicktest deletes the case.",
+        )
+
+        p_new_in.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Create <case>.temp instead of <case>. Run quicktest, then delete the "
+                 "temporary directory unless --accept is used.",
+        )
+
+        p_new_in.add_argument(
+            "case",
+            nargs=1,
+            help="Target integration case directory (must be under golden/integration).",
+        )
+
+        p_new_in.add_argument(
+            "inputs",
+            nargs=1,
+            help="Folder containing input files used to generate expected artifacts.",
+        )
+
+        p_new_in.set_defaults(func=self._dispatch_new_from_input)
+
         return parser
 
     # ------------------------------------------------------------------
@@ -249,3 +314,24 @@ class TesterCLI:
 
         return cmd_new.new(case_path)
 
+    def _dispatch_new_from_input(self, args) -> int:
+        case_path = Path(args.case[0]).resolve()
+
+        inputs_dir = Path(args.inputs[0]).resolve()
+
+        try:
+            params = json.loads(args.params)
+        except Exception:
+            print("[FAIL] --params must be valid JSON")
+            return 1
+
+        return cmd_new_from_input.new_from_input(
+            case_path,
+            inputs_dir,
+            builder=args.builder,
+            params=params,
+            author=args.author,
+            accept=args.accept,
+            dry_run=args.dry_run,
+            force=args.force,
+        )

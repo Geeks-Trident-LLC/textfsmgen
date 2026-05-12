@@ -40,7 +40,8 @@ from textfsmgen import (
     TabularTemplateBuilder,
 )
 
-from textfsmgen.libs.generic import DotObject
+from textfsmgen.libs.generic import DotObject, StatusString
+from textfsmgen.libs.common import parse_textfsm_to_dicts
 
 
 META_FILENAME = "meta.json"
@@ -58,6 +59,112 @@ class DataLoader:
     """
 
     case_dir: Path
+
+    def generate_expected(self):
+        """
+        Generate expected snippet, template, and expected_results/*.json
+        for an integration case.
+
+        Rules:
+          - First input defines snippet + template + reference columns
+          - All subsequent inputs must produce rows with identical columns
+          - Write:
+                expected/snippet.txt
+                expected/textfsm.template
+                expected_results/<input>_result.json
+        """
+        manifest = self.load_manifest()
+        builder_name = manifest.get("builder")
+
+        snippet = ""
+        template = ""
+        reference_rows = None
+        groups = []  # list of (input_file, rows)
+
+        # --------------------------------------------------------------
+        # Process each input
+        # --------------------------------------------------------------
+        for input_info in self.load_inputs():
+            sample = input_info.content
+            in_file = input_info.fullname
+
+            # Build from sample
+            builder = self.build(sample)
+            if not builder:
+                return StatusString(
+                    f"Cannot create {builder_name} builder from input {in_file}",
+                    status=False,
+                )
+
+            # ----------------------------------------------------------
+            # First input: establish snippet, template, reference rows
+            # ----------------------------------------------------------
+            if not template:
+                snippet = builder.snippet
+                template = builder.template
+
+                reference_rows = parse_textfsm_to_dicts(template, sample)
+                if not reference_rows:
+                    return StatusString(
+                        f"No records found after parsing input {in_file}",
+                        status=False,
+                    )
+
+                groups.append((in_file, reference_rows))
+                continue
+
+            # ----------------------------------------------------------
+            # Subsequent inputs: must match reference columns
+            # ----------------------------------------------------------
+            rows = parse_textfsm_to_dicts(template, sample)
+            if not rows:
+                return StatusString(
+                    f"No records found after parsing input {in_file}",
+                    status=False,
+                )
+
+            # Column consistency check
+            if set(rows[0].keys()) != set(reference_rows[0].keys()):
+                ref_file = groups[0][0]
+                return StatusString(
+                    f"Inconsistent columns between:\n"
+                    f"  - {ref_file}\n"
+                    f"  - {in_file}",
+                    status=False,
+                )
+
+            groups.append((in_file, rows))
+
+        # --------------------------------------------------------------
+        # Write outputs
+        # --------------------------------------------------------------
+        if not groups:
+            return StatusString("No inputs found", status=False)
+
+        expected_dir = self.case_dir / "expected"
+        results_dir = self.case_dir / "expected_results"
+
+        expected_dir.mkdir(exist_ok=True)
+        results_dir.mkdir(exist_ok=True)
+
+        # snippet
+        (expected_dir / "snippet.txt").write_text(snippet, encoding="utf-8")
+
+        # template
+        (expected_dir / "textfsm.template").write_text(template,
+                                                       encoding="utf-8")
+
+        # expected_results/*.json
+        for in_file, rows in groups:
+            in_path = Path(in_file)
+            out_path = results_dir / f"{in_path.stem}_result.json"
+            out_path.write_text(
+                json.dumps(rows, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+
+        return StatusString(status=True)
+
 
     def build(self, sample):
         """
