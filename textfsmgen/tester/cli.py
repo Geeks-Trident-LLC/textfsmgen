@@ -21,7 +21,6 @@ from .commands import (
     regen as cmd_regen,
     diff as cmd_diff,
     drift as cmd_drift,
-    preview as cmd_preview,
     quicktest as cmd_quicktest,
     copy as cmd_copy,
     duplicate as cmd_duplicate,
@@ -37,7 +36,6 @@ class TesterCLI:
         regen <case>
         diff <case>
         drift <case>
-        preview <case>
         quicktest <case>
 
         copy <author> <src> <dst>
@@ -126,13 +124,6 @@ class TesterCLI:
         p_drift.set_defaults(func=self._dispatch_drift)
 
         # --------------------------------------------------------------
-        # preview
-        # --------------------------------------------------------------
-        p_preview = subparsers.add_parser("preview", help="Preview parsing.")
-        p_preview.add_argument("case", nargs=1)
-        p_preview.set_defaults(func=self._dispatch_preview)
-
-        # --------------------------------------------------------------
         # quicktest
         # --------------------------------------------------------------
         p_quick = subparsers.add_parser("quicktest", help="Quick test.")
@@ -204,9 +195,6 @@ class TesterCLI:
 
     def _dispatch_drift(self, case_path: Path) -> int:
         return cmd_drift.drift(case_path)
-
-    def _dispatch_preview(self, case_path: Path) -> int:
-        return cmd_preview.preview(case_path)
 
     def _dispatch_quicktest(self, case_path: Path) -> int:
         return cmd_quicktest.quicktest(case_path)
