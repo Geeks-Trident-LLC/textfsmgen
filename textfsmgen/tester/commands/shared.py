@@ -94,7 +94,7 @@ def run_canonical(case, is_quicktest=False) -> int:
     meta_status_before = meta_path.exists()
     hash_status_before = hash_path.exists()
 
-    case.data.generate_meta()
+    case.data.write_meta()
     case.data.write_golden_hash()
 
     meta_status = describe_file_update(meta_path, exist=meta_status_before)
