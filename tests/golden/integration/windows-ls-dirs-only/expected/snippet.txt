@@ -1,0 +1,2 @@
+Mode                 LastWriteTime         Length Name
+start() mixed_word(var_mode)  3_mixed_word(var_lastwritetime)  non_wss(var_length, or_empty)  word(var_name) end() -> record

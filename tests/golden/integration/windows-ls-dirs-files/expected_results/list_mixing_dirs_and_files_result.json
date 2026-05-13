@@ -1,0 +1,38 @@
+[
+  {
+    "mode": "d-----",
+    "lastwritetime": "5/5/2026  10:12 PM",
+    "length": "",
+    "name": "dir1"
+  },
+  {
+    "mode": "d-----",
+    "lastwritetime": "5/5/2026  10:12 PM",
+    "length": "",
+    "name": "dir2"
+  },
+  {
+    "mode": "-a----",
+    "lastwritetime": "5/5/2026  10:11 PM",
+    "length": "0",
+    "name": "+"
+  },
+  {
+    "mode": "-a----",
+    "lastwritetime": "5/5/2026  10:12 PM",
+    "length": "0",
+    "name": "another dummy file.txt"
+  },
+  {
+    "mode": "-a----",
+    "lastwritetime": "5/5/2026  10:10 PM",
+    "length": "0",
+    "name": "dummy.txt"
+  },
+  {
+    "mode": "-a----",
+    "lastwritetime": "5/5/2026  10:11 PM",
+    "length": "0",
+    "name": "other-dummy.txt"
+  }
+]
