@@ -34,6 +34,7 @@ from .commands import (
     batch_quicktest as cmd_batch_quicktest,
 
     merge as cmd_merge,
+    merge_review as cmd_merge_review,
 )
 
 
@@ -102,6 +103,9 @@ class TesterCLI:
 
         if args.action == "merge":
             return self._dispatch_merge(args)
+
+        if args.action == "merge-review":
+            return self._dispatch_merge_review(args)
 
         # --------------------------------------------------------------
         # All other actions require exactly ONE <case>
@@ -464,6 +468,28 @@ class TesterCLI:
 
         p_merge.set_defaults(func=self._dispatch_merge)
 
+        # --------------------------------------------------------------
+        # merge
+        # --------------------------------------------------------------
+
+        p_merge_review = subparsers.add_parser(
+            "merge-review",
+            help="Preview a merge using dst as the reference case (no filesystem writes).",
+        )
+
+        p_merge_review.add_argument(
+            "dst",
+            help="Destination case directory (reference case).",
+        )
+
+        p_merge_review.add_argument(
+            "srcs",
+            nargs="+",
+            help="Source integration cases to merge.",
+        )
+
+        p_merge_review.set_defaults(func=self._dispatch_merge_review)
+
         return parser
 
     # ------------------------------------------------------------------
@@ -586,3 +612,9 @@ class TesterCLI:
             author=args.author,
             dry_run=args.dry_run,
         )
+
+    def _dispatch_merge_review(self, args) -> int:
+        dst = Path(args.dst)
+        srcs = [Path(p) for p in args.srcs]
+
+        return cmd_merge_review.merge_review(dst, srcs)
