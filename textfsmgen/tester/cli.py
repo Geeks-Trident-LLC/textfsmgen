@@ -198,15 +198,31 @@ class TesterCLI:
         # --------------------------------------------------------------
         # diff
         # --------------------------------------------------------------
-        p_diff = subparsers.add_parser("diff", help="Show differences.")
-        p_diff.add_argument("case", nargs=1)
+        p_diff = subparsers.add_parser(
+            "diff",
+            help="Show differences between expected and generated results for a case.",
+        )
+
+        p_diff.add_argument(
+            "case",
+            help="Path to the integration case directory.",
+        )
+
         p_diff.set_defaults(func=self._dispatch_diff)
 
         # --------------------------------------------------------------
         # drift
         # --------------------------------------------------------------
-        p_drift = subparsers.add_parser("drift", help="Detect drift.")
-        p_drift.add_argument("case", nargs=1)
+        p_drift = subparsers.add_parser(
+            "drift",
+            help="Detect drift between current outputs and golden expected results.",
+        )
+
+        p_drift.add_argument(
+            "case",
+            help="Path to the integration case directory.",
+        )
+
         p_drift.set_defaults(func=self._dispatch_drift)
 
         # --------------------------------------------------------------
@@ -582,19 +598,19 @@ class TesterCLI:
             help="Identify integration cases that produce identical results.",
         )
         p_identical.add_argument(
-            "sources",
+            "srcs",
             nargs="+",
             help="List of integration case directories."
-        )
-        p_identical.add_argument(
-            "--json",
-            action="store_true",
-            help="Output results in JSON format."
         )
         p_identical.add_argument(
             "--compact",
             action="store_true",
             help="Compact summary output."
+        )
+        p_identical.add_argument(
+            "--json",
+            action="store_true",
+            help="Output results in JSON format."
         )
         p_identical.set_defaults(func=self._dispatch_identical)
 
@@ -763,7 +779,7 @@ class TesterCLI:
     @staticmethod
     def _dispatch_identical(args):
         return cmd_identical.run_identical(
-            [Path(p) for p in args.sources],
+            [Path(p) for p in args.srcs],
             compact=args.compact,
             is_json=args.json,
         )
