@@ -36,6 +36,7 @@ from .commands import (
     merge as cmd_merge,
     merge_review as cmd_merge_review,
     merge_preview as cmd_merge_preview,
+    merge_diff as cmd_merge_diff,
 )
 
 
@@ -110,6 +111,9 @@ class TesterCLI:
 
         if args.action == "merge-preview":
             return self._dispatch_merge_preview(args)
+
+        if args.action == "merge-diff":
+            return self._dispatch_merge_diff(args)
 
         # --------------------------------------------------------------
         # All other actions require exactly ONE <case>
@@ -523,6 +527,49 @@ class TesterCLI:
 
         p_merge_preview.set_defaults(func=self._dispatch_merge_preview)
 
+        # ---------------------------------------------------------------------------
+        # merge-diff
+        # ---------------------------------------------------------------------------
+
+        p_merge_diff = subparsers.add_parser(
+            "merge-diff",
+            help="Diff merged expected_results against golden expected_results."
+        )
+
+        p_merge_diff.add_argument(
+            "srcs",
+            nargs="+",
+            help="List of integration cases to merge and diff."
+        )
+
+        p_merge_diff.add_argument(
+            "--compact",
+            action="store_true",
+            help="Show compact summary output."
+        )
+
+        p_merge_diff.add_argument(
+            "--json",
+            dest="is_json",
+            action="store_true",
+            help="Output machine-readable JSON."
+        )
+
+        p_merge_diff.add_argument(
+            "--diff-count",
+            type=int,
+            default=2,
+            help="Maximum number of diff hunks to show per file (default: 2)."
+        )
+
+        p_merge_diff.add_argument(
+            "--diff-names-only",
+            action="store_true",
+            help="Only list names of files that differ; no diff output."
+        )
+
+        p_merge_diff.set_defaults(func=self._dispatch_merge_diff)
+
         return parser
 
     # ------------------------------------------------------------------
@@ -657,4 +704,13 @@ class TesterCLI:
         srcs = [Path(p) for p in args.srcs]
         return cmd_merge_preview.merge_preview(
             srcs, compact=args.compact, is_json=args.json
+        )
+
+    def _dispatch_merge_diff(self, args):
+        return cmd_merge_diff.merge_diff(
+            [Path(p) for p in args.srcs],
+            compact=args.compact,
+            is_json=args.is_json,
+            diff_count=args.diff_count,
+            diff_names_only=args.diff_names_only,
         )

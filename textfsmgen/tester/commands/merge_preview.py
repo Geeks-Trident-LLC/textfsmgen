@@ -178,8 +178,9 @@ def merge_preview_simulate_input_merge(cases: list[GoldenCase], ref_case: Golden
 
     # BASE inputs
     for inp in ref_case.data.load_inputs():
+        fullname = inp.fullname
         name = Path(inp.fullname).name
-        simulated_inputs[name] = inp.content
+        simulated_inputs[fullname] = inp.content
         merge_actions.append(("BASE", name, "", ref_case_name))
 
     # Merge others
@@ -190,27 +191,30 @@ def merge_preview_simulate_input_merge(cases: list[GoldenCase], ref_case: Golden
         case_name = extract_subpath_after("golden", case.case_dir)
 
         for inp in case.data.load_inputs():
+            fullname = inp.fullname
             name = Path(inp.fullname).name
             content = inp.content
 
             if name not in simulated_inputs:
-                simulated_inputs[name] = content
+                simulated_inputs[fullname] = content
                 merge_actions.append(("COPY", name, "", case_name))
                 continue
 
-            if simulated_inputs[name] == content:
+            if simulated_inputs[fullname] == content:
                 merge_actions.append(("OVERWRITE", name, "", case_name))
                 continue
 
             # rename
             base = Path(name).stem
+            dir_path = Path(name).parent
             ext = Path(name).suffix
             counter = 2
 
             while True:
                 new_name = f"{base}_{counter}{ext}"
+                new_fullname = str(dir_path / new_name)
                 if new_name not in simulated_inputs:
-                    simulated_inputs[new_name] = content
+                    simulated_inputs[new_fullname] = content
                     merge_actions.append(("RENAME", name, new_name, case_name))
                     break
                 counter += 1
@@ -250,7 +254,12 @@ def merge_preview_print_compact(builder, ref_case_name, merge_actions, simulated
 def merge_preview_json_success(builder, ref_case_name, candidate_info, merge_actions, simulated_inputs):
     reference_candidates = {}
     for case, value in candidate_info.items():
-        reference_candidates[str(case)] = value
+        key = (
+            str(extract_subpath_after("golden", case))
+            if isinstance(case, Path) and case.is_absolute() else
+            str(case)
+        )
+        reference_candidates[key] = value
 
     data = {
         "builder": builder,
@@ -281,7 +290,12 @@ def merge_preview_json_success(builder, ref_case_name, candidate_info, merge_act
 def merge_preview_json_fail(builder, candidate_info):
     reference_candidates = {}
     for case, value in candidate_info.items():
-        reference_candidates[str(case)] = value
+        key = (
+            str(extract_subpath_after("golden", case))
+            if isinstance(case, Path) and case.is_absolute() else
+            str(case)
+        )
+        reference_candidates[key] = value
 
     data = {
         "builder": builder,
