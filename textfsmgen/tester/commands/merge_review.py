@@ -69,13 +69,22 @@ def merge_review(dst: Path, srcs: list[Path]) -> int:
     for src in srcs:
         src_case = GoldenCase.from_path(src)
         src_case_name = extract_subpath_after("golden", src_case.case_dir)
-        for input_info in src_case.data.load_inputs():
+        for input_info, result_info in src_case.data.load_input_result_pairs():
             rows = parse_textfsm_to_dicts(template, input_info.content)
-            if not rows:
+            exp_result = result_info.content
+            if rows != exp_result:
                 ok = False
                 errors.append(
                     f"Template from '{dst_case_name}' failed to parse "
                     f"input '{input_info.fullname}' from case '{src_case_name}'."
+                )
+
+            if rows == exp_result and not rows:
+                ok = False
+                errors.append(
+                    f"Template from '{dst_case_name}' failed to parse "
+                    f"input '{input_info.fullname}' from case '{src_case_name}'"
+                    f"because parsed and expected result are empty."
                 )
 
     if not ok:

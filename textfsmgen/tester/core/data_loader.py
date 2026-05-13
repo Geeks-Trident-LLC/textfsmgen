@@ -78,23 +78,27 @@ class DataLoader:
             case_name = extract_subpath_after("golden", case_i.case_dir)
 
             case_ok = True
-            non_ref_cases = []
+            non_ref_messages = []
 
             # Check template_i against all inputs of all cases
             for case_j in source_cases:
+                if case_i == case_j:
+                    continue
+
                 all_inputs_passed = True
-                for input_info in case_j.data.load_inputs():
+                for input_info, result_info in case_j.data.load_input_result_pairs():
                     rows = parse_textfsm_to_dicts(
                         template_i,
                         input_info.content
                     )
-                    if not rows:
+                    expected_result = result_info.content
+                    if rows != expected_result or (rows == expected_result and not rows):
                         all_inputs_passed = all_inputs_passed and False
                         case_ok = case_ok and False
 
                 if not all_inputs_passed:
                     case_j_name = extract_subpath_after("golden", case_j.case_dir)
-                    non_ref_cases.append(
+                    non_ref_messages.append(
                         f"Template from {case_name} failed to parse "
                         f"all inputs from case {case_j_name}."
                     )
@@ -106,7 +110,7 @@ class DataLoader:
             else:
                 diagnostics.append(
                     f"[INFO] Case '{case_name}' is NOT a valid reference candidate:\n"
-                    + "\n".join(f"    - {err}" for err in non_ref_cases)
+                    + "\n".join(f"    - {err}" for err in non_ref_messages)
                 )
         # --------------------------------------------------------------
         # 2. No valid reference case
