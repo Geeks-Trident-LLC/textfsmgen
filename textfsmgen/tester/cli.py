@@ -230,7 +230,7 @@ class TesterCLI:
         # --------------------------------------------------------------
         p_quick = subparsers.add_parser(
             "quicktest",
-            help="Run quicktest for a golden test case.",
+            help="Run quicktest validation for a golden test case.",
         )
 
         p_quick.add_argument(
@@ -254,16 +254,23 @@ class TesterCLI:
             "copy",
             help="Copy a golden test case into a new case directory.",
         )
-        p_copy.add_argument("author", help="Author name for metadata.")
-        p_copy.add_argument("src", help="Source case directory.")
-        p_copy.add_argument("dst", help="Destination case directory.")
-        # NEW FLAGS
+        p_copy.add_argument(
+            "author",
+            help="Author name recorded in the new case's metadata.",
+        )
+        p_copy.add_argument(
+            "src",
+            help="Source case directory to copy from.",
+        )
+        p_copy.add_argument(
+            "dst",
+            help="Destination case directory to create.",
+        )
         p_copy.add_argument(
             "--dry-run",
             action="store_true",
-            help="Copy into <dst>.temp, run quicktest, delete temp on success.",
+            help="Copy into <dst>.temp, run quicktest, and delete temp on success.",
         )
-
         p_copy.add_argument(
             "--force",
             action="store_true",
@@ -278,22 +285,24 @@ class TesterCLI:
             "duplicate",
             help="Duplicate a golden test case into an auto-named sibling directory.",
         )
-        p_dup.add_argument("author", help="Author name for metadata.")
-        p_dup.add_argument("src", help="Source case directory.")
-
-        # NEW FLAGS
+        p_dup.add_argument(
+            "author",
+            help="Author name recorded in the duplicate case's metadata.",
+        )
+        p_dup.add_argument(
+            "src",
+            help="Source case directory to duplicate.",
+        )
         p_dup.add_argument(
             "--dry-run",
             action="store_true",
-            help="Duplicate into <src>_copy.temp, run quicktest, delete temp on success.",
+            help="Duplicate into <src>_copy.temp, run quicktest, and delete temp on success.",
         )
-
         p_dup.add_argument(
             "--force",
             action="store_true",
             help="Allow overwriting an existing duplicate directory.",
         )
-
         p_dup.set_defaults(func=self._dispatch_duplicate)
 
         # --------------------------------------------------------------
@@ -303,11 +312,15 @@ class TesterCLI:
             "new",
             help="Create a new golden test case scaffold (auto-detect main/integration).",
         )
-        p_new.add_argument("case", nargs=1)
+        p_new.add_argument(
+            "case",
+            nargs=1,
+            help="Path to the new case directory.",
+        )
         p_new.add_argument(
             "--force",
             action="store_true",
-            help="Allow overwriting an existing case directory.",
+            help="Overwrite the case directory if it already exists.",
         )
         p_new.set_defaults(func=self._dispatch_new)
 
@@ -318,80 +331,67 @@ class TesterCLI:
             "new-from-input",
             help="Create a new integration case from an input folder.",
         )
-
         p_new_in.add_argument(
             "--builder",
             required=True,
-            help="Name of the builder to use for generating snippet/template (required).",
+            help="Builder name used to generate snippet/template (required).",
         )
-
         p_new_in.add_argument(
             "--params",
             default="{}",
-            help="JSON object of builder parameters (optional). Example: '{\"normalize\": true}'.",
+            help="JSON object of builder parameters. Example: '{\"normalize\": true}'.",
         )
-
         p_new_in.add_argument(
             "--author",
             required=True,
             help="Author name recorded in manifest.json (required).",
         )
-
         p_new_in.add_argument(
             "--force",
             action="store_true",
             help="Overwrite the existing <case> directory if it already exists.",
         )
-
         p_new_in.add_argument(
             "--accept",
             action="store_true",
-            help="Keep the generated <case> even if quicktest fails. Without this flag, "
-                 "a failed quicktest deletes the case.",
+            help="Keep the generated <case> even if quicktest fails. "
+                 "Without this flag, a failed quicktest deletes the case.",
         )
-
         p_new_in.add_argument(
             "--dry-run",
             action="store_true",
             help="Create <case>.temp instead of <case>. Run quicktest, then delete the "
                  "temporary directory unless --accept is used.",
         )
-
         p_new_in.add_argument(
             "case",
             nargs=1,
             help="Target integration case directory (must be under golden/integration).",
         )
-
         p_new_in.add_argument(
             "inputs",
             nargs=1,
             help="Folder containing input files used to generate expected artifacts.",
         )
-
         p_new_in.set_defaults(func=self._dispatch_new_from_input)
 
         # --------------------------------------------------------------
         # generate
         # --------------------------------------------------------------
-
         p_generate = subparsers.add_parser(
             "generate",
             help="Generate expected artifacts for an existing case using manifest.json and inputs/.",
         )
-
         p_generate.add_argument(
             "--dry-run",
             action="store_true",
             help="Run generation inside <case>.temp and delete it on success.",
         )
-
         p_generate.add_argument(
             "case",
             nargs=1,
             help="Path to an existing case directory (must contain manifest.json and inputs/).",
         )
-
         p_generate.set_defaults(func=self._dispatch_generate)
 
         # --------------------------------------------------------------
@@ -399,195 +399,162 @@ class TesterCLI:
         # --------------------------------------------------------------
         p_batch_gen = subparsers.add_parser(
             "batch-generate",
-            help="Run `generate` on all cases under a directory.",
+            help="Run `generate` on all cases inside a directory.",
         )
-
         p_batch_gen.add_argument(
             "--dry-run",
             action="store_true",
-            help="Run each case inside <case>.temp and delete temp on success.",
+            help="Run each case inside <case>.temp and delete the temp directory on success.",
         )
-
         p_batch_gen.add_argument(
             "root",
             nargs=1,
             help="Directory containing multiple case folders.",
         )
-
         p_batch_gen.set_defaults(func=self._dispatch_batch_generate)
 
         # --------------------------------------------------------------
         # batch-regen
         # --------------------------------------------------------------
-
         p_batch_regen = subparsers.add_parser(
             "batch-regen",
-            help="Run `regen` on all cases under a directory.",
+            help="Run `regen` on all cases inside a directory.",
         )
-
         p_batch_regen.add_argument(
             "--dry-run",
             action="store_true",
-            help="Run each case inside <case>.temp and delete temp on success.",
+            help="Run each case inside <case>.temp and delete the temp directory on success.",
         )
-
         p_batch_regen.add_argument(
             "root",
             nargs=1,
             help="Directory containing multiple case folders.",
         )
-
         p_batch_regen.set_defaults(func=self._dispatch_batch_regen)
 
         # --------------------------------------------------------------
         # batch-quicktest
         # --------------------------------------------------------------
-
         p_batch_qt = subparsers.add_parser(
             "batch-quicktest",
-            help="Run quicktest on all cases under a directory.",
+            help="Run quicktest on all cases inside a directory.",
         )
-
         p_batch_qt.add_argument(
             "--dry-run",
             action="store_true",
-            help="Run each case inside <case>.temp and delete temp on success.",
+            help="Run each case inside <case>.temp and delete the temp directory on success.",
         )
-
         p_batch_qt.add_argument(
             "root",
             nargs=1,
             help="Directory containing multiple case folders.",
         )
-
         p_batch_qt.set_defaults(func=self._dispatch_batch_quicktest)
 
         # --------------------------------------------------------------
         # merge
         # --------------------------------------------------------------
-
         p_merge = subparsers.add_parser(
             "merge",
             help="Merge multiple integration cases into a new destination case.",
         )
-
         p_merge.add_argument(
             "--dry-run",
             action="store_true",
-            help="Run merge inside <dst>.temp and delete it on success.",
+            help="Run merge inside <dst>.temp and delete the temp directory on success.",
         )
-
         p_merge.add_argument(
             "--author",
             required=True,
-            help="Author for the merged case.",
+            help="Author name recorded in the merged case.",
         )
-
         p_merge.add_argument(
             "dst",
-            help="Destination case directory.",
+            help="Destination case directory to create.",
         )
-
         p_merge.add_argument(
             "srcs",
             nargs="+",
             help="Source integration cases to merge.",
         )
-
         p_merge.set_defaults(func=self._dispatch_merge)
 
         # --------------------------------------------------------------
         # merge-review
         # --------------------------------------------------------------
-
         p_merge_review = subparsers.add_parser(
             "merge-review",
-            help="Preview a merge using dst as the reference case (no filesystem writes).",
+            help="Preview a merge using <dst> as the reference case (no filesystem writes).",
         )
-
         p_merge_review.add_argument(
             "dst",
-            help="Destination case directory (reference case).",
+            help="Reference case directory.",
         )
-
         p_merge_review.add_argument(
             "srcs",
             nargs="+",
             help="Source integration cases to merge.",
         )
-
         p_merge_review.set_defaults(func=self._dispatch_merge_review)
 
         # --------------------------------------------------------------
         # merge-preview
         # --------------------------------------------------------------
-
         p_merge_preview = subparsers.add_parser(
             "merge-preview",
             help="Preview a merge by selecting a reference candidate from the source cases.",
         )
-
         p_merge_preview.add_argument(
             "srcs",
             nargs="+",
             help="Source integration cases to preview merge from.",
         )
-
         p_merge_preview.add_argument(
             "--compact",
             action="store_true",
-            help="Show compact one-line summary output."
+            help="Show compact one-line summary output.",
         )
-
         p_merge_preview.add_argument(
             "--json",
             action="store_true",
-            help="Output machine-readable JSON."
+            help="Output machine-readable JSON.",
         )
-
         p_merge_preview.set_defaults(func=self._dispatch_merge_preview)
 
         # ---------------------------------------------------------------------------
         # merge-diff
         # ---------------------------------------------------------------------------
-
         p_merge_diff = subparsers.add_parser(
             "merge-diff",
-            help="Diff merged expected_results against golden expected_results."
+            help="Diff merged expected_results against golden expected_results.",
         )
-
         p_merge_diff.add_argument(
             "srcs",
             nargs="+",
-            help="List of integration cases to merge and diff."
+            help="Integration cases to merge and diff.",
         )
-
         p_merge_diff.add_argument(
             "--compact",
             action="store_true",
-            help="Show compact summary output."
+            help="Show compact summary output.",
         )
-
         p_merge_diff.add_argument(
             "--json",
             dest="is_json",
             action="store_true",
-            help="Output machine-readable JSON."
+            help="Output machine-readable JSON.",
         )
-
         p_merge_diff.add_argument(
             "--diff-count",
             type=int,
             default=2,
-            help="Maximum number of diff hunks to show per file (default: 2)."
+            help="Maximum number of diff hunks to show per file (default: 2).",
         )
-
         p_merge_diff.add_argument(
             "--diff-names-only",
             action="store_true",
-            help="Only list names of files that differ; no diff output."
+            help="Only list names of files that differ; no diff output.",
         )
-
         p_merge_diff.set_defaults(func=self._dispatch_merge_diff)
 
         # --------------------------------------------------------------
@@ -600,17 +567,17 @@ class TesterCLI:
         p_identical.add_argument(
             "srcs",
             nargs="+",
-            help="List of integration case directories."
+            help="Integration case directories to compare.",
         )
         p_identical.add_argument(
             "--compact",
             action="store_true",
-            help="Compact summary output."
+            help="Show compact summary output.",
         )
         p_identical.add_argument(
             "--json",
             action="store_true",
-            help="Output results in JSON format."
+            help="Output results in JSON format.",
         )
         p_identical.set_defaults(func=self._dispatch_identical)
 

@@ -13,7 +13,6 @@ argument forwarding using argparse.REMAINDER.
 from __future__ import annotations
 
 import argparse
-import sys
 
 from textfsmgen.tester.cli import TesterCLI
 
@@ -73,7 +72,8 @@ class Cli:
     # ------------------------------------------------------------------
     # Dispatchers
     # ------------------------------------------------------------------
-    def _dispatch_tester(self, args: argparse.Namespace) -> int:
+    @staticmethod
+    def _dispatch_tester(args: argparse.Namespace) -> int:
         """
         Forward all remaining arguments to TesterCLI.
         Example:
