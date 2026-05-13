@@ -37,6 +37,7 @@ from .commands import (
     merge_review as cmd_merge_review,
     merge_preview as cmd_merge_preview,
     merge_diff as cmd_merge_diff,
+    identical as cmd_identical,
 )
 
 
@@ -114,6 +115,9 @@ class TesterCLI:
 
         if args.action == "merge-diff":
             return self._dispatch_merge_diff(args)
+
+        if args.action == "identical":
+            return self._dispatch_identical(args)
 
         # --------------------------------------------------------------
         # All other actions require exactly ONE <case>
@@ -570,33 +574,63 @@ class TesterCLI:
 
         p_merge_diff.set_defaults(func=self._dispatch_merge_diff)
 
+        # --------------------------------------------------------------
+        # identical
+        # --------------------------------------------------------------
+        p_identical = subparsers.add_parser(
+            "identical",
+            help="Identify integration cases that produce identical results.",
+        )
+        p_identical.add_argument(
+            "sources",
+            nargs="+",
+            help="List of integration case directories."
+        )
+        p_identical.add_argument(
+            "--json",
+            action="store_true",
+            help="Output results in JSON format."
+        )
+        p_identical.add_argument(
+            "--compact",
+            action="store_true",
+            help="Compact summary output."
+        )
+        p_identical.set_defaults(func=self._dispatch_identical)
+
         return parser
 
     # ------------------------------------------------------------------
     # Dispatchers
     # ------------------------------------------------------------------
-    def _dispatch_run(self, args) -> int:
+    @staticmethod
+    def _dispatch_run(args) -> int:
         case_path = Path(args.case[0]).resolve()
         return cmd_run.run(case_path, dry_run=args.dry_run)
 
-    def _dispatch_regen(self, args) -> int:
+    @staticmethod
+    def _dispatch_regen(args) -> int:
         case_path = Path(args.case[0]).resolve()
         return cmd_regen.regen(case_path, dry_run=args.dry_run)
 
-    def _dispatch_diff(self, case_path: Path) -> int:
+    @staticmethod
+    def _dispatch_diff(case_path: Path) -> int:
         return cmd_diff.diff(case_path)
 
-    def _dispatch_drift(self, case_path: Path) -> int:
+    @staticmethod
+    def _dispatch_drift(case_path: Path) -> int:
         return cmd_drift.drift(case_path)
 
-    def _dispatch_quicktest(self, args) -> int:
+    @staticmethod
+    def _dispatch_quicktest(args) -> int:
         case_path = Path(args.case[0]).resolve()
         return cmd_quicktest.quicktest(case_path, dry_run=args.dry_run)
 
     # --------------------------------------------------------------
     # Special-case dispatchers
     # --------------------------------------------------------------
-    def _dispatch_copy(self, args) -> int:
+    @staticmethod
+    def _dispatch_copy(args) -> int:
         return cmd_copy.copy_case(
             author=args.author,
             src=Path(args.src),
@@ -605,7 +639,8 @@ class TesterCLI:
             force=args.force,
         )
 
-    def _dispatch_duplicate(self, args) -> int:
+    @staticmethod
+    def _dispatch_duplicate(args) -> int:
         return cmd_duplicate.duplicate_case(
             author=args.author,
             src=Path(args.src),
@@ -613,7 +648,8 @@ class TesterCLI:
             force=args.force,
         )
 
-    def _dispatch_new(self, args) -> int:
+    @staticmethod
+    def _dispatch_new(args) -> int:
         case_path = Path(args.case[0]).resolve()
 
         if case_path.exists() and not args.force:
@@ -623,14 +659,15 @@ class TesterCLI:
 
         return cmd_new.new(case_path)
 
-    def _dispatch_new_from_input(self, args) -> int:
+    @staticmethod
+    def _dispatch_new_from_input(args) -> int:
         case_path = Path(args.case[0]).resolve()
 
         inputs_dir = Path(args.inputs[0]).resolve()
 
         try:
             params = json.loads(args.params)
-        except Exception:
+        except Exception:   # noqa
             print("[FAIL] --params must be valid JSON")
             return 1
 
@@ -645,7 +682,8 @@ class TesterCLI:
             force=args.force,
         )
 
-    def _dispatch_generate(self, args) -> int:
+    @staticmethod
+    def _dispatch_generate(args) -> int:
         case_path = Path(args.case[0]).resolve()
 
         if not case_path.exists():
@@ -657,7 +695,8 @@ class TesterCLI:
             dry_run=args.dry_run,
         )
 
-    def _dispatch_batch_generate(self, args) -> int:
+    @staticmethod
+    def _dispatch_batch_generate(args) -> int:
         root_dir = Path(args.root[0]).resolve()
 
         return cmd_batch_generate.batch_generate(
@@ -665,7 +704,8 @@ class TesterCLI:
             dry_run=args.dry_run,
         )
 
-    def _dispatch_batch_regen(self, args) -> int:
+    @staticmethod
+    def _dispatch_batch_regen(args) -> int:
         root_dir = Path(args.root[0]).resolve()
 
         return cmd_batch_regen.batch_regen(
@@ -674,7 +714,8 @@ class TesterCLI:
         )
 
 
-    def _dispatch_batch_quicktest(self, args) -> int:
+    @staticmethod
+    def _dispatch_batch_quicktest(args) -> int:
         root_dir = Path(args.root[0]).resolve()
 
         return cmd_batch_quicktest.batch_quicktest(
@@ -682,7 +723,8 @@ class TesterCLI:
             dry_run=args.dry_run,
         )
 
-    def _dispatch_merge(self, args) -> int:
+    @staticmethod
+    def _dispatch_merge(args) -> int:
         dst = Path(args.dst)
         srcs = [Path(p) for p in args.srcs]
 
@@ -693,24 +735,35 @@ class TesterCLI:
             dry_run=args.dry_run,
         )
 
-    def _dispatch_merge_review(self, args) -> int:
+    @staticmethod
+    def _dispatch_merge_review(args) -> int:
         dst = Path(args.dst)
         srcs = [Path(p) for p in args.srcs]
 
         return cmd_merge_review.merge_review(dst, srcs)
 
 
-    def _dispatch_merge_preview(self, args) -> int:
+    @staticmethod
+    def _dispatch_merge_preview(args) -> int:
         srcs = [Path(p) for p in args.srcs]
         return cmd_merge_preview.merge_preview(
             srcs, compact=args.compact, is_json=args.json
         )
 
-    def _dispatch_merge_diff(self, args):
+    @staticmethod
+    def _dispatch_merge_diff(args):
         return cmd_merge_diff.merge_diff(
             [Path(p) for p in args.srcs],
             compact=args.compact,
             is_json=args.is_json,
             diff_count=args.diff_count,
             diff_names_only=args.diff_names_only,
+        )
+
+    @staticmethod
+    def _dispatch_identical(args):
+        return cmd_identical.run_identical(
+            [Path(p) for p in args.sources],
+            compact=args.compact,
+            is_json=args.json,
         )

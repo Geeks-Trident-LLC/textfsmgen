@@ -102,3 +102,15 @@ def parse_textfsm_to_dicts(template: str, test_data: str) -> list[dict]:
         error_title = decorate_text(f"{type(err).__name__}: {err}")
         error_details = traceback.format_exc()
         raise Exception(f"{error_title}\n{error_details}")
+
+
+def extract_textfsm_headers(template: str) -> list:
+    """
+    Extract header variable names from a TextFSM template.
+    Returns an empty list if the template cannot be parsed.
+    """
+    try:
+        return TextFSM(StringIO(template)).header
+    except Exception:   # noqa
+        return []
+

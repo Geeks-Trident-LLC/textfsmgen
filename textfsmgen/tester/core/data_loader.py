@@ -544,7 +544,7 @@ class DataLoader:
                 check=True,
             )
             return result.stdout.strip()
-        except Exception:
+        except Exception:   # noqa
             return "unknown"
 
 
@@ -558,6 +558,8 @@ def extract_subpath_after(root: str, full_path: Path) -> Path:
         root      = "golden"
         result    = network/ospf/case1
     """
+    if not isinstance(full_path, Path):
+        full_path = Path(full_path)
     resolved = full_path.resolve()
     parts = resolved.parts
 
