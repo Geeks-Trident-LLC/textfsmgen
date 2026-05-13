@@ -28,9 +28,12 @@ from .commands import (
     new as cmd_new,
     new_from_input as cmd_new_from_input,
     generate as cmd_generate,
+
     batch_generate as cmd_batch_generate,
     batch_regen as cmd_batch_regen,
     batch_quicktest as cmd_batch_quicktest,
+
+    merge as cmd_merge,
 )
 
 
@@ -96,6 +99,9 @@ class TesterCLI:
 
         if args.action == "batch-quicktest":
             return self._dispatch_batch_quicktest(args)
+
+        if args.action == "merge":
+            return self._dispatch_merge(args)
 
         # --------------------------------------------------------------
         # All other actions require exactly ONE <case>
@@ -424,6 +430,40 @@ class TesterCLI:
 
         p_batch_qt.set_defaults(func=self._dispatch_batch_quicktest)
 
+        # --------------------------------------------------------------
+        # merge
+        # --------------------------------------------------------------
+
+        p_merge = subparsers.add_parser(
+            "merge",
+            help="Merge multiple integration cases into a new destination case.",
+        )
+
+        p_merge.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Run merge inside <dst>.temp and delete it on success.",
+        )
+
+        p_merge.add_argument(
+            "--author",
+            required=True,
+            help="Author for the merged case.",
+        )
+
+        p_merge.add_argument(
+            "dst",
+            help="Destination case directory.",
+        )
+
+        p_merge.add_argument(
+            "srcs",
+            nargs="+",
+            help="Source integration cases to merge.",
+        )
+
+        p_merge.set_defaults(func=self._dispatch_merge)
+
         return parser
 
     # ------------------------------------------------------------------
@@ -533,5 +573,16 @@ class TesterCLI:
 
         return cmd_batch_quicktest.batch_quicktest(
             root_dir,
+            dry_run=args.dry_run,
+        )
+
+    def _dispatch_merge(self, args) -> int:
+        dst = Path(args.dst)
+        srcs = [Path(p) for p in args.srcs]
+
+        return cmd_merge.merge(
+            dst,
+            srcs,
+            author=args.author,
             dry_run=args.dry_run,
         )

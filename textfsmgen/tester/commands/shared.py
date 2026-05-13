@@ -277,9 +277,10 @@ def diff_against_reference(
     Compare generated snippet/template against a reference (canonical or expected).
     """
     groups = []
-    exit_code = 0
 
     ref_clean = strip_header_block(ref_text)
+
+    at_least_one_match = False
 
     for fileinfo in case.data.load_inputs(root="golden"):
         builder = case.data.build(fileinfo.content)
@@ -289,22 +290,26 @@ def diff_against_reference(
         # --- Quicktest Fast Path ---------------------------------------------
         if is_quicktest:
             if generated_clean.strip() == ref_clean.strip():
-                continue
-            return 1
+                at_least_one_match = True
+            continue
+
 
         # --- Full Diff -------------------------------------------------------
         diff_text = make_diff(ref_clean, generated_clean)
-        if diff_text:
-            exit_code = 1
-            groups.append(
-                (
-                    f"Generated {kind} from input: {fileinfo.name}",
-                    generated_text,
-                    f"Diff: {ref_name}\n"
-                    f"      vs generated {kind} (from {fileinfo.name})",
-                    diff_text,
-                )
+        if not diff_text:
+            at_least_one_match = True
+            continue
+
+        groups.append(
+            (
+                f"Generated {kind} from input: {fileinfo.name}",
+                generated_text,
+                f"Diff: {ref_name}\n"
+                f"      vs generated {kind} (from {fileinfo.name})",
+                diff_text,
             )
+        )
+
 
     # --- Print Groups --------------------------------------------------------
     if groups:
@@ -316,7 +321,7 @@ def diff_against_reference(
             print_block(gen_title, gen_text)
             print_block(diff_title, diff_text)
 
-    return exit_code
+    return 0 if at_least_one_match else 1
 
 
 # ============================================================================

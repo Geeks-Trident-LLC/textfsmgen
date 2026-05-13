@@ -60,6 +60,105 @@ class DataLoader:
 
     case_dir: Path
 
+    def create_merge(self, source_cases):
+        """
+        Select a reference case whose template can successfully parse
+        all inputs from all source cases. Provide detailed diagnostics
+        explaining why each candidate failed.
+        """
+
+        diagnostics = []
+        ref_candidates = []
+
+        # --------------------------------------------------------------
+        # 1. Evaluate each candidate reference case
+        # --------------------------------------------------------------
+        for case_i in source_cases:
+            template_i = case_i.data.load_expected().template.content
+            case_name = extract_subpath_after("golden", case_i.case_dir)
+
+            case_ok = True
+            non_ref_cases = []
+
+            # Check template_i against all inputs of all cases
+            for case_j in source_cases:
+                all_inputs_passed = True
+                for input_info in case_j.data.load_inputs():
+                    rows = parse_textfsm_to_dicts(
+                        template_i,
+                        input_info.content
+                    )
+                    if not rows:
+                        all_inputs_passed = all_inputs_passed and False
+                        case_ok = case_ok and False
+
+                if not all_inputs_passed:
+                    case_j_name = extract_subpath_after("golden", case_j.case_dir)
+                    non_ref_cases.append(
+                        f"Template from {case_name} failed to parse "
+                        f"all inputs from case {case_j_name}."
+                    )
+            if case_ok:
+                ref_candidates.append(case_i)
+                diagnostics.append(
+                    f"[OK] Case '{case_name}' is a valid reference candidate."
+                )
+            else:
+                diagnostics.append(
+                    f"[INFO] Case '{case_name}' is NOT a valid reference candidate:\n"
+                    + "\n".join(f"    - {err}" for err in non_ref_cases)
+                )
+        # --------------------------------------------------------------
+        # 2. No valid reference case
+        # --------------------------------------------------------------
+        if not ref_candidates:
+            print("[MERGE] No valid reference case found.")
+            print("\n".join(diagnostics))
+            return False
+
+        # --------------------------------------------------------------
+        # 3. Pick the first valid reference case
+        # --------------------------------------------------------------
+        ref_case = ref_candidates[0]
+        ref_name = extract_subpath_after("golden", ref_case.case_dir)
+
+        print("[MERGE] Reference case selected:", ref_name)
+        print("\n".join(diagnostics))
+
+        ref_expected = ref_case.data.load_expected()
+        ref_manifest = ref_case.data.load_manifest()
+
+        # --------------------------------------------------------------
+        # 4. Copy parameters from reference manifest
+        # --------------------------------------------------------------
+        manifest = self.load_manifest()
+        manifest["parameters"] = ref_manifest.get("parameters", {}).copy()
+        self.write_manifest(manifest=manifest)
+
+        # --------------------------------------------------------------
+        # 5. Write snippet + template from reference
+        # --------------------------------------------------------------
+        snippet_path = self.case_dir / "expected" / "snippet.txt"
+        snippet_path.write_text(ref_expected.snippet.content, encoding="utf-8")
+
+        template = ref_expected.template.content
+        template_path = self.case_dir / "expected" / "textfsm.template"
+        template_path.write_text(template, encoding="utf-8")
+
+        # --------------------------------------------------------------
+        # 6. Generate expected_results for all inputs in merged case
+        # --------------------------------------------------------------
+        for input_info in self.load_inputs():
+            in_path = Path(input_info.fullname)
+            out_path = self.case_dir / "expected_results" / f"{in_path.stem}_result.json"
+
+            rows = parse_textfsm_to_dicts(template, input_info.content)
+            out_path.write_text(
+                json.dumps(rows, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+        return True
+
     def generate_expected(self):
         """
         Generate expected snippet, template, and expected_results/*.json
