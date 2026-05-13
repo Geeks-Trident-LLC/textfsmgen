@@ -22,7 +22,15 @@ def catch_path_errors(func):
         try:
             if args or "case_path" in kwargs:
                 case_path = args[0] if args else kwargs["case_path"]
-                require_case_dir(case_path)
+                multi_case_path = []
+                if isinstance(case_path, Path):
+                    multi_case_path = [case_path]
+                elif isinstance(case_path, (list, tuple)):
+                    for item in case_path:
+                        if isinstance(item, Path):
+                            multi_case_path.append(item)
+                for case_path_ in multi_case_path:
+                    require_case_dir(case_path_)
             return func(*args, **kwargs)
         except Exception as e:
             exc_name = type(e).__name__

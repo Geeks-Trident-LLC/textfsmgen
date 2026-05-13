@@ -35,6 +35,7 @@ from .commands import (
 
     merge as cmd_merge,
     merge_review as cmd_merge_review,
+    merge_preview as cmd_merge_preview,
 )
 
 
@@ -106,6 +107,9 @@ class TesterCLI:
 
         if args.action == "merge-review":
             return self._dispatch_merge_review(args)
+
+        if args.action == "merge-preview":
+            return self._dispatch_merge_preview(args)
 
         # --------------------------------------------------------------
         # All other actions require exactly ONE <case>
@@ -469,7 +473,7 @@ class TesterCLI:
         p_merge.set_defaults(func=self._dispatch_merge)
 
         # --------------------------------------------------------------
-        # merge
+        # merge-review
         # --------------------------------------------------------------
 
         p_merge_review = subparsers.add_parser(
@@ -489,6 +493,35 @@ class TesterCLI:
         )
 
         p_merge_review.set_defaults(func=self._dispatch_merge_review)
+
+        # --------------------------------------------------------------
+        # merge-preview
+        # --------------------------------------------------------------
+
+        p_merge_preview = subparsers.add_parser(
+            "merge-preview",
+            help="Preview a merge by selecting a reference candidate from the source cases.",
+        )
+
+        p_merge_preview.add_argument(
+            "srcs",
+            nargs="+",
+            help="Source integration cases to preview merge from.",
+        )
+
+        p_merge_preview.add_argument(
+            "--compact",
+            action="store_true",
+            help="Show compact one-line summary output."
+        )
+
+        p_merge_preview.add_argument(
+            "--json",
+            action="store_true",
+            help="Output machine-readable JSON."
+        )
+
+        p_merge_preview.set_defaults(func=self._dispatch_merge_preview)
 
         return parser
 
@@ -618,3 +651,10 @@ class TesterCLI:
         srcs = [Path(p) for p in args.srcs]
 
         return cmd_merge_review.merge_review(dst, srcs)
+
+
+    def _dispatch_merge_preview(self, args) -> int:
+        srcs = [Path(p) for p in args.srcs]
+        return cmd_merge_preview.merge_preview(
+            srcs, compact=args.compact, is_json=args.json
+        )
