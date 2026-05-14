@@ -1,99 +1,73 @@
-![PyPI](https://img.shields.io/pypi/v/textfsmgen)
-![Build](https://github.com/geekstrident/textfsmgen/actions/workflows/release-test.yml/badge.svg)
-![Docs](https://img.shields.io/badge/docs-online-brightgreen)
-![License](https://img.shields.io/github/license/geekstrident/textfsmgen)
-
-
-# TextFSM Generator
-
----
+[![PyPI Version](https://img.shields.io/pypi/v/textfsmgen.svg)](https://pypi.org/project/textfsmgen/)
+[![Docs](https://img.shields.io/badge/Docs-Wiki-blue)](https://github.com/Geeks-Trident-LLC/textfsmgen/wiki)
+[![License: BSD 3‑Clause](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
 # 📖 Overview
 
-**TextFSM Generator** is a low‑code, no‑code tool and Python library that creates TextFSM templates from simple, English‑readable snippets. It removes the need for manual rule‑writing, streamlines parsing workflows, and helps developers, testers, and citizen developers build consistent, reusable automation patterns with minimal effort
+**TextFSM Generator** is a low‑code, no‑code tool and Python library that turns simple, English‑readable snippets into reliable TextFSM templates — no regex required. It eliminates manual rule‑writing, accelerates parsing workflows, and includes built‑in **Golden Master Testing** to guarantee stable, reproducible, drift‑free parsing across every environment.
+
+Designed for **professional developers**, **test engineers**, **network automation teams**, and **citizen developers**, TextFSM Generator makes parsing faster, safer, and dramatically easier to maintain — even at scale.
 
 ---
 
-## ✨ Features
+# ✨ Features
 
-- 📝 **Automatic Template Generation** – Build TextFSM templates directly from user‑provided snippets.  
-- 📄 **Human‑Readable Input** – Use plain English snippets instead of complex regex syntax.  
-- 🔄 **Reusable Templates** – Share and reuse templates across teams and projects.  
-- ⚡ **Workflow Efficiency** – Reduce manual effort and accelerate text parsing tasks.  
-- 🤝 **Collaboration Ready** – Designed for developers, testers, engineers, and QA professionals.  
-
----
-
-## 🚀 Benefits
-
-- Simplifies template creation and reduces errors.  
-- Improves consistency across projects and teams.  
-- Accelerates development and testing cycles.  
-- Enhances maintainability of parsing logic.  
-- Makes text parsing scalable and reliable for modern environments.  
+- 📝 **Turn Plain Text Into Parsers** — Drop in human‑readable snippets and instantly generate production‑ready TextFSM templates.  
+- 🧪 **Golden Master Testing at the Core** — Every template is validated with deterministic outputs, drift detection, and regression‑proof confidence.  
+- 🔄 **Reusable Parsing Intelligence** — Build once, reuse everywhere, and standardize parsing logic across teams and automation pipelines.  
+- ⚡ **Faster Automation, Zero Regex Pain** — Skip the syntax wrestling and accelerate development with a clean, low‑code workflow.
 
 ---
 
-## ⚙️ Installation  
+# 🚀 Benefits
 
-You can install the **textfsmgen** package directly from PyPI using `pip`:  
+- Guarantees **stable, predictable parsing** with built‑in golden master testing.  
+- Eliminates regex complexity so teams can focus on automation, not syntax.  
+- Creates a **shared parsing language** that scales across projects and organizations.  
+- Speeds up delivery with reproducible results that plug cleanly into CI/CD and modern automation stacks.
+
+---
+
+# ⚙️ Installation
+
+Install from PyPI:
 
 ```bash
 pip install textfsmgen
 ```
 
-### 📦 Dependencies  
-
-This project depends on the following Python packages to provide core functionality and seamless integration:  
-
-- [**textfsm**](https://pypi.org/project/textfsm/) – Template‑based state machine for parsing semi‑structured text.  
-- [**PyYAML**](https://pypi.org/project/PyYAML/) – YAML parser and emitter, enabling structured configuration management.
+See the **Wiki** for examples, CLI usage, and advanced workflows:  
+👉 [https://github.com/Geeks-Trident-LLC/textfsmgen/wiki](https://github.com/Geeks-Trident-LLC/textfsmgen/wiki)
 
 ---
 
-## 🛣️ Roadmap  
+# 🛣️ Roadmap
 
-- ✨ **Template Generation Improvements** – Ongoing refinements to TextFSM template creation, deeper integration with parsing libraries, and streamlined developer workflows.  
-- 🐳 **Containerization** – Official Docker images and containerized deployment options for portability, scalability, and simplified setup.  
-- 🔄 **CI/CD Integration** – Automated pipelines for testing, building, and releasing to ensure faster and more reliable delivery.  
-- 🤖 **Robot Framework Support** – Native integration with Robot Framework for keyword‑driven acceptance testing and automation.  
-- 🧩 **Flexibility & Robustness Verification** – Tools to validate template adaptability and resilience across diverse input conditions.  
-- 🧪 **Testing & QA Strategy** – Comprehensive testing methodologies, regression suites, and formalized QA practices for higher reliability.  
-- 📊 **Metrics & Reporting** – Built‑in performance metric analysis, automated reporting, and audit‑ready documentation.  
-- 📈 **Forecasting & Projections** – Estimation tools for usage trends, scalability requirements, and performance forecasting.  
-- 🛡️ **Quality & Maintenance** – Continuous monitoring, static analysis, and long‑term maintainability strategies to ensure code health.  
-- 🤖 **AI Integration** – Advanced AI‑powered capabilities, including:  
-  - Intelligent template suggestions and auto‑completion.  
-  - Automated error detection and correction.  
-  - Adaptive optimization based on usage patterns.  
-  - Natural language → TextFSM template translation for non‑expert users.  
-  - Predictive analytics for template performance, reliability, and optimization.  
-- 🔍 **Testing & Feedback** - Early adopters are encouraged to experiment, validate new features, and provide feedback to shape the stable release.  
+- ✨ **Next‑Gen Template Generation** with smarter builders, richer snippet translation, and deeper parsing‑engine integration.  
+- 🧪 **Extensible Golden Master Testing** with multi‑engine validation, cross‑version checks, and additional test types (fuzz, mutation, semantic diff).  
+- 🐳 **Developer & CI Enhancements** including Docker images, full CI/CD integration, metrics, reporting, and long‑term maintainability tooling.  
+- 🤖 **Ecosystem & AI Expansion** with Robot Framework support, forecasting tools, natural‑language template generation, intelligent suggestions, and predictive drift detection.
 
 ---
 
-## 📚 References
+# 🐞 Bugs & Feature Requests
 
-- [Wiki](https://github.com/Geeks-Trident-LLC/textfsmgen/wiki)
-- [FAQ](https://github.com/Geeks-Trident-LLC/textfsmgen/wiki/FAQ)
+Report issues or request features here:  
+👉 [https://github.com/Geeks-Trident-LLC/textfsmgen/issues](https://github.com/Geeks-Trident-LLC/textfsmgen/issues)
 
----
-
-
-## 🐞 Bugs & Feature Requests  
-
-If you encounter a bug or have a feature request, please submit it through the official [GitHub Issue Tracker](https://github.com/Geeks-Trident-LLC/textfsmgen/issues). This helps us track, prioritize, and resolve issues efficiently while keeping all feedback in one place.
+Your feedback helps guide development and improve the platform.
 
 ---
 
-## 📜 License  
+# 📜 License
 
-This project is licensed under the **[BSD 3‑Clause License](https://github.com/Geeks-Trident-LLC/textfsmgen/blob/develop/LICENSE)**, permitting broad use, modification, and redistribution with required attribution and no endorsement.
+Licensed under the **BSD 3‑Clause License**, allowing broad use, modification, and redistribution with attribution.  
+Full text:  
+[https://github.com/Geeks-Trident-LLC/textfsmgen/blob/develop/LICENSE](https://github.com/Geeks-Trident-LLC/textfsmgen/blob/develop/LICENSE)
 
 ---
 
-## ⚠️ Disclaimer  
+# ⚠️ Disclaimer
 
-This package is currently in **pre‑beta development**. Features, APIs, and dependencies may change before the official 1.x release. While it is functional, please use it with caution in production environments and expect ongoing updates as the project matures.  
+This project is currently in **beta development**. APIs, features, and dependencies may evolve before the 1.x release. While functional, use caution in production environments and expect active updates as the platform matures.
 
---- 
