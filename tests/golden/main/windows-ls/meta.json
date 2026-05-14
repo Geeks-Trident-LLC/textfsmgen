@@ -1,14 +1,14 @@
 {
   "schema_version": "1.0",
   "approved_by": "Tom",
-  "approved_at": "2026-05-09 06:29:23",
+  "approved_at": "2026-05-14 09:39:41",
   "description": "",
   "email": "",
   "notes": "",
-  "textfsmgen_version": "0.6.2",
+  "textfsmgen_version": "0.6.3",
   "textfsm_version": "2.1.0",
   "python_version": "3.14.3",
   "operating_system": "Windows 11",
   "machine": "AMD64",
-  "git_commit": "708712421fbca604c921e2f87c7e8d8cb54fd8a7"
+  "git_commit": "afea52c722a4db1c3d1ab49dc03e9e75bd2efff4"
 }

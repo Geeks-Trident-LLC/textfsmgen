@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from typing import List, Optional
+from typing import List
 
 import textfsm
 
@@ -19,6 +19,7 @@ from textfsmgen import (
     parse_textfsm_to_dicts
 )
 
+from textfsmgen.libs.generic import DotObject
 
 from textfsmgen.exceptions import raise_runtime_error
 
@@ -33,7 +34,8 @@ def write_text_atomic(path, text):
 def write_json_atomic(path, obj):
     path = Path(path)
     tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(json.dumps(obj, indent=2, ensure_ascii=False), encoding="utf-8")
+    tmp.write_text(json.dumps(obj, indent=2, ensure_ascii=False),
+                   encoding="utf-8")
     tmp.replace(path)
 
 
@@ -84,7 +86,7 @@ class DataLoader:
         self.load_expected()
 
     @classmethod
-    def validate_test_case(cls, test_case: str) -> Path:
+    def validate_test_case(cls, test_case: str):
         """
         Validate a test case folder.
 
@@ -173,7 +175,6 @@ class DataLoader:
             f"{prefix} {file_path!r} does not exist.  Cannot continue.".strip()
         )
 
-
     def load_manifest(self):
         result = json.loads(self.manifest_path.read_text(encoding="utf-8"))
         self.builder_type = result["builder"].lower().strip()
@@ -193,13 +194,15 @@ class DataLoader:
         self.canonical_snippet = snippet_path.read_text(encoding="utf-8")
 
         template_path = self.file_path / "canonical" / "textfsm.template"
-        self.validate_file_path(template_path, prefix="Canonical TextFSM template file")
+        self.validate_file_path(template_path,
+                                prefix="Canonical TextFSM template file")
         self.canonical_template = template_path.read_text(encoding="utf-8")
 
         result_path = self.file_path / "canonical" / "result.json"
         self.validate_file_path(result_path, prefix="Canonical result file")
 
-        self.canonical_result = json.loads(result_path.read_text(encoding="utf-8")) or []
+        self.canonical_result = json.loads(
+            result_path.read_text(encoding="utf-8")) or []
 
     def load_expected(self):
         if self.kind == "main":
@@ -210,20 +213,24 @@ class DataLoader:
         self.expected_snippet = snippet_path.read_text(encoding="utf-8")
 
         template_path = self.file_path / "expected" / "textfsm.template"
-        self.validate_file_path(template_path, prefix="Expected TextFSM template file")
+        self.validate_file_path(template_path,
+                                prefix="Expected TextFSM template file")
         self.expected_template = template_path.read_text(encoding="utf-8")
 
-    def get_input_and_expected_result(self):
+    def load_input_result_pairs(self):
         for input_path in self.inputs_path.glob("*"):
             input_filename = str(input_path)
             basename = input_path.stem
             exp_result_path = self.expected_results_path / f"{basename}_result.json"
-            exp_result_filename = str(exp_result_path)
+            if not exp_result_path.exists():
+                continue
 
+            exp_result_filename = str(exp_result_path)
             input_sample = input_path.read_text(encoding="utf-8")
             exp_result = json.loads(exp_result_path.read_text(encoding="utf-8"))
-            input_info = {"filename": input_filename, "data": input_sample}
-            result_info = {"filename": exp_result_filename, "data": exp_result}
+            input_info = DotObject(path=input_filename, data=input_sample)
+            result_info = DotObject(path=exp_result_filename,
+                                    data=exp_result)
             yield input_info, result_info
 
     def get_builder(self):
@@ -290,126 +297,154 @@ class DataLoader:
         with file_path.open("w", encoding="utf-8") as f:
             json.dump(meta, f, indent=2, ensure_ascii=False)
 
-    def regenerate(self):
-        """
-        Regenerate golden data for this test case.
-
-        Behavior:
-        - For 'main' cases:
-            * Rebuild canonical result.json (parsed rows from canonical_template + canonical_sample)
-        - For 'integration' cases:
-            * Rebuild expected_results/*.json (parsed rows from expected_template + inputs)
-        - For both kinds:
-            * Rewrite meta.json
-            * Rewrite golden.hash
-        """
-
-        # Only regenerate when explicitly requested
-        if not os.getenv("GOLDEN_REGEN"):
-            return
-
-        # -----------------------------
-        # 1. MAIN CASE: regenerate canonical result.json
-        # -----------------------------
-        if self.kind == "main":
-            # Use authoritative canonical_template + canonical_sample
-            rows = parse_textfsm_to_dicts(self.canonical_template,
-                                          self.canonical_sample)
-            write_json_atomic(
-                self.file_path / "canonical" / "result.json",
-                rows
-            )
-            # Use authoritative canonical_template + each input
-            for input_sample_info, expected_result_info in self.get_input_and_expected_result():
-                input_sample = input_sample_info["data"]
-                out_path = expected_result_info["filename"]
-
-                rows = parse_textfsm_to_dicts(self.canonical_template, input_sample)
-                write_json_atomic(out_path, rows)
-
-        # -----------------------------
-        # 2. INTEGRATION CASE: regenerate expected_results/*.json
-        # -----------------------------
-        elif self.kind == "integration":
-            # Use authoritative expected_template + each input
-            for input_sample_info, expected_result_info in self.get_input_and_expected_result():
-                input_sample = input_sample_info["data"]
-                out_path = expected_result_info["filename"]
-
-                rows = parse_textfsm_to_dicts(self.expected_template,
-                                              input_sample)
-                write_json_atomic(out_path, rows)
-
-        # -----------------------------
-        # 3. Rewrite meta.json
-        # -----------------------------
-        self.generate_meta()
-
-        # -----------------------------
-        # 4. Rewrite golden.hash
-        # -----------------------------
-        files = self.get_all_golden_files()
-        current_hash = compute_hash_for_files(files)
-        self.write_hash(current_hash)
-
     def get_all_golden_files(self):
         files = [
             self.manifest_path,
-            # meta.json intentionally excluded from hashing
-            # self.file_path / "meta.json",
         ]
 
         if self.kind == "main":
             files += [
+                self.file_path / "canonical" / "sample.txt",
                 self.file_path / "canonical" / "snippet.txt",
                 self.file_path / "canonical" / "textfsm.template",
                 self.file_path / "canonical" / "result.json",
-            ]
-        else:
-            files += [
-                self.file_path / "expected" / "snippet.txt",
-                self.file_path / "expected" / "textfsm.template",
             ]
 
         for input_path in self.inputs_path.glob("*"):
             basename = input_path.stem
             files.append(self.expected_results_path / f"{basename}_result.json")
-
         return files
 
-    def get_hash_file_path(self):
-        return self.file_path / "golden.hash"
-
-    def load_stored_hash(self):
-        path = self.get_hash_file_path()
-        if not path.exists():
-            return None
-        return path.read_text().strip()
-
-    def write_hash(self, value):
+    def write_hash(self):
         if self.kind == "main":
-            path = self.get_hash_file_path()
-            path.write_text(value, encoding="utf-8")
+            files = self.get_all_golden_files()
+            current_hash = compute_hash_for_files(files)
+            path = self.file_path / "golden.hash"
+            path.write_text(current_hash, encoding="utf-8")
 
     def check_drift(self):
         if os.getenv("GOLDEN_REGEN"):
             return  # skip drift check during regeneration
 
-        files = self.get_all_golden_files()
-        current_hash = compute_hash_for_files(files)
-        stored_hash = self.load_stored_hash()
+        if self.kind != "main":
+            return
 
-        if stored_hash is None:
+        hash_file_path = self.file_path / "golden.hash"
+        if not hash_file_path.exists() or not hash_file_path.is_file():
             raise AssertionError(
                 f"Golden hash file missing for {self.test_case}. "
                 f"Run: pytest --regen-golden"
             )
+
+        files = self.get_all_golden_files()
+        current_hash = compute_hash_for_files(files)
+        stored_hash = hash_file_path.read_text().strip()
 
         if current_hash != stored_hash:
             raise AssertionError(
                 f"Golden files drift detected in {self.test_case}.\n"
                 f"Run: pytest --regen-golden"
             )
+
+    def run_main(self):
+        if self.kind != "main":
+            return
+        template = self.canonical_template
+
+        for inp, res in self.load_input_result_pairs():
+            sample = inp.data
+            exp_result = res.data
+
+            result = parse_textfsm_to_dicts(template, sample)
+            error = (f"mismatch parsed result (using canonical template) "
+                     f"vs expected result\n"
+                     f"  - {inp.path}\n"
+                     f"  - {res.path}")
+            assert result == exp_result, error
+
+        self.check_drift()
+
+    def run_integration(self):
+        if self.kind != "integration":
+            return
+        template = self.expected_template
+
+        for inp, res in self.load_input_result_pairs():
+            sample = inp.data
+            exp_result = res.data
+
+            result = parse_textfsm_to_dicts(template, sample)
+            error = (f"mismatch parsed result (using expected template) "
+                     f"vs expected result\n"
+                     f"  - {inp.path}\n"
+                     f"  - {res.path}")
+
+            assert result == exp_result, error
+
+    def run(self):
+        # Only regenerate when explicitly requested
+        if os.getenv("GOLDEN_REGEN"):
+            self.regenerate()
+            return
+
+        if self.kind == "main":
+            self.run_main()
+            return
+        self.run_integration()
+
+    def regenerate_main(self):
+        if self.kind != "main":
+            return
+
+        Builder = self.get_builder()
+        builder = Builder(user_data=self.canonical_sample, **self.parameters)
+
+        sample_path = str(self.file_path / "canonical" / "sample.txt")
+        error = (
+            f"Failed to use canonical sample to create {self.builder_type} builder\n"
+            f"  - {sample_path}"
+        )
+        assert bool(builder), error
+
+        snippet_path = self.file_path / "canonical" / "snippet.txt"
+        snippet_path.write_text(builder.snippet, encoding="utf-8")
+
+        template_path = self.file_path / "canonical" / "textfsm.template"
+        template_path.write_text(builder.template, encoding="utf-8")
+
+        result = parse_textfsm_to_dicts(builder.template, self.canonical_sample)
+
+        result_path = self.file_path / "canonical" / "result.json"
+        result_path.write_text(
+            json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
+
+        for inp, res in self.load_input_result_pairs():
+            sample = inp.data
+            result = parse_textfsm_to_dicts(builder.template, sample)
+            Path(res.path).write_text(
+                json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8"
+            )
+
+        self.generate_meta()
+        self.write_hash()
+
+    def regenerate_integration(self):
+        if self.kind != "integration":
+            return
+        self.run_integration()
+
+    def regenerate(self):
+
+        # Only regenerate when explicitly requested
+        if not os.getenv("GOLDEN_REGEN"):
+            return
+
+        if self.kind == "main":
+            self.regenerate_main()
+            return
+
+        self.regenerate_integration()
 
 
 def is_identical_templates(template1, template2):
@@ -426,6 +461,7 @@ def is_identical_templates(template1, template2):
                 started = True
                 parts.append(line)
         return "\n".join(parts)
+
     # --------------------------------------------------------------------------
     normalized_template1 = extract_template(template1)
     normalized_template2 = extract_template(template2)
