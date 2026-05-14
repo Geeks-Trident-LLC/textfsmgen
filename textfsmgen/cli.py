@@ -19,13 +19,18 @@ from textfsmgen.tester.cli import TesterCLI
     invoke_without_command=True,
     help="TextFSM Generator CLI. Use 'textfsmgen tester --help' for test utilities."
 )
-@click.version_option(__version__, "--version", "-V", message="textfsmgen %(version)s")
+@click.version_option(__version__, "--version", "-v", message="textfsmgen %(version)s")
 @click.pass_context
 def cli(ctx):
     """Top-level command-line interface for textfsmgen."""
     if ctx.invoked_subcommand is None:
         click.echo(ctx.get_help())
         ctx.exit(0)
+
+
+@cli.command(help="Show the textfsmgen version.")
+def version():
+    click.echo(f"textfsmgen {__version__}")
 
 
 @cli.command(
