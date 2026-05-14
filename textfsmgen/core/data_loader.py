@@ -387,8 +387,9 @@ class DataLoader:
         return path.read_text().strip()
 
     def write_hash(self, value):
-        path = self.get_hash_file_path()
-        path.write_text(value, encoding="utf-8")
+        if self.kind == "main":
+            path = self.get_hash_file_path()
+            path.write_text(value, encoding="utf-8")
 
     def check_drift(self):
         if os.getenv("GOLDEN_REGEN"):
