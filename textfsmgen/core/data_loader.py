@@ -240,11 +240,13 @@ class DataLoader:
     def generate_meta(self):
 
         # Only write meta when explicitly allowed
-        if not os.getenv("GOLDEN_WRITE_META") and not os.getenv("GOLDEN_REGEN"):
+        if (
+                not os.getenv("GOLDEN_WRITE_META") and
+                not os.getenv("GOLDEN_REGEN")
+        ):
             return
 
-        saved = self.meta.get("saved")
-        if not saved:
+        if self.kind != "main":
             return
 
         author = self.meta.get("author", "")
@@ -341,8 +343,7 @@ class DataLoader:
         # -----------------------------
         # 3. Rewrite meta.json
         # -----------------------------
-        meta_out = self.file_path / "meta.json"
-        write_json_atomic(meta_out, self.meta)
+        self.generate_meta()
 
         # -----------------------------
         # 4. Rewrite golden.hash
