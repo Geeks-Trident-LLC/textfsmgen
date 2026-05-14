@@ -1,5 +1,7 @@
 import pytest
 import os
+from pathlib import Path
+
 
 def pytest_addoption(parser):
     parser.addoption(
@@ -19,3 +21,22 @@ def pytest_configure(config):
 @pytest.fixture
 def regen_golden(request):
     return request.config.getoption("--regen-golden")
+
+
+def pytest_collection_modifyitems(config, items):
+    """
+    Skip all tests under tests/golden unless --regen-golden is passed.
+    """
+    regen = config.getoption("--regen-golden")
+
+    if regen:
+        # Running: pytest tests/golden --regen-golden
+        return
+
+    # Running: pytest tests/golden
+    skip_marker = pytest.mark.skip(reason="Golden tests require --regen-golden")
+
+    for item in items:
+        # Only skip tests inside tests/golden/
+        if Path("tests/golden") in Path(item.fspath).parents:
+            item.add_marker(skip_marker)
