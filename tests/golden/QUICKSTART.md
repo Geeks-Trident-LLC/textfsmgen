@@ -1,209 +1,232 @@
-# 🚀 Developer Quick‑Start Guide
+# 🚀 Golden Tests Quick‑Start
 
-This guide gives new contributors everything they need to start working with the project’s development workflow, golden tests, and regeneration rules — without reading the entire documentation set.
-
----
-
-## 🛠️ 1. Set Up Your Development Environment
-
-Clone the repository:
-
-```
-git clone <repo-url>
-cd textfsmgen
-```
-
-Install development dependencies:
-
-```
-pip install -r requirements-dev.txt
-```
-
-Run the full test suite:
-
-```
-pytest
-```
-
-Run only golden tests:
-
-```
-pytest tests/golden
-```
+This guide shows the **fastest way** to work with golden tests using the `textfsmgen tester` CLI.  
+If you only read one document, read this one.
 
 ---
 
-## 🧪 2. Running Golden Tests
+## 🧪 1. Run a Golden Test Case
 
-Golden tests validate:
+```
+textfsmgen tester run <case>
+```
+
+Example:
+
+```
+textfsmgen tester run tests/golden/integration/show_version
+```
+
+Runs the case non‑destructively and reports mismatches.
+
+---
+
+## ⚡ 2. Quicktest (fast validation)
+
+```
+textfsmgen tester quicktest <case>
+```
+
+Quickly checks:
 
 - template generation  
 - snippet parsing  
 - expected results  
-- drift detection  
 
-To run only golden tests:
+Useful during development.
 
-```
-pytest tests/golden
-```
+---
 
-If everything is correct, tests pass silently.
+## 🔄 3. Regenerate a Case
 
-If something changed unexpectedly, you’ll see:
+Regenerates all **derived** files for a single case:
 
 ```
-Golden files drift detected. Run: pytest --regen-golden
+textfsmgen tester regen <case>
+```
+
+Use this when:
+
+- manifest.json changes  
+- canonical/expected snippet or template changes  
+- input samples change  
+- expected behavior intentionally changes  
+
+---
+
+## 🆕 4. Create a New Case
+
+```
+textfsmgen tester new <case>
+```
+
+Creates a scaffolded case directory (auto‑detects main vs integration).
+
+---
+
+## 📥 5. Create a Case From Input Samples
+
+```
+textfsmgen tester new-from-input \
+    --builder <builder> \
+    --author <name> \
+    <case> <inputs>
+```
+
+Example:
+
+```
+textfsmgen tester new-from-input \
+    --builder ios_show_version \
+    --author tuyen \
+    tests/golden/integration/show_version \
+    samples/show_version/
 ```
 
 ---
 
-## 🔄 3. Regenerating Golden Files
+## 📑 6. Duplicate or Copy a Case
 
-Regeneration updates **derived** golden files:
-
-- `canonical/result.json`
-- `expected_results/*.json`
-- `meta.json`
-- `golden.hash`
-
-Run regeneration:
+Duplicate (auto‑named):
 
 ```
-pytest tests/golden --regen-golden
+textfsmgen tester duplicate <author> <src>
 ```
 
-This is required whenever:
+Copy (explicit destination):
 
-- you change `manifest.json`
-- you change canonical or expected templates/snippets
-- you add or modify input samples
-- you intentionally update expected behavior
+```
+textfsmgen tester copy <author> <src> <dst>
+```
 
 ---
 
-## 📘 4. Authoritative vs. Derived Files
-
-### Authoritative (human‑edited, never auto‑rewritten)
+## 🔍 7. Diff a Case
 
 ```
-manifest.json
-canonical/snippet.txt
-canonical/textfsm.template
-expected/snippet.txt
-expected/textfsm.template
+textfsmgen tester diff <case>
 ```
 
-These define the *intended* behavior of the golden test case.
-
-### Derived (machine‑generated, always rewritten during regen)
-
-```
-canonical/result.json
-expected_results/*.json
-meta.json
-golden.hash
-```
-
-These reflect the authoritative truth and must never be edited manually.
+Shows differences between expected and generated results.
 
 ---
 
-## 🧩 5. When You MUST Regenerate
-
-You must run:
+## 🛡️ 8. Detect Drift
 
 ```
-pytest tests/golden --regen-golden
+textfsmgen tester drift <case>
 ```
 
-after any of the following:
-
-- You modify `manifest.json`
-- You change canonical snippet or template
-- You change expected snippet or template
-- You add or modify input samples
-- You intentionally update expected behavior
-
-If you forget, drift detection will fail and remind you.
+Reports whether the case is out of sync with its golden state.
 
 ---
 
-## 🛡️ 6. Drift Detection
+## 🧭 9. Typical Workflow
 
-During normal test runs:
-
-```
-pytest tests/golden
-```
-
-drift detection verifies that all golden files match the stored `golden.hash`.
-
-If any file changes unexpectedly, you’ll see:
-
-```
-Golden hash mismatch. Run: pytest --regen-golden
-```
-
-This protects the repository from accidental edits.
-
-> Note: `meta.json` is excluded from hashing because it contains volatile fields.
+1. Edit template/snippet/manifest  
+2. Run quicktest  
+3. If behavior changed intentionally → regenerate  
+4. Commit authoritative + derived files  
+5. Open PR
 
 ---
 
-## 🧭 7. Typical Contributor Workflow
+# 🆚 **CLI vs Pytest Workflows (Side‑by‑Side Comparison)**
 
-Here’s the real‑world flow most developers follow:
+This table makes the distinction crystal clear for contributors.
 
-1. Make code changes  
-2. Run golden tests  
-   ```
-   pytest tests/golden
-   ```
-3. If drift is detected, inspect the diff  
-4. If the change is intentional, regenerate:  
-   ```
-   pytest tests/golden --regen-golden
-   ```
-5. Commit authoritative + derived files  
-6. Push and open a PR  
+| Purpose                        | **CLI Tester (`textfsmgen tester …`)**              | **Pytest (`pytest tests/golden …`)**              |
+|--------------------------------|-----------------------------------------------------|---------------------------------------------------|
+| **Primary Use**                | Day‑to‑day development                              | CI validation + regeneration                      |
+| **Who uses it**                | Developers editing cases                            | CI, reviewers, maintainers                        |
+| **Scope**                      | Single case or batch of cases                       | Entire golden suite                               |
+| **Typical Actions**            | run, quicktest, regen, diff, copy, duplicate, merge | validate, drift‑check, regenerate all             |
+| **Regeneration**               | Per‑case (`tester regen <case>`)                    | All cases (`pytest --regen-golden`)               |
+| **Drift Detection**            | Per‑case (`tester drift <case>`)                    | Automatic during test run                         |
+| **Speed**                      | Fast, targeted                                      | Slower, full suite                                |
+| **When to use**                | While developing or modifying a case                | Before commit, CI, or after authoritative changes |
+| **Edits authoritative files?** | Yes                                                 | Yes                                               |
+| **Edits derived files?**       | Yes (per case)                                      | Yes (all cases)                                   |
+| **Entry Point**                | `textfsmgen tester <action>`                        | `pytest tests/golden`                             |
 
-This keeps golden tests stable and meaningful.
-
----
-
-## 🎯 8. Adding a New Golden Test Case
-
-1. Create a new directory under `tests/golden/<case-name>/`
-2. Add:
-   - `manifest.json`
-   - `canonical/snippet.txt`
-   - `canonical/textfsm.template`
-   - `inputs/*.txt`
-3. Run:
-   ```
-   pytest tests/golden --regen-golden
-   ```
-4. Commit everything
-
-Done.
+### **Mental Model**
+- **CLI = your daily toolbelt**  
+- **Pytest = the final judge**  
 
 ---
 
-## 🧹 9. Common Mistakes to Avoid
+# 🔁 **Quickstart Flowchart (Developer Workflow)**
 
-- ❌ Editing derived files manually  
-- ❌ Forgetting to regenerate after manifest changes  
-- ❌ Running regen when you didn’t intend to update behavior  
-- ❌ Committing only authoritative files without derived files  
-- ❌ Editing meta.json manually  
+A compact, visual flow that matches your CLI Quickstart.
+
+```
+                   ┌──────────────────────────┐
+                   │   Start Working on Case  │
+                   └─────────────┬────────────┘
+                                 │
+                                 ▼
+                     ┌────────────────────┐
+                     │ Edit authoritative │
+                     │ files (manifest,   │
+                     │ snippet, template, │
+                     │ inputs)            │
+                     └─────────────┬──────┘
+                                   │
+                                   ▼
+                     ┌────────────────────┐
+                     │ Run quicktest      │
+                     │ textfsmgen tester  │
+                     │ quicktest <case>   │
+                     └─────────────┬──────┘
+                                   │
+                     ┌─────────────▼──────────────┐
+                     │  Quicktest passes?         │
+                     └─────────────┬──────────────┘
+                                   │Yes
+                                   │
+                                   ▼
+                     ┌──────────────────────────┐
+                     │   Continue development   │
+                     └─────────────┬────────────┘
+                                   │No
+                                   ▼
+                     ┌──────────────────────────┐
+                     │ Inspect diff             │
+                     │ textfsmgen tester diff   │
+                     │ <case>                   │
+                     └─────────────┬────────────┘
+                                   │
+                     ┌─────────────▼──────────────┐
+                     │  Change intentional?       │
+                     └─────────────┬──────────────┘
+                                   │Yes
+                                   │
+                                   ▼
+                     ┌──────────────────────────┐
+                     │ Regenerate case          │
+                     │ textfsmgen tester regen  │
+                     │ <case>                   │
+                     └─────────────┬────────────┘
+                                   │
+                                   ▼
+                     ┌──────────────────────────┐
+                     │ Commit authoritative +   │
+                     │ derived files            │
+                     └─────────────┬────────────┘
+                                   │No
+                                   ▼
+                     ┌──────────────────────────┐
+                     │ Fix authoritative files  │
+                     └─────────────┬────────────┘
+                                   │
+                                   ▼
+                     (loop back to quicktest)
+```
 
 ---
 
-## 🏁 Summary
+## 📝 Summary
 
-If you remember only one rule:
-
-> **If you change manifest.json or any authoritative file, you MUST regenerate golden files.**
-
-Everything else flows from that.
+- Use the **CLI** for all day‑to‑day golden test work  
+- Use **pytest** only for CI and full‑suite validation  
+- If you change authoritative files, run:

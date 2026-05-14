@@ -80,7 +80,6 @@ def run_main_case(data_info: DataLoader) -> None:
         )
         assert bool(status), status
 
-    breakpoint()
     # write meta.json
     data_info.generate_meta()
 

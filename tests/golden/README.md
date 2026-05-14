@@ -1,213 +1,142 @@
-# 🧩 Golden Test Workflow: Manifest Changes & Regeneration
+# 🧩 Golden Tests
 
-Golden tests in this project rely on a strict separation between:
+Golden tests use **Golden Master Testing**:  
+you freeze a known‑good output (“the golden master”), and every future run must match it exactly.
 
-- **Authoritative files** — the human‑approved truth  
-- **Derived files** — machine‑generated outputs that depend on the authoritative truth  
+This protects TextFSM parsing from silent regressions, template drift, and accidental edits.
 
-Understanding this separation is essential for anyone modifying golden test cases.
+Golden tests matter because they guarantee:
+
+- stable parsing across real device outputs  
+- safe refactoring of templates and builders  
+- deterministic CI behavior  
+- immediate detection of unintended changes  
+
+If the golden output changes, it must be **intentional** and **regenerated**.
 
 ---
 
-## 📘 Authoritative Files (Never auto‑rewritten)
+# ⭐ The Core Mental Model
 
-These files define the *intended* behavior of a golden test case:
+Golden tests separate files into two groups:
+
+## **1. Authoritative Files (human‑owned)**  
+These define the *intended* behavior of the test case:
 
 ```
 manifest.json
+canonical/sample.txt
 canonical/snippet.txt
 canonical/textfsm.template
+canonical/result.json
 expected/snippet.txt
 expected/textfsm.template
 ```
 
-They are written or edited **only by humans** (test authors, reviewers, or CLI testers).
-
-These files represent the *correct* template, snippet, and configuration for the test case.
-
-> If any authoritative file changes, the meaning of the golden test changes.
+You **may edit** these.  
+Changing any of them **changes the meaning** of the test.
 
 ---
 
-## 📗 Derived Files (Always regenerated)
-
-These files are produced automatically from authoritative files:
+## **2. Derived Files (machine‑generated)**  
+These must always match the authoritative truth:
 
 ```
-canonical/result.json
 expected_results/*.json
 meta.json
 golden.hash
 ```
 
-They are rewritten during regeneration and must never be edited manually.
+You **must not edit** these manually.  
+They are rewritten during regeneration.
 
 ---
 
-## 🔄 When You Must Regenerate
+# 🔄 When You Must Regenerate
 
-If **any authoritative file changes**, you must regenerate the derived files.
+Regenerate whenever any authoritative file changes:
 
-This includes:
+- manifest.json  
+- builder type or parameters  
+- canonical snippet/template  
+- expected snippet/template  
+- input samples  
 
-- Editing `manifest.json`
-- Changing `builder_type`
-- Changing `parameters`
-- Updating canonical snippet or template
-- Updating expected snippet or template
-- Adding or modifying input samples
-
-### ✔ Required command:
+### ✔ Command (the one you must remember)
 
 ```
 pytest tests/golden --regen-golden
 ```
 
-This command:
+This rewrites:
 
-- Recomputes canonical result.json  
-- Recomputes expected_results/*.json  
-- Rewrites meta.json  
-- Rewrites golden.hash  
-- Ensures all derived files match the authoritative truth  
+- canonical/result.json  
+- expected_results/*.json  
+- meta.json  
+- golden.hash  
 
----
-
-## 🧪 Why Regeneration Is Required After Manifest Changes
-
-`manifest.json` is authoritative configuration.  
-It controls:
-
-- Which builder is used  
-- How templates are generated  
-- How inputs are parsed  
-- How expected_results should look  
-
-If `manifest.json` changes, the golden test’s behavior changes.
-
-Regeneration ensures:
-
-- expected_results match the new configuration  
-- canonical result.json is updated  
-- golden.hash reflects the new state  
-- drift detection remains accurate  
-
-Without regeneration, tests will fail or drift detection will trigger false positives.
+and brings the golden test back into a stable state.
 
 ---
 
-## 🛡️ Drift Detection
+# 🛡️ Drift Detection
 
-During normal test runs:
+Normal test runs:
 
 ```
 pytest tests/golden
 ```
 
-drift detection verifies that **all authoritative and derived files** match the stored `golden.hash`.
+verify that authoritative + derived files match `golden.hash`.
 
-If any file changes unexpectedly, you’ll see:
+If anything drifts:
 
 ```
 Golden files drift detected. Run: pytest --regen-golden
 ```
 
-This protects the repository from accidental edits.
+This prevents accidental edits from entering the repository.
 
-> Note: `meta.json` is intentionally excluded from hashing because it contains volatile fields (timestamps, git commit, OS info).
+(`meta.json` is excluded from hashing because it contains volatile fields.)
 
 ---
 
-## 📝 Summary for Contributors
+# 📝 Contributor Summary
 
-- ✔ You may edit `manifest.json`  
-- ✔ You may edit canonical/expected snippet or template  
+- ✔ You may edit authoritative files  
 - ✔ You may add or modify input samples  
-- ❗ After any such change, you **must** run:
+- ❗ After any such change, run:
 
 ```
 pytest tests/golden --regen-golden
 ```
 
-- ✔ Never manually edit derived files  
-- ✔ Drift detection ensures golden files stay consistent  
+- ✔ Never edit derived files  
+- ✔ Drift detection protects the repo  
 - ✔ Normal test runs validate correctness  
 
-
 ---
 
-# 🧩 Golden File Lifecycle Diagram
+# 🔍 Golden Test Lifecycle (Compact)
 
 ```
-                         ┌──────────────────────────┐
-                         │      Author edits:       │
-                         │  - manifest.json         │
-                         │  - canonical snippet     │
-                         │  - canonical template    │
-                         │  - expected snippet      │
-                         │  - expected template     │
-                         └─────────────┬────────────┘
-                                       │
-                                       ▼
-                         ┌──────────────────────────┐
-                         │   Authoritative Files    │
-                         │  (Human-approved truth)  │
-                         └─────────────┬────────────┘
-                                       │
-                                       │  Normal test run
-                                       │  (pytest tests/golden)
-                                       ▼
-                         ┌──────────────────────────┐
-                         │   Golden Test Runner     │
-                         │  - Builds template       │
-                         │  - Compares snippet      │
-                         │  - Compares template     │
-                         │  - Parses inputs         │
-                         │  - Compares results      │
-                         │  - Checks drift          │
-                         └─────────────┬────────────┘
-                                       │
-                                       │  If mismatch or drift:
-                                       │  “Run: pytest --regen-golden”
-                                       ▼
-                         ┌─────────────────────────────┐
-                         │   Regeneration Mode         │
-                         │  (pytest --regen-golden)    │
-                         │                             │
-                         │  Rewrites ONLY:             │
-                         │   - canonical/result.json   │
-                         │   - expected_results/*.json |
-                         │   - meta.json               │
-                         │   - golden.hash             │
-                         │                             │
-                         │  NEVER rewrites:            │
-                         │   - manifest.json           │
-                         │   - canonical snippet       │
-                         │   - canonical template      │
-                         │   - expected snippet        │
-                         │   - expected template       │
-                         └─────────────┬───────────────┘
-                                       │
-                                       ▼
-                         ┌──────────────────────────┐
-                         │   Derived Golden Files   │
-                         │  (Machine-generated)     │
-                         └─────────────┬────────────┘
-                                       │
-                                       │  Drift detection hashes
-                                       ▼
-                         ┌───────────────────────────┐
-                         │       golden.hash         │
-                         │  (Hash of authoritative + │
-                         │   derived files, except   │
-                         │   meta.json)              │
-                         └─────────────┬─────────────┘
-                                       │
-                                       ▼
-                         ┌──────────────────────────┐
-                         │   Stable Golden State    │
-                         │  (Ready for CI + review) │
-                         └──────────────────────────┘
+Author edits authoritative files
+        │
+        ▼
+pytest tests/golden
+  - parse inputs
+  - compare results
+  - check drift
+        │
+   mismatch or drift
+        ▼
+pytest tests/golden --regen-golden
+  rewrites:
+    - canonical/result.json
+    - expected_results/*.json
+    - meta.json
+    - golden.hash
+        │
+        ▼
+Stable Golden State
 ```
-
----
