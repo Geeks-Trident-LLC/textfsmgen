@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "textfsmgen"
 version = "0.6.3"
-description = "TextFSM Generator is a low‑code, no‑code Python library that transforms simple, readable snippets into TextFSM templates, reducing manual effort and accelerating automation development."
+description = "TextFSM Generator transforms plain‑English snippets into production‑ready TextFSM templates using a low‑code, no‑code workflow and built‑in Golden Master Testing, empowering both professional and citizen developers to create reliable, reusable parsing logic."
 readme = "README.md"
 license = "BSD-3-Clause"
 requires-python = ">=3.9"
@@ -63,13 +63,14 @@ classifiers = [
 
 [project.urls]
 Documentation = "https://github.com/Geeks-Trident-LLC/textfsmgen/wiki"
-Source = "https://github.com/Geeks-Trident-LLC/textfsmgen"
-Tracker = "https://github.com/Geeks-Trident-LLC/textfsmgen/issues"
+Repository = "https://github.com/Geeks-Trident-LLC/textfsmgen"
+Issues = "https://github.com/Geeks-Trident-LLC/textfsmgen/issues"
 
 [project.scripts]
 # textfsmgen = "textfsmgen.main:execute"
 # textfsmgen = "textfsmgen.cli:main"
-textfsmgen = "textfsmgen.cli:main"
+# textfsmgen = "textfsmgen.cli:main"
+textfsmgen = "textfsmgen.cli:cli"
 textfsmgen-gui = "textfsmgen.application:execute"
 textfsmgen-app = "textfsmgen.application:execute"
 textfsm-app = "textfsmgen.application:execute"

@@ -7,86 +7,31 @@ This dispatcher handles commands such as:
     textfsmgen tester regen <case>
 
 All tester subcommands are forwarded to TesterCLI with correct
-argument forwarding using argparse.REMAINDER.
+argument forwarding.
 """
 
-from __future__ import annotations
-
-import argparse
-
+import click
+from textfsmgen import __version__
 from textfsmgen.tester.cli import TesterCLI
 
 
-class Cli:
-    """
-    Top-level command-line interface for textfsmgen.
-    """
-
-    # ------------------------------------------------------------------
-    # Entry point
-    # ------------------------------------------------------------------
-    def run(self) -> int:
-        parser = self._build_parser()
-        args = parser.parse_args()
-
-        if not hasattr(args, "func"):
-            parser.print_help()
-            return 1
-
-        return args.func(args)
-
-    # ------------------------------------------------------------------
-    # Parser construction
-    # ------------------------------------------------------------------
-    def _build_parser(self) -> argparse.ArgumentParser:
-        parser = argparse.ArgumentParser(
-            prog="textfsmgen",
-            description="TextFSM Generator CLI",
-        )
-
-        subparsers = parser.add_subparsers(
-            dest="command",
-            metavar="<command>",
-        )
-
-        # --------------------------------------------------------------
-        # tester
-        # --------------------------------------------------------------
-        tester_parser = subparsers.add_parser(
-            "tester",
-            help="Golden test utilities",
-            description="Golden test utilities",
-        )
-
-        # Capture everything after "tester"
-        tester_parser.add_argument(
-            "remaining",
-            nargs=argparse.REMAINDER,
-            help=argparse.SUPPRESS,
-        )
-
-        tester_parser.set_defaults(func=self._dispatch_tester)
-
-        return parser
-
-    # ------------------------------------------------------------------
-    # Dispatchers
-    # ------------------------------------------------------------------
-    @staticmethod
-    def _dispatch_tester(args: argparse.Namespace) -> int:
-        """
-        Forward all remaining arguments to TesterCLI.
-        Example:
-            textfsmgen tester run tests/main/demo
-        becomes:
-            ["run", "tests/main/demo"]
-        """
-        tester_cli = TesterCLI()
-        return tester_cli.run_from_argv(args.remaining)
+@click.group(
+    invoke_without_command=True,
+    help="TextFSM Generator CLI. Use 'textfsmgen tester --help' for test utilities."
+)
+@click.version_option(__version__, "--version", "-V", message="textfsmgen %(version)s")
+@click.pass_context
+def cli(ctx):
+    """Top-level command-line interface for textfsmgen."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+        ctx.exit(0)
 
 
-# ----------------------------------------------------------------------
-# Script entry point
-# ----------------------------------------------------------------------
-def main() -> int:
-    return Cli().run()
+@cli.command(
+    help="Golden Master Testing utilities. All arguments after 'tester' are forwarded."
+)
+@click.argument("remaining", nargs=-1)
+def tester(remaining):
+    tester_cli = TesterCLI()
+    return tester_cli.run_from_argv(list(remaining))

@@ -28,4 +28,5 @@ __all__ = [
     "verify_textfsm",
     "parse_textfsm_to_dicts",
     "version",
+    "__version__",
 ]
