@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "textfsmgen"
-version = "0.6.2"
+version = "0.6.3"
 description = "TextFSM Generator is a low‑code, no‑code Python library that transforms simple, readable snippets into TextFSM templates, reducing manual effort and accelerating automation development."
 readme = "README.md"
 license = "BSD-3-Clause"
