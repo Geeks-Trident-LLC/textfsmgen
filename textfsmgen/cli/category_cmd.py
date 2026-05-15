@@ -2,7 +2,6 @@
 
 import json
 from pathlib import Path
-from typing import Any
 
 import click
 
@@ -492,7 +491,7 @@ def show_outputs(builder, sample, show_spec):
     return StatusString(content, status=(reason == ""), reason=reason or None)
 
 
-def dry_run_save(builder, sample, save_spec):
+def dry_run_save(builder, sample, save_spec):   # noqa
     """
     Simulate save actions without writing files.
     Returns list[StatusString].

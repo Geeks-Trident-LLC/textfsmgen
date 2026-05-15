@@ -2,6 +2,35 @@ import pytest
 import os
 from pathlib import Path
 
+from click.testing import CliRunner
+
+
+@pytest.fixture
+def runner():
+    return CliRunner()
+
+
+@pytest.fixture
+def tmpfile(tmp_path):
+    def _make(name, content=""):
+        p = tmp_path / name
+        p.write_text(content, encoding="utf-8")
+        return p
+    return _make
+
+
+@pytest.fixture
+def fake_builder():
+    class FakeBuilder:
+        snippet = "abc"
+        template = "Value {{ key }}"
+
+        def __init__(self, user_data=None, **params):
+            self.user_data = user_data
+            self.params = params
+
+    return FakeBuilder
+
 
 def pytest_addoption(parser):
     parser.addoption(
