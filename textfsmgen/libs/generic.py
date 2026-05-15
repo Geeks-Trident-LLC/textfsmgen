@@ -141,6 +141,7 @@ class StatusString(str):
             kwargs.pop(key, None)
 
         obj = super().__new__(cls, text, **kwargs)
+        obj.raw = text
         obj.status = str(status).strip().lower() in cls._ALLOWED_TRUE
         obj.error = str(status).strip().lower()
         obj.reason = str(reason)
