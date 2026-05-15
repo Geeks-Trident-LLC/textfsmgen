@@ -10,10 +10,11 @@ from typing import Optional
 import subprocess
 import re
 import platform
+import shlex
+
 
 from . import ECODE
 from .generic import DotObject
-from .decorators import try_and_catch
 
 
 class PackageInfo:
@@ -78,29 +79,101 @@ class PackageInfo:
                 self._version = m.group("version")
 
 
-@try_and_catch()
 def execute_command(cmdline: str) -> DotObject:
     """
-    Run a shell command and return its result.
-
-    Parameters
-    ----------
-    cmdline : str
-        Command line string to execute.
-
-    Returns
-    -------
-    DotObject
-        Object with:
-        - output (str): Captured stdout/stderr.
-        - exit_code (int): The exit status code returned by the shell.
-        - is_success (bool): True if exit_code == ECODE.SUCCESS.
+    Run a shell command in the most natural way possible.
+    Automatically detects PowerShell pipelines and reruns them safely.
     """
-    exit_code, output = subprocess.getstatusoutput(cmdline)
+
+    is_windows = platform.system() == "Windows"
+
+    # ------------------------------------------------------------
+    # 1. Try running normally (cmd.exe or bash/zsh)
+    # ------------------------------------------------------------
+    proc = subprocess.run(
+        cmdline,
+        shell=True,
+        capture_output=True,
+        text=True
+    )
+
+    if proc.returncode == ECODE.SUCCESS or not is_windows:
+        return DotObject(
+            output=(proc.stdout or "") + (proc.stderr or ""),
+            exit_code=proc.returncode,
+            is_success=proc.returncode == ECODE.SUCCESS,
+        )
+
+    # ------------------------------------------------------------
+    # 2. If on Windows and command looks like PowerShell syntax,
+    #    run it through PowerShell safely.
+    # ------------------------------------------------------------
+    if _looks_like_powershell(cmdline):
+        return _run_powershell_block(cmdline)
+
+    # ------------------------------------------------------------
+    # 3. If user explicitly typed "powershell ..." or "pwsh ...",
+    #    run it directly with shell=False.
+    # ------------------------------------------------------------
+    if cmdline.strip().lower().startswith(("powershell ", "pwsh ")):
+        return _run_explicit_powershell(cmdline)
+
+    # ------------------------------------------------------------
+    # 4. Fallback: return the failed result
+    # ------------------------------------------------------------
     return DotObject(
-        output=output,
-        exit_code=exit_code,
-        is_success=exit_code == ECODE.SUCCESS,
+        output=(proc.stdout or "") + (proc.stderr or ""),
+        exit_code=proc.returncode,
+        is_success=False,
+    )
+
+
+def _looks_like_powershell(cmd: str) -> bool:
+    """Heuristics to detect PowerShell pipelines."""
+    ps_keywords = [
+        "|", "select-object", "where-object", "format-",
+        "get-", "set-", "new-", "remove-", "& {", ";"
+    ]
+    cmd_lower = cmd.lower()
+    return any(k in cmd_lower for k in ps_keywords)
+
+
+def _run_powershell_block(command: str) -> DotObject:
+    """Run a PowerShell pipeline using a script block."""
+    ps_command = f"& {{ {command} }}"
+    for ps in ("powershell", "pwsh"):
+        proc = subprocess.run(
+            [ps, "-command", ps_command],
+            shell=False,
+            capture_output=True,
+            text=True
+        )
+        if proc.returncode == ECODE.SUCCESS:
+            return DotObject(
+                output=(proc.stdout or "") + (proc.stderr or ""),
+                exit_code=proc.returncode,
+                is_success=True,
+            )
+    return DotObject(
+        output=(proc.stdout or "") + (proc.stderr or ""),
+        exit_code=proc.returncode,
+        is_success=False,
+    )
+
+
+def _run_explicit_powershell(cmdline: str) -> DotObject:
+    """Run commands that already start with powershell/pwsh."""
+    parts = shlex.split(cmdline)
+    proc = subprocess.run(
+        parts,
+        shell=False,
+        capture_output=True,
+        text=True
+    )
+    return DotObject(
+        output=(proc.stdout or "") + (proc.stderr or ""),
+        exit_code=proc.returncode,
+        is_success=proc.returncode == ECODE.SUCCESS,
     )
 
 
