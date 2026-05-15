@@ -804,6 +804,23 @@ def wrap_text_block(text: str, limit: int = 76, subject: str = "") -> str:
     return "\n".join(p + w for p, w in zip(prefixes, wrapped))
 
 
+def render_text_block(text: str, subject: str = "") -> str:
+    if not subject:
+        return text
+
+    lines = []
+    spacers = " " * len(subject)
+    for line in text.splitlines(keepends=True):
+        if not lines:
+            lines.append(f"{subject} {line}")
+            continue
+        lines.append(f"{spacers} {line}")
+
+    return "".join(lines)
+
+
+
+
 def center_fixed_width(text: str) -> str:
     """Return text centered within a fixed width of 40 or 80 characters."""
     txt = text.decode("utf-8") if isinstance(text, bytes) else str(text)

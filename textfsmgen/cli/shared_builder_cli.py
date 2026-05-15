@@ -7,6 +7,7 @@ from textfsmgen.libs.generic import StatusString, emit_status
 from textfsmgen.libs.common import parse_textfsm_to_dicts
 from textfsmgen.libs import shell
 from textfsmgen.libs.utils import get_data_as_tabular
+from textfsmgen.libs.text import render_text_block
 
 
 # ------------------------------------------------------------
@@ -112,15 +113,45 @@ def save_outputs(builder, sample, save_spec):
     items = [x.strip() for x in save_spec.split(",") if x.strip()]
 
     for item in items:
+        # Validate format
         if "-" not in item:
             results.append(StatusString(
-                f"Invalid save format: {item}",
-                status=False, reason="error"))
+                f"Invalid save format: {item}\n"
+                "Save format must be: <type>-<filename>\n"
+                "  <type> may be: snippet, template, json-snippet, json-template, result\n"
+                "\n"
+                "Examples:\n"
+                "  snippet-out.txt             → write builder.snippet to out.txt\n"
+                "  template-template.textfsm   → write builder.template to template.textfsm\n"
+                "  result-output.json          → write parsed result to output.json\n"
+                "  json-snippet-snippet.json   → write {\"snippet\": ...} to snippet.json\n"
+                "  json-template-template.json → write {\"template\": ...} to template.json\n",
+                status=False,
+                reason="error"
+            ))
             continue
 
+        # Handle json-snippet
+        if item.lower().startswith("json-snippet-"):
+            filename = item[len("json-snippet-"):].strip()
+            content = json.dumps({"snippet": getattr(builder, "snippet", None)},
+                                 indent=2, ensure_ascii=False)
+            results.append(_write_file(filename, content))
+            continue
+
+        # Handle json-template
+        if item.lower().startswith("json-template-"):
+            filename = item[len("json-template-"):].strip()
+            content = json.dumps({"template": getattr(builder, "template", None)},
+                                 indent=2, ensure_ascii=False)
+            results.append(_write_file(filename, content))
+            continue
+
+        # Normal split for snippet/template/result
         t, filename = item.split("-", 1)
         t, filename = t.strip(), filename.strip()
 
+        # snippet / template
         if t in ("snippet", "template"):
             content = getattr(builder, t, None)
             if not content:
@@ -131,18 +162,7 @@ def save_outputs(builder, sample, save_spec):
             results.append(_write_file(filename, content))
             continue
 
-        if t == "json-snippet":
-            content = json.dumps({"snippet": builder.snippet},
-                                 indent=2, ensure_ascii=False)
-            results.append(_write_file(filename, content))
-            continue
-
-        if t == "json-template":
-            content = json.dumps({"template": builder.template},
-                                 indent=2, ensure_ascii=False)
-            results.append(_write_file(filename, content))
-            continue
-
+        # result
         if t == "result":
             parsed = parse_textfsm_to_dicts(builder.template, sample)
             content = json.dumps(parsed, indent=2, ensure_ascii=False)
@@ -153,9 +173,11 @@ def save_outputs(builder, sample, save_spec):
             results.append(_write_file(filename, content))
             continue
 
+        # Unknown type
         results.append(StatusString(
             f"Unknown save type '{t}'",
-            status=False, reason="error"))
+            status=False, reason="error"
+        ))
 
     return results
 
@@ -197,8 +219,8 @@ def show_outputs(builder, sample, show_spec):
 
     def parse_result():
         try:
-            parsed = parse_textfsm_to_dicts(builder.template, sample)
-            return parsed, None
+            parsed_ = parse_textfsm_to_dicts(builder.template, sample)
+            return parsed_, None
         except Exception as exc:
             return None, str(exc)
 
@@ -246,29 +268,57 @@ def show_outputs(builder, sample, show_spec):
 # ------------------------------------------------------------
 # Dry-run save
 # ------------------------------------------------------------
-def dry_run_save(builder, sample, save_spec):
+def dry_run_save(builder, sample, save_spec):   # noqa
     results = []
     items = [x.strip() for x in save_spec.split(",") if x.strip()]
 
     for item in items:
         if "-" not in item:
             results.append(StatusString(
-                f"[DRY-RUN] Invalid save format: {item}",
-                status=False, reason="error"))
+                f"[DRY-RUN] Invalid save format: {item}\n"
+                "Save format must be: <type>-<filename>\n"
+                "  <type> may be: snippet, template, json-snippet, json-template, result\n"
+                "\n"
+                "Examples:\n"
+                "  snippet-out.txt             → write builder.snippet to out.txt\n"
+                "  template-template.textfsm   → write builder.template to template.textfsm\n"
+                "  result-output.json          → write parsed result to output.json\n"
+                '  json-snippet-snippet.json   → write {"snippet": builder.snippet} to snippet.json\n'
+                '  json-template-template.json → write {"template": builder.template} to template.json\n',
+                status=False,
+                reason=""
+            ))
+            continue
+
+        # Handle json-snippet
+        if item.lower().startswith("json-snippet-"):
+            filename = item[len("json-snippet-"):].strip()
+            results.append(StatusString(
+                '[DRY-RUN] Would save {"snippet": builder.snippet} → ' + filename,
+                status=True))
+            continue
+
+        # Handle json-template
+        if item.lower().startswith("json-template-"):
+            filename = item[len("json-template-"):].strip()
+            results.append(StatusString(
+                '[DRY-RUN] Would save {"template": builder.template} → ' + filename,
+                status=True))
             continue
 
         t, filename = item.split("-", 1)
         t, filename = t.strip(), filename.strip()
 
-        if t in ("snippet", "template", "json-snippet", "json-template", "result"):
+        if t in ("snippet", "template", "result"):
+            case = "parsed result" if t == "result" else f"builder.{t}"
             results.append(StatusString(
-                f"[DRY-RUN] Would save {t} → {filename}",
+                f"[DRY-RUN] Would save {case} → {filename}",
                 status=True))
             continue
 
         results.append(StatusString(
             f"[DRY-RUN] Unknown save type '{t}'",
-            status=False, reason="error"))
+            status=False, reason=""))
 
     return results
 
@@ -283,7 +333,13 @@ def debug_print(input_file, cmd, params, config, sample, save, show):
     click.echo(f"input_file     = {input_file!r}")
     click.echo(f"command        = {cmd!r}")
     click.echo(f"params         = {params}")
-    click.echo(f"config         = {config}")
+    params_txt = json.dumps(params, indent=2, ensure_ascii=False)
+    click.echo(render_text_block(params_txt, subject="params         ="))
+    if isinstance(config, dict):
+        config_txt = json.dumps(config, indent=2, ensure_ascii=False)
+        click.echo(render_text_block(config_txt, subject="config         ="))
+    else:
+        click.echo(f"config         = {config}")
     click.echo(f"save           = {save!r}")
     click.echo(f"show           = {show!r}")
     click.echo("==================")
