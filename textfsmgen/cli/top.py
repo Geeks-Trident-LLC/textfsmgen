@@ -31,6 +31,9 @@ def cli(ctx):
 from . import category_cmd
 category_cmd.register(cli)
 
+from . import tabular_cmd
+tabular_cmd.register(cli)
+
 
 @cli.command(help="Show the textfsmgen version.")
 def version():

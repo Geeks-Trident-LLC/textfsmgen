@@ -1083,9 +1083,9 @@ class ParsedTable:
     def header_span(self, row_pos):
         """Return start/stop indices of meaningful header lines above row_pos."""
         width_limit = (
-            len(self.reference_row.line)
+            len(self.reference_row.line.rstrip())
             if self.reference_row
-            else max(len(line) for line in self.lines)
+            else max(len(line.rstrip()) for line in self.lines[: row_pos + 1])
         ) or 80
 
         collected = []
