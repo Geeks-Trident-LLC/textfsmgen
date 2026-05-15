@@ -2,6 +2,8 @@
 
 import json
 from pathlib import Path
+from typing import Any
+
 import click
 
 from textfsmgen.libs.generic import StatusString, emit_status
@@ -16,6 +18,181 @@ from textfsmgen.libs.utils import get_data_as_tabular
 # ------------------------------------------------------------
 def register(cli):
     cli.add_command(category)
+
+
+# ------------------------------------------------------------
+# Main CLI Command
+# ------------------------------------------------------------
+@click.command(
+    help="Category builder for snippet/template/result generation.",
+    context_settings=dict(help_option_names=["-h", "--help"])
+)
+@click.option(
+    "--input-file",
+    default=None,
+    type=click.Path(exists=True),
+    help="Input filename (default: empty)."
+)
+@click.option(
+    "--command",
+    "cmd",
+    default="",
+    help="Shell command to generate real-world sample (default: empty)."
+)
+@click.option(
+    "--count",
+    default=1,
+    type=int,
+    show_default=True,
+    help="Number of category pairs to generate."
+)
+@click.option(
+    "--separator",
+    default=":",
+    show_default=True,
+    help="Separator between key/value pairs."
+)
+@click.option(
+    "--starting-from",
+    default="",
+    help="Starting-from marker (default: empty)."
+)
+@click.option(
+    "--ending-at",
+    default="",
+    help="Ending-at marker (default: empty)."
+)
+@click.option(
+    "--replacing-rules",
+    default="",
+    help="Replacing rules (string or JSON-like). Default empty."
+)
+@click.option(
+    "--show",
+    default="",
+    help="Show output: snippet, template, result."
+)
+@click.option(
+    "--save",
+    default="",
+    help="Save output to a file (default empty)."
+)
+@click.option(
+    "--config",
+    default=None,
+    type=click.Path(exists=True),
+    help="JSON config file (optional)."
+)
+@click.option(
+    "--debug",
+    is_flag=True,
+    default=False,
+    help="Print resolved parameters and input metadata."
+)
+@click.pass_context
+def category(
+    ctx,
+    input_file,
+    cmd,
+    count,
+    separator,
+    starting_from,
+    ending_at,
+    replacing_rules,
+    show,
+    save,
+    config,
+    debug,
+):
+    if not input_file and not cmd and config is None:
+        click.echo(ctx.get_help())
+        return 0
+
+    config_data = {}
+    if config:
+        status = validate_config(config)
+        if not status:
+            emit_status(status)
+            return 1
+        config_data = status.raw or {}
+
+    input_file_ = merge(input_file, config_data, "input_file", "")
+    cmd_ = merge(cmd, config_data, "command", "")
+    save_ = merge(save, config_data, "save", "")
+    show_ = merge(show, config_data, "show", "")
+
+    count_ = merge(count, config_data, "count", 1)
+    separator_ = merge(separator, config_data, "separator", ":")
+    starting_from_ = merge(starting_from, config_data, "starting_from", None)
+    ending_at_ = merge(ending_at, config_data, "ending_at", None)
+    replacing_rules_ = merge(replacing_rules, config_data, "replacing_rules", None)
+
+    params = {
+        "count": abs(count_) or 1,
+        "separator": separator_ or ":",
+        "starting_from": starting_from_ or None,
+        "ending_at": ending_at_ or None,
+        "replacing_rules": replacing_rules_ or None,
+    }
+
+    if not input_file_ and not cmd_:
+        emit_status(
+            StatusString(
+                "Either input_file or command must be provided",
+                status=False,
+                reason="warning",
+            )
+        )
+        return 1
+
+    sample = load_sample_from_input_or_cmd(input_file_, cmd_)
+    if not sample:
+        emit_status(sample)
+        return 1
+
+    if debug:
+        debug_print(cmd_, config, input_file_, params, sample, save_, show_)
+
+    builder = CategoryTemplateBuilder(user_data=sample, **params)
+    if not builder:
+        ref = input_file_ or cmd_
+        status = StatusString(
+            (
+                "Cannot create category builder from sample (reference: {!r})\n"
+                "===========================================\n"
+                "{}\n"
+            ).format(ref, sample),
+            status=False,
+            reason="warning",
+        )
+        emit_status(status)
+        return 1
+
+    if save_:
+        statuses = save_outputs(builder, sample, save_)
+        exit_code = 0
+        for st in statuses:
+            emit_status(st)
+            if not st:
+                exit_code = 1
+        return exit_code
+
+    status = show_outputs(builder, sample, show_)
+    emit_status(status)
+    return 0 if status else 1
+
+
+def debug_print(cmd_, config, input_file_, params, sample, save_, show_):
+    click.echo(f"[INFO] Loaded sample from: {input_file_ or cmd_}")
+    click.echo(f"[INFO] Sample size: {len(sample)} characters")
+    click.echo("=== DEBUG INFO ===")
+    click.echo(f"input_file     = {input_file_!r}")
+    click.echo(f"command        = {cmd_!r}")
+    click.echo(f"params         = {params}")
+    click.echo(f"config         = {config}")
+    click.echo(f"save           = {save_!r}")
+    click.echo(f"show           = {show_!r}")
+    click.echo("==================")
 
 
 # ------------------------------------------------------------
@@ -302,154 +479,3 @@ def show_outputs(builder, sample, show_spec):
     content = "\n======\n".join(parts)
     return StatusString(content, status=(reason == ""), reason=reason or None)
 
-
-# ------------------------------------------------------------
-# Main CLI Command
-# ------------------------------------------------------------
-@click.command(
-    help="Category builder for snippet/template/result generation.",
-    context_settings=dict(help_option_names=["-h", "--help"])
-)
-@click.option(
-    "--input-file",
-    default=None,
-    type=click.Path(exists=True),
-    help="Input filename (default: empty)."
-)
-@click.option(
-    "--command",
-    "cmd",
-    default="",
-    help="Shell command to generate real-world sample (default: empty)."
-)
-@click.option(
-    "--count",
-    default=1,
-    type=int,
-    show_default=True,
-    help="Number of category pairs to generate."
-)
-@click.option(
-    "--separator",
-    default=":",
-    show_default=True,
-    help="Separator between key/value pairs."
-)
-@click.option(
-    "--starting-from",
-    default="",
-    help="Starting-from marker (default: empty)."
-)
-@click.option(
-    "--ending-at",
-    default="",
-    help="Ending-at marker (default: empty)."
-)
-@click.option(
-    "--replacing-rules",
-    default="",
-    help="Replacing rules (string or JSON-like). Default empty."
-)
-@click.option(
-    "--show",
-    default="",
-    help="Show output: snippet, template, result."
-)
-@click.option(
-    "--save",
-    default="",
-    help="Save output to a file (default empty)."
-)
-@click.option(
-    "--config",
-    default=None,
-    type=click.Path(exists=True),
-    help="JSON config file (optional)."
-)
-@click.pass_context
-def category(
-    ctx,
-    input_file,
-    cmd,
-    count,
-    separator,
-    starting_from,
-    ending_at,
-    replacing_rules,
-    show,
-    save,
-    config,
-):
-    if not input_file and not cmd and config is None:
-        click.echo(ctx.get_help())
-        return 0
-
-    config_data = {}
-    if config:
-        status = validate_config(config)
-        if not status:
-            emit_status(status)
-            return 1
-        config_data = status.raw or {}
-
-    input_file_ = merge(input_file, config_data, "input_file", "")
-    cmd_ = merge(cmd, config_data, "command", "")
-    save_ = merge(save, config_data, "save", "")
-    show_ = merge(show, config_data, "show", "")
-
-    count_ = merge(count, config_data, "count", 1)
-    separator_ = merge(separator, config_data, "separator", ":")
-    starting_from_ = merge(starting_from, config_data, "starting_from", None)
-    ending_at_ = merge(ending_at, config_data, "ending_at", None)
-    replacing_rules_ = merge(replacing_rules, config_data, "replacing_rules", None)
-
-    params = {
-        "count": abs(count_) or 1,
-        "separator": separator_ or ":",
-        "starting_from": starting_from_ or None,
-        "ending_at": ending_at_ or None,
-        "replacing_rules": replacing_rules_ or None,
-    }
-
-    if not input_file_ and not cmd_:
-        emit_status(
-            StatusString(
-                "Either input_file or command must be provided",
-                status=False,
-                reason="warning",
-            )
-        )
-        return 1
-
-    sample = load_sample_from_input_or_cmd(input_file_, cmd_)
-    if not sample:
-        emit_status(sample)
-        return 1
-
-    builder = CategoryTemplateBuilder(user_data=sample, **params)
-    if not builder:
-        ref = input_file_ or cmd_
-        status = StatusString(
-            (
-                "Cannot create category builder from sample (reference: {!r})\n"
-                "===========================================\n"
-                "{}\n"
-            ).format(ref, sample),
-            status=False,
-            reason="warning",
-        )
-        emit_status(status)
-        return 1
-
-    if save_:
-        statuses = save_outputs(builder, sample, save_)
-        exit_code = 0
-        for st in statuses:
-            emit_status(st)
-            if not st:
-                exit_code = 1
-        return exit_code
-
-    status = show_outputs(builder, sample, show_)
-    emit_status(status)
-    return 0 if status else 1
