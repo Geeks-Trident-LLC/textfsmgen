@@ -28,6 +28,10 @@ def cli(ctx):
         ctx.exit(0)
 
 
+from . import category_cmd
+category_cmd.register(cli)
+
+
 @cli.command(help="Show the textfsmgen version.")
 def version():
     click.echo(f"textfsmgen {__version__}")
