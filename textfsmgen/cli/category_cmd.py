@@ -89,6 +89,12 @@ def register(cli):
     default=False,
     help="Print resolved parameters and input metadata."
 )
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    default=False,
+    help="Simulate actions without writing files."
+)
 @click.pass_context
 def category(
     ctx,
@@ -103,6 +109,7 @@ def category(
     save,
     config,
     debug,
+    dry_run
 ):
     if not input_file and not cmd and config is None:
         click.echo(ctx.get_help())
@@ -169,7 +176,12 @@ def category(
         return 1
 
     if save_:
-        statuses = save_outputs(builder, sample, save_)
+        if dry_run:
+            click.echo("[DRY-RUN] No files will be written.")
+            statuses = dry_run_save(builder, sample, save_)
+        else:
+            statuses = save_outputs(builder, sample, save_)
+
         exit_code = 0
         for st in statuses:
             emit_status(st)
@@ -479,3 +491,40 @@ def show_outputs(builder, sample, show_spec):
     content = "\n======\n".join(parts)
     return StatusString(content, status=(reason == ""), reason=reason or None)
 
+
+def dry_run_save(builder, sample, save_spec):
+    """
+    Simulate save actions without writing files.
+    Returns list[StatusString].
+    """
+    results = []
+    items = [x.strip() for x in save_spec.split(",") if x.strip()]
+
+    for item in items:
+        if "-" not in item:
+            results.append(StatusString(
+                f"[DRY-RUN] Invalid save format: {item}",
+                status=False,
+                reason="error",
+            ))
+            continue
+
+        t, filename = item.split("-", 1)
+        t, filename = t.strip(), filename.strip()
+
+        # Simulate known types
+        if t in ("snippet", "template", "json-snippet", "json-template", "result"):
+            results.append(StatusString(
+                f"[DRY-RUN] Would save {t} → {filename}",
+                status=True,
+            ))
+            continue
+
+        # Unknown type
+        results.append(StatusString(
+            f"[DRY-RUN] Unknown save type '{t}'",
+            status=False,
+            reason="error",
+        ))
+
+    return results
