@@ -1,100 +1,139 @@
 # textfsmgen/cli/tabular_cmd.py
 
 import click
-
-from textfsmgen.libs.generic import StatusString, emit_status
 from textfsmgen import TabularTemplateBuilder
-
 from textfsmgen.cli.shared_builder_cli import (
     merge, validate_config, run_builder_workflow
 )
 
 
-# ------------------------------------------------------------
-# CLI Registration
-# ------------------------------------------------------------
 def register(cli):
     cli.add_command(tabular)
 
 
-# ------------------------------------------------------------
-# Main CLI Command
-# ------------------------------------------------------------
 @click.command(
     help="Tabular builder for snippet/template/result generation.",
     context_settings=dict(help_option_names=["-h", "--help"])
 )
-@click.option("--input-file", default=None, type=click.Path(exists=True))
-@click.option("--command", "cmd", default="")
-@click.option("--column-divider", default="")
-@click.option("--column-count", default=0, type=int)
-@click.option("--column-widths", default=None)
-@click.option("--headers", default=None)
-@click.option("--header-rows", default=None)
-@click.option("--custom-header", default="")
-@click.option("--starting-from", default=None)
-@click.option("--ending-at", default=None)
-@click.option("--has-header", is_flag=True, default=True)
-@click.option("--replacing-rules", default=None)
-@click.option("--show", default="")
-@click.option("--save", default="")
-@click.option("--config", default=None, type=click.Path(exists=True))
-@click.option("--debug", is_flag=True, default=False)
-@click.option("--dry-run", is_flag=True, default=False)
+@click.option(
+    "--input-file",
+    default=None,
+    type=click.Path(exists=True),
+    help="Input filename containing raw text sample."
+)
+@click.option(
+    "--command", "cmd",
+    default="",
+    help="Shell command to generate a real-world sample."
+)
+@click.option(
+    "--column-divider",
+    default="",
+    help="Column divider string (e.g., whitespace or a specific character)."
+)
+@click.option(
+    "--column-count",
+    default=0,
+    type=int,
+    help="Expected number of columns in the table."
+)
+@click.option(
+    "--column-widths",
+    default=None,
+    help="Explicit column widths (comma-separated or JSON)."
+)
+@click.option(
+    "--headers",
+    default=None,
+    help="Header names (comma-separated or JSON)."
+)
+@click.option(
+    "--header-rows",
+    default=None,
+    help="Number of header rows or explicit row indices."
+)
+@click.option(
+    "--custom-header",
+    default="",
+    help="Custom header text to prepend to the template."
+)
+@click.option(
+    "--starting-from",
+    default=None,
+    help="Start parsing only after this marker."
+)
+@click.option(
+    "--ending-at",
+    default=None,
+    help="Stop parsing when this marker is reached."
+)
+@click.option(
+    "--has-header",
+    is_flag=True,
+    default=True,
+    help="Indicates whether the table contains a header row."
+)
+@click.option(
+    "--replacing-rules",
+    default=None,
+    help="Replacing rules (string or JSON)."
+)
+@click.option(
+    "--show",
+    default="",
+    help="Show output: snippet, template, result, tabular, or json(...)."
+)
+@click.option(
+    "--save",
+    default="",
+    help="Save output to file(s). Format: type-filename."
+)
+@click.option(
+    "--config",
+    default=None,
+    type=click.Path(exists=True),
+    help="Optional JSON config file."
+)
+@click.option(
+    "--debug",
+    is_flag=True,
+    default=False,
+    help="Print resolved parameters and input metadata."
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    default=False,
+    help="Simulate save actions without writing files."
+)
 @click.pass_context
 def tabular(
     ctx,
-    input_file,
-    cmd,
-    column_divider,
-    column_count,
-    column_widths,
-    headers,
-    header_rows,
-    custom_header,
-    starting_from,
-    ending_at,
-    has_header,
-    replacing_rules,
-    show,
-    save,
-    config,
-    debug,
-    dry_run,
+    input_file, cmd,
+    column_divider, column_count, column_widths, headers, header_rows,
+    custom_header, starting_from, ending_at, has_header, replacing_rules,
+    show, save, config, debug, dry_run
 ):
-    # ------------------------------------------------------------
     # Show help if nothing provided
-    # ------------------------------------------------------------
     if not input_file and not cmd and config is None:
         click.echo(ctx.get_help())
         return 0
 
-    # ------------------------------------------------------------
     # Load config
-    # ------------------------------------------------------------
     config_data = {}
     if config:
-        required_params = [
-            "column_divider",
-            "column_count",
-            "column_widths",
-            "headers",
-            "header_rows",
-            "custom_header_text",
-            "starting_from",
-            "ending_at",
-            "has_header_row",
+        required = [
+            "column_divider", "column_count", "column_widths",
+            "headers", "header_rows", "custom_header_text",
+            "starting_from", "ending_at", "has_header_row",
             "replacing_rules",
         ]
-        status = validate_config(config, required_params)
+        status = validate_config(config, required)
         if not status:
-            emit_status(status)
             return 1
         config_data = status.raw or {}
 
-    # ------------------------------------------------------------
     # Merge CLI + config
-    # ------------------------------------------------------------
     input_file_ = merge(input_file, config_data, "input_file", "")
     cmd_ = merge(cmd, config_data, "command", "")
     save_ = merge(save, config_data, "save", "")
@@ -113,24 +152,10 @@ def tabular(
         "replacing_rules": merge(replacing_rules, config_data, "replacing_rules", None),
     }
 
-    # ------------------------------------------------------------
-    # Must have input_file or cmd
-    # ------------------------------------------------------------
-    if not input_file_ and not cmd_:
-        emit_status(StatusString(
-            "Either input_file or command must be provided",
-            status=False, reason="warning"
-        ))
-        return 1
-
+    # Delegate to shared workflow
     return run_builder_workflow(
         TabularTemplateBuilder,
-        input_file_,
-        cmd_,
-        params,
-        save_,
-        show_,
-        config,
-        debug,
-        dry_run,
+        input_file_, cmd_,
+        params, save_, show_,
+        config_data, debug, dry_run,
     )

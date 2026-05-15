@@ -1,24 +1,16 @@
 # textfsmgen/cli/category_cmd.py
 
 import click
-
-from textfsmgen.libs.generic import StatusString, emit_status
 from textfsmgen import CategoryTemplateBuilder
-
 from textfsmgen.cli.shared_builder_cli import (
     merge, validate_config, run_builder_workflow
 )
 
-# ------------------------------------------------------------
-# CLI Registration
-# ------------------------------------------------------------
+
 def register(cli):
     cli.add_command(category)
 
 
-# ------------------------------------------------------------
-# Main CLI Command
-# ------------------------------------------------------------
 @click.command(
     help="Category builder for snippet/template/result generation.",
     context_settings=dict(help_option_names=["-h", "--help"])
@@ -27,57 +19,56 @@ def register(cli):
     "--input-file",
     default=None,
     type=click.Path(exists=True),
-    help="Input filename (default: empty)."
+    help="Input filename containing raw text sample."
 )
 @click.option(
-    "--command",
-    "cmd",
+    "--command", "cmd",
     default="",
-    help="Shell command to generate real-world sample (default: empty)."
+    help="Shell command to generate a real-world sample."
 )
 @click.option(
     "--count",
     default=1,
     type=int,
     show_default=True,
-    help="Number of category pairs to generate."
+    help="Number of category key/value pairs to generate."
 )
 @click.option(
     "--separator",
     default=":",
     show_default=True,
-    help="Separator between key/value pairs."
+    help="Separator between key and value fields."
 )
 @click.option(
     "--starting-from",
     default=None,
-    help="Starting-from marker (default: empty)."
+    help="Start parsing only after this marker."
 )
 @click.option(
     "--ending-at",
     default=None,
-    help="Ending-at marker (default: empty)."
+    help="Stop parsing when this marker is reached."
 )
 @click.option(
     "--replacing-rules",
     default=None,
-    help="Replacing rules (string or JSON-like). Default empty."
+    help="Replacing rules (string or JSON)."
 )
 @click.option(
     "--show",
     default="",
-    help="Show output: snippet, template, result."
+    help="Show output: snippet, template, result, tabular, or json(...)."
 )
 @click.option(
     "--save",
     default="",
-    help="Save output to a file (default empty)."
+    help="Save output to file(s). Format: type-filename."
 )
 @click.option(
     "--config",
     default=None,
     type=click.Path(exists=True),
-    help="JSON config file (optional)."
+    help="Optional JSON config file."
 )
 @click.option(
     "--debug",
@@ -89,80 +80,47 @@ def register(cli):
     "--dry-run",
     is_flag=True,
     default=False,
-    help="Simulate actions without writing files."
+    help="Simulate save actions without writing files."
 )
 @click.pass_context
 def category(
     ctx,
-    input_file,
-    cmd,
-    count,
-    separator,
-    starting_from,
-    ending_at,
-    replacing_rules,
-    show,
-    save,
-    config,
-    debug,
-    dry_run
+    input_file, cmd,
+    count, separator, starting_from, ending_at, replacing_rules,
+    show, save, config, debug, dry_run
 ):
+    # Show help if nothing provided
     if not input_file and not cmd and config is None:
         click.echo(ctx.get_help())
         return 0
 
+    # Load config
     config_data = {}
     if config:
-        required_params = [
-            "count",
-            "separator",
-            "starting_from",
-            "ending_at",
-            "replacing_rules",
-        ]
-        status = validate_config(config, required_params)
+        required = ["count", "separator", "starting_from", "ending_at", "replacing_rules"]
+        status = validate_config(config, required)
         if not status:
-            emit_status(status)
             return 1
         config_data = status.raw or {}
 
+    # Merge CLI + config
     input_file_ = merge(input_file, config_data, "input_file", "")
     cmd_ = merge(cmd, config_data, "command", "")
     save_ = merge(save, config_data, "save", "")
     show_ = merge(show, config_data, "show", "")
 
-    count_ = merge(count, config_data, "count", 1)
-    separator_ = merge(separator, config_data, "separator", ":")
-    starting_from_ = merge(starting_from, config_data, "starting_from", None)
-    ending_at_ = merge(ending_at, config_data, "ending_at", None)
-    replacing_rules_ = merge(replacing_rules, config_data, "replacing_rules", None)
-
     params = {
-        "count": abs(count_) or 1,
-        "separator": separator_ or ":",
-        "starting_from": starting_from_ or None,
-        "ending_at": ending_at_ or None,
-        "replacing_rules": replacing_rules_ or None,
+        "count": merge(count, config_data, "count", 1),
+        "separator": merge(separator, config_data, "separator", ":"),
+        "starting_from": merge(starting_from, config_data, "starting_from", None),
+        "ending_at": merge(ending_at, config_data, "ending_at", None),
+        "replacing_rules": merge(replacing_rules, config_data, "replacing_rules", None),
     }
 
-    if not input_file_ and not cmd_:
-        emit_status(
-            StatusString(
-                "Either input_file or command must be provided",
-                status=False,
-                reason="warning",
-            )
-        )
-        return 1
-
+    # Delegate to shared workflow
     return run_builder_workflow(
         CategoryTemplateBuilder,
-        input_file_,
-        cmd_,
-        params,
-        save_,
-        show_,
-        config,
-        debug,
-        dry_run,
+        input_file_, cmd_,
+        params, save_, show_,
+        config_data, debug, dry_run,
     )
