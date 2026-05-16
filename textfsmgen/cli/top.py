@@ -34,6 +34,9 @@ category_cmd.register(cli)
 from . import tabular_cmd
 tabular_cmd.register(cli)
 
+from . import config_cmd
+config_cmd.register(cli)
+
 
 @cli.command(help="Show the textfsmgen version.")
 def version():
