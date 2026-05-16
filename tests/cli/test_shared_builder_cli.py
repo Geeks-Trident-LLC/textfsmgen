@@ -1,6 +1,7 @@
 import json
-# import pytest
-# from pathlib import Path
+from pathlib import Path
+
+from click.testing import CliRunner
 
 from textfsmgen.cli.shared_builder_cli import (
     merge,
@@ -11,7 +12,6 @@ from textfsmgen.cli.shared_builder_cli import (
     show_outputs,
     run_builder_workflow,
 )
-# from textfsmgen.libs.generic import StatusString
 
 
 # ------------------------------------------------------------

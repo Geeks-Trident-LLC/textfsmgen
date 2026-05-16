@@ -120,6 +120,7 @@ def save_outputs(builder, sample, save_spec):
                     "  <type> may be: snippet, template, json-snippet, json-template, result\n"
                     "\n"
                     "Examples:\n"
+                    "  sample-file1.txt            → write sample data to file1.txt\n"
                     "  snippet-out.txt             → write builder.snippet to out.txt\n"
                     "  template-template.textfsm   → write builder.template to template.textfsm\n"
                     "  result-output.json          → write parsed result to output.json\n"
@@ -156,6 +157,10 @@ def save_outputs(builder, sample, save_spec):
         # Normal split for snippet/template/result
         t, filename = item.split("-", 1)
         t, filename = t.strip(), filename.strip()
+
+        if t == "sample":
+            results.append(_write_file(filename, sample))
+            continue
 
         # snippet / template
         if t in ("snippet", "template"):

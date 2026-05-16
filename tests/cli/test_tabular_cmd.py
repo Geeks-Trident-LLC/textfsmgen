@@ -1,5 +1,5 @@
 from textfsmgen.cli.tabular_cmd import tabular
-
+from click.testing import CliRunner
 
 # ------------------------------------------------------------
 # HELP
@@ -107,3 +107,21 @@ def test_tabular_params_passed(tmpfile, runner, monkeypatch):
     assert captured["params"]["column_divider"] == "|"
     assert captured["params"]["column_count"] == 4
     assert captured["params"]["has_header_row"] is True
+
+
+def test_tabular_column_divider_flag(tmp_path):
+    runner = CliRunner()
+
+    sample = tmp_path / "table.txt"
+    sample.write_text("a|b|c\n1|2|3\n")
+
+    result = runner.invoke(tabular, [   # noqa
+        "--input-file", str(sample),
+        "--column-divider", "|",
+        "--column-count", "3",
+        "--show", "snippet"
+    ])
+
+    assert result.exit_code == 0
+    assert "a" in result.output
+    assert "b" in result.output

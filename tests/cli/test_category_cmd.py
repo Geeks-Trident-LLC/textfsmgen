@@ -1,6 +1,4 @@
-# import json
-# import pytest
-# from click.testing import CliRunner
+from click.testing import CliRunner
 from textfsmgen.cli.category_cmd import category
 
 
@@ -55,3 +53,51 @@ def test_category_debug(tmpfile, runner, monkeypatch, fake_builder):
     assert result.exit_code == 0
     assert "[INFO] Loaded sample" in result.output
     assert "=== DEBUG INFO ===" in result.output
+
+
+def test_category_input_file_flag(tmp_path):
+    runner = CliRunner()
+
+    sample = tmp_path / "sample.txt"
+    sample.write_text("key: value\n")
+
+    result = runner.invoke(category, [  # noqa
+        "--input-file", str(sample),
+        "--show", "sample"
+    ])
+
+    assert result.exit_code == 0
+    assert "key: value" in result.output
+
+
+from click.testing import CliRunner
+from pathlib import Path
+
+from textfsmgen.cli.category_cmd import category
+
+
+def test_category_debug_print_shows_input_file(tmp_path):
+    runner = CliRunner()
+
+    # Create sample input file
+    sample = tmp_path / "sample.txt"
+    sample.write_text("alpha: beta\n", encoding="utf-8")
+
+    # Invoke CLI with debug enabled
+    result = runner.invoke(
+        category,
+        [
+            "--input-file", str(sample),
+            "--show", "sample",
+            "--debug"
+        ]
+    )
+
+    # Basic success check
+    assert result.exit_code == 0
+
+    # Debug output should contain the raw input text
+    assert "input_file     =" in result.output
+
+    # Debug output should contain a debug marker (adjust to your actual output)
+    assert "[DEBUG]" in result.output or "DEBUG" in result.output

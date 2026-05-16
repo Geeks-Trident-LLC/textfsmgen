@@ -78,3 +78,13 @@ def test_config_validate_missing_top_level(tmp_path):
     result = runner.invoke(config, ["validate", str(p)])
 
     assert result.exit_code == 1
+
+
+def test_config_explain_includes_params():
+    runner = CliRunner()
+    result = runner.invoke(config, ["explain", "category"])
+    assert result.exit_code == 0
+    assert "input_file" in result.output
+    assert "params:" in result.output
+    assert "count" in result.output
+    assert "separator" in result.output
