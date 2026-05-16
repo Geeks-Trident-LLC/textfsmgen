@@ -92,7 +92,7 @@ def category(
     # Show help if nothing provided
     if not input_file and not cmd and config is None:
         click.echo(ctx.get_help())
-        return 0
+        raise SystemExit(0)
 
     # Load config
     config_data = {}
@@ -100,7 +100,7 @@ def category(
         required = ["count", "separator", "starting_from", "ending_at", "replacing_rules"]
         status = validate_config(config, required)
         if not status:
-            return 1
+            raise SystemExit(1)
         config_data = status.raw or {}
 
     # Merge CLI + config
@@ -118,9 +118,10 @@ def category(
     }
 
     # Delegate to shared workflow
-    return run_builder_workflow(
+    exit_code = run_builder_workflow(
         CategoryTemplateBuilder,
         input_file_, cmd_,
         params, save_, show_,
         config_data, debug, dry_run,
     )
+    raise SystemExit(exit_code)
