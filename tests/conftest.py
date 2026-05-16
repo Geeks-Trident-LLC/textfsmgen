@@ -23,12 +23,22 @@ def tmpfile(tmp_path):
 @pytest.fixture
 def fake_builder():
     class FakeBuilder:
-        snippet = "abc"
-        template = "Value {{ key }}"
+        def __init__(self):
+            self.sample = None
+            self.params = None
+            self.snippet = "abc"
+            self.template = "Value {{ key }}"
 
-        def __init__(self, user_data=None, **params):
-            self.user_data = user_data
+        def set_sample(self, sample, **params):
+            self.sample = sample
             self.params = params
+
+        def build(self):
+            # snippet/template already set
+            pass
+
+        def __bool__(self):
+            return True
 
     return FakeBuilder
 

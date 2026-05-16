@@ -1,7 +1,5 @@
 import json
-from pathlib import Path
 
-from click.testing import CliRunner
 
 from textfsmgen.cli.shared_builder_cli import (
     merge,
@@ -94,7 +92,7 @@ def test_show_outputs_default(fake_builder):
 def test_run_builder_workflow_success(fake_builder):
     params = {"count": 1, "separator": ":"}
     exit_code = run_builder_workflow(
-        builder_class=lambda user_data, **p: fake_builder(user_data, **p),
+        builder_class=fake_builder,  # <-- class, not lambda
         sample_file=None,
         cmd="echo hello",
         params=params,

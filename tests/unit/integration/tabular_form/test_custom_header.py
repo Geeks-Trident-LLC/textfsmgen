@@ -13,8 +13,6 @@ from textwrap import dedent
 
 from textfsmgen.engine.tabular import VarColumnTabularTranslator
 
-from textfsmgen.core.verify import verify_textfsm
-
 
 def test_parses_rows_with_full_cells_per_column():
     test_data = dedent("""
@@ -31,12 +29,12 @@ def test_parses_rows_with_full_cells_per_column():
         start() 3_mixed_word(var_lastwritetime)  mixed_word(var_name) end() -> record
     """).strip()
 
-    expected_result = [
-        {"lastwritetime": "9/1/2021 6:13:50 AM", "name": "reference"},
-        {"lastwritetime": "10/5/2021 9:13:50 PM", "name": "dsc"},
-        {"lastwritetime": "11/2/2021 11:58:45 PM", "name": "README.md"},
-        {"lastwritetime": "12/16/2021 12:30:59 PM", "name": "CONTRIBUTING.md"},
-    ]
+    # expected_result = [
+    #     {"lastwritetime": "9/1/2021 6:13:50 AM", "name": "reference"},
+    #     {"lastwritetime": "10/5/2021 9:13:50 PM", "name": "dsc"},
+    #     {"lastwritetime": "11/2/2021 11:58:45 PM", "name": "README.md"},
+    #     {"lastwritetime": "12/16/2021 12:30:59 PM", "name": "CONTRIBUTING.md"},
+    # ]
 
     translator = VarColumnTabularTranslator(
         test_data,
@@ -68,10 +66,10 @@ def test_parses_row_with_empty_cell():
         start() word(var_fruits) 10_15_space() words(var_drinks) end() -> record
     """).strip()
 
-    expected_result = [
-        {"fruits": "orange", "meat": "pork", "drinks": "water"},
-        {"fruits": "peach", "meat": "", "drinks": "pepsi soda"},
-    ]
+    # expected_result = [
+    #     {"fruits": "orange", "meat": "pork", "drinks": "water"},
+    #     {"fruits": "peach", "meat": "", "drinks": "pepsi soda"},
+    # ]
 
     translator = VarColumnTabularTranslator(
         test_data,
@@ -85,9 +83,9 @@ def test_parses_row_with_empty_cell():
     snippet = table.to_snippet()
     assert snippet == exp_snippet
 
-    adjust_snippet = snippet.replace(
-        "  word(var_meat)  ", "1_8_space()word(var_meat)1_8_space()"
-    )
+    # adjust_snippet = snippet.replace(
+    #     "  word(var_meat)  ", "1_8_space()word(var_meat)1_8_space()"
+    # )
 
     # ok = verify_snippet(adjust_snippet, test_data, expected_result=expected_result)
     # assert ok

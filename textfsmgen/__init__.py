@@ -10,6 +10,7 @@ from textfsmgen.core.line import LineParser
 from textfsmgen.core.template import TemplateBuilder
 from textfsmgen.core.template import CategoryTemplateBuilder
 from textfsmgen.core.template import TabularTemplateBuilder
+from textfsmgen.core.builder import FreeFormBuilder, CategoryBuilder, TabularBuilder
 from textfsmgen.core.verify import (
     verify_textfsm,
 )
@@ -23,6 +24,9 @@ __all__ = [
     "TemplateBuilder",
     "CategoryTemplateBuilder",
     "TabularTemplateBuilder",
+    "FreeFormBuilder",
+    "CategoryBuilder",
+    "TabularBuilder",
     "verify_textfsm",
     "parse_textfsm_to_dicts",
     "version",

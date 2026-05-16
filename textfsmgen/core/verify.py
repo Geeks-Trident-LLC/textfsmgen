@@ -20,7 +20,6 @@ from textfsm import TextFSM
 from textfsmgen.libs.text import decorate_text
 from textfsmgen.libs import datatype
 
-from textfsmgen import TemplateBuilder
 from textfsmgen.libs.generic import StatusString
 
 

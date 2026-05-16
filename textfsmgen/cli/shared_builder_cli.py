@@ -100,7 +100,9 @@ def load_sample(sample_file, cmd):
 
         return StatusString(f"{cmd} has no output", status=False, reason="warning")
 
-    return StatusString("No sample_file or cmd provided", status=False, reason="warning")
+    return StatusString(
+        "No sample_file or cmd provided", status=False, reason="warning"
+    )
 
 
 # ------------------------------------------------------------
@@ -130,17 +132,13 @@ def dry_run_save(builder, sample, save_spec):
 
         # JSON mode
         if wrapper == "json":
-            json_results.append({
-                "kind": kind,
-                "filename": filename,
-                "content": content
-            })
+            json_results.append(
+                {"kind": kind, "filename": filename, "content": content}
+            )
             continue
 
         # Plain mode
-        lines.append(
-            f"[DRY-RUN] Would write {filename}:\n{content}\n"
-        )
+        lines.append(f"[DRY-RUN] Would write {filename}:\n{content}\n")
 
     if wrapper == "json":
         return [json.dumps(json_results, indent=2, ensure_ascii=False)]
@@ -157,10 +155,7 @@ def save_outputs(builder, sample, save_spec):
     except ValueError as exc:
         # JSON mode → return JSON error
         if save_spec.strip().startswith("json("):
-            return {
-                "status": "error",
-                "error": str(exc)
-            }
+            return {"status": "error", "error": str(exc)}
         # Plain mode → return StatusString
         return [StatusString(str(exc), status=False, reason="error")]
 
@@ -184,7 +179,7 @@ def save_outputs(builder, sample, save_spec):
                     json_results[kind] = {
                         "status": "error",
                         "filename": filename,
-                        "reason": msg
+                        "reason": msg,
                     }
                     continue
                 results.append(StatusString(msg, status=False, reason="warning"))
@@ -198,7 +193,7 @@ def save_outputs(builder, sample, save_spec):
                     json_results[kind] = {
                         "status": "warning",
                         "filename": filename,
-                        "reason": msg
+                        "reason": msg,
                     }
                     continue
                 results.append(StatusString(msg, status=False, reason="warning"))
@@ -209,15 +204,12 @@ def save_outputs(builder, sample, save_spec):
             try:
                 json_content = json.dumps({kind: content}, indent=2, ensure_ascii=False)
                 _write_file(filename, json_content)
-                json_results[kind] = {
-                    "status": "ok",
-                    "filename": filename
-                }
+                json_results[kind] = {"status": "ok", "filename": filename}
             except Exception as exc:
                 json_results[kind] = {
                     "status": "error",
                     "filename": filename,
-                    "reason": str(exc)
+                    "reason": str(exc),
                 }
             continue
 
@@ -239,6 +231,7 @@ def _write_file(filename, content):
         return StatusString(
             f"Failed to save {filename}: {exc}", status=False, reason="error"
         )
+
 
 def parse_save_expression(expr: str):
     expr = expr.strip()
@@ -281,7 +274,7 @@ def show_outputs(builder, sample, show_spec):
     is_json = show_spec.startswith("json(") and show_spec.endswith(")")
 
     if is_json:
-        inner = show_spec[len("json("):-1].strip()
+        inner = show_spec[len("json(") : -1].strip()
         cases = [x.strip() for x in inner.split(",") if x.strip()]
     else:
         cases = [x.strip() for x in show_spec.split(",") if x.strip()]
@@ -294,15 +287,13 @@ def show_outputs(builder, sample, show_spec):
             container[name] = item
         else:
             container.append(
-                item if isinstance(item, str)
+                item
+                if isinstance(item, str)
                 else json.dumps(item, indent=2, ensure_ascii=False)
             )
 
     def json_wrap(status, value):
-        return {
-            "status": status,
-            "value": value
-        }
+        return {"status": status, "value": value}
 
     def parse_result():
         try:
@@ -410,8 +401,26 @@ def run_builder_workflow(
     if debug:
         debug_print(sample_file, cmd, params, config, sample, save, show)
 
+    # Instantiate builder
+    builder = builder_class()
+
+    # Apply sample/snippet depending on builder type
+    if hasattr(builder, "set_sample"):
+        builder.set_sample(sample, **params)
+    elif hasattr(builder, "set_snippet"):
+        builder.set_snippet(sample)
+    else:
+        status = StatusString(
+            f"Builder {builder_class.__name__} does not support sample/snippet input",
+            status=False,
+            reason="error",
+        )
+        emit_status(status)
+        return 1
+
     # Build
-    builder = builder_class(user_data=sample, **params)
+    builder.build()
+
     if not builder:
         status = StatusString(
             f"Cannot create builder from sample (reference: {sample_file or cmd!r})\n"

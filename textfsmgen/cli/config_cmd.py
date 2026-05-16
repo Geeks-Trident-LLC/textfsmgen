@@ -21,6 +21,7 @@ def register(cli):
 # Config templates
 # ------------------------------------------------------------
 CATEGORY_TEMPLATE = {
+    "builder": "category",
     "params": {
         "count": 1,
         "separator": ":",
@@ -35,6 +36,7 @@ CATEGORY_TEMPLATE = {
 }
 
 TABULAR_TEMPLATE = {
+    "builder": "tabular",
     "params": {
         "column_divider": "",
         "column_count": 0,
@@ -59,21 +61,19 @@ CONFIG_TYPES = {
 }
 
 TOP_LEVEL_DOCS_MAPPING = {
+    "builder": "category | tabular | freeform",
     "params": """
         Parameter/value pairs that control how the __PLACEHOLDER__ builder
         parses __PLACEHOLDER__‑like text.
     """,
-
     "sample_file": """
         Path to a sample input file used as the source text for the
         __PLACEHOLDER__ builder.
     """,
-
     "command": """
         Shell command used to generate sample text dynamically.
         If provided, its output is used instead of sample_file.
     """,
-
     "show": """
         Selects which output to display on the console.
 
@@ -95,7 +95,6 @@ TOP_LEVEL_DOCS_MAPPING = {
           json(result, template)
               Display both items in a single JSON object.
     """,
-
     "save": """
         Selects which output to write to file(s).
 
@@ -126,44 +125,37 @@ PARAMS_DOCS_MAPPING = {
         Higher values improve extraction accuracy.
         Default is 1.
     """,
-
     "separator": """
         Separator between key and value fields.
         Default is ":".
     """,
-
     "column_divider": """
         Character or string that separates columns in the raw text.
         The tabular builder uses this divider to determine where one
         column ends and the next begins.
         Default is an empty string.
     """,
-
     "column_count": """
         Number of columns expected in the table.
         Default is 0.
     """,
-
     "column_widths": """
         Comma‑separated list of expected column widths used for parsing
         fixed‑width or mixed‑width tables.
         Format: <width1>,<width2>,...,<widthN>.
         Default is None.
     """,
-
     "headers": """
         Comma‑separated list of header names.
         Useful for headerless tables so the generated template can
         produce structured results with explicit field names.
         Default is None.
     """,
-
     "header_rows": """
         One or more consecutive rows that define header lines when the
         builder cannot automatically infer correct headers.
         Default is None.
     """,
-
     "custom_header_text": """
         Manually defined header‑separator line used to determine column
         boundaries in headerless tabular text. This is helpful when the
@@ -172,27 +164,23 @@ PARAMS_DOCS_MAPPING = {
         separator line (e.g., "---------- --------- --------------- -----").
         Default is None.
     """,
-
     "has_header_row": """
         Indicates whether the tabular text contains a header row.
         Set to True for headered tables; set to False for headerless tables.
         Default is True.
     """,
-
     "starting_from": """
         Specifies where tabular parsing should begin when the text contains
         a mix of non‑tabular and tabular sections. Accepts either a line
         number or a lookup string marking the first row of the table.
         Default is None.
     """,
-
     "ending_at": """
         Specifies where tabular parsing should end when the text contains
         a mix of non‑tabular and tabular sections. Accepts either a line
         number or a lookup string marking the last row of the table.
         Default is None.
     """,
-
     "replacing_rules": """
         Post‑processing replacement rules applied to the generated snippet,
         allowing users to customize the final template.

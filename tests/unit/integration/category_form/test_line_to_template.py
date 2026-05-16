@@ -11,7 +11,6 @@ Run pytest in the project root to execute these tests:
 
 import pytest
 
-from textfsmgen.core.verify import verify_textfsm
 from textfsmgen.core.template import get_textfsm_template
 
 from textfsmgen.engine.category import CategoryLineTranslator

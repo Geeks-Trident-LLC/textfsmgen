@@ -1,0 +1,55 @@
+import pytest
+from textfsmgen.core.builder import CategoryBuilder
+
+
+SAMPLE = """
+Interface: Gi0/1
+Status: up
+"""
+
+
+def test_set_sample_resets_state():
+    b = CategoryBuilder()
+    b.set_sample(SAMPLE)
+    b.build()
+    assert b.template
+
+    b.set_sample("Interface: Gi0/2")
+    assert not b.template
+
+
+def test_set_sample_file(tmp_path):
+    p = tmp_path / "sample.txt"
+    p.write_text(SAMPLE)
+
+    b = CategoryBuilder()
+    b.set_sample_file(str(p))
+    b.build()
+
+    assert "Value" in b.template
+
+
+def test_build_generates_snippet():
+    b = CategoryBuilder()
+    b.set_sample(SAMPLE)
+    b.build()
+
+    assert b.snippet
+    assert "Value" in b.snippet
+
+
+def test_build_generates_template():
+    b = CategoryBuilder()
+    b.set_sample(SAMPLE)
+    b.build()
+
+    assert "Start" in b.template
+
+
+def test_truthiness():
+    b = CategoryBuilder()
+    assert not b
+
+    b.set_sample(SAMPLE)
+    b.build()
+    assert b

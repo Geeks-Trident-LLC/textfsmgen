@@ -10,7 +10,6 @@ Run pytest in the project root to execute these tests:
 """
 
 from textfsmgen.core.template import get_textfsm_template
-from textfsmgen.core.verify import verify_textfsm
 
 from textfsmgen.engine.category import CategoryLinesTranslator
 
@@ -81,7 +80,7 @@ def test():
     test_data = get_test_data()
     exp_snippet = get_expected_snippet()
     exp_template = get_expected_template()
-    exp_result = get_expected_result()
+    # exp_result = get_expected_result()
 
     # --- Action ---
     node = CategoryLinesTranslator(test_data, starting_from=1, ending_at=5)

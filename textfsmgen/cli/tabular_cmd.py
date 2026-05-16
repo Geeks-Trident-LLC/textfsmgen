@@ -1,7 +1,7 @@
 # textfsmgen/cli/tabular_cmd.py
 
 import click
-from textfsmgen import TabularTemplateBuilder
+from textfsmgen import TabularBuilder
 from textfsmgen.cli.shared_builder_cli import (
     merge,
     validate_config,
@@ -162,7 +162,7 @@ def tabular(
 
     # Delegate to shared workflow
     exit_code = run_builder_workflow(
-        TabularTemplateBuilder,
+        TabularBuilder,
         sample_file_,
         cmd_,
         params,

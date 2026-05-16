@@ -1,7 +1,7 @@
 # textfsmgen/cli/category_cmd.py
 
 import click
-from textfsmgen import CategoryTemplateBuilder
+from textfsmgen import CategoryBuilder
 from textfsmgen.cli.shared_builder_cli import (
     merge,
     validate_config,
@@ -129,7 +129,7 @@ def category(
 
     # Delegate to shared workflow
     exit_code = run_builder_workflow(
-        CategoryTemplateBuilder,
+        CategoryBuilder,
         sample_file_,
         cmd_,
         params,
