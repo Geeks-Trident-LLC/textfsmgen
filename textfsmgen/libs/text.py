@@ -837,3 +837,9 @@ def align_first_token(line: str, width: int = 0) -> str:
 
     first, remainder = parts
     return f"{first:<{width}} {remainder}" if first else line
+
+
+def normalize_text_values(mapping: dict) -> None:
+    """Dedent and strip all string values in the given mapping."""
+    for key, value in mapping.items():
+        mapping[key] = textwrap.dedent(value).strip()

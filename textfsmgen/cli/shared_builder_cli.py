@@ -104,96 +104,129 @@ def load_sample(sample_file, cmd):
 
 
 # ------------------------------------------------------------
+# Dry-run save
+# ------------------------------------------------------------
+def dry_run_save(builder, sample, save_spec):
+    try:
+        parsed_items = parse_save_expression(save_spec)
+    except ValueError as exc:
+        if save_spec.strip().startswith("json("):
+            return [json.dumps({"status": "error", "error": str(exc)}, indent=2)]
+        return [f"[DRY-RUN] {exc}"]
+
+    wrapper = parsed_items[0][0]  # JSON or None
+
+    json_results = []
+    lines = []
+
+    for _, kind, filename in parsed_items:
+        content = None  # always defined
+
+        # Load content
+        if kind in ("snippet", "template"):
+            content = getattr(builder, kind, None)
+        elif kind == "result":
+            content = parse_textfsm_to_dicts(builder.template, sample)
+
+        # JSON mode
+        if wrapper == "json":
+            json_results.append({
+                "kind": kind,
+                "filename": filename,
+                "content": content
+            })
+            continue
+
+        # Plain mode
+        lines.append(
+            f"[DRY-RUN] Would write {filename}:\n{content}\n"
+        )
+
+    if wrapper == "json":
+        return [json.dumps(json_results, indent=2, ensure_ascii=False)]
+
+    return lines
+
+
+# ------------------------------------------------------------
 # Save outputs
 # ------------------------------------------------------------
 def save_outputs(builder, sample, save_spec):
+    try:
+        parsed_items = parse_save_expression(save_spec)
+    except ValueError as exc:
+        # JSON mode → return JSON error
+        if save_spec.strip().startswith("json("):
+            return {
+                "status": "error",
+                "error": str(exc)
+            }
+        # Plain mode → return StatusString
+        return [StatusString(str(exc), status=False, reason="error")]
+
+    wrapper = parsed_items[0][0]  # JSON or None
+
+    # JSON mode accumulates structured results
+    json_results = {}
+
+    # Plain mode accumulates StatusString objects
     results = []
-    items = [x.strip() for x in save_spec.split(",") if x.strip()]
 
-    for item in items:
-        # Validate format
-        if "-" not in item:
-            results.append(
-                StatusString(
-                    f"Invalid save format: {item}\n"
-                    "Save format must be: <type>-<filename>\n"
-                    "  <type> may be: snippet, template, json-snippet, json-template, result\n"
-                    "\n"
-                    "Examples:\n"
-                    "  sample-file1.txt            → write sample data to file1.txt\n"
-                    "  snippet-out.txt             → write builder.snippet to out.txt\n"
-                    "  template-template.textfsm   → write builder.template to template.textfsm\n"
-                    "  result-output.json          → write parsed result to output.json\n"
-                    '  json-snippet-snippet.json   → write {"snippet": ...} to snippet.json\n'
-                    '  json-template-template.json → write {"template": ...} to template.json\n',
-                    status=False,
-                    reason="error",
-                )
-            )
-            continue
+    for _, kind, filename in parsed_items:
+        content = None  # always defined
 
-        # Handle json-snippet
-        if item.lower().startswith("json-snippet-"):
-            filename = item[len("json-snippet-") :].strip()
-            content = json.dumps(
-                {"snippet": getattr(builder, "snippet", None)},
-                indent=2,
-                ensure_ascii=False,
-            )
-            results.append(_write_file(filename, content))
-            continue
-
-        # Handle json-template
-        if item.lower().startswith("json-template-"):
-            filename = item[len("json-template-") :].strip()
-            content = json.dumps(
-                {"template": getattr(builder, "template", None)},
-                indent=2,
-                ensure_ascii=False,
-            )
-            results.append(_write_file(filename, content))
-            continue
-
-        # Normal split for snippet/template/result
-        t, filename = item.split("-", 1)
-        t, filename = t.strip(), filename.strip()
-
-        if t == "sample":
-            results.append(_write_file(filename, sample))
-            continue
-
-        # snippet / template
-        if t in ("snippet", "template"):
-            content = getattr(builder, t, None)
+        # Load content
+        if kind in ("snippet", "template"):
+            content = getattr(builder, kind, None)
             if not content:
-                results.append(
-                    StatusString(
-                        f"Builder has no '{t}' content", status=False, reason="warning"
-                    )
-                )
+                msg = f"Builder has no '{kind}' content"
+                if wrapper == "json":
+                    json_results[kind] = {
+                        "status": "error",
+                        "filename": filename,
+                        "reason": msg
+                    }
+                    continue
+                results.append(StatusString(msg, status=False, reason="warning"))
                 continue
-            results.append(_write_file(filename, content))
+
+        elif kind == "result":
+            content = parse_textfsm_to_dicts(builder.template, sample)
+            if not content:
+                msg = f"No records found for {filename}"
+                if wrapper == "json":
+                    json_results[kind] = {
+                        "status": "warning",
+                        "filename": filename,
+                        "reason": msg
+                    }
+                    continue
+                results.append(StatusString(msg, status=False, reason="warning"))
+                continue
+
+        # JSON mode
+        if wrapper == "json":
+            try:
+                json_content = json.dumps({kind: content}, indent=2, ensure_ascii=False)
+                _write_file(filename, json_content)
+                json_results[kind] = {
+                    "status": "ok",
+                    "filename": filename
+                }
+            except Exception as exc:
+                json_results[kind] = {
+                    "status": "error",
+                    "filename": filename,
+                    "reason": str(exc)
+                }
             continue
 
-        # result
-        if t == "result":
-            parsed = parse_textfsm_to_dicts(builder.template, sample)
-            content = json.dumps(parsed, indent=2, ensure_ascii=False)
-            if not parsed:
-                results.append(
-                    StatusString(
-                        f"No records found for {filename}",
-                        status=False,
-                        reason="warning",
-                    )
-                )
-            results.append(_write_file(filename, content))
-            continue
+        # Plain mode
+        results.append(_write_file(filename, content))
 
-        # Unknown type
-        results.append(
-            StatusString(f"Unknown save type '{t}'", status=False, reason="error")
-        )
+    # JSON mode → return JSON object
+    if wrapper == "json":
+        return json_results
 
     return results
 
@@ -207,6 +240,38 @@ def _write_file(filename, content):
             f"Failed to save {filename}: {exc}", status=False, reason="error"
         )
 
+def parse_save_expression(expr: str):
+    expr = expr.strip()
+
+    # Case 1: json(...)
+    if expr.startswith("json(") and expr.endswith(")"):
+        inner = expr[5:-1].strip()
+        items = [i.strip() for i in inner.split(",") if i.strip()]
+        wrapper = "json"
+    else:
+        # Case 2: plain
+        items = [i.strip() for i in expr.split(",") if i.strip()]
+        wrapper = None
+
+    parsed = []
+    for item in items:
+        if "-" not in item:
+            raise ValueError(
+                f"Invalid save format: {item}\n"
+                "Expected: kind-filename or json(kind-filename)"
+            )
+
+        kind, filename = item.split("-", 1)
+        kind = kind.strip()
+        filename = filename.strip()
+
+        if kind not in ("snippet", "template", "result"):
+            raise ValueError(f"Unknown save kind: {kind}")
+
+        parsed.append((wrapper, kind, filename))
+
+    return parsed
+
 
 # ------------------------------------------------------------
 # Show outputs
@@ -216,7 +281,7 @@ def show_outputs(builder, sample, show_spec):
     is_json = show_spec.startswith("json(") and show_spec.endswith(")")
 
     if is_json:
-        inner = show_spec[len("json(") : -1].strip()
+        inner = show_spec[len("json("):-1].strip()
         cases = [x.strip() for x in inner.split(",") if x.strip()]
     else:
         cases = [x.strip() for x in show_spec.split(",") if x.strip()]
@@ -229,10 +294,15 @@ def show_outputs(builder, sample, show_spec):
             container[name] = item
         else:
             container.append(
-                item
-                if isinstance(item, str)
+                item if isinstance(item, str)
                 else json.dumps(item, indent=2, ensure_ascii=False)
             )
+
+    def json_wrap(status, value):
+        return {
+            "status": status,
+            "value": value
+        }
 
     def parse_result():
         try:
@@ -245,108 +315,53 @@ def show_outputs(builder, sample, show_spec):
         return StatusString(builder.template, status=True)
 
     for case in cases:
+        # snippet / template
         if case in ("snippet", "template"):
-            add(parts, getattr(builder, case), case)
+            value = getattr(builder, case)
+            add(parts, json_wrap("ok", value) if is_json else value, case)
             continue
 
+        # sample
         if case == "sample":
-            add(parts, sample, case)
+            add(parts, json_wrap("ok", sample) if is_json else sample, case)
             continue
 
+        # parse result
         parsed, err = parse_result()
         if err:
-            add(parts, err, "result")
             reason = "error"
+            add(parts, json_wrap("error", err) if is_json else err, "result")
             continue
 
         if not parsed:
             msg = "no record found after parsed sample with textfsm template"
-            add(parts, msg, "result")
             reason = "warning"
+            add(parts, json_wrap("warning", msg) if is_json else msg, "result")
             continue
 
+        # default
         if case == "default":
-            add(parts, str(parsed), "result")
+            value = str(parsed)
+            add(parts, json_wrap("ok", value) if is_json else value, "result")
             continue
 
+        # tabular
         if case == "tabular":
-            add(parts, get_data_as_tabular(parsed), "result")
+            tab = get_data_as_tabular(parsed)
+            add(parts, json_wrap("ok", tab) if is_json else tab, "result")
             continue
 
-        add(parts, parsed, "result")
+        # raw parsed result
+        add(parts, json_wrap("ok", parsed) if is_json else parsed, "result")
 
+    # Final output
     content = (
         json.dumps(parts, indent=2, ensure_ascii=False)
         if is_json
         else "\n======\n".join(parts)
     )
+
     return StatusString(content, status=(reason == ""), reason=reason or None)
-
-
-# ------------------------------------------------------------
-# Dry-run save
-# ------------------------------------------------------------
-def dry_run_save(builder, sample, save_spec):  # noqa
-    results = []
-    items = [x.strip() for x in save_spec.split(",") if x.strip()]
-
-    for item in items:
-        if "-" not in item:
-            results.append(
-                StatusString(
-                    f"[DRY-RUN] Invalid save format: {item}\n"
-                    "Save format must be: <type>-<filename>\n"
-                    "  <type> may be: snippet, template, json-snippet, json-template, result\n"
-                    "\n"
-                    "Examples:\n"
-                    "  snippet-out.txt             → write builder.snippet to out.txt\n"
-                    "  template-template.textfsm   → write builder.template to template.textfsm\n"
-                    "  result-output.json          → write parsed result to output.json\n"
-                    '  json-snippet-snippet.json   → write {"snippet": builder.snippet} to snippet.json\n'
-                    '  json-template-template.json → write {"template": builder.template} to template.json\n',
-                    status=False,
-                    reason="",
-                )
-            )
-            continue
-
-        # Handle json-snippet
-        if item.lower().startswith("json-snippet-"):
-            filename = item[len("json-snippet-") :].strip()
-            results.append(
-                StatusString(
-                    '[DRY-RUN] Would save {"snippet": builder.snippet} → ' + filename,
-                    status=True,
-                )
-            )
-            continue
-
-        # Handle json-template
-        if item.lower().startswith("json-template-"):
-            filename = item[len("json-template-") :].strip()
-            results.append(
-                StatusString(
-                    '[DRY-RUN] Would save {"template": builder.template} → ' + filename,
-                    status=True,
-                )
-            )
-            continue
-
-        t, filename = item.split("-", 1)
-        t, filename = t.strip(), filename.strip()
-
-        if t in ("snippet", "template", "result"):
-            case = "parsed result" if t == "result" else f"builder.{t}"
-            results.append(
-                StatusString(f"[DRY-RUN] Would save {case} → {filename}", status=True)
-            )
-            continue
-
-        results.append(
-            StatusString(f"[DRY-RUN] Unknown save type '{t}'", status=False, reason="")
-        )
-
-    return results
 
 
 # ------------------------------------------------------------

@@ -6,6 +6,7 @@ import click
 
 from textfsmgen.libs.generic import StatusString
 from textfsmgen.libs.common import emit_status
+from textfsmgen.libs.text import normalize_text_values
 from textwrap import indent
 
 
@@ -58,91 +59,148 @@ CONFIG_TYPES = {
 }
 
 TOP_LEVEL_DOCS_MAPPING = {
-    "params": (
-        "Parameter/value pairs that control how the __PLACEHOLDER__ builder\n"
-        "parses __PLACEHOLDER__‑like text."
-    ),
-    "sample_file": (
-        "Path to a sample input file used as the source text for the __PLACEHOLDER__ builder."
-    ),
-    "command": "Shell command used to generate sample text dynamically\n"
-    "If provided, its output is used instead of sample_file.",
-    "show": (
-        "Selects which output to display on the console:\n"
-        "  - sample        : display the raw sample (from sample_file or command)\n"
-        "  - snippet       : display builder.snippet\n"
-        "  - template      : display builder.template\n"
-        "  - result        : display parsed result in JSON format\n"
-        "  - <sel#1>,...   : display multiple outputs in sequence\n"
-        "                    (e.g., sample,result)\n"
-        "  - json(... )    : display a JSON object containing selected fields\n"
-        "                    (e.g., json(template,result))"
-    ),
-    "save": (
-        "Selects which output to write to file(s).\n"
-        "Format: <kind>-<filename>\n"
-        "  - <kind> may be: snippet, template, result, json-snippet, json-template\n"
-        "    (e.g., result-out.json -> writes parsed result to out.json)"
-    ),
+    "params": """
+        Parameter/value pairs that control how the __PLACEHOLDER__ builder
+        parses __PLACEHOLDER__‑like text.
+    """,
+
+    "sample_file": """
+        Path to a sample input file used as the source text for the
+        __PLACEHOLDER__ builder.
+    """,
+
+    "command": """
+        Shell command used to generate sample text dynamically.
+        If provided, its output is used instead of sample_file.
+    """,
+
+    "show": """
+        Selects which output to display on the console.
+
+        Formats:
+          <kind>
+          <kind1>,...,<kindK>
+          json(<kind1>,...,<kindK>)
+
+        Kinds:
+          sample, snippet, template, result
+
+        Examples:
+          result
+              Display the parsed result.
+
+          template, result
+              Display both the generated template and the parsed result.
+
+          json(result, template)
+              Display both items in a single JSON object.
+    """,
+
+    "save": """
+        Selects which output to write to file(s).
+
+        Formats:
+          <kind>-<filename>
+          <kind1>-<filename1>,...,<kindK>-<filenameK>
+          json(<kind1>-<filename1>,...,<kindK>-<filenameK>)
+
+        Kinds:
+          sample, snippet, template, result
+
+        Examples:
+          result-out.json
+              Write the parsed result to out.json.
+
+          template-b.textfsm, result-out.json
+              Write the template to b.textfsm and the parsed result to out.json.
+
+          json(result-out.json)
+              Write the parsed result in JSON‑wrapped form to out.json.
+    """,
 }
+normalize_text_values(TOP_LEVEL_DOCS_MAPPING)
 
 PARAMS_DOCS_MAPPING = {
-    "count": (
-        "Number of category key/value pairs to extract. Higher values \n"
-        "improve extraction accuracy. Default is 1."
-    ),
-    "separator": 'Separator between key and value fields.  Default is ":".',
-    "column_divider": (
-        "A character or string that separates columns in the raw text.\n"
-        "The tabular builder uses this divider to detect where one\n"
-        "column ends and the next begins.  Default is empty string."
-    ),
-    "column_count": "The number of columns expected in the table.  Default is 0.",
-    "column_widths": (
-        "Comma‑separated list of expected column widths used for\n"
-        "parsing fixed‑width or mixed‑width tables.\n"
-        "Format: <width1>,<width2>,...,<widthN>."
-    ),
-    "headers": (
-        "Comma‑separated list of header names. Used primarily for\n"
-        "headerless tables so the generated template can produce \n"
-        "structured results with explicit field names. Default is None."
-    ),
-    "header_rows": (
-        "Consecutive rows that define header lines when the builder \n"
-        "cannot automatically infer correct headers. Default is None."
-    ),
-    "custom_header_text": (
-        "A manually defined header‑separator line used to\n"
-        "determine column boundaries in headerless tabular text.\n"
-        "This is helpful when the builder cannot infer column\n"
-        "structure automatically. Users should inspect the sample text\n"
-        "and create an appropriate separator line\n"
-        "(e.g., '---------- --------- --------------- -----')."
-    ),
-    "has_header_row": (
-        "Indicates whether the tabular text contains a header row.\n"
-        "Set to True for headered tables;set to False for headerless tables.\n"
-        "Default is True."
-    ),
-    "starting_from": (
-        "Specifies where tabular parsing should begin when the text\n"
-        "contains a mix of non‑tabular and tabular sections.\n"
-        "Accepts either a line number or a lookup string that marks\n"
-        "the first row of the table. Default is None."
-    ),
-    "ending_at": (
-        "Specifies where tabular parsing should end when the text\n"
-        "contains a mix of non‑tabular and tabular sections.\n"
-        "Accepts either a line number or a lookup string that marks\n"
-        "the last row of the table. Default is None."
-    ),
-    "replacing_rules": (
-        "Post‑processing replacement rules applied to the generated snippet,\n"
-        "allowing users to further customize the final template.\n"
-        "Format: [(old, new), ...]. Default is None."
-    ),
+    "count": """
+        Number of category key/value pairs to extract.
+        Higher values improve extraction accuracy.
+        Default is 1.
+    """,
+
+    "separator": """
+        Separator between key and value fields.
+        Default is ":".
+    """,
+
+    "column_divider": """
+        Character or string that separates columns in the raw text.
+        The tabular builder uses this divider to determine where one
+        column ends and the next begins.
+        Default is an empty string.
+    """,
+
+    "column_count": """
+        Number of columns expected in the table.
+        Default is 0.
+    """,
+
+    "column_widths": """
+        Comma‑separated list of expected column widths used for parsing
+        fixed‑width or mixed‑width tables.
+        Format: <width1>,<width2>,...,<widthN>.
+        Default is None.
+    """,
+
+    "headers": """
+        Comma‑separated list of header names.
+        Useful for headerless tables so the generated template can
+        produce structured results with explicit field names.
+        Default is None.
+    """,
+
+    "header_rows": """
+        One or more consecutive rows that define header lines when the
+        builder cannot automatically infer correct headers.
+        Default is None.
+    """,
+
+    "custom_header_text": """
+        Manually defined header‑separator line used to determine column
+        boundaries in headerless tabular text. This is helpful when the
+        builder cannot infer column structure automatically.
+        Users should inspect the sample text and create an appropriate
+        separator line (e.g., "---------- --------- --------------- -----").
+        Default is None.
+    """,
+
+    "has_header_row": """
+        Indicates whether the tabular text contains a header row.
+        Set to True for headered tables; set to False for headerless tables.
+        Default is True.
+    """,
+
+    "starting_from": """
+        Specifies where tabular parsing should begin when the text contains
+        a mix of non‑tabular and tabular sections. Accepts either a line
+        number or a lookup string marking the first row of the table.
+        Default is None.
+    """,
+
+    "ending_at": """
+        Specifies where tabular parsing should end when the text contains
+        a mix of non‑tabular and tabular sections. Accepts either a line
+        number or a lookup string marking the last row of the table.
+        Default is None.
+    """,
+
+    "replacing_rules": """
+        Post‑processing replacement rules applied to the generated snippet,
+        allowing users to customize the final template.
+        Format: [(old, new), ...].
+        Default is None.
+    """,
 }
+normalize_text_values(PARAMS_DOCS_MAPPING)
 
 
 # ------------------------------------------------------------
@@ -304,7 +362,7 @@ def explain_config(config_type):
 
     click.echo("\nTop-level keys:")
     for key in template.keys():
-        click.echo(f"  - {key}")
+        click.echo(f"\n  - {key}")
         doc = TOP_LEVEL_DOCS_MAPPING[key].replace("__PLACEHOLDER__", config_type)
         if doc:
             click.echo(indent(doc, prefix=" " * 6))
@@ -312,7 +370,7 @@ def explain_config(config_type):
     # ------------------------------------------------------------
     # Params section
     # ------------------------------------------------------------
-    click.echo("\nparams:")
+    click.echo("\n\nparams:")
 
     # These params are always treated as strings in CLI usage
     force_str = {
@@ -328,7 +386,7 @@ def explain_config(config_type):
         # Determine type name
         typename = "str" if key in force_str else type(default).__name__
         default_repr = f'"{default}"' if isinstance(default, str) else default
-        click.echo(f"  - {key:<21} (type: {typename}, default: {default_repr})")
+        click.echo(f"\n  - {key:<21} (type: {typename}, default: {default_repr})")
         txt = PARAMS_DOCS_MAPPING.get(key, "")
         if txt:
             click.echo(indent(txt, prefix=" " * 6))
@@ -336,7 +394,7 @@ def explain_config(config_type):
     # ------------------------------------------------------------
     # Description
     # ------------------------------------------------------------
-    click.echo("\nDescription:")
+    click.echo("\n\nDescription:")
 
     if config_type == "category":
         click.echo("  Category builder config controls key/value extraction from text.")
