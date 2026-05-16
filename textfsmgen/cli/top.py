@@ -14,6 +14,11 @@ import click
 from textfsmgen import __version__
 from textfsmgen.tester.cli import TesterCLI
 
+from . import category_cmd
+from . import tabular_cmd
+from . import config_cmd
+
+
 
 @click.group(
     invoke_without_command=True,
@@ -28,13 +33,8 @@ def cli(ctx):
         ctx.exit(0)
 
 
-from . import category_cmd
 category_cmd.register(cli)
-
-from . import tabular_cmd
 tabular_cmd.register(cli)
-
-from . import config_cmd
 config_cmd.register(cli)
 
 

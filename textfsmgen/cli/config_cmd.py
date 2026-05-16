@@ -4,7 +4,8 @@ import json
 from pathlib import Path
 import click
 
-from textfsmgen.libs.generic import StatusString, emit_status
+from textfsmgen.libs.generic import StatusString
+from textfsmgen.libs.common import emit_status
 from textwrap import indent
 
 

@@ -2,7 +2,6 @@ import json
 import copy
 import pytest
 from click.testing import CliRunner
-from pathlib import Path
 
 from textfsmgen.cli.config_cmd import config, CONFIG_TYPES
 

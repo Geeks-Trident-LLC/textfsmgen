@@ -4,7 +4,6 @@ from pathlib import Path
 import json
 import shutil
 
-from ..core.utils import catch_path_errors
 from ..core.data_loader import extract_subpath_after
 
 

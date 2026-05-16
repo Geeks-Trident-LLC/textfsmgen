@@ -161,7 +161,7 @@ def copy_case(
 
     print(f"[OK] Copied case '{src_tc}' -> '{dst_tc}'")
     print(f"  Author: {author}")
-    print(f"  Copied:")
+    print("  Copied:")
     if source_case.is_main():
         print("    - canonical/")
     else:

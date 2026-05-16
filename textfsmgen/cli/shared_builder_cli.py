@@ -3,8 +3,8 @@
 import json
 from pathlib import Path
 import click
-from textfsmgen.libs.generic import StatusString, emit_status
-from textfsmgen.libs.common import parse_textfsm_to_dicts
+from textfsmgen.libs.generic import StatusString
+from textfsmgen.libs.common import parse_textfsm_to_dicts, emit_status
 from textfsmgen.libs import shell
 from textfsmgen.libs.utils import get_data_as_tabular
 from textfsmgen.libs.text import render_text_block

@@ -6,7 +6,6 @@ General-purpose generic classes used across TextFSMGen.
 """
 
 import re
-import sys
 
 
 class DotObject(dict):
@@ -188,30 +187,3 @@ class Position:
         self.value = 0
         return self.value
 
-
-def emit_status(data):
-    """
-    Print StatusString output with correct severity routing.
-
-    Rules:
-      - Non‑StatusString → print to stdout
-      - reason == "error"   → print to stderr with [ERROR]
-      - reason == "warning" → print to stdout with [WARNING]
-      - otherwise           → print raw data to stdout
-    """
-    if not isinstance(data, StatusString):
-        print(data)
-        return
-
-    reason = getattr(data, "reason", "")
-    message = str(data)
-
-    if reason == "error":
-        print(f"[ERROR] {message}", file=sys.stderr)
-        return
-
-    if reason == "warning":
-        print(f"[WARNING] {message}")
-        return
-
-    print(message)
