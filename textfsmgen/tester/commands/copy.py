@@ -73,7 +73,9 @@ def copy_case(
             print(f"[FAIL]: Destination already exists: {target_dst}")
             return 1
         else:
-            print(f"[WARN]: Overwriting existing destination due to --force: {target_dst}")
+            print(
+                f"[WARN]: Overwriting existing destination due to --force: {target_dst}"
+            )
             shutil.rmtree(target_dst)
 
     if "golden" not in target_dst.parts:
@@ -148,8 +150,7 @@ def copy_case(
             return 0
         else:
             print(
-                f"[FAIL]: Dry-run failed. Temp case kept for inspection:\n"
-                f"  {temp_dst}"
+                f"[FAIL]: Dry-run failed. Temp case kept for inspection:\n  {temp_dst}"
             )
             return 1
 
@@ -173,7 +174,6 @@ def copy_case(
     print("    - manifest.json")
 
     return 0
-
 
 
 # ----------------------------------------------------------------------

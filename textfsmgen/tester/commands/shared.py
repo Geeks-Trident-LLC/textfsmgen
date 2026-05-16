@@ -22,6 +22,7 @@ from ..core.utils import strip_header_block
 # File Status Helpers
 # ============================================================================
 
+
 def describe_file_update(path: Path, exist=False) -> str:
     """
     Return a human-readable status string:
@@ -38,6 +39,7 @@ def describe_file_update(path: Path, exist=False) -> str:
 # ============================================================================
 # Canonical Run Logic
 # ============================================================================
+
 
 def run_canonical(case, is_quicktest=False) -> int:
     """
@@ -57,7 +59,9 @@ def run_canonical(case, is_quicktest=False) -> int:
     builder = case.data.build(sample=canonical.sample.content)
 
     if not builder:
-        print(f"[FAIL] {tc_name} — failed to generate builder from {canonical.sample.name}")
+        print(
+            f"[FAIL] {tc_name} — failed to generate builder from {canonical.sample.name}"
+        )
         return 1
 
     # --- Snippet + Template Checks ------------------------------------------
@@ -112,6 +116,7 @@ def run_canonical(case, is_quicktest=False) -> int:
 # Expected Run Logic
 # ============================================================================
 
+
 def run_expected(case, is_quicktest=False) -> int:
     """
     Run the expected-based golden test for a case.
@@ -126,7 +131,9 @@ def run_expected(case, is_quicktest=False) -> int:
     # --- Snippet + Template Checks ------------------------------------------
     for kind in ("snippet", "template"):
         if diff_expected(case, kind=kind, is_quicktest=is_quicktest):
-            print(f"[FAIL] {tc_name} — diff found between expected and generated {kind}")
+            print(
+                f"[FAIL] {tc_name} — diff found between expected and generated {kind}"
+            )
             return 1
 
     # --- Expected Result Check ----------------------------------------------
@@ -144,13 +151,15 @@ def run_expected(case, is_quicktest=False) -> int:
 # Diff: Column-Based Tabular Comparison
 # ============================================================================
 
+
 def _diff_by_column_name(act_rows, exp_rows, columns):
     """
     Compare rows by column name and return only rows/columns
     where expected != actual.
     """
     diff_cols = [
-        col for col in columns
+        col
+        for col in columns
         if any(a.get(col) != e.get(col) for a, e in zip(act_rows, exp_rows))
     ]
 
@@ -167,7 +176,7 @@ def _diff_by_column_name(act_rows, exp_rows, columns):
             ev = e.get(col, "")
             av = a.get(col, "")
             row[col] = f"{ev} | {av}" if ev != av else ""
-            has_diff |= (ev != av)
+            has_diff |= ev != av
 
         if has_diff:
             diff_rows.append(row)
@@ -178,6 +187,7 @@ def _diff_by_column_name(act_rows, exp_rows, columns):
 # ============================================================================
 # Diff Printing Helpers
 # ============================================================================
+
 
 def make_diff(left: str, right: str) -> str:
     diff_ = difflib.unified_diff(
@@ -200,6 +210,7 @@ def print_block(title: str, content: str):
 # Snippet/Template Diff APIs
 # ============================================================================
 
+
 def diff_canonical(case: GoldenCase, kind: str, is_quicktest=False) -> int:
     canonical = case.data.load_canonical(root="golden")
     info = canonical.get(kind)
@@ -209,7 +220,7 @@ def diff_canonical(case: GoldenCase, kind: str, is_quicktest=False) -> int:
         ref_name=info.name,
         ref_text=info.content,
         kind=kind,
-        is_quicktest=is_quicktest
+        is_quicktest=is_quicktest,
     )
 
 
@@ -222,7 +233,7 @@ def diff_expected(case: GoldenCase, kind: str, is_quicktest=False) -> int:
         ref_name=info.name,
         ref_text=info.content,
         kind=kind,
-        is_quicktest=is_quicktest
+        is_quicktest=is_quicktest,
     )
 
 
@@ -252,12 +263,12 @@ def diff_against_canonical(case: GoldenCase, kind: str, is_quicktest=False) -> i
         print_block(f"Reference {kind} (canonical): {info.name}", info.content)
         print_block(
             f"Generated {kind} from (canonical) input: {canonical.sample.name}",
-            generated_text
+            generated_text,
         )
         print_block(
             f"Diff: {info.name}\n"
             f"      vs generated {kind} (from {canonical.sample.name})",
-            diff_text
+            diff_text,
         )
     return exit_code
 
@@ -266,12 +277,9 @@ def diff_against_canonical(case: GoldenCase, kind: str, is_quicktest=False) -> i
 # Shared Snippet/Template Diff Engine
 # ============================================================================
 
+
 def diff_against_reference(
-    case: GoldenCase,
-    ref_name: str,
-    ref_text: str,
-    kind: str,
-    is_quicktest=False
+    case: GoldenCase, ref_name: str, ref_text: str, kind: str, is_quicktest=False
 ) -> int:
     """
     Compare generated snippet/template against a reference (canonical or expected).
@@ -293,7 +301,6 @@ def diff_against_reference(
                 at_least_one_match = True
             continue
 
-
         # --- Full Diff -------------------------------------------------------
         diff_text = make_diff(ref_clean, generated_clean)
         if not diff_text:
@@ -304,12 +311,10 @@ def diff_against_reference(
             (
                 f"Generated {kind} from input: {fileinfo.name}",
                 generated_text,
-                f"Diff: {ref_name}\n"
-                f"      vs generated {kind} (from {fileinfo.name})",
+                f"Diff: {ref_name}\n      vs generated {kind} (from {fileinfo.name})",
                 diff_text,
             )
         )
-
 
     # --- Print Groups --------------------------------------------------------
     if groups:
@@ -327,6 +332,7 @@ def diff_against_reference(
 # ============================================================================
 # Result Diff (Canonical + Expected)
 # ============================================================================
+
 
 def diff_against_canonical_result(case: GoldenCase, is_quicktest=False):
     canonical = case.data.load_canonical(root="golden")
@@ -350,7 +356,7 @@ def diff_against_canonical_result(case: GoldenCase, is_quicktest=False):
         print_block(
             f"Diff: {canonical.result.name}\n"
             f"      vs parsed canonical sample (from {canonical.sample.name})",
-            diff_text
+            diff_text,
         )
     return exit_code
 
@@ -386,7 +392,7 @@ def diff_against_result(case: GoldenCase, is_quicktest=False):
             print_block(
                 f"Diff: {result_info.name}\n"
                 f"      vs parsed sample (from {input_info.name})",
-                diff_text
+                diff_text,
             )
 
     return exit_code
@@ -396,8 +402,10 @@ def diff_against_result(case: GoldenCase, is_quicktest=False):
 # Tabular Diff Utilities
 # ============================================================================
 
-def make_diff_tabular(actual: List[Dict[str, Any]],
-                      expected: List[Dict[str, Any]]) -> str:
+
+def make_diff_tabular(
+    actual: List[Dict[str, Any]], expected: List[Dict[str, Any]]
+) -> str:
     """
     Compare two parsed tabular results (list of dict rows) and return
     a human-readable diff table.
@@ -405,8 +413,10 @@ def make_diff_tabular(actual: List[Dict[str, Any]],
 
     if not expected or not actual:
         if not expected and not actual:
-            return ("No records found in either expected or generated results. "
-                    "Cannot perform diff.")
+            return (
+                "No records found in either expected or generated results. "
+                "Cannot perform diff."
+            )
         if not expected:
             return "No records found in expected results. Cannot perform diff."
         return "No records found in generated results. Cannot perform diff."

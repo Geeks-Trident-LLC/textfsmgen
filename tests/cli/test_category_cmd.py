@@ -18,10 +18,7 @@ def test_category_show_snippet(tmpfile, runner, monkeypatch, fake_builder):
 
     p = tmpfile("sample.txt", "hello")
 
-    result = runner.invoke(category, [
-        "--input-file", str(p),
-        "--show", "snippet"
-    ])
+    result = runner.invoke(category, ["--input-file", str(p), "--show", "snippet"])
 
     assert result.exit_code == 0
     assert "abc" in result.output
@@ -35,11 +32,9 @@ def test_category_save_dry_run(tmpfile, runner, monkeypatch, fake_builder):
 
     p = tmpfile("sample.txt", "hello")
 
-    result = runner.invoke(category, [
-        "--input-file", str(p),
-        "--save", "snippet-out.txt",
-        "--dry-run"
-    ])
+    result = runner.invoke(
+        category, ["--input-file", str(p), "--save", "snippet-out.txt", "--dry-run"]
+    )
 
     assert result.exit_code == 0
     assert "[DRY-RUN]" in result.output
@@ -53,11 +48,9 @@ def test_category_debug(tmpfile, runner, monkeypatch, fake_builder):
 
     p = tmpfile("sample.txt", "hello")
 
-    result = runner.invoke(category, [
-        "--input-file", str(p),
-        "--show", "snippet",
-        "--debug"
-    ])
+    result = runner.invoke(
+        category, ["--input-file", str(p), "--show", "snippet", "--debug"]
+    )
 
     assert result.exit_code == 0
     assert "[INFO] Loaded sample" in result.output

@@ -819,8 +819,6 @@ def render_text_block(text: str, subject: str = "") -> str:
     return "".join(lines)
 
 
-
-
 def center_fixed_width(text: str) -> str:
     """Return text centered within a fixed width of 40 or 80 characters."""
     txt = text.decode("utf-8") if isinstance(text, bytes) else str(text)

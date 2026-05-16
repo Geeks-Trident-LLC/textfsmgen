@@ -52,7 +52,7 @@ def generate(case_path: Path, *, dry_run: bool) -> int:
 
     try:
         manifest = json.loads(manifest_path.read_text())
-    except Exception:   # noqa
+    except Exception:  # noqa
         print("[FAIL] manifest.json is not valid JSON.")
         return 1
 

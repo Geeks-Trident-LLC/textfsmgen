@@ -15,7 +15,6 @@ from textfsm import TextFSM
 
 from . import ECODE
 from .generic import StatusString
-from .text import decorate_text
 
 
 def dedent_and_strip(txt):
@@ -112,7 +111,7 @@ def extract_textfsm_headers(template: str) -> list:
     """
     try:
         return TextFSM(StringIO(template)).header
-    except Exception:   # noqa
+    except Exception:  # noqa
         return []
 
 

@@ -8,7 +8,6 @@ from ..core.golden_case import GoldenCase
 from .quicktest import quicktest as run_quicktest
 
 
-
 def new_from_input(
     case_path: Path,
     inputs_dir: Path,
@@ -43,8 +42,12 @@ def new_from_input(
     parts = case_path.parts
     if "main" in parts:
         print("[FAIL] Cannot create a new case under 'main/'.")
-        print("       Main cases contain canonical authoritative truth and must be created manually.")
-        print("       Use an integration path instead, e.g.: tests/golden/integration/<case>")
+        print(
+            "       Main cases contain canonical authoritative truth and must be created manually."
+        )
+        print(
+            "       Use an integration path instead, e.g.: tests/golden/integration/<case>"
+        )
         return 1
 
     if "integration" not in parts:
@@ -65,18 +68,19 @@ def new_from_input(
     if final_case_path.exists():
         if dry_run:
             print(
-                f"[DRY-RUN] Temporary directory already exists, removing: {final_case_path}")
+                f"[DRY-RUN] Temporary directory already exists, removing: {final_case_path}"
+            )
             shutil.rmtree(final_case_path)
 
         else:
             if not force:
-                print(
-                    f"[FAIL] Case directory already exists: {final_case_path}")
+                print(f"[FAIL] Case directory already exists: {final_case_path}")
                 print("       Use --force to overwrite.")
                 return 1
 
             print(
-                f"[INFO] Overwriting existing case directory due to --force: {final_case_path}")
+                f"[INFO] Overwriting existing case directory due to --force: {final_case_path}"
+            )
             shutil.rmtree(final_case_path)
 
     final_case_path.mkdir(parents=True, exist_ok=True)
@@ -189,5 +193,7 @@ def new_from_input(
         shutil.rmtree(final_case_path)
         return 1
 
-    print("[INFO] Leaving failed case for manual inspection because --accept was provided.")
+    print(
+        "[INFO] Leaving failed case for manual inspection because --accept was provided."
+    )
     return 1

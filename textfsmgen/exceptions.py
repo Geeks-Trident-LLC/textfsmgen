@@ -84,11 +84,11 @@ class NoTestDataError(TemplateError):
 
 
 def raise_exception(
-        ex: Exception,
-        cls: Optional[Type[Exception]] = None,
-        fmt: str = "{} - {}",
-        msg: str = "",
-        is_skipped: bool = False,
+    ex: Exception,
+    cls: Optional[Type[Exception]] = None,
+    fmt: str = "{} - {}",
+    msg: str = "",
+    is_skipped: bool = False,
 ):
     """
     Raise a formatted exception or skip raising.
@@ -98,8 +98,7 @@ def raise_exception(
         fmt = str(fmt)
 
         if not isinstance(ex, Exception):  # if ex is NOT instance of Exception
-            ex_type_name = ex.__name__ if isinstance(ex, type) else type(
-                ex).__name__
+            ex_type_name = ex.__name__ if isinstance(ex, type) else type(ex).__name__
             failure = (
                 f"Invalid argument: expected an Exception instance, got {ex_type_name}."
             )
@@ -127,8 +126,7 @@ def create_runtime_error(obj=None, msg=""):
     if obj is None:
         exc_cls_name = "RuntimeError"
     else:
-        exc_cls_name = obj if isinstance(obj,
-                                         str) else f"{type(obj).__name__}RTError"
+        exc_cls_name = obj if isinstance(obj, str) else f"{type(obj).__name__}RTError"
 
     # Normalize class name: ensure first character is uppercase
     exc_cls_name = str(exc_cls_name)

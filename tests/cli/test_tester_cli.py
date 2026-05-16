@@ -7,7 +7,7 @@ from textfsmgen.tester.cli import TesterCLI  # adjust import to your actual modu
 @pytest.fixture
 def parser() -> argparse.ArgumentParser:
     cli = TesterCLI()
-    return cli._build_parser()      # noqa
+    return cli._build_parser()  # noqa
 
 
 @pytest.mark.parametrize(
@@ -37,7 +37,11 @@ def parser() -> argparse.ArgumentParser:
         (["generate", "case-dir"], "generate", "_dispatch_generate"),
         (["batch-generate", "root-dir"], "batch-generate", "_dispatch_batch_generate"),
         (["batch-regen", "root-dir"], "batch-regen", "_dispatch_batch_regen"),
-        (["batch-quicktest", "root-dir"], "batch-quicktest", "_dispatch_batch_quicktest"),
+        (
+            ["batch-quicktest", "root-dir"],
+            "batch-quicktest",
+            "_dispatch_batch_quicktest",
+        ),
         (
             ["merge", "--author", "me", "dst-dir", "src-a", "src-b"],
             "merge",
@@ -65,7 +69,9 @@ def parser() -> argparse.ArgumentParser:
         ),
     ],
 )
-def test_subcommand_binds_correct_dispatcher(parser, argv, expected_action, expected_func_attr):
+def test_subcommand_binds_correct_dispatcher(
+    parser, argv, expected_action, expected_func_attr
+):
     args = parser.parse_args(argv)
     # action is stored in dest="action"
     assert args.action == expected_action
@@ -122,9 +128,7 @@ def test_copy_parsing_flags(parser):
 
 
 def test_duplicate_parsing_flags(parser):
-    args = parser.parse_args(
-        ["duplicate", "--dry-run", "--force", "me", "src-dir"]
-    )
+    args = parser.parse_args(["duplicate", "--dry-run", "--force", "me", "src-dir"])
     assert args.action == "duplicate"
     assert args.author == "me"
     assert args.src == "src-dir"
@@ -152,9 +156,7 @@ def test_new_from_input_required_flags(parser):
 
 
 def test_merge_preview_compact_and_json(parser):
-    args = parser.parse_args(
-        ["merge-preview", "--compact", "--json", "src-a", "src-b"]
-    )
+    args = parser.parse_args(["merge-preview", "--compact", "--json", "src-a", "src-b"])
     assert args.action == "merge-preview"
     assert args.compact is True
     assert args.json is True
@@ -184,9 +186,7 @@ def test_merge_diff_flags(parser):
 
 
 def test_identical_modes(parser):
-    args = parser.parse_args(
-        ["identical", "--compact", "--json", "src-a", "src-b"]
-    )
+    args = parser.parse_args(["identical", "--compact", "--json", "src-a", "src-b"])
     assert args.action == "identical"
     assert args.compact is True
     assert args.json is True

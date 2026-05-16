@@ -7,7 +7,6 @@ import shutil
 from ..core.data_loader import extract_subpath_after
 
 
-
 def new(case_path: Path) -> int:
     """
     Create a new golden test case scaffold.

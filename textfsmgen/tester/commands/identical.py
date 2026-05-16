@@ -50,6 +50,7 @@ def run_identical(case_dirs, compact=False, is_json=False):
 # INTERNAL HELPERS
 # ======================================================================
 
+
 def _cases_are_identical(inner, outer_template, outer_columns):
     """
     True if:
@@ -62,7 +63,7 @@ def _cases_are_identical(inner, outer_template, outer_columns):
         expected_rows = res.content
         try:
             rows = parse_textfsm_to_dicts(outer_template, sample)
-        except Exception:   # noqa
+        except Exception:  # noqa
             return False
 
         if not expected_rows or not rows:
@@ -123,6 +124,7 @@ def _extract_identical_groups(mapping):
 # ======================================================================
 # OUTPUT MODES
 # ======================================================================
+
 
 def _print_normal(groups):
     if not groups:

@@ -87,12 +87,11 @@ class DataLoader:
 
                 all_inputs_passed = True
                 for input_info, result_info in case_j.data.load_input_result_pairs():
-                    rows = parse_textfsm_to_dicts(
-                        template_i,
-                        input_info.content
-                    )
+                    rows = parse_textfsm_to_dicts(template_i, input_info.content)
                     expected_result = result_info.content
-                    if rows != expected_result or (rows == expected_result and not rows):
+                    if rows != expected_result or (
+                        rows == expected_result and not rows
+                    ):
                         all_inputs_passed = all_inputs_passed and False
                         case_ok = case_ok and False
 
@@ -154,7 +153,9 @@ class DataLoader:
         # --------------------------------------------------------------
         for input_info in self.load_inputs():
             in_path = Path(input_info.fullname)
-            out_path = self.case_dir / "expected_results" / f"{in_path.stem}_result.json"
+            out_path = (
+                self.case_dir / "expected_results" / f"{in_path.stem}_result.json"
+            )
 
             rows = parse_textfsm_to_dicts(template, input_info.content)
             out_path.write_text(
@@ -230,9 +231,7 @@ class DataLoader:
             if set(rows[0].keys()) != set(reference_rows[0].keys()):
                 ref_file = groups[0][0]
                 return StatusString(
-                    f"Inconsistent columns between:\n"
-                    f"  - {ref_file}\n"
-                    f"  - {in_file}",
+                    f"Inconsistent columns between:\n  - {ref_file}\n  - {in_file}",
                     status=False,
                 )
 
@@ -254,8 +253,7 @@ class DataLoader:
         (expected_dir / "snippet.txt").write_text(snippet, encoding="utf-8")
 
         # template
-        (expected_dir / "textfsm.template").write_text(template,
-                                                       encoding="utf-8")
+        (expected_dir / "textfsm.template").write_text(template, encoding="utf-8")
 
         # expected_results/*.json
         for in_file, rows in groups:
@@ -267,7 +265,6 @@ class DataLoader:
             )
 
         return StatusString(status=True)
-
 
     def build(self, sample):
         """
@@ -544,7 +541,7 @@ class DataLoader:
                 check=True,
             )
             return result.stdout.strip()
-        except Exception:   # noqa
+        except Exception:  # noqa
             return "unknown"
 
 
@@ -568,7 +565,7 @@ def extract_subpath_after(root: str, full_path: Path) -> Path:
     except ValueError:
         raise ValueError(f"'{root}' not found in path: {resolved}")
 
-    return Path(*parts[index + 1:])
+    return Path(*parts[index + 1 :])
 
 
 def load_file_info(path: Path, root: str = ""):

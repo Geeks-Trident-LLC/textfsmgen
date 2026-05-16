@@ -69,4 +69,3 @@ def duplicate_case(
         dry_run=dry_run,
         force=force,
     )
-

@@ -30,7 +30,6 @@ from ..core.golden_case import GoldenCase
 from .shared import run_canonical, run_expected
 
 
-
 @catch_path_errors
 def quicktest(case_path: Path, *, dry_run: bool = False) -> int:
     """
@@ -76,7 +75,8 @@ def quicktest(case_path: Path, *, dry_run: bool = False) -> int:
             print("[DRY-RUN] Cleaning up temporary directory.")
             shutil.rmtree(case_path)
         else:
-            print("[DRY-RUN] Quicktest failed. Temporary directory preserved for inspection.")
+            print(
+                "[DRY-RUN] Quicktest failed. Temporary directory preserved for inspection."
+            )
 
     return rc
-

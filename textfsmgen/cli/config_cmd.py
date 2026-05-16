@@ -58,11 +58,15 @@ CONFIG_TYPES = {
 }
 
 TOP_LEVEL_DOCS_MAPPING = {
-    "params": "Parameter/value pairs that control how the __PLACEHOLDER__ builder\n"
-              "parses __PLACEHOLDER__‑like text.",
-    "input_file": "Path to a sample input file used as the source text for the __PLACEHOLDER__ builder.",
+    "params": (
+        "Parameter/value pairs that control how the __PLACEHOLDER__ builder\n"
+        "parses __PLACEHOLDER__‑like text."
+    ),
+    "input_file": (
+        "Path to a sample input file used as the source text for the __PLACEHOLDER__ builder."
+    ),
     "command": "Shell command used to generate sample text dynamically\n"
-               "If provided, its output is used instead of input_file.",
+    "If provided, its output is used instead of input_file.",
     "show": (
         "Selects which output to display on the console:\n"
         "  - sample        : display the raw sample (from input_file or command)\n"
@@ -79,67 +83,74 @@ TOP_LEVEL_DOCS_MAPPING = {
         "Format: <kind>-<filename>\n"
         "  - <kind> may be: snippet, template, result, json-snippet, json-template\n"
         "    (e.g., result-out.json -> writes parsed result to out.json)"
-    )
+    ),
 }
-
-# force_str = {
-#     "starting_from", "ending_at", "replacing_rules",
-#     "column_widths", "headers", "header_rows"
-# }
 
 PARAMS_DOCS_MAPPING = {
-    "count": "Number of category key/value pairs to extract. Higher values \n"
-             "improve extraction accuracy. Default is 1.",
-    "separator": "Separator between key and value fields.  Default is \":\".",
-
-    "column_divider": "A character or string that separates columns in the raw text.\n"
-                      "The tabular builder uses this divider to detect where one\n"
-                      "column ends and the next begins.  Default is empty string.",
-
+    "count": (
+        "Number of category key/value pairs to extract. Higher values \n"
+        "improve extraction accuracy. Default is 1."
+    ),
+    "separator": 'Separator between key and value fields.  Default is ":".',
+    "column_divider": (
+        "A character or string that separates columns in the raw text.\n"
+        "The tabular builder uses this divider to detect where one\n"
+        "column ends and the next begins.  Default is empty string."
+    ),
     "column_count": "The number of columns expected in the table.  Default is 0.",
-
-    "column_widths": "Comma‑separated list of expected column widths used for\n"
-                     "parsing fixed‑width or mixed‑width tables.\n"
-                     "Format: <width1>,<width2>,...,<widthN>.",
-
-    "headers": "Comma‑separated list of header names. Used primarily for\n"
-               "headerless tables so the generated template can produce \n"
-               "structured results with explicit field names. Default is None.",
-
-    "header_rows": "Consecutive rows that define header lines when the builder \n"
-                   "cannot automatically infer correct headers. Default is None.",
-
-    "custom_header_text": "A manually defined header‑separator line used to\n"
-                          "determine column boundaries in headerless tabular text.\n"
-                          "This is helpful when the builder cannot infer column\n"
-                          "structure automatically. Users should inspect the sample text\n"
-                          "and create an appropriate separator line\n"
-                          "(e.g., '---------- --------- --------------- -----').",
-    "has_header_row": "Indicates whether the tabular text contains a header row.\n"
-                      "Set to True for headered tables;set to False for headerless tables.\n"
-                      "Default is True.",
-
-    "starting_from": "Specifies where tabular parsing should begin when the text\n"
-                     "contains a mix of non‑tabular and tabular sections.\n"
-                     "Accepts either a line number or a lookup string that marks\n"
-                     "the first row of the table. Default is None.",
-
-    "ending_at": "Specifies where tabular parsing should end when the text\n"
-                 "contains a mix of non‑tabular and tabular sections.\n"
-                 "Accepts either a line number or a lookup string that marks\n"
-                 "the last row of the table. Default is None.",
-
-    "replacing_rules": "Post‑processing replacement rules applied to the generated snippet,\n"
-                       "allowing users to further customize the final template.\n"
-                       "Format: [(old, new), ...]. Default is None."
+    "column_widths": (
+        "Comma‑separated list of expected column widths used for\n"
+        "parsing fixed‑width or mixed‑width tables.\n"
+        "Format: <width1>,<width2>,...,<widthN>."
+    ),
+    "headers": (
+        "Comma‑separated list of header names. Used primarily for\n"
+        "headerless tables so the generated template can produce \n"
+        "structured results with explicit field names. Default is None."
+    ),
+    "header_rows": (
+        "Consecutive rows that define header lines when the builder \n"
+        "cannot automatically infer correct headers. Default is None."
+    ),
+    "custom_header_text": (
+        "A manually defined header‑separator line used to\n"
+        "determine column boundaries in headerless tabular text.\n"
+        "This is helpful when the builder cannot infer column\n"
+        "structure automatically. Users should inspect the sample text\n"
+        "and create an appropriate separator line\n"
+        "(e.g., '---------- --------- --------------- -----')."
+    ),
+    "has_header_row": (
+        "Indicates whether the tabular text contains a header row.\n"
+        "Set to True for headered tables;set to False for headerless tables.\n"
+        "Default is True."
+    ),
+    "starting_from": (
+        "Specifies where tabular parsing should begin when the text\n"
+        "contains a mix of non‑tabular and tabular sections.\n"
+        "Accepts either a line number or a lookup string that marks\n"
+        "the first row of the table. Default is None."
+    ),
+    "ending_at": (
+        "Specifies where tabular parsing should end when the text\n"
+        "contains a mix of non‑tabular and tabular sections.\n"
+        "Accepts either a line number or a lookup string that marks\n"
+        "the last row of the table. Default is None."
+    ),
+    "replacing_rules": (
+        "Post‑processing replacement rules applied to the generated snippet,\n"
+        "allowing users to further customize the final template.\n"
+        "Format: [(old, new), ...]. Default is None."
+    ),
 }
+
 
 # ------------------------------------------------------------
 # Main command group
 # ------------------------------------------------------------
 @click.group(
     help="Manage TextFSMGen config templates.",
-    context_settings=dict(help_option_names=["-h", "--help"])
+    context_settings=dict(help_option_names=["-h", "--help"]),
 )
 def config():
     pass
@@ -149,18 +160,17 @@ def config():
 # config create <type> [--output FILE]
 # ------------------------------------------------------------
 @config.command(
-    name="create",
-    help="Create a config template for a given builder type."
+    name="create", help="Create a config template for a given builder type."
 )
 @click.argument(
-    "config_type",
-    type=click.Choice(CONFIG_TYPES.keys(), case_sensitive=False)
+    "config_type", type=click.Choice(CONFIG_TYPES.keys(), case_sensitive=False)
 )
 @click.option(
-    "--output", "-o",
+    "--output",
+    "-o",
     default=None,
     type=click.Path(),
-    help="Write config template to a file instead of stdout."
+    help="Write config template to a file instead of stdout.",
 )
 def create_config(config_type, output):
     config_type = config_type.lower()
@@ -170,17 +180,16 @@ def create_config(config_type, output):
     if output:
         try:
             Path(output).write_text(content, encoding="utf-8")
-            emit_status(StatusString(
-                f"Config template written to {output}",
-                status=True
-            ))
+            emit_status(
+                StatusString(f"Config template written to {output}", status=True)
+            )
             return 0
         except Exception as exc:
-            emit_status(StatusString(
-                f"Failed to write config file: {exc}",
-                status=False,
-                reason="error"
-            ))
+            emit_status(
+                StatusString(
+                    f"Failed to write config file: {exc}", status=False, reason="error"
+                )
+            )
             raise SystemExit(1)
 
     click.echo(content)
@@ -192,22 +201,17 @@ def create_config(config_type, output):
 # ------------------------------------------------------------
 @config.command(
     name="validate",
-    help="Validate a config JSON file for category or tabular builders."
+    help="Validate a config JSON file for category or tabular builders.",
 )
-@click.argument(
-    "file",
-    type=click.Path(exists=True)
-)
+@click.argument("file", type=click.Path(exists=True))
 def validate_config_cmd(file):
     # Load JSON
     try:
         raw = json.loads(Path(file).read_text(encoding="utf-8"))
     except Exception as exc:
-        emit_status(StatusString(
-            f"Failed to load JSON: {exc}",
-            status=False,
-            reason="error"
-        ))
+        emit_status(
+            StatusString(f"Failed to load JSON: {exc}", status=False, reason="error")
+        )
 
         raise SystemExit(1)
 
@@ -219,12 +223,14 @@ def validate_config_cmd(file):
             break
 
     if not detected_type:
-        emit_status(StatusString(
-            "Unable to detect config type. "
-            "Ensure 'params' keys match either category or tabular template.",
-            status=False,
-            reason="error"
-        ))
+        emit_status(
+            StatusString(
+                "Unable to detect config type. "
+                "Ensure 'params' keys match either category or tabular template.",
+                status=False,
+                reason="error",
+            )
+        )
         raise SystemExit(1)
 
     template = CONFIG_TYPES[detected_type]
@@ -257,25 +263,23 @@ def validate_config_cmd(file):
 
     # Report errors
     if errors:
-        emit_status(StatusString(
-            "Config validation failed:\n" + "\n".join(f"- {e}" for e in errors),
-            status=False,
-            reason="error"
-        ))
+        emit_status(
+            StatusString(
+                "Config validation failed:\n" + "\n".join(f"- {e}" for e in errors),
+                status=False,
+                reason="error",
+            )
+        )
         raise SystemExit(1)
 
     # Success
-    emit_status(StatusString(
-        f"Config file '{file}' is valid ({detected_type}).",
-        status=True
-    ))
+    emit_status(
+        StatusString(f"Config file '{file}' is valid ({detected_type}).", status=True)
+    )
     return 0
 
 
-@config.command(
-    name="list",
-    help="List all available config types."
-)
+@config.command(name="list", help="List all available config types.")
 def list_configs():
     click.echo("Available config types:")
     for name in CONFIG_TYPES.keys():
@@ -283,12 +287,10 @@ def list_configs():
 
 
 @config.command(
-    name="explain",
-    help="Explain the structure and fields of a config type."
+    name="explain", help="Explain the structure and fields of a config type."
 )
 @click.argument(
-    "config_type",
-    type=click.Choice(CONFIG_TYPES.keys(), case_sensitive=False)
+    "config_type", type=click.Choice(CONFIG_TYPES.keys(), case_sensitive=False)
 )
 def explain_config(config_type):
     config_type = config_type.lower()
@@ -314,8 +316,12 @@ def explain_config(config_type):
 
     # These params are always treated as strings in CLI usage
     force_str = {
-        "starting_from", "ending_at", "replacing_rules",
-        "column_widths", "headers", "header_rows"
+        "starting_from",
+        "ending_at",
+        "replacing_rules",
+        "column_widths",
+        "headers",
+        "header_rows",
     }
 
     for key, default in template["params"].items():
@@ -334,8 +340,14 @@ def explain_config(config_type):
 
     if config_type == "category":
         click.echo("  Category builder config controls key/value extraction from text.")
-        click.echo("  Use 'params' to define separators, ranges, and replacement rules.")
+        click.echo(
+            "  Use 'params' to define separators, ranges, and replacement rules."
+        )
 
     elif config_type == "tabular":
-        click.echo("  Tabular builder config controls column parsing for table-like text.")
-        click.echo("  Use 'params' to define column structure, headers, and parsing rules.")
+        click.echo(
+            "  Tabular builder config controls column parsing for table-like text."
+        )
+        click.echo(
+            "  Use 'params' to define column structure, headers, and parsing rules."
+        )

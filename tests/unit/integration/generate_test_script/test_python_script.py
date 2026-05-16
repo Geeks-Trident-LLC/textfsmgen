@@ -15,7 +15,6 @@ from textfsmgen import TemplateBuilder
 from textfsmgen.libs.common import dedent_and_strip
 
 
-
 def test():
     test_data = dedent_and_strip("""
         Title                   Price       Genre

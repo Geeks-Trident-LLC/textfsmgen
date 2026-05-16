@@ -9,6 +9,7 @@ and parsing results used within the TextFSM Generator framework.
 It ensures that generated templates and data structures conform
 to expected formats, improving reliability and maintainability.
 """
+
 from typing import Optional
 import traceback
 import json
@@ -39,7 +40,7 @@ def verify_snippet(
         expected_rows_count=expected_rows_count,
         expected_result=expected_result,
         ignore_space=ignore_space,
-        debug=debug
+        debug=debug,
     )
     return status
 
@@ -92,7 +93,6 @@ def verify_textfsm(
             print("There is no record after parsed.")
         return StatusString("There is no record after parsed.", status=False)
 
-
     verified_msg = ""
     is_verified = True
 
@@ -110,9 +110,7 @@ def verify_textfsm(
 
     # Validate expected result
     if expected_result is not None:
-        rows_to_compare = (
-            datatype.clean_list_of_dicts(rows) if ignore_space else rows
-        )
+        rows_to_compare = datatype.clean_list_of_dicts(rows) if ignore_space else rows
         chk = rows_to_compare == expected_result
         is_verified = is_verified and chk
         msg = (

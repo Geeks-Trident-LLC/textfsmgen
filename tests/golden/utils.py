@@ -7,8 +7,8 @@ def get_testcases(parent_path):
     for file_path in parent_path.glob("*"):
         name = file_path.name
         if (
-            file_path.is_dir() and
-            (not name.startswith("_") or not name.endswith("_")) and
-            name[0].isalpha()
+            file_path.is_dir()
+            and (not name.startswith("_") or not name.endswith("_"))
+            and name[0].isalpha()
         ):
             yield str(file_path)

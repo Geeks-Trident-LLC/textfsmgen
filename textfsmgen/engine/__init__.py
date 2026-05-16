@@ -5,23 +5,17 @@ textfsmgen.engine.__init__
 Initialization for the TextFSM parsing engine.
 """
 
-from .category import (
-    CategoryLineTranslator,
-    CategoryLinesTranslator
-)
+from .category import CategoryLineTranslator, CategoryLinesTranslator
 
 from .common import (
     get_line_position_by,
     get_fixed_line_snippet,
     sanitize_identifier,
     apply_replacements,
-    apply_fallback_replacements
+    apply_fallback_replacements,
 )
 
-from .doc import (
-    OperationDoc,
-    ExplanationDoc
-)
+from .doc import OperationDoc, ExplanationDoc
 
 from .line import LineData
 
@@ -52,7 +46,6 @@ from .translate import (
     NonWSSTranslator,
     NonWSSGroupTranslator,
     TokenAggregator,
-
     validate_translator_value,
     make_translator,
 )
@@ -62,26 +55,21 @@ __all__ = [
     # Category Translators
     "CategoryLineTranslator",
     "CategoryLinesTranslator",
-
     # Common Utilities
     "get_line_position_by",
     "get_fixed_line_snippet",
     "sanitize_identifier",
     "apply_replacements",
     "apply_fallback_replacements",
-
     # Documentation Helpers
     "OperationDoc",
     "ExplanationDoc",
-
     # Line Data
     "LineData",
-
     # Tabular Translators
     "TabularTranslator",
     "VarColumnTabularTranslator",
     "ParsedTable",
-
     # Pattern Translators
     "PatternTranslator",
     "DigitTranslator",
@@ -103,7 +91,6 @@ __all__ = [
     "NonWSSTranslator",
     "NonWSSGroupTranslator",
     "TokenAggregator",
-
     # Translator Helpers
     "validate_translator_value",
     "make_translator",

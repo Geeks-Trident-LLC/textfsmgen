@@ -28,11 +28,9 @@ from .commands import (
     new as cmd_new,
     new_from_input as cmd_new_from_input,
     generate as cmd_generate,
-
     batch_generate as cmd_batch_generate,
     batch_regen as cmd_batch_regen,
     batch_quicktest as cmd_batch_quicktest,
-
     merge as cmd_merge,
     merge_review as cmd_merge_review,
     merge_preview as cmd_merge_preview,
@@ -355,13 +353,13 @@ class TesterCLI:
             "--accept",
             action="store_true",
             help="Keep the generated <case> even if quicktest fails. "
-                 "Without this flag, a failed quicktest deletes the case.",
+            "Without this flag, a failed quicktest deletes the case.",
         )
         p_new_in.add_argument(
             "--dry-run",
             action="store_true",
             help="Create <case>.temp instead of <case>. Run quicktest, then delete the "
-                 "temporary directory unless --accept is used.",
+            "temporary directory unless --accept is used.",
         )
         p_new_in.add_argument(
             "case",
@@ -650,7 +648,7 @@ class TesterCLI:
 
         try:
             params = json.loads(args.params)
-        except Exception:   # noqa
+        except Exception:  # noqa
             print("[FAIL] --params must be valid JSON")
             return 1
 
@@ -696,7 +694,6 @@ class TesterCLI:
             dry_run=args.dry_run,
         )
 
-
     @staticmethod
     def _dispatch_batch_quicktest(args) -> int:
         root_dir = Path(args.root[0]).resolve()
@@ -724,7 +721,6 @@ class TesterCLI:
         srcs = [Path(p) for p in args.srcs]
 
         return cmd_merge_review.merge_review(dst, srcs)
-
 
     @staticmethod
     def _dispatch_merge_preview(args) -> int:

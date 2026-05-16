@@ -16,6 +16,7 @@ def tmpfile(tmp_path):
         p = tmp_path / name
         p.write_text(content, encoding="utf-8")
         return p
+
     return _make
 
 
@@ -37,7 +38,7 @@ def pytest_addoption(parser):
         "--regen-golden",
         action="store_true",
         default=False,
-        help="Regenerate golden files instead of comparing them."
+        help="Regenerate golden files instead of comparing them.",
     )
 
 

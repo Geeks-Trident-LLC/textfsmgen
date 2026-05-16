@@ -20,8 +20,7 @@ class FakeDataLoader:
     def regenerate(self):
         # Simulate regeneration
         (self.path / "regen.txt").write_text(
-            f"Regenerated for {self.kind}/{self.test_case}",
-            encoding="utf-8"
+            f"Regenerated for {self.kind}/{self.test_case}", encoding="utf-8"
         )
 
     def generate_meta(self):
@@ -29,8 +28,7 @@ class FakeDataLoader:
             return
 
         (self.path / "meta_generated.txt").write_text(
-            f"Meta written for {self.kind}/{self.test_case}",
-            encoding="utf-8"
+            f"Meta written for {self.kind}/{self.test_case}", encoding="utf-8"
         )
 
 
@@ -82,4 +80,3 @@ def test_generate_meta_env_var(tmp_path):
     os.environ.pop("GOLDEN_WRITE_META", None)
 
     assert (case_dir / "meta_generated.txt").exists()
-

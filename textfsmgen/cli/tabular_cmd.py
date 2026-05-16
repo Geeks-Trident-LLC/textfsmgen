@@ -3,7 +3,9 @@
 import click
 from textfsmgen import TabularTemplateBuilder
 from textfsmgen.cli.shared_builder_cli import (
-    merge, validate_config, run_builder_workflow
+    merge,
+    validate_config,
+    run_builder_workflow,
 )
 
 
@@ -13,106 +15,104 @@ def register(cli):
 
 @click.command(
     help="Tabular builder for snippet/template/result generation.",
-    context_settings=dict(help_option_names=["-h", "--help"])
+    context_settings=dict(help_option_names=["-h", "--help"]),
 )
 @click.option(
     "--input-file",
     default=None,
     type=click.Path(exists=True),
-    help="Input filename containing raw text sample."
+    help="Input filename containing raw text sample.",
 )
 @click.option(
-    "--command", "cmd",
+    "--command",
+    "cmd",
     default="",
-    help="Shell command to generate a real-world sample."
+    help="Shell command to generate a real-world sample.",
 )
 @click.option(
     "--column-divider",
     default="",
-    help="Column divider string (e.g., whitespace or a specific character)."
+    help="Column divider string (e.g., whitespace or a specific character).",
 )
 @click.option(
     "--column-count",
     default=0,
     type=int,
-    help="Expected number of columns in the table."
+    help="Expected number of columns in the table.",
 )
 @click.option(
     "--column-widths",
     default=None,
-    help="Explicit column widths (comma-separated or JSON)."
+    help="Explicit column widths (comma-separated or JSON).",
+)
+@click.option("--headers", default=None, help="Header names (comma-separated or JSON).")
+@click.option(
+    "--header-rows", default=None, help="Number of header rows or explicit row indices."
 )
 @click.option(
-    "--headers",
-    default=None,
-    help="Header names (comma-separated or JSON)."
+    "--custom-header", default="", help="Custom header text to prepend to the template."
 )
 @click.option(
-    "--header-rows",
-    default=None,
-    help="Number of header rows or explicit row indices."
+    "--starting-from", default=None, help="Start parsing only after this marker."
 )
 @click.option(
-    "--custom-header",
-    default="",
-    help="Custom header text to prepend to the template."
-)
-@click.option(
-    "--starting-from",
-    default=None,
-    help="Start parsing only after this marker."
-)
-@click.option(
-    "--ending-at",
-    default=None,
-    help="Stop parsing when this marker is reached."
+    "--ending-at", default=None, help="Stop parsing when this marker is reached."
 )
 @click.option(
     "--has-header",
     is_flag=True,
     default=True,
-    help="Indicates whether the table contains a header row."
+    help="Indicates whether the table contains a header row.",
 )
 @click.option(
-    "--replacing-rules",
-    default=None,
-    help="Replacing rules (string or JSON)."
+    "--replacing-rules", default=None, help="Replacing rules (string or JSON)."
 )
 @click.option(
     "--show",
     default="",
-    help="Show output: snippet, template, result, tabular, or json(...)."
+    help="Show output: snippet, template, result, tabular, or json(...).",
 )
 @click.option(
-    "--save",
-    default="",
-    help="Save output to file(s). Format: type-filename."
+    "--save", default="", help="Save output to file(s). Format: type-filename."
 )
 @click.option(
     "--config",
     default=None,
     type=click.Path(exists=True),
-    help="Optional JSON config file."
+    help="Optional JSON config file.",
 )
 @click.option(
     "--debug",
     is_flag=True,
     default=False,
-    help="Print resolved parameters and input metadata."
+    help="Print resolved parameters and input metadata.",
 )
 @click.option(
     "--dry-run",
     is_flag=True,
     default=False,
-    help="Simulate save actions without writing files."
+    help="Simulate save actions without writing files.",
 )
 @click.pass_context
 def tabular(
     ctx,
-    input_file, cmd,
-    column_divider, column_count, column_widths, headers, header_rows,
-    custom_header, starting_from, ending_at, has_header, replacing_rules,
-    show, save, config, debug, dry_run
+    input_file,
+    cmd,
+    column_divider,
+    column_count,
+    column_widths,
+    headers,
+    header_rows,
+    custom_header,
+    starting_from,
+    ending_at,
+    has_header,
+    replacing_rules,
+    show,
+    save,
+    config,
+    debug,
+    dry_run,
 ):
     # Show help if nothing provided
     if not input_file and not cmd and config is None:
@@ -123,9 +123,15 @@ def tabular(
     config_data = {}
     if config:
         required = [
-            "column_divider", "column_count", "column_widths",
-            "headers", "header_rows", "custom_header_text",
-            "starting_from", "ending_at", "has_header_row",
+            "column_divider",
+            "column_count",
+            "column_widths",
+            "headers",
+            "header_rows",
+            "custom_header_text",
+            "starting_from",
+            "ending_at",
+            "has_header_row",
             "replacing_rules",
         ]
         status = validate_config(config, required)
@@ -145,7 +151,9 @@ def tabular(
         "column_widths": merge(column_widths, config_data, "column_widths", None),
         "headers": merge(headers, config_data, "headers", None),
         "header_rows": merge(header_rows, config_data, "header_rows", None),
-        "custom_header_text": merge(custom_header, config_data, "custom_header_text", ""),
+        "custom_header_text": merge(
+            custom_header, config_data, "custom_header_text", ""
+        ),
         "starting_from": merge(starting_from, config_data, "starting_from", None),
         "ending_at": merge(ending_at, config_data, "ending_at", None),
         "has_header_row": merge(has_header, config_data, "has_header_row", True),
@@ -155,8 +163,13 @@ def tabular(
     # Delegate to shared workflow
     exit_code = run_builder_workflow(
         TabularTemplateBuilder,
-        input_file_, cmd_,
-        params, save_, show_,
-        config_data, debug, dry_run,
+        input_file_,
+        cmd_,
+        params,
+        save_,
+        show_,
+        config_data,
+        debug,
+        dry_run,
     )
     raise SystemExit(exit_code)

@@ -1,4 +1,3 @@
-
 from textfsmgen.cli.tabular_cmd import tabular
 
 
@@ -23,13 +22,10 @@ def test_tabular_show_snippet(tmpfile, runner, monkeypatch, fake_builder):
 
     p = tmpfile("sample.txt", "hello")
 
-    result = runner.invoke(tabular, [
-        "--input-file", str(p),
-        "--show", "snippet"
-    ])
+    result = runner.invoke(tabular, ["--input-file", str(p), "--show", "snippet"])
 
     assert result.exit_code == 0
-    assert "abc" in result.output   # fake_builder.snippet = "abc"
+    assert "abc" in result.output  # fake_builder.snippet = "abc"
 
 
 # ------------------------------------------------------------
@@ -43,11 +39,9 @@ def test_tabular_save_dry_run(tmpfile, runner, monkeypatch, fake_builder):
 
     p = tmpfile("sample.txt", "hello")
 
-    result = runner.invoke(tabular, [
-        "--input-file", str(p),
-        "--save", "snippet-out.txt",
-        "--dry-run"
-    ])
+    result = runner.invoke(
+        tabular, ["--input-file", str(p), "--save", "snippet-out.txt", "--dry-run"]
+    )
 
     assert result.exit_code == 0
     assert "[DRY-RUN]" in result.output
@@ -64,11 +58,9 @@ def test_tabular_debug(tmpfile, runner, monkeypatch, fake_builder):
 
     p = tmpfile("sample.txt", "hello")
 
-    result = runner.invoke(tabular, [
-        "--input-file", str(p),
-        "--show", "snippet",
-        "--debug"
-    ])
+    result = runner.invoke(
+        tabular, ["--input-file", str(p), "--show", "snippet", "--debug"]
+    )
 
     assert result.exit_code == 0
     assert "[INFO] Loaded sample" in result.output
@@ -83,9 +75,11 @@ def test_tabular_params_passed(tmpfile, runner, monkeypatch):
 
     def fake_builder_capture(user_data, **params):  # noqa
         captured["params"] = params
+
         class B:
             snippet = "abc"
             template = "xyz"
+
         return B()
 
     monkeypatch.setattr(
@@ -95,13 +89,20 @@ def test_tabular_params_passed(tmpfile, runner, monkeypatch):
 
     p = tmpfile("sample.txt", "hello")
 
-    runner.invoke(tabular, [
-        "--input-file", str(p),
-        "--column-divider", "|",
-        "--column-count", "4",
-        "--has-header",
-        "--show", "snippet"
-    ])
+    runner.invoke(
+        tabular,
+        [
+            "--input-file",
+            str(p),
+            "--column-divider",
+            "|",
+            "--column-count",
+            "4",
+            "--has-header",
+            "--show",
+            "snippet",
+        ],
+    )
 
     assert captured["params"]["column_divider"] == "|"
     assert captured["params"]["column_count"] == 4

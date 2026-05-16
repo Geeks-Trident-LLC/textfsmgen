@@ -20,6 +20,7 @@ from ..core.data_loader import extract_subpath_after
 # Entry point
 # ---------------------------------------------------------------------------
 
+
 @catch_path_errors
 def diff(case_path: Path) -> int:
     """
@@ -39,8 +40,12 @@ def diff(case_path: Path) -> int:
         snippet_diff = diff_canonical(case, kind="snippet")
         template_diff = diff_canonical(case, kind="template")
 
-        is_diff = (canonical_snippet_diff or canonical_template_diff
-                   or snippet_diff or template_diff)
+        is_diff = (
+            canonical_snippet_diff
+            or canonical_template_diff
+            or snippet_diff
+            or template_diff
+        )
     else:
         snippet_diff = diff_expected(case, kind="snippet")
         template_diff = diff_expected(case, kind="template")
@@ -49,4 +54,3 @@ def diff(case_path: Path) -> int:
     if not is_diff:
         print(f"[OK] {tc_name} — no differences found")
     return is_diff
-

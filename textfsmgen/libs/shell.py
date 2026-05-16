@@ -90,12 +90,7 @@ def execute_command(cmdline: str) -> DotObject:
     # ------------------------------------------------------------
     # 1. Try running normally (cmd.exe or bash/zsh)
     # ------------------------------------------------------------
-    proc = subprocess.run(
-        cmdline,
-        shell=True,
-        capture_output=True,
-        text=True
-    )
+    proc = subprocess.run(cmdline, shell=True, capture_output=True, text=True)
 
     if proc.returncode == ECODE.SUCCESS or not is_windows:
         return DotObject(
@@ -131,8 +126,16 @@ def execute_command(cmdline: str) -> DotObject:
 def _looks_like_powershell(cmd: str) -> bool:
     """Heuristics to detect PowerShell pipelines."""
     ps_keywords = [
-        "|", "select-object", "where-object", "format-",
-        "get-", "set-", "new-", "remove-", "& {", ";"
+        "|",
+        "select-object",
+        "where-object",
+        "format-",
+        "get-",
+        "set-",
+        "new-",
+        "remove-",
+        "& {",
+        ";",
     ]
     cmd_lower = cmd.lower()
     return any(k in cmd_lower for k in ps_keywords)
@@ -143,10 +146,7 @@ def _run_powershell_block(command: str) -> DotObject:
     ps_command = f"& {{ {command} }}"
     for ps in ("powershell", "pwsh"):
         proc = subprocess.run(
-            [ps, "-command", ps_command],
-            shell=False,
-            capture_output=True,
-            text=True
+            [ps, "-command", ps_command], shell=False, capture_output=True, text=True
         )
         if proc.returncode == ECODE.SUCCESS:
             return DotObject(
@@ -164,12 +164,7 @@ def _run_powershell_block(command: str) -> DotObject:
 def _run_explicit_powershell(cmdline: str) -> DotObject:
     """Run commands that already start with powershell/pwsh."""
     parts = shlex.split(cmdline)
-    proc = subprocess.run(
-        parts,
-        shell=False,
-        capture_output=True,
-        text=True
-    )
+    proc = subprocess.run(parts, shell=False, capture_output=True, text=True)
     return DotObject(
         output=(proc.stdout or "") + (proc.stderr or ""),
         exit_code=proc.returncode,

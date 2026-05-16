@@ -79,7 +79,9 @@ def regen(case_path: Path, *, dry_run: bool = False) -> int:
             print("[DRY-RUN] Cleaning up temporary directory.")
             shutil.rmtree(case_path)
         else:
-            print("[DRY-RUN] Regen failed. Temporary directory preserved for inspection.")
+            print(
+                "[DRY-RUN] Regen failed. Temporary directory preserved for inspection."
+            )
 
     return rc
 
@@ -87,6 +89,7 @@ def regen(case_path: Path, *, dry_run: bool = False) -> int:
 # ---------------------------------------------------------------------------
 # MAIN CASE REGEN
 # ---------------------------------------------------------------------------
+
 
 def regen_main(case: GoldenCase) -> int:
     """
@@ -113,10 +116,7 @@ def regen_main(case: GoldenCase) -> int:
         base = Path(input_info.fullname).stem
         out_path = loader.case_dir / "expected_results" / f"{base}_result.json"
 
-        rows = parse_textfsm_to_dicts(
-            canonical.template.content,
-            input_info.content
-        )
+        rows = parse_textfsm_to_dicts(canonical.template.content, input_info.content)
         out_path.write_text(json.dumps(rows, indent=2, ensure_ascii=False))
         updated.append(str(out_path))
 
@@ -135,6 +135,7 @@ def regen_main(case: GoldenCase) -> int:
 # ---------------------------------------------------------------------------
 # INTEGRATION CASE REGEN
 # ---------------------------------------------------------------------------
+
 
 def regen_integration(case: GoldenCase) -> int:
     """
@@ -190,6 +191,7 @@ def regen_integration(case: GoldenCase) -> int:
 # ---------------------------------------------------------------------------
 # UTIL
 # ---------------------------------------------------------------------------
+
 
 def _print_success(case: GoldenCase, files: list[str]) -> None:
     tc_name = extract_subpath_after("golden", case.case_dir)

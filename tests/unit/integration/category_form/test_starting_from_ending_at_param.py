@@ -105,5 +105,7 @@ def test():
 
     # Verification passes
 
-    is_verified = verify_snippet(generated_snippet, test_data, expected_result=exp_result)
+    is_verified = verify_snippet(
+        generated_snippet, test_data, expected_result=exp_result
+    )
     assert is_verified

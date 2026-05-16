@@ -186,4 +186,3 @@ class Position:
         """Reset the position."""
         self.value = 0
         return self.value
-

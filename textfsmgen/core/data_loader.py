@@ -16,7 +16,7 @@ import textfsmgen
 from textfsmgen import (
     TabularTemplateBuilder,
     CategoryTemplateBuilder,
-    parse_textfsm_to_dicts
+    parse_textfsm_to_dicts,
 )
 
 from textfsmgen.libs.generic import DotObject
@@ -34,8 +34,7 @@ def write_text_atomic(path, text):
 def write_json_atomic(path, obj):
     path = Path(path)
     tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(json.dumps(obj, indent=2, ensure_ascii=False),
-                   encoding="utf-8")
+    tmp.write_text(json.dumps(obj, indent=2, ensure_ascii=False), encoding="utf-8")
     tmp.replace(path)
 
 
@@ -118,8 +117,9 @@ class DataLoader:
 
         # --- Helper to validate required files ---
         def check_required(required_paths):
-            missing = [str(p.relative_to(folder)) for p in required_paths if
-                       not p.exists()]
+            missing = [
+                str(p.relative_to(folder)) for p in required_paths if not p.exists()
+            ]
             if missing:
                 raise_runtime_error(
                     obj="InvalidTestCaseStructure",
@@ -194,15 +194,15 @@ class DataLoader:
         self.canonical_snippet = snippet_path.read_text(encoding="utf-8")
 
         template_path = self.file_path / "canonical" / "textfsm.template"
-        self.validate_file_path(template_path,
-                                prefix="Canonical TextFSM template file")
+        self.validate_file_path(template_path, prefix="Canonical TextFSM template file")
         self.canonical_template = template_path.read_text(encoding="utf-8")
 
         result_path = self.file_path / "canonical" / "result.json"
         self.validate_file_path(result_path, prefix="Canonical result file")
 
-        self.canonical_result = json.loads(
-            result_path.read_text(encoding="utf-8")) or []
+        self.canonical_result = (
+            json.loads(result_path.read_text(encoding="utf-8")) or []
+        )
 
     def load_expected(self):
         if self.kind == "main":
@@ -213,8 +213,7 @@ class DataLoader:
         self.expected_snippet = snippet_path.read_text(encoding="utf-8")
 
         template_path = self.file_path / "expected" / "textfsm.template"
-        self.validate_file_path(template_path,
-                                prefix="Expected TextFSM template file")
+        self.validate_file_path(template_path, prefix="Expected TextFSM template file")
         self.expected_template = template_path.read_text(encoding="utf-8")
 
     def load_input_result_pairs(self):
@@ -229,8 +228,7 @@ class DataLoader:
             input_sample = input_path.read_text(encoding="utf-8")
             exp_result = json.loads(exp_result_path.read_text(encoding="utf-8"))
             input_info = DotObject(path=input_filename, data=input_sample)
-            result_info = DotObject(path=exp_result_filename,
-                                    data=exp_result)
+            result_info = DotObject(path=exp_result_filename, data=exp_result)
             yield input_info, result_info
 
     def get_builder(self):
@@ -247,10 +245,7 @@ class DataLoader:
     def generate_meta(self):
 
         # Only write meta when explicitly allowed
-        if (
-                not os.getenv("GOLDEN_WRITE_META") and
-                not os.getenv("GOLDEN_REGEN")
-        ):
+        if not os.getenv("GOLDEN_WRITE_META") and not os.getenv("GOLDEN_REGEN"):
             return
 
         if self.kind != "main":
@@ -356,10 +351,12 @@ class DataLoader:
             exp_result = res.data
 
             result = parse_textfsm_to_dicts(template, sample)
-            error = (f"mismatch parsed result (using canonical template) "
-                     f"vs expected result\n"
-                     f"  - {inp.path}\n"
-                     f"  - {res.path}")
+            error = (
+                f"mismatch parsed result (using canonical template) "
+                f"vs expected result\n"
+                f"  - {inp.path}\n"
+                f"  - {res.path}"
+            )
             assert result == exp_result, error
 
         self.check_drift()
@@ -374,10 +371,12 @@ class DataLoader:
             exp_result = res.data
 
             result = parse_textfsm_to_dicts(template, sample)
-            error = (f"mismatch parsed result (using expected template) "
-                     f"vs expected result\n"
-                     f"  - {inp.path}\n"
-                     f"  - {res.path}")
+            error = (
+                f"mismatch parsed result (using expected template) "
+                f"vs expected result\n"
+                f"  - {inp.path}\n"
+                f"  - {res.path}"
+            )
 
             assert result == exp_result, error
 

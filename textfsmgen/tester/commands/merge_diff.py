@@ -59,7 +59,9 @@ def merge_diff(
         print(f"[MERGE-DIFF] Reference case: {ref_case_name}")
 
     # 4. Simulate input merge
-    merge_actions, simulated_inputs = merge_preview_simulate_input_merge(cases, ref_case)
+    merge_actions, simulated_inputs = merge_preview_simulate_input_merge(
+        cases, ref_case
+    )
 
     if display:
         print(f"[MERGE-DIFF] Total merged inputs: {len(simulated_inputs)}\n")
@@ -113,6 +115,7 @@ def merge_diff(
 # Generate merged expected_results
 # ---------------------------------------------------------------------------
 
+
 def merge_diff_generate_results(ref_case: GoldenCase, simulated_inputs: dict[str, str]):
     template = ref_case.data.load_expected().template.content
     merged = {}
@@ -128,7 +131,10 @@ def merge_diff_generate_results(ref_case: GoldenCase, simulated_inputs: dict[str
 # Compare merged vs golden expected_results
 # ---------------------------------------------------------------------------
 
-def merge_diff_compare_results(ref_case: GoldenCase, merged_results: dict[str, list[dict]]):
+
+def merge_diff_compare_results(
+    ref_case: GoldenCase, merged_results: dict[str, list[dict]]
+):
     diffs = {}
     for name, merged_rows in merged_results.items():
         base = Path(name).stem
@@ -152,6 +158,7 @@ def merge_diff_compare_results(ref_case: GoldenCase, merged_results: dict[str, l
 # Normal mode printing
 # ---------------------------------------------------------------------------
 
+
 def merge_diff_print_normal(ref_case, diffs, merged_results, diff_count):
     for name, status in diffs.items():
         # name is now a full path, so extract just the filename
@@ -159,7 +166,7 @@ def merge_diff_print_normal(ref_case, diffs, merged_results, diff_count):
         base = file_path.stem  # e.g. "list_files.txt"
         result_path = extract_subpath_after(
             "golden",
-            file_path.parent.parent / "expected_results" / f"{base}_result.json"
+            file_path.parent.parent / "expected_results" / f"{base}_result.json",
         )
 
         # Print the diff header
@@ -183,7 +190,7 @@ def merge_diff_print_normal(ref_case, diffs, merged_results, diff_count):
                 merged_text.splitlines(),
                 fromfile="expected",
                 tofile="merged",
-                lineterm=""
+                lineterm="",
             )
         )
 
@@ -198,9 +205,11 @@ def merge_diff_print_normal(ref_case, diffs, merged_results, diff_count):
 
         print()
 
+
 # ---------------------------------------------------------------------------
 # Compact mode
 # ---------------------------------------------------------------------------
+
 
 def merge_diff_print_compact(ref_case_name, diffs, total_inputs):
     diff_count = sum(1 for v in diffs.values() if v != "match")
@@ -214,14 +223,15 @@ def merge_diff_print_compact(ref_case_name, diffs, total_inputs):
 # JSON mode
 # ---------------------------------------------------------------------------
 
+
 def merge_diff_json_success(ref_case_name, diffs, total_inputs):
     clean_diffs = {}
     for file_name, value in diffs.items():
         file_path = Path(file_name)
         key = (
             str(extract_subpath_after("golden", file_path))
-            if file_path.is_absolute() else
-            str(file_path)
+            if file_path.is_absolute()
+            else str(file_path)
         )
         clean_diffs[key] = value
 
@@ -229,7 +239,7 @@ def merge_diff_json_success(ref_case_name, diffs, total_inputs):
         "reference_case": str(ref_case_name),
         "inputs_total": total_inputs,
         "diffs": clean_diffs,
-        "result": "success" if all(v == "match" for v in diffs.values()) else "fail"
+        "result": "success" if all(v == "match" for v in diffs.values()) else "fail",
     }
     return json.dumps(data, indent=2)
 
@@ -239,14 +249,14 @@ def merge_diff_json_fail(candidate_info):
     for case_path, value in candidate_info.items():
         key = (
             str(extract_subpath_after("golden", case_path))
-            if isinstance(case_path, Path) and case_path.is_absolute() else
-            str(case_path)
+            if isinstance(case_path, Path) and case_path.is_absolute()
+            else str(case_path)
         )
         reference_candidates[key] = value
 
     data = {
         "reference_case": None,
         "reference_candidates": reference_candidates,
-        "result": "fail"
+        "result": "fail",
     }
     return json.dumps(data, indent=2)

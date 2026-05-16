@@ -19,10 +19,9 @@ from . import tabular_cmd
 from . import config_cmd
 
 
-
 @click.group(
     invoke_without_command=True,
-    help="TextFSM Generator CLI. Use 'textfsmgen tester --help' for test utilities."
+    help="TextFSM Generator CLI. Use 'textfsmgen tester --help' for test utilities.",
 )
 @click.version_option(__version__, "--version", "-v", message="textfsmgen %(version)s")
 @click.pass_context

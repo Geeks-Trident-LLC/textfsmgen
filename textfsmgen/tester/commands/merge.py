@@ -119,7 +119,9 @@ def merge(dst: Path, srcs: list[Path], *, author: str, dry_run: bool = False) ->
 
             if existing_content == inp.content:
                 # Same content → skip
-                print(f"[INFO] Input '{name}' already exists with identical content. Skipped.")
+                print(
+                    f"[INFO] Input '{name}' already exists with identical content. Skipped."
+                )
                 continue
 
             # Different content → generate new unique filename

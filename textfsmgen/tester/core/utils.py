@@ -42,6 +42,7 @@ def catch_path_errors(func):
 
     return wrapper
 
+
 # ----------------------------------------------------------------------
 # Error helpers
 # ----------------------------------------------------------------------
@@ -60,14 +61,12 @@ def require_case_dir(case_path: Path) -> Path:
 
     if not case_path.exists():
         raise_runtime_error(
-            obj="TestCasePathError",
-            msg=f"Case path does not exist: {case_path}"
+            obj="TestCasePathError", msg=f"Case path does not exist: {case_path}"
         )
 
     if not case_path.is_dir():
         raise_runtime_error(
-            obj="TestCasePathError",
-            msg=f"Case path is not a directory: {case_path}"
+            obj="TestCasePathError", msg=f"Case path is not a directory: {case_path}"
         )
 
     # Required folders
@@ -100,10 +99,11 @@ def require_case_dir(case_path: Path) -> Path:
                 f"  expected_results: {has_results}\n"
                 f"  canonical: {has_canonical}\n"
                 f"  expected: {has_expected}"
-            )
+            ),
         )
 
     return case_path
+
 
 # ----------------------------------------------------------------------
 # Path helpers

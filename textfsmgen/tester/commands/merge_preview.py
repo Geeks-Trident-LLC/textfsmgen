@@ -11,7 +11,9 @@ from ..core.utils import catch_path_errors
 
 
 @catch_path_errors
-def merge_preview(srcs: list[Path], compact: bool = False, is_json: bool = False) -> int:
+def merge_preview(
+    srcs: list[Path], compact: bool = False, is_json: bool = False
+) -> int:
     display = not (is_json or compact)
 
     if display:
@@ -32,7 +34,9 @@ def merge_preview(srcs: list[Path], compact: bool = False, is_json: bool = False
         print(f"[PREVIEW] builder = {builder_type}\n")
 
     # 3. Evaluate reference candidates
-    ref_case, candidate_info = merge_preview_select_reference_case(cases, display=display)
+    ref_case, candidate_info = merge_preview_select_reference_case(
+        cases, display=display
+    )
 
     if ref_case is None:
         if is_json:
@@ -48,25 +52,26 @@ def merge_preview(srcs: list[Path], compact: bool = False, is_json: bool = False
         print(f"[PREVIEW] Reference case selected: {ref_case_name}\n")
 
     # 4. Simulate input merge
-    merge_actions, simulated_inputs = merge_preview_simulate_input_merge(cases, ref_case)
+    merge_actions, simulated_inputs = merge_preview_simulate_input_merge(
+        cases, ref_case
+    )
 
     # 5. Output modes
     if is_json:
-        print(merge_preview_json_success(
-            builder_type,
-            ref_case_name,
-            candidate_info,
-            merge_actions,
-            simulated_inputs
-        ))
+        print(
+            merge_preview_json_success(
+                builder_type,
+                ref_case_name,
+                candidate_info,
+                merge_actions,
+                simulated_inputs,
+            )
+        )
         return 0
 
     if compact:
         merge_preview_print_compact(
-            builder_type,
-            ref_case_name,
-            merge_actions,
-            simulated_inputs
+            builder_type, ref_case_name, merge_actions, simulated_inputs
         )
         return 0
 
@@ -81,7 +86,6 @@ def merge_preview(srcs: list[Path], compact: bool = False, is_json: bool = False
 
     print("[PREVIEW] Merge would succeed.")
     return 0
-
 
 
 def merge_preview_load_and_validate_cases(srcs: list[Path], display=False):
@@ -225,17 +229,21 @@ def merge_preview_simulate_input_merge(cases: list[GoldenCase], ref_case: Golden
 def merge_preview_print_merge_plan(merge_actions):
     # Compute widths
     action_w = max(len(a[0]) for a in merge_actions)
-    name_w   = max(len(a[1]) for a in merge_actions)
-    new_w    = max(len(a[2]) for a in merge_actions)
+    name_w = max(len(a[1]) for a in merge_actions)
+    new_w = max(len(a[2]) for a in merge_actions)
 
     for action, name, new_name, src in merge_actions:
         if action == "RENAME":
-            print(f"  {action:<{action_w}}  {name:<{name_w}} → {new_name:<{new_w}}  (from {src})")
+            print(
+                f"  {action:<{action_w}}  {name:<{name_w}} → {new_name:<{new_w}}  (from {src})"
+            )
         else:
             print(f"  {action:<{action_w}}  {name:<{name_w}}      (from {src})")
 
 
-def merge_preview_print_compact(builder, ref_case_name, merge_actions, simulated_inputs):
+def merge_preview_print_compact(
+    builder, ref_case_name, merge_actions, simulated_inputs
+):
     base = sum(1 for a in merge_actions if a[0] == "BASE")
     copied = sum(1 for a in merge_actions if a[0] == "COPY")
     overwritten = sum(1 for a in merge_actions if a[0] == "OVERWRITE")
@@ -251,13 +259,15 @@ def merge_preview_print_compact(builder, ref_case_name, merge_actions, simulated
     print("[PREVIEW] Merge would succeed.")
 
 
-def merge_preview_json_success(builder, ref_case_name, candidate_info, merge_actions, simulated_inputs):
+def merge_preview_json_success(
+    builder, ref_case_name, candidate_info, merge_actions, simulated_inputs
+):
     reference_candidates = {}
     for case, value in candidate_info.items():
         key = (
             str(extract_subpath_after("golden", case))
-            if isinstance(case, Path) and case.is_absolute() else
-            str(case)
+            if isinstance(case, Path) and case.is_absolute()
+            else str(case)
         )
         reference_candidates[key] = value
 
@@ -272,17 +282,17 @@ def merge_preview_json_success(builder, ref_case_name, candidate_info, merge_act
                     "action": f"{a}",
                     "name": f"{n}",
                     "new_name": f"{new}" if new else None,
-                    "source": f"{src}"
+                    "source": f"{src}",
                 }
                 for (a, n, new, src) in merge_actions
-            ]
+            ],
         },
         "expected_artifacts": [
             "expected/snippet.txt",
             "expected/textfsm.template",
-            "expected_results/<input>_result.json"
+            "expected_results/<input>_result.json",
         ],
-        "result": "success"
+        "result": "success",
     }
     return json.dumps(data, indent=2)
 
@@ -292,8 +302,8 @@ def merge_preview_json_fail(builder, candidate_info):
     for case, value in candidate_info.items():
         key = (
             str(extract_subpath_after("golden", case))
-            if isinstance(case, Path) and case.is_absolute() else
-            str(case)
+            if isinstance(case, Path) and case.is_absolute()
+            else str(case)
         )
         reference_candidates[key] = value
 
@@ -301,6 +311,6 @@ def merge_preview_json_fail(builder, candidate_info):
         "builder": builder,
         "reference_case": None,
         "reference_candidates": reference_candidates,
-        "result": "fail"
+        "result": "fail",
     }
     return json.dumps(data, indent=2)
