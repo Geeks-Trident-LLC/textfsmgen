@@ -24,27 +24,6 @@ from textfsmgen import TemplateBuilder
 from textfsmgen.libs.generic import StatusString
 
 
-def verify_snippet(
-    template_snippet: str,
-    test_data: str,
-    expected_rows_count: Optional[int] = None,
-    expected_result: Optional[list[dict]] = None,
-    ignore_space: bool = True,
-    debug: bool = False,
-) -> StatusString:
-    """
-    Verify a template snippet against test data.
-    """
-    builder = TemplateBuilder(user_data=template_snippet, test_data=test_data)
-    status = builder.verify(
-        expected_rows_count=expected_rows_count,
-        expected_result=expected_result,
-        ignore_space=ignore_space,
-        debug=debug,
-    )
-    return status
-
-
 def verify_textfsm(
     textfsm_template: str,
     test_data: str,

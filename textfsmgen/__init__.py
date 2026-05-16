@@ -11,7 +11,6 @@ from textfsmgen.core.template import TemplateBuilder
 from textfsmgen.core.template import CategoryTemplateBuilder
 from textfsmgen.core.template import TabularTemplateBuilder
 from textfsmgen.core.verify import (
-    verify_snippet,
     verify_textfsm,
 )
 from textfsmgen.libs.common import parse_textfsm_to_dicts
@@ -24,7 +23,6 @@ __all__ = [
     "TemplateBuilder",
     "CategoryTemplateBuilder",
     "TabularTemplateBuilder",
-    "verify_snippet",
     "verify_textfsm",
     "parse_textfsm_to_dicts",
     "version",
