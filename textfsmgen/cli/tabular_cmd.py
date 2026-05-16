@@ -18,10 +18,10 @@ def register(cli):
     context_settings=dict(help_option_names=["-h", "--help"]),
 )
 @click.option(
-    "--input-file",
+    "--sample-file",
     default=None,
     type=click.Path(exists=True),
-    help="Input filename containing raw text sample.",
+    help="Sample filename containing raw text sample.",
 )
 @click.option(
     "--command",
@@ -85,7 +85,7 @@ def register(cli):
     "--debug",
     is_flag=True,
     default=False,
-    help="Print resolved parameters and input metadata.",
+    help="Print resolved parameters and sample metadata.",
 )
 @click.option(
     "--dry-run",
@@ -96,7 +96,7 @@ def register(cli):
 @click.pass_context
 def tabular(
     ctx,
-    input_file,
+    sample_file,
     cmd,
     column_divider,
     column_count,
@@ -115,7 +115,7 @@ def tabular(
     dry_run,
 ):
     # Show help if nothing provided
-    if not input_file and not cmd and config is None:
+    if not sample_file and not cmd and config is None:
         click.echo(ctx.get_help())
         raise SystemExit(0)
 
@@ -140,7 +140,7 @@ def tabular(
         config_data = status.raw or {}
 
     # Merge CLI + config
-    input_file_ = merge(input_file, config_data, "input_file", "")
+    sample_file_ = merge(sample_file, config_data, "sample_file", "")
     cmd_ = merge(cmd, config_data, "command", "")
     save_ = merge(save, config_data, "save", "")
     show_ = merge(show, config_data, "show", "")
@@ -163,7 +163,7 @@ def tabular(
     # Delegate to shared workflow
     exit_code = run_builder_workflow(
         TabularTemplateBuilder,
-        input_file_,
+        sample_file_,
         cmd_,
         params,
         save_,

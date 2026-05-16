@@ -27,7 +27,7 @@ CATEGORY_TEMPLATE = {
         "ending_at": None,
         "replacing_rules": None,
     },
-    "input_file": "",
+    "sample_file": "",
     "command": "",
     "show": "",
     "save": "",
@@ -46,7 +46,7 @@ TABULAR_TEMPLATE = {
         "has_header_row": True,
         "replacing_rules": None,
     },
-    "input_file": "",
+    "sample_file": "",
     "command": "",
     "show": "",
     "save": "",
@@ -62,14 +62,14 @@ TOP_LEVEL_DOCS_MAPPING = {
         "Parameter/value pairs that control how the __PLACEHOLDER__ builder\n"
         "parses __PLACEHOLDER__‑like text."
     ),
-    "input_file": (
+    "sample_file": (
         "Path to a sample input file used as the source text for the __PLACEHOLDER__ builder."
     ),
     "command": "Shell command used to generate sample text dynamically\n"
-    "If provided, its output is used instead of input_file.",
+    "If provided, its output is used instead of sample_file.",
     "show": (
         "Selects which output to display on the console:\n"
-        "  - sample        : display the raw sample (from input_file or command)\n"
+        "  - sample        : display the raw sample (from sample_file or command)\n"
         "  - snippet       : display builder.snippet\n"
         "  - template      : display builder.template\n"
         "  - result        : display parsed result in JSON format\n"

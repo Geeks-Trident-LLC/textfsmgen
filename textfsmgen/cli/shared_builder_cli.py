@@ -33,7 +33,7 @@ def validate_config(config, required_params):
             reason="error",
         )
 
-    required_keys = ["params", "input_file", "command", "show", "save"]
+    required_keys = ["params", "sample_file", "command", "show", "save"]
     missing_top = [k for k in required_keys if k not in data]
     if missing_top:
         return StatusString(
@@ -60,9 +60,9 @@ def validate_config(config, required_params):
             reason="warning",
         )
 
-    if not data.get("input_file") and not data.get("command"):
+    if not data.get("sample_file") and not data.get("command"):
         return StatusString(
-            "Config must contain either 'input_file' or 'command'",
+            "Config must contain either 'sample_file' or 'command'",
             status=False,
             reason="warning",
         )
@@ -73,10 +73,10 @@ def validate_config(config, required_params):
 # ------------------------------------------------------------
 # Sample loading
 # ------------------------------------------------------------
-def load_sample(input_file, cmd):
-    if input_file:
+def load_sample(sample_file, cmd):
+    if sample_file:
         try:
-            content = Path(input_file).read_text(encoding="utf-8")
+            content = Path(sample_file).read_text(encoding="utf-8")
         except Exception as exc:
             return StatusString(
                 f"Failed to read input-file: {exc}",
@@ -100,7 +100,7 @@ def load_sample(input_file, cmd):
 
         return StatusString(f"{cmd} has no output", status=False, reason="warning")
 
-    return StatusString("No input_file or cmd provided", status=False, reason="warning")
+    return StatusString("No sample_file or cmd provided", status=False, reason="warning")
 
 
 # ------------------------------------------------------------
@@ -352,11 +352,11 @@ def dry_run_save(builder, sample, save_spec):  # noqa
 # ------------------------------------------------------------
 # Debug printer
 # ------------------------------------------------------------
-def debug_print(input_file, cmd, params, config, sample, save, show):
-    click.echo(f"[INFO] Loaded sample from: {input_file or cmd}")
+def debug_print(sample_file, cmd, params, config, sample, save, show):
+    click.echo(f"[INFO] Loaded sample from: {sample_file or cmd}")
     click.echo(f"[INFO] Sample size: {len(sample)} characters")
     click.echo("=== DEBUG INFO ===")
-    click.echo(f"input_file     = {input_file!r}")
+    click.echo(f"sample_file    = {sample_file!r}")
     click.echo(f"command        = {cmd!r}")
     click.echo(f"params         = {params}")
     params_txt = json.dumps(params, indent=2, ensure_ascii=False)
@@ -376,7 +376,7 @@ def debug_print(input_file, cmd, params, config, sample, save, show):
 # ------------------------------------------------------------
 def run_builder_workflow(
     builder_class,
-    input_file,
+    sample_file,
     cmd,
     params,
     save,
@@ -386,20 +386,20 @@ def run_builder_workflow(
     dry_run,
 ):
     # Load sample
-    sample = load_sample(input_file, cmd)
+    sample = load_sample(sample_file, cmd)
     if not sample:
         emit_status(sample)
         return 1
 
     # Debug
     if debug:
-        debug_print(input_file, cmd, params, config, sample, save, show)
+        debug_print(sample_file, cmd, params, config, sample, save, show)
 
     # Build
     builder = builder_class(user_data=sample, **params)
     if not builder:
         status = StatusString(
-            f"Cannot create builder from sample (reference: {input_file or cmd!r})\n"
+            f"Cannot create builder from sample (reference: {sample_file or cmd!r})\n"
             "===========================================\n"
             f"{sample}\n",
             status=False,

@@ -22,7 +22,7 @@ def test_tabular_show_snippet(tmpfile, runner, monkeypatch, fake_builder):
 
     p = tmpfile("sample.txt", "hello")
 
-    result = runner.invoke(tabular, ["--input-file", str(p), "--show", "snippet"])
+    result = runner.invoke(tabular, ["--sample-file", str(p), "--show", "snippet"])
 
     assert result.exit_code == 0
     assert "abc" in result.output  # fake_builder.snippet = "abc"
@@ -40,7 +40,7 @@ def test_tabular_save_dry_run(tmpfile, runner, monkeypatch, fake_builder):
     p = tmpfile("sample.txt", "hello")
 
     result = runner.invoke(
-        tabular, ["--input-file", str(p), "--save", "snippet-out.txt", "--dry-run"]
+        tabular, ["--sample-file", str(p), "--save", "snippet-out.txt", "--dry-run"]
     )
 
     assert result.exit_code == 0
@@ -59,7 +59,7 @@ def test_tabular_debug(tmpfile, runner, monkeypatch, fake_builder):
     p = tmpfile("sample.txt", "hello")
 
     result = runner.invoke(
-        tabular, ["--input-file", str(p), "--show", "snippet", "--debug"]
+        tabular, ["--sample-file", str(p), "--show", "snippet", "--debug"]
     )
 
     assert result.exit_code == 0
@@ -92,7 +92,7 @@ def test_tabular_params_passed(tmpfile, runner, monkeypatch):
     runner.invoke(
         tabular,
         [
-            "--input-file",
+            "--sample-file",
             str(p),
             "--column-divider",
             "|",
@@ -103,7 +103,6 @@ def test_tabular_params_passed(tmpfile, runner, monkeypatch):
             "snippet",
         ],
     )
-
     assert captured["params"]["column_divider"] == "|"
     assert captured["params"]["column_count"] == 4
     assert captured["params"]["has_header_row"] is True
@@ -116,7 +115,7 @@ def test_tabular_column_divider_flag(tmp_path):
     sample.write_text("a|b|c\n1|2|3\n")
 
     result = runner.invoke(tabular, [   # noqa
-        "--input-file", str(sample),
+        "--sample-file", str(sample),
         "--column-divider", "|",
         "--column-count", "3",
         "--show", "snippet"

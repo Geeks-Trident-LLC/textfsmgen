@@ -84,7 +84,7 @@ def test_config_explain_includes_params():
     runner = CliRunner()
     result = runner.invoke(config, ["explain", "category"])
     assert result.exit_code == 0
-    assert "input_file" in result.output
+    assert "sample_file" in result.output
     assert "params:" in result.output
     assert "count" in result.output
     assert "separator" in result.output

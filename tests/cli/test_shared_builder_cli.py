@@ -41,7 +41,7 @@ def test_validate_config_valid(tmpfile):
             "ending_at": "",
             "replacing_rules": "",
         },
-        "input_file": "x",
+        "sample_file": "x",
         "command": "",
         "show": "",
         "save": "",
@@ -95,7 +95,7 @@ def test_run_builder_workflow_success(fake_builder):
     params = {"count": 1, "separator": ":"}
     exit_code = run_builder_workflow(
         builder_class=lambda user_data, **p: fake_builder(user_data, **p),
-        input_file=None,
+        sample_file=None,
         cmd="echo hello",
         params=params,
         save="",
