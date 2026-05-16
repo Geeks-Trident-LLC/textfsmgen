@@ -11,7 +11,7 @@ Run pytest in the project root to execute these tests:
 
 import pytest
 
-from textfsmgen.core.template import LineParser
+from textfsmgen import LineParser
 
 
 @pytest.mark.parametrize(
