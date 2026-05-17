@@ -9,6 +9,8 @@ from textfsmgen.libs import shell
 from textfsmgen.libs.utils import get_data_as_tabular
 from textfsmgen.libs.text import render_text_block
 
+from textfsmgen.core.builder import BuildResult
+
 
 # ------------------------------------------------------------
 # Merge helper
@@ -149,7 +151,7 @@ def dry_run_save(builder, sample, save_spec):
 # ------------------------------------------------------------
 # Save outputs
 # ------------------------------------------------------------
-def save_outputs(builder, sample, save_spec):
+def save_outputs(result: BuildResult, sample, save_spec):
     try:
         parsed_items = parse_save_expression(save_spec)
     except ValueError as exc:
@@ -172,7 +174,7 @@ def save_outputs(builder, sample, save_spec):
 
         # Load content
         if kind in ("snippet", "template"):
-            content = getattr(builder, kind, None)
+            content = getattr(result, kind, None)
             if not content:
                 msg = f"Builder has no '{kind}' content"
                 if wrapper == "json":
@@ -186,7 +188,7 @@ def save_outputs(builder, sample, save_spec):
                 continue
 
         elif kind == "result":
-            content = parse_textfsm_to_dicts(builder.template, sample)
+            content = parse_textfsm_to_dicts(result.template, sample)
             if not content:
                 msg = f"No records found for {filename}"
                 if wrapper == "json":
@@ -269,7 +271,7 @@ def parse_save_expression(expr: str):
 # ------------------------------------------------------------
 # Show outputs
 # ------------------------------------------------------------
-def show_outputs(builder, sample, show_spec):
+def show_outputs(result: BuildResult, sample, show_spec):
     show_spec = show_spec.strip()
     is_json = show_spec.startswith("json(") and show_spec.endswith(")")
 
@@ -297,18 +299,18 @@ def show_outputs(builder, sample, show_spec):
 
     def parse_result():
         try:
-            parsed_ = parse_textfsm_to_dicts(builder.template, sample)
+            parsed_ = parse_textfsm_to_dicts(result.template, sample)
             return parsed_, None
         except Exception as exc:
             return None, str(exc)
 
     if not cases:
-        return StatusString(builder.template, status=True)
+        return StatusString(result.template, status=True)
 
     for case in cases:
         # snippet / template
         if case in ("snippet", "template"):
-            value = getattr(builder, case)
+            value = getattr(result, case)
             add(parts, json_wrap("ok", value) if is_json else value, case)
             continue
 
@@ -361,6 +363,7 @@ def show_outputs(builder, sample, show_spec):
 def debug_print(sample_file, cmd, params, config, sample, save, show):
     click.echo(f"[INFO] Loaded sample from: {sample_file or cmd}")
     click.echo(f"[INFO] Sample size: {len(sample)} characters")
+
     click.echo("=== DEBUG INFO ===")
     click.echo(f"sample_file    = {sample_file!r}")
     click.echo(f"command        = {cmd!r}")
@@ -420,6 +423,9 @@ def run_builder_workflow(
 
     # Build
     builder.build()
+
+    # Convert to BuildResult
+    result: BuildResult = builder.to_result()
 
     if not builder:
         status = StatusString(

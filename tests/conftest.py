@@ -1,6 +1,8 @@
 import pytest
 import os
 from pathlib import Path
+from dataclasses import dataclass
+from typing import Optional, List
 
 from click.testing import CliRunner
 
@@ -22,6 +24,13 @@ def tmpfile(tmp_path):
 
 @pytest.fixture
 def fake_builder():
+    @dataclass
+    class FakeBuildResult:
+        snippet: str
+        template: str
+        result: List[dict]
+        warning: Optional[str] = None
+
     class FakeBuilder:
         def __init__(self):
             self.sample = None
@@ -47,6 +56,14 @@ def fake_builder():
 
         def __bool__(self):
             return True
+
+        def to_result(self):
+            return FakeBuildResult(
+                snippet=self.snippet,
+                template=self.template,
+                result=self.result,
+                warning=self.warning,
+            )
 
     return FakeBuilder
 
