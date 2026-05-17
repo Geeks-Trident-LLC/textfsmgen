@@ -1,3 +1,4 @@
+import pytest
 from textfsmgen.core.builder import TabularBuilder
 
 
@@ -54,3 +55,10 @@ def test_truthiness():
     b.set_sample(SAMPLE_TABLE)
     b.build()
     assert b
+
+
+def test_raises_on_parse_failure():
+    b = TabularBuilder()
+    b.set_sample("bad table")
+    with pytest.raises(Exception):
+        b.build()

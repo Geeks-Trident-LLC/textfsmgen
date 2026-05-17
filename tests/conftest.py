@@ -28,14 +28,22 @@ def fake_builder():
             self.params = None
             self.snippet = "abc"
             self.template = "Value {{ key }}"
+            self.result = []
+            self.warning = None
 
         def set_sample(self, sample, **params):
             self.sample = sample
             self.params = params
 
         def build(self):
-            # snippet/template already set
-            pass
+            # keep it simple but realistic
+            if self.sample and "fail" in self.sample:
+                self.result = []
+                self.warning = "Template could not parse sample"
+            elif self.sample:
+                self.result = [{"key": "value"}]
+            else:
+                self.result = []
 
         def __bool__(self):
             return True

@@ -7,6 +7,11 @@ Interface: non_wss(var_INTERFACE)
 Status: non_wss(var_STATUS)
 """
 
+SAMPLE = """
+Interface: Gi0/1
+Status: On
+"""
+
 NO_VARIABLE_SNIPPET = """
 Interface: Gi0/1
 """
@@ -56,9 +61,9 @@ def test_build_generates_template():
 def test_build_validates_template():
     b = FreeFormBuilder()
     b.set_snippet(SIMPLE_SNIPPET)
+    b.set_sample(SAMPLE)
     b.build()
-
-    assert b.template_parser is not None
+    assert bool(b.result)
 
 
 def test_build_raises_without_variables():
@@ -76,3 +81,10 @@ def test_truthiness():
     b.set_snippet(SIMPLE_SNIPPET)
     b.build()
     assert b
+
+def test_parsing_failure_warning():
+    b = FreeFormBuilder()
+    b.set_snippet("Value {{ key }}")
+    b.set_sample("this will not match")
+    with pytest.raises(Exception):
+        b.build()

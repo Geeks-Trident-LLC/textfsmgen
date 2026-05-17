@@ -35,7 +35,7 @@ def test_build_generates_snippet():
     b.build()
 
     assert b.snippet
-    assert "Value" in b.snippet
+    assert "Interface: mixed_word" in b.snippet
 
 
 def test_build_generates_template():
@@ -53,3 +53,10 @@ def test_truthiness():
     b.set_sample(SAMPLE)
     b.build()
     assert b
+
+
+def test_raises_on_parse_failure():
+    b = CategoryBuilder()
+    b.set_sample("invalid sample")
+    with pytest.raises(Exception):
+        b.build()
