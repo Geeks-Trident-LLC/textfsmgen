@@ -14,7 +14,7 @@ def register(cli):
 
 
 @click.command(
-    help="Generate a TextFSM template from tabular text samples.",
+    help="Generate a TextFSM template from a tabular text sample.",
     context_settings=dict(help_option_names=["-h", "--help"]),
 )
 @click.option(
@@ -45,30 +45,18 @@ def register(cli):
     default=None,
     help="Explicit column widths (comma-separated or JSON).",
 )
+@click.option("--headers", default=None, help="Header names (comma-separated or JSON).")
 @click.option(
-    "--headers",
-    default=None,
-    help="Header names (comma-separated or JSON)."
+    "--header-rows", default=None, help="Number of header rows or explicit row indices."
 )
 @click.option(
-    "--header-rows",
-    default=None,
-    help="Number of header rows or explicit row indices."
+    "--custom-header", default="", help="Custom header text to prepend to the template."
 )
 @click.option(
-    "--custom-header",
-    default="",
-    help="Custom header text to prepend to the template."
+    "--starting-from", default=None, help="Start parsing only after this marker."
 )
 @click.option(
-    "--starting-from",
-    default=None,
-    help="Start parsing only after this marker."
-)
-@click.option(
-    "--ending-at",
-    default=None,
-    help="Stop parsing when this marker is reached."
+    "--ending-at", default=None, help="Stop parsing when this marker is reached."
 )
 @click.option(
     "--has-header",
@@ -77,9 +65,7 @@ def register(cli):
     help="Indicates whether the table contains a header row.",
 )
 @click.option(
-    "--replacing-rules",
-    default=None,
-    help="Replacing rules (string or JSON)."
+    "--replacing-rules", default=None, help="Replacing rules (string or JSON)."
 )
 @click.option(
     "--show",
@@ -87,9 +73,7 @@ def register(cli):
     help="Show output: snippet, template, result, tabular, or json(...).",
 )
 @click.option(
-    "--save",
-    default="",
-    help="Save output to file(s). Format: type-filename."
+    "--save", default="", help="Save output to file(s). Format: type-filename."
 )
 @click.option(
     "--config",

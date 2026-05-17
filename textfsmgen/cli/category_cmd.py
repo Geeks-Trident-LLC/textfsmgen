@@ -14,7 +14,7 @@ def register(cli):
 
 
 @click.command(
-    help="Generate a category-based TextFSM template from sample text.",
+    help="Generate a TextFSM template from a categorized text sample.",
     context_settings=dict(help_option_names=["-h", "--help"]),
 )
 @click.option(
@@ -43,22 +43,13 @@ def register(cli):
     help="Separator between key and value fields.",
 )
 @click.option(
-
-    "--starting-from",
-    default=None,
-    help="Start parsing only after this marker."
+    "--starting-from", default=None, help="Start parsing only after this marker."
 )
 @click.option(
-
-    "--ending-at",
-    default=None,
-    help="Stop parsing when this marker is reached."
+    "--ending-at", default=None, help="Stop parsing when this marker is reached."
 )
 @click.option(
-
-    "--replacing-rules",
-    default=None,
-    help="Replacing rules (string or JSON)."
+    "--replacing-rules", default=None, help="Replacing rules (string or JSON)."
 )
 @click.option(
     "--show",
@@ -66,9 +57,7 @@ def register(cli):
     help="Show output: snippet, template, result, tabular, or json(...).",
 )
 @click.option(
-    "--save",
-    default="",
-    help="Save output to file(s). Format: type-filename."
+    "--save", default="", help="Save output to file(s). Format: type-filename."
 )
 @click.option(
     "--config",

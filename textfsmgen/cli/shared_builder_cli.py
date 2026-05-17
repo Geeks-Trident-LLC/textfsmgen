@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 import click
 from textfsmgen.libs.generic import StatusString
-from textfsmgen.libs.common import parse_textfsm_to_dicts, emit_status
+from textfsmgen.libs.common import emit_status
 from textfsmgen.libs import shell
 from textfsmgen.libs.utils import get_data_as_tabular
 from textfsmgen.libs.text import render_text_block
@@ -110,7 +110,7 @@ def load_sample(sample_file, cmd):
 # ------------------------------------------------------------
 # Dry-run save
 # ------------------------------------------------------------
-def dry_run_save(builder, sample, save_spec):
+def dry_run_save(result: BuildResult, sample, save_spec):
     try:
         parsed_items = parse_save_expression(save_spec)
     except ValueError as exc:
@@ -118,32 +118,119 @@ def dry_run_save(builder, sample, save_spec):
             return [json.dumps({"status": "error", "error": str(exc)}, indent=2)]
         return [f"[DRY-RUN] {exc}"]
 
-    wrapper = parsed_items[0][0]  # JSON or None
+    wrapper = parsed_items[0][0]  # "json" or None
 
-    json_results = []
+    json_items = []
     lines = []
+    global_reason = None  # "warning" or "error"
+    content = None
 
     for _, kind, filename in parsed_items:
-        content = None  # always defined
+        # ------------------------------------------------------------
+        # sample is always allowed
+        # ------------------------------------------------------------
+        if kind == "sample":
+            if wrapper == "json":
+                json_items.append(
+                    {
+                        "kind": "sample",
+                        "filename": filename,
+                        "status": "ok",
+                        "content": sample,
+                    }
+                )
+            else:
+                lines.append(f"[DRY-RUN] Would write {filename}:\n{sample}\n")
+            continue
 
+        # ------------------------------------------------------------
+        # Builder-level warning
+        # ------------------------------------------------------------
+        if result.warning:
+            msg = result.warning
+            if wrapper == "json":
+                json_items.append(
+                    {
+                        "kind": kind,
+                        "filename": filename,
+                        "status": "error",
+                        "reason": msg,
+                    }
+                )
+            else:
+                lines.append(f"[DRY-RUN] Would NOT write {filename}: {msg}")
+            global_reason = "error"
+            continue
+
+        # ------------------------------------------------------------
         # Load content
+        # ------------------------------------------------------------
         if kind in ("snippet", "template"):
-            content = getattr(builder, kind, None)
-        elif kind == "result":
-            content = parse_textfsm_to_dicts(builder.template, sample)
+            content = getattr(result, kind, None)
+            if not content:
+                msg = f"Builder has no '{kind}' content"
+                if wrapper == "json":
+                    json_items.append(
+                        {
+                            "kind": kind,
+                            "filename": filename,
+                            "status": "error",
+                            "reason": msg,
+                        }
+                    )
+                else:
+                    lines.append(f"[DRY-RUN] Would NOT write {filename}: {msg}")
+                global_reason = "error"
+                continue
 
+        elif kind == "result":
+            content = result.result
+            if not content:
+                msg = f"No records found for {filename}"
+                if wrapper == "json":
+                    json_items.append(
+                        {
+                            "kind": kind,
+                            "filename": filename,
+                            "status": "warning",
+                            "reason": msg,
+                        }
+                    )
+                else:
+                    lines.append(f"[DRY-RUN] Would NOT write {filename}: {msg}")
+                global_reason = "warning"
+                continue
+
+        # ------------------------------------------------------------
         # JSON mode
+        # ------------------------------------------------------------
         if wrapper == "json":
-            json_results.append(
-                {"kind": kind, "filename": filename, "content": content}
+            json_items.append(
+                {
+                    "kind": kind,
+                    "filename": filename,
+                    "status": "ok",
+                    "content": content,
+                }
             )
             continue
 
+        # ------------------------------------------------------------
         # Plain mode
+        # ------------------------------------------------------------
         lines.append(f"[DRY-RUN] Would write {filename}:\n{content}\n")
 
+    # ------------------------------------------------------------
+    # Final output
+    # ------------------------------------------------------------
     if wrapper == "json":
-        return [json.dumps(json_results, indent=2, ensure_ascii=False)]
+        return [
+            json.dumps(
+                {"status": global_reason or "ok", "items": json_items},
+                indent=2,
+                ensure_ascii=False,
+            )
+        ]
 
     return lines
 
@@ -155,24 +242,62 @@ def save_outputs(result: BuildResult, sample, save_spec):
     try:
         parsed_items = parse_save_expression(save_spec)
     except ValueError as exc:
-        # JSON mode → return JSON error
         if save_spec.strip().startswith("json("):
             return {"status": "error", "error": str(exc)}
-        # Plain mode → return StatusString
         return [StatusString(str(exc), status=False, reason="error")]
 
-    wrapper = parsed_items[0][0]  # JSON or None
+    wrapper = parsed_items[0][0]  # "json" or None
 
-    # JSON mode accumulates structured results
     json_results = {}
-
-    # Plain mode accumulates StatusString objects
     results = []
+    global_reason = None  # "warning" or "error"
+    content = None
 
     for _, kind, filename in parsed_items:
-        content = None  # always defined
+        # ------------------------------------------------------------
+        # sample is always allowed, regardless of warnings
+        # ------------------------------------------------------------
+        if kind == "sample":
+            content = sample
+            if wrapper == "json":
+                try:
+                    json_content = json.dumps(
+                        {"sample": content}, indent=2, ensure_ascii=False
+                    )
+                    _write_file(filename, json_content)
+                    json_results[kind] = {"status": "ok", "filename": filename}
+                except Exception as exc:
+                    json_results[kind] = {
+                        "status": "error",
+                        "filename": filename,
+                        "reason": str(exc),
+                    }
+                continue
 
+            # plain mode
+            results.append(_write_file(filename, content))
+            continue
+
+        # ------------------------------------------------------------
+        # Handle builder-level warning
+        # ------------------------------------------------------------
+        if result.warning:
+            if wrapper == "json":
+                json_results[kind] = {
+                    "status": "error",
+                    "filename": filename,
+                    "reason": result.warning,
+                }
+            else:
+                results.append(
+                    StatusString(result.warning, status=False, reason="error")
+                )
+            global_reason = "error"
+            continue
+
+        # ------------------------------------------------------------
         # Load content
+        # ------------------------------------------------------------
         if kind in ("snippet", "template"):
             content = getattr(result, kind, None)
             if not content:
@@ -183,12 +308,13 @@ def save_outputs(result: BuildResult, sample, save_spec):
                         "filename": filename,
                         "reason": msg,
                     }
-                    continue
-                results.append(StatusString(msg, status=False, reason="warning"))
+                else:
+                    results.append(StatusString(msg, status=False, reason="warning"))
+                global_reason = "warning"
                 continue
 
         elif kind == "result":
-            content = parse_textfsm_to_dicts(result.template, sample)
+            content = result.result
             if not content:
                 msg = f"No records found for {filename}"
                 if wrapper == "json":
@@ -197,11 +323,14 @@ def save_outputs(result: BuildResult, sample, save_spec):
                         "filename": filename,
                         "reason": msg,
                     }
-                    continue
-                results.append(StatusString(msg, status=False, reason="warning"))
+                else:
+                    results.append(StatusString(msg, status=False, reason="warning"))
+                global_reason = "warning"
                 continue
 
+        # ------------------------------------------------------------
         # JSON mode
+        # ------------------------------------------------------------
         if wrapper == "json":
             try:
                 json_content = json.dumps({kind: content}, indent=2, ensure_ascii=False)
@@ -213,13 +342,19 @@ def save_outputs(result: BuildResult, sample, save_spec):
                     "filename": filename,
                     "reason": str(exc),
                 }
+                global_reason = "error"
             continue
 
+        # ------------------------------------------------------------
         # Plain mode
+        # ------------------------------------------------------------
         results.append(_write_file(filename, content))
 
-    # JSON mode → return JSON object
+    # ------------------------------------------------------------
+    # Final return
+    # ------------------------------------------------------------
     if wrapper == "json":
+        json_results["status"] = "ok" if global_reason is None else global_reason
         return json_results
 
     return results
@@ -268,9 +403,6 @@ def parse_save_expression(expr: str):
     return parsed
 
 
-# ------------------------------------------------------------
-# Show outputs
-# ------------------------------------------------------------
 def show_outputs(result: BuildResult, sample, show_spec):
     show_spec = show_spec.strip()
     is_json = show_spec.startswith("json(") and show_spec.endswith(")")
@@ -282,7 +414,7 @@ def show_outputs(result: BuildResult, sample, show_spec):
         cases = [x.strip() for x in show_spec.split(",") if x.strip()]
 
     parts = {} if is_json else []
-    reason = ""
+    reason = None  # "warning" or "error"
 
     def add(container, item, name):
         if is_json:
@@ -294,15 +426,8 @@ def show_outputs(result: BuildResult, sample, show_spec):
                 else json.dumps(item, indent=2, ensure_ascii=False)
             )
 
-    def json_wrap(status, value):
-        return {"status": status, "value": value}
-
-    def parse_result():
-        try:
-            parsed_ = parse_textfsm_to_dicts(result.template, sample)
-            return parsed_, None
-        except Exception as exc:
-            return None, str(exc)
+    def json_wrap(status, value_):
+        return {"status": status, "value": value_}
 
     if not cases:
         return StatusString(result.template, status=True)
@@ -319,26 +444,43 @@ def show_outputs(result: BuildResult, sample, show_spec):
             add(parts, json_wrap("ok", sample) if is_json else sample, case)
             continue
 
-        # parse result
-        parsed, err = parse_result()
-        if err:
-            reason = "error"
-            add(parts, json_wrap("error", err) if is_json else err, "result")
+        # explicit result
+        if case == "result":
+            if result.warning:
+                reason = "warning"
+                add(
+                    parts,
+                    json_wrap("warning", result.warning) if is_json else result.warning,
+                    "result",
+                )
+            else:
+                add(
+                    parts,
+                    json_wrap("ok", result.result) if is_json else result.result,
+                    "result",
+                )
             continue
 
-        if not parsed:
-            msg = "no record found after parsed sample with textfsm template"
+        # parsed result (default)
+        if result.warning:
             reason = "warning"
-            add(parts, json_wrap("warning", msg) if is_json else msg, "result")
+            add(
+                parts,
+                json_wrap("warning", result.warning) if is_json else result.warning,
+                "result",
+            )
             continue
 
-        # default
+        parsed = result.result
+
         if case == "default":
-            value = str(parsed)
-            add(parts, json_wrap("ok", value) if is_json else value, "result")
+            add(
+                parts,
+                json_wrap("ok", str(parsed)) if is_json else str(parsed),
+                "result",
+            )
             continue
 
-        # tabular
         if case == "tabular":
             tab = get_data_as_tabular(parsed)
             add(parts, json_wrap("ok", tab) if is_json else tab, "result")
@@ -354,7 +496,7 @@ def show_outputs(result: BuildResult, sample, show_spec):
         else "\n======\n".join(parts)
     )
 
-    return StatusString(content, status=(reason == ""), reason=reason or None)
+    return StatusString(content, status=(reason is None), reason=reason)
 
 
 # ------------------------------------------------------------
@@ -422,7 +564,16 @@ def run_builder_workflow(
         return 1
 
     # Build
-    builder.build()
+    try:
+        builder.build()
+    except Exception as exc:
+        status = StatusString(
+            f"{builder_class.__name__} build error ({type(exc).__name__}): {exc}",
+            status=False,
+            reason="error",
+        )
+        emit_status(status)
+        return 1
 
     # Convert to BuildResult
     result: BuildResult = builder.to_result()
@@ -441,9 +592,9 @@ def run_builder_workflow(
     # Save
     if save:
         statuses = (
-            dry_run_save(builder, sample, save)
+            dry_run_save(result, sample, save)
             if dry_run
-            else save_outputs(builder, sample, save)
+            else save_outputs(result, sample, save)
         )
         exit_code = 0
         for st in statuses:
@@ -453,6 +604,6 @@ def run_builder_workflow(
         return exit_code
 
     # Show
-    status = show_outputs(builder, sample, show)
+    status = show_outputs(result, sample, show)
     emit_status(status)
     return 0 if status else 1

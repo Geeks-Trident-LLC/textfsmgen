@@ -8,7 +8,7 @@ from click.testing import CliRunner
 def test_tabular_help(runner):
     result = runner.invoke(tabular, [])
     assert result.exit_code == 0
-    assert "Tabular builder" in result.output
+    assert "Generate a TextFSM template" in result.output
 
 
 # ------------------------------------------------------------

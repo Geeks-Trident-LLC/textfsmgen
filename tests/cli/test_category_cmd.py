@@ -5,7 +5,7 @@ from textfsmgen.cli.category_cmd import category
 def test_category_help(runner):
     result = runner.invoke(category, [])
     assert result.exit_code == 0
-    assert "Category builder" in result.output
+    assert "Generate a TextFSM template" in result.output
 
 
 def test_category_show_snippet(tmpfile, runner, monkeypatch, fake_builder):

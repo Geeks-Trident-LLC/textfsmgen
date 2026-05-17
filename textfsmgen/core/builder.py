@@ -93,10 +93,13 @@ class FreeFormBuilder(BuilderBase):
         self._prepare()
 
         if not self.variables:
-            raise_runtime_error(
-                obj="TemplateBuilderInvalidFormat",
-                msg="Snippet does not contain any variable definitions.",
+            self.warning = (
+                "Snippet does not contain any variable definitions.\n"
+                "A valid snippet must include at least one variable, e.g.:\n"
+                "  + 'San Jose, CA' → no variables\n"
+                "  + 'words(var_city), word(var_state)' → contains variables"
             )
+            return
 
         variables = "\n".join(v.value for v in self.variables)
         template_def = "\n".join(self.statements)

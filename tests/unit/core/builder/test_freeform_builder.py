@@ -1,10 +1,9 @@
-import pytest
 from textfsmgen.core.builder import FreeFormBuilder
 
 
 SIMPLE_SNIPPET = """
-Interface: non_wss(var_INTERFACE)
-Status: non_wss(var_STATUS)
+Interface: mixed_word(var_INTERFACE)
+Status: mixed_word(var_STATUS)
 """
 
 SAMPLE = """
@@ -69,9 +68,8 @@ def test_build_validates_template():
 def test_build_raises_without_variables():
     b = FreeFormBuilder()
     b.set_snippet(NO_VARIABLE_SNIPPET)
-
-    with pytest.raises(Exception):
-        b.build()
+    b.build()
+    assert "Snippet does not contain any variable definitions" in b.warning
 
 
 def test_truthiness():
@@ -82,9 +80,10 @@ def test_truthiness():
     b.build()
     assert b
 
+
 def test_parsing_failure_warning():
     b = FreeFormBuilder()
     b.set_snippet("Value {{ key }}")
     b.set_sample("this will not match")
-    with pytest.raises(Exception):
-        b.build()
+    b.build()
+    assert "Snippet does not contain any variable definitions" in b.warning
