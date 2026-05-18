@@ -126,6 +126,7 @@ def freeform(
             "show",
             "save",
         ]
+
         required_params = []
         status = validate_config(config, required_top, required_params)
         if not status:
@@ -163,7 +164,7 @@ def freeform(
 
     if is_created_config and exit_code == 0:
         generate_or_save_config(
-            "category",
+            "freeform",
             cfg_path=create_config_file,
             params=params,
             sample_file=sample_file_,

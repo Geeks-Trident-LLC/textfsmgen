@@ -93,14 +93,22 @@ def validate_config(config_path, required_top_keys, required_param_keys):
         )
 
     # ------------------------------------------------------------
-    # Validate sample_file or command
+    # Validate
     # ------------------------------------------------------------
-    if not data.get("sample_file") and not data.get("command"):
-        return StatusString(
-            "Config must contain either 'sample_file' or 'command'",
-            status=False,
-            reason="warning",
-        )
+    if "snippet" in data:
+        if not data.get("snippet") and not data.get("snippet_file"):
+            return StatusString(
+                "Config must contain either 'snippet' or 'snippet_file'",
+                status=False,
+                reason="warning",
+            )
+    else:
+        if not data.get("sample_file") and not data.get("command"):
+            return StatusString(
+                "Config must contain either 'sample_file' or 'command'",
+                status=False,
+                reason="warning",
+            )
 
     # ------------------------------------------------------------
     # Valid config

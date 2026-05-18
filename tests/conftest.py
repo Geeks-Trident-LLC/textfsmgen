@@ -22,72 +22,167 @@ def tmpfile(tmp_path):
     return _make
 
 
-def _make_fake_builder(base_cls):
-    @dataclass
-    class FakeBuildResult:
-        snippet: str
-        template: str
-        result: list
-        warning: str | None = None
+@pytest.fixture
+def fake_builder_factory():
+    """
+    Factory that returns a FakeBuilder subclass matching the requested base class.
+    Ensures issubclass(FakeBuilder, BaseBuilder) is True.
+    """
 
-    class FakeBuilder(base_cls):
-        def __init__(self):
-            self.sample = None
-            self.params = None
-            self.snippet = "abc"
-            self.template = "Value {{ key }}"
-            self.result = []
-            self.warning = None
+    def _factory(base_cls):
+        @dataclass
+        class FakeBuildResult:
+            snippet: str
+            template: str
+            result: list
+            warning: str | None = None
 
-        def set_sample(self, sample, **params):
-            self.sample = sample
-            self.params = params
-
-        def set_snippet(self, snippet):
-            self.snippet = snippet
-
-        def set_snippet_file(self, path):
-            self.snippet = f"FILE:{path}"
-
-        def build(self):
-            if self.sample and "fail" in self.sample:
+        class FakeBuilder(base_cls):
+            def __init__(self):
+                self.sample = None
+                self.params = None
+                self.snippet = "abc"
+                self.template = "Value {{ key }}"
                 self.result = []
-                self.warning = "Template could not parse sample"
-            elif self.sample:
-                self.result = [{"key": "value"}]
-            else:
-                self.result = []
+                self.warning = None
 
-        def to_result(self):
-            return FakeBuildResult(
-                snippet=self.snippet,
-                template=self.template,
-                result=self.result,
-                warning=self.warning,
-            )
+            def set_sample(self, sample, **params):
+                self.sample = sample
+                self.params = params
 
-    return FakeBuilder
+            def set_snippet(self, snippet):
+                self.snippet = snippet
+
+            def set_snippet_file(self, path):
+                self.snippet = f"FILE:{path}"
+
+            def build(self):
+                if self.sample and "fail" in self.sample:
+                    self.result = []
+                    self.warning = "Template could not parse sample"
+                elif self.sample:
+                    self.result = [{"key": "value"}]
+                else:
+                    self.result = []
+
+            def to_result(self):
+                return FakeBuildResult(
+                    snippet=self.snippet,
+                    template=self.template,
+                    result=self.result,
+                    warning=self.warning,
+                )
+
+        return FakeBuilder
+
+    return _factory
+
+
+# ------------------------------------------------------------
+# Builder-specific fixtures (correct)
+# ------------------------------------------------------------
 
 
 @pytest.fixture
-def fake_builder(fake_freeform_builder):
-    # Default fake builder is FreeFormBuilder-compatible
-    return fake_freeform_builder
+def fake_freeform(fake_builder_factory):
+    return fake_builder_factory(FreeFormBuilder)
 
 
 @pytest.fixture
-def fake_freeform_builder():
-    return _make_fake_builder(FreeFormBuilder)
+def fake_category(fake_builder_factory):
+    return fake_builder_factory(CategoryBuilder)
 
 
 @pytest.fixture
-def fake_category_builder():
-    return _make_fake_builder(CategoryBuilder)
+def fake_tabular(fake_builder_factory):
+    return fake_builder_factory(TabularBuilder)
 
 
 @pytest.fixture
-def fake_tabular_builder():
-    return _make_fake_builder(TabularBuilder)
+def fake_builder(fake_builder_factory):
+    return fake_builder_factory(FreeFormBuilder)
+
+
+# ------------------------------------------------------------
+# Patch load_sample globally for all CLI tests
+# ------------------------------------------------------------
+
+
+@pytest.fixture
+def patch_load_sample(monkeypatch):
+    monkeypatch.setattr(
+        "textfsmgen.cli.shared_builder_cli.load_sample",
+        lambda sf, cmd: "SAMPLE TEXT",
+    )
+
+
+#
+# def _make_fake_builder(base_cls):
+#     @dataclass
+#     class FakeBuildResult:
+#         snippet: str
+#         template: str
+#         result: list
+#         warning: str | None = None
+#
+#     class FakeBuilder(base_cls):
+#         def __init__(self):
+#             self.sample = None
+#             self.params = None
+#             self.snippet = "abc"
+#             self.template = "Value {{ key }}"
+#             self.result = []
+#             self.warning = None
+#
+#         def set_sample(self, sample, **params):
+#             self.sample = sample
+#             self.params = params
+#
+#         def set_snippet(self, snippet):
+#             self.snippet = snippet
+#
+#         def set_snippet_file(self, path):
+#             self.snippet = f"FILE:{path}"
+#
+#         def build(self):
+#             if self.sample and "fail" in self.sample:
+#                 self.result = []
+#                 self.warning = "Template could not parse sample"
+#             elif self.sample:
+#                 self.result = [{"key": "value"}]
+#             else:
+#                 self.result = []
+#
+#         def to_result(self):
+#             return FakeBuildResult(
+#                 snippet=self.snippet,
+#                 template=self.template,
+#                 result=self.result,
+#                 warning=self.warning,
+#             )
+#
+#     return FakeBuilder
+#
+#
+# @pytest.fixture
+# def fake_builder(fake_freeform_builder):
+#     # Default fake builder is FreeFormBuilder-compatible
+#     return fake_freeform_builder
+#
+#
+# @pytest.fixture
+# def fake_freeform_builder():
+#     return _make_fake_builder(FreeFormBuilder)
+#
+#
+# @pytest.fixture
+# def fake_category_builder():
+#     return _make_fake_builder(CategoryBuilder)
+#
+#
+# @pytest.fixture
+# def fake_tabular_builder():
+#     return _make_fake_builder(TabularBuilder)
 
 
 def pytest_addoption(parser):
