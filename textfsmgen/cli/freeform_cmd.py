@@ -1,7 +1,6 @@
-# textfsmgen/cli/category_cmd.py
-
 import click
-from textfsmgen import CategoryBuilder
+from textfsmgen.core.builder import FreeFormBuilder
+
 from textfsmgen.cli.shared_builder_cli import (
     merge,
     validate_config,
@@ -10,12 +9,19 @@ from textfsmgen.cli.shared_builder_cli import (
 
 
 def register(cli):
-    cli.add_command(category)
+    cli.add_command(freeform)
 
 
 @click.command(
-    help="Generate a TextFSM template from a categorized text sample.",
+    help="Generate a TextFSM template from user input snippet.",
     context_settings=dict(help_option_names=["-h", "--help"]),
+)
+@click.option("--snippet", default="", help="Inline snippet text.")
+@click.option(
+    "--snippet-file",
+    default=None,
+    type=click.Path(exists=True),
+    help="Path to snippet file.",
 )
 @click.option(
     "--sample-file",
@@ -28,28 +34,6 @@ def register(cli):
     "cmd",
     default="",
     help="Shell command to generate a real-world sample.",
-)
-@click.option(
-    "--count",
-    default=1,
-    type=int,
-    show_default=True,
-    help="Number of category key/value pairs to generate.",
-)
-@click.option(
-    "--separator",
-    default=":",
-    show_default=True,
-    help="Separator between key and value fields.",
-)
-@click.option(
-    "--starting-from", default=None, help="Start parsing only after this marker."
-)
-@click.option(
-    "--ending-at", default=None, help="Stop parsing when this marker is reached."
-)
-@click.option(
-    "--replacing-rules", default=None, help="Replacing rules (string or JSON)."
 )
 @click.option(
     "--show",
@@ -69,7 +53,7 @@ def register(cli):
     "--debug",
     is_flag=True,
     default=False,
-    help="Print resolved parameters and input metadata.",
+    help="Print resolved parameters and sample metadata.",
 )
 @click.option(
     "--dry-run",
@@ -78,59 +62,48 @@ def register(cli):
     help="Simulate save actions without writing files.",
 )
 @click.pass_context
-def category(
-    ctx,
-    sample_file,
-    cmd,
-    count,
-    separator,
-    starting_from,
-    ending_at,
-    replacing_rules,
-    show,
-    save,
-    config,
-    debug,
-    dry_run,
+def freeform(
+    ctx, snippet, snippet_file, sample_file, cmd, save, show, config, debug, dry_run
 ):
+    """
+    Build a template from free-form snippet text.
+    """
+
     # Show help if nothing provided
-    if not sample_file and not cmd and config is None:
+    if not snippet and not snippet_file and config is None:
         click.echo(ctx.get_help())
         raise SystemExit(0)
 
     # Load config
     config_data = {}
     if config:
-        required_top = ["builder", "params", "sample_file", "command", "show", "save"]
-        required_params = [
-            "count",
-            "separator",
-            "starting_from",
-            "ending_at",
-            "replacing_rules",
+        required_top = [
+            "builder", "params", "snippet", "snippet_file",
+            "sample_file", "command", "show", "save"
         ]
+        required_params = []
         status = validate_config(config, required_top, required_params)
         if not status:
             raise SystemExit(1)
         config_data = status.raw or {}
 
+    params = {}
+
     # Merge CLI + config
+    snippet_ = merge(snippet, config_data, "snippet", "")
+    snippet_file_ = merge(snippet_file, config_data, "snippet_file", "")
     sample_file_ = merge(sample_file, config_data, "sample_file", "")
     cmd_ = merge(cmd, config_data, "command", "")
     save_ = merge(save, config_data, "save", "")
     show_ = merge(show, config_data, "show", "")
 
-    params = {
-        "count": merge(count, config_data, "count", 1),
-        "separator": merge(separator, config_data, "separator", ":"),
-        "starting_from": merge(starting_from, config_data, "starting_from", None),
-        "ending_at": merge(ending_at, config_data, "ending_at", None),
-        "replacing_rules": merge(replacing_rules, config_data, "replacing_rules", None),
-    }
+    params = {}
 
     # Delegate to shared workflow
     exit_code = run_builder_workflow(
-        CategoryBuilder,
+        FreeFormBuilder,
+        snippet=snippet_,
+        snippet_file=snippet_file_,
         sample_file=sample_file_,
         cmd=cmd_,
         params=params,

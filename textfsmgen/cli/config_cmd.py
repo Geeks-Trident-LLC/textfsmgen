@@ -20,6 +20,17 @@ def register(cli):
 # ------------------------------------------------------------
 # Config templates
 # ------------------------------------------------------------
+FREEFORM_TEMPLATE = {
+    "builder": "freeform",
+    "params": {},
+    "snippet": "",
+    "snippet_file": "",
+    "sample_file": "",
+    "command": "",
+    "show": "",
+    "save": "",
+}
+
 CATEGORY_TEMPLATE = {
     "builder": "category",
     "params": {
@@ -58,6 +69,7 @@ TABULAR_TEMPLATE = {
 CONFIG_TYPES = {
     "category": CATEGORY_TEMPLATE,
     "tabular": TABULAR_TEMPLATE,
+    "freeform": FREEFORM_TEMPLATE
 }
 
 TOP_LEVEL_DOCS_MAPPING = {
@@ -66,6 +78,12 @@ TOP_LEVEL_DOCS_MAPPING = {
         Parameter/value pairs that control how the __PLACEHOLDER__ builder
         parses __PLACEHOLDER__‑like text.
     """,
+    "snippet": """
+        Inline snippet text used as the source text for __PLACEHOLDER__ builder.
+        """,
+    "snippet_file": """
+        Path to a snippet text whose contents serve as the source input 
+        for __PLACEHOLDER__ builder.""",
     "sample_file": """
         Path to a sample input file used as the source text for the
         __PLACEHOLDER__ builder.

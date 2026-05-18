@@ -122,7 +122,7 @@ def tabular(
     # Load config
     config_data = {}
     if config:
-        required_top = ["params", "sample_file", "command", "show", "save"]
+        required_top = ["builder", "params", "sample_file", "command", "show", "save"]
         required_params = [
             "column_divider",
             "column_count",

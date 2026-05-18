@@ -9,7 +9,12 @@ from textfsmgen.libs import shell
 from textfsmgen.libs.utils import get_data_as_tabular
 from textfsmgen.libs.text import render_text_block
 
-from textfsmgen.core.builder import BuildResult
+from textfsmgen.core.builder import (
+    BuildResult,
+    FreeFormBuilder,
+    TabularBuilder,
+    CategoryBuilder
+)
 
 
 # ------------------------------------------------------------
@@ -531,14 +536,19 @@ def show_outputs(result: BuildResult, sample, show_spec):
 # ------------------------------------------------------------
 # Debug printer
 # ------------------------------------------------------------
-def debug_print(sample_file, cmd, params, config, sample, save, show):
-    click.echo(f"[INFO] Loaded sample from: {sample_file or cmd}")
-    click.echo(f"[INFO] Sample size: {len(sample)} characters")
+def debug_print(snippet, snippet_file, sample_file, cmd, params, config, sample, save, show):
+    if snippet_file:
+        click.echo(f"[INFO] Loaded snippet from: {snippet_file}")
+        click.echo(f"[INFO] Snippet size: {len(snippet)} characters")
+    if sample:
+        click.echo(f"[INFO] Loaded sample from: {sample_file or cmd}")
+        click.echo(f"[INFO] Sample size: {len(sample)} characters")
 
     click.echo("=== DEBUG INFO ===")
+    if snippet_file:
+        click.echo(f"snippet_file   = {snippet_file}")
     click.echo(f"sample_file    = {sample_file!r}")
     click.echo(f"command        = {cmd!r}")
-    click.echo(f"params         = {params}")
     params_txt = json.dumps(params, indent=2, ensure_ascii=False)
     click.echo(render_text_block(params_txt, subject="params         ="))
     if isinstance(config, dict):
@@ -556,6 +566,8 @@ def debug_print(sample_file, cmd, params, config, sample, save, show):
 # ------------------------------------------------------------
 def run_builder_workflow(
     builder_class,
+    snippet="",
+    snippet_file=None,
     sample_file=None,
     cmd="",
     params=None,
@@ -568,24 +580,32 @@ def run_builder_workflow(
 
     params = params or {}
 
-    # Load sample
-    sample = load_sample(sample_file, cmd)
-    if not sample:
-        emit_status(sample)
-        return 1
+    sample = ""
+
+    if sample_file or cmd:
+        # Load sample
+        sample = load_sample(sample_file, cmd)
+        if not sample:
+            emit_status(sample)
+            return 1
 
     # Debug
     if debug:
-        debug_print(sample_file, cmd, params, config, sample, save, show)
+        debug_print(snippet, snippet_file, sample_file, cmd, params, config, sample, save, show)
 
     # Instantiate builder
     builder = builder_class()
 
     # Apply sample/snippet depending on builder type
-    if hasattr(builder, "set_sample"):
+    if builder_class is FreeFormBuilder:
+        if snippet_file:
+            builder.set_snippet_file(snippet_file)
+        else:
+            builder.set_snippet(snippet)
+        if sample:
+            builder.set_sample(sample)
+    elif builder_class is TabularBuilder or builder_class is CategoryBuilder:
         builder.set_sample(sample, **params)
-    elif hasattr(builder, "set_snippet"):
-        builder.set_snippet(sample)
     else:
         status = StatusString(
             f"Builder {builder_class.__name__} does not support sample/snippet input",
@@ -609,7 +629,6 @@ def run_builder_workflow(
 
     # Convert to BuildResult
     result: BuildResult = builder.to_result()
-
     if not builder:
         status = StatusString(
             f"Cannot create builder from sample (reference: {sample_file or cmd!r})\n"
