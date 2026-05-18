@@ -8,10 +8,10 @@ def test_category_help(runner):
     assert "Generate a TextFSM template" in result.output
 
 
-def test_category_show_snippet(tmpfile, runner, monkeypatch, fake_builder):
+def test_category_show_snippet(tmpfile, runner, monkeypatch, fake_category_builder):
     monkeypatch.setattr(
         "textfsmgen.cli.category_cmd.CategoryBuilder",
-        fake_builder,  # <-- class, not lambda
+        fake_category_builder,  # <-- class, not lambda
     )
 
     p = tmpfile("sample.txt", "hello")
@@ -22,10 +22,10 @@ def test_category_show_snippet(tmpfile, runner, monkeypatch, fake_builder):
     assert "abc" in result.output
 
 
-def test_category_save_dry_run(tmpfile, runner, monkeypatch, fake_builder):
+def test_category_save_dry_run(tmpfile, runner, monkeypatch, fake_category_builder):
     monkeypatch.setattr(
         "textfsmgen.cli.category_cmd.CategoryBuilder",
-        fake_builder,
+        fake_category_builder,
     )
 
     p = tmpfile("sample.txt", "hello")
@@ -38,10 +38,10 @@ def test_category_save_dry_run(tmpfile, runner, monkeypatch, fake_builder):
     assert "[DRY-RUN]" in result.output
 
 
-def test_category_debug(tmpfile, runner, monkeypatch, fake_builder):
+def test_category_debug(tmpfile, runner, monkeypatch, fake_category_builder):
     monkeypatch.setattr(
         "textfsmgen.cli.category_cmd.CategoryBuilder",
-        fake_builder,
+        fake_category_builder,
     )
 
     p = tmpfile("sample.txt", "hello")

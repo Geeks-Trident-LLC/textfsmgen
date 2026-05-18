@@ -2,7 +2,7 @@ import pytest
 import os
 from pathlib import Path
 from dataclasses import dataclass
-from typing import Optional, List
+from textfsmgen import FreeFormBuilder, CategoryBuilder, TabularBuilder
 
 from click.testing import CliRunner
 
@@ -22,16 +22,15 @@ def tmpfile(tmp_path):
     return _make
 
 
-@pytest.fixture
-def fake_builder():
+def _make_fake_builder(base_cls):
     @dataclass
     class FakeBuildResult:
         snippet: str
         template: str
-        result: List[dict]
-        warning: Optional[str] = None
+        result: list
+        warning: str | None = None
 
-    class FakeBuilder:
+    class FakeBuilder(base_cls):
         def __init__(self):
             self.sample = None
             self.params = None
@@ -44,8 +43,13 @@ def fake_builder():
             self.sample = sample
             self.params = params
 
+        def set_snippet(self, snippet):
+            self.snippet = snippet
+
+        def set_snippet_file(self, path):
+            self.snippet = f"FILE:{path}"
+
         def build(self):
-            # keep it simple but realistic
             if self.sample and "fail" in self.sample:
                 self.result = []
                 self.warning = "Template could not parse sample"
@@ -53,9 +57,6 @@ def fake_builder():
                 self.result = [{"key": "value"}]
             else:
                 self.result = []
-
-        def __bool__(self):
-            return True
 
         def to_result(self):
             return FakeBuildResult(
@@ -66,6 +67,27 @@ def fake_builder():
             )
 
     return FakeBuilder
+
+
+@pytest.fixture
+def fake_builder(fake_freeform_builder):
+    # Default fake builder is FreeFormBuilder-compatible
+    return fake_freeform_builder
+
+
+@pytest.fixture
+def fake_freeform_builder():
+    return _make_fake_builder(FreeFormBuilder)
+
+
+@pytest.fixture
+def fake_category_builder():
+    return _make_fake_builder(CategoryBuilder)
+
+
+@pytest.fixture
+def fake_tabular_builder():
+    return _make_fake_builder(TabularBuilder)
 
 
 def pytest_addoption(parser):

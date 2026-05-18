@@ -68,7 +68,8 @@ class FreeFormBuilder(BuilderBase):
             f"warning={bool(self.warning)}>"
         )
 
-    def __bool__(self): return bool(self.template)
+    def __bool__(self):
+        return bool(self.template)
 
     # ------------------------------------------------------------
     # Public API

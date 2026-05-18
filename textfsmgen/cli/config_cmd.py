@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 import click
+import copy
 
 from textfsmgen.libs.generic import StatusString
 from textfsmgen.libs.common import emit_status
@@ -69,7 +70,7 @@ TABULAR_TEMPLATE = {
 CONFIG_TYPES = {
     "category": CATEGORY_TEMPLATE,
     "tabular": TABULAR_TEMPLATE,
-    "freeform": FREEFORM_TEMPLATE
+    "freeform": FREEFORM_TEMPLATE,
 }
 
 TOP_LEVEL_DOCS_MAPPING = {
@@ -415,3 +416,10 @@ def explain_config(config_type):
         click.echo(
             "  Use 'params' to define column structure, headers, and parsing rules."
         )
+
+
+def get_config_template(name):
+    name = str(name).lower()
+    if name not in CONFIG_TYPES:
+        raise SystemExit(f"Config type '{name}' not supported.")
+    return copy.deepcopy(CONFIG_TYPES[name])

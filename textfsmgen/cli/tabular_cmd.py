@@ -2,10 +2,12 @@
 
 import click
 from textfsmgen import TabularBuilder
-from textfsmgen.cli.shared_builder_cli import (
+from .shared_builder_cli import (
     merge,
     validate_config,
     run_builder_workflow,
+    generate_or_save_config,
+    dry_run_or_create_golden_test,
 )
 
 
@@ -93,6 +95,30 @@ def register(cli):
     default=False,
     help="Simulate save actions without writing files.",
 )
+@click.option(
+    "--create-config",
+    is_flag=True,
+    default=False,
+    help="Preview the generated config (dry run). Prints config to console.",
+)
+@click.option(
+    "--create-config-file",
+    default=None,
+    type=click.Path(dir_okay=False, writable=True, allow_dash=True),
+    help="Generate the config and save it to the specified file.",
+)
+@click.option(
+    "--create-golden-test",
+    is_flag=True,
+    default=False,
+    help="Preview golden test creation (dry run). Shows which files would be created.",
+)
+@click.option(
+    "--create-golden-test-path",
+    default=None,
+    type=click.Path(dir_okay=True, writable=True, allow_dash=True),
+    help="Create a golden test at the specified path under tests/golden/integration/.",
+)
 @click.pass_context
 def tabular(
     ctx,
@@ -113,6 +139,10 @@ def tabular(
     config,
     debug,
     dry_run,
+    create_config,
+    create_config_file,
+    create_golden_test,
+    create_golden_test_path,
 ):
     # Show help if nothing provided
     if not sample_file and not cmd and config is None:
@@ -161,6 +191,9 @@ def tabular(
         "replacing_rules": merge(replacing_rules, config_data, "replacing_rules", None),
     }
 
+    is_created_config = create_config or bool(create_config_file)
+    is_created_golden_test = create_golden_test or bool(create_golden_test_path)
+
     # Delegate to shared workflow
     exit_code = run_builder_workflow(
         TabularBuilder,
@@ -172,5 +205,28 @@ def tabular(
         config=config_data,
         debug=debug,
         dry_run=dry_run,
+        suppressed_message=is_created_config or is_created_golden_test,
     )
+
+    if is_created_config and exit_code == 0:
+        generate_or_save_config(
+            "category",
+            cfg_path=create_config_file,
+            params=params,
+            sample_file=sample_file_,
+            command=cmd_,
+            show=show_,
+            save=save_,
+        )
+
+    if is_created_golden_test and exit_code == 0:
+        dry_run_or_create_golden_test(
+            TabularBuilder,
+            "tabular",
+            golden_path=create_golden_test_path,
+            params=params,
+            sample_file=sample_file_,
+            command=cmd_,
+        )
+
     raise SystemExit(exit_code)

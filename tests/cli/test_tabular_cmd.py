@@ -14,10 +14,10 @@ def test_tabular_help(runner):
 # ------------------------------------------------------------
 # SHOW SNIPPET
 # ------------------------------------------------------------
-def test_tabular_show_snippet(tmpfile, runner, monkeypatch, fake_builder):
+def test_tabular_show_snippet(tmpfile, runner, monkeypatch, fake_tabular_builder):
     monkeypatch.setattr(
         "textfsmgen.cli.tabular_cmd.TabularBuilder",
-        fake_builder,
+        fake_tabular_builder,
     )
 
     p = tmpfile("sample.txt", "hello")
@@ -31,10 +31,10 @@ def test_tabular_show_snippet(tmpfile, runner, monkeypatch, fake_builder):
 # ------------------------------------------------------------
 # DRY-RUN SAVE
 # ------------------------------------------------------------
-def test_tabular_save_dry_run(tmpfile, runner, monkeypatch, fake_builder):
+def test_tabular_save_dry_run(tmpfile, runner, monkeypatch, fake_tabular_builder):
     monkeypatch.setattr(
         "textfsmgen.cli.tabular_cmd.TabularBuilder",
-        fake_builder,  # <-- class, not lambda
+        fake_tabular_builder,  # <-- class, not lambda
     )
 
     p = tmpfile("sample.txt", "hello")
@@ -50,10 +50,10 @@ def test_tabular_save_dry_run(tmpfile, runner, monkeypatch, fake_builder):
 # ------------------------------------------------------------
 # DEBUG MODE
 # ------------------------------------------------------------
-def test_tabular_debug(tmpfile, runner, monkeypatch, fake_builder):
+def test_tabular_debug(tmpfile, runner, monkeypatch, fake_tabular_builder):
     monkeypatch.setattr(
         "textfsmgen.cli.tabular_cmd.TabularBuilder",
-        fake_builder,  # <-- class, not lambda
+        fake_tabular_builder,  # <-- class, not lambda
     )
 
     p = tmpfile("sample.txt", "hello")
@@ -70,10 +70,10 @@ def test_tabular_debug(tmpfile, runner, monkeypatch, fake_builder):
 # ------------------------------------------------------------
 # PARAMETER PASSING
 # ------------------------------------------------------------
-def test_tabular_params_passed(tmpfile, runner, monkeypatch, fake_builder):
+def test_tabular_params_passed(tmpfile, runner, monkeypatch, fake_tabular_builder):
     captured = {}
 
-    class CapturingBuilder(fake_builder):
+    class CapturingBuilder(fake_tabular_builder):
         def set_sample(self, sample, **params):
             super().set_sample(sample, **params)
             captured["params"] = params

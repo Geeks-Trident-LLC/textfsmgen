@@ -13,8 +13,10 @@ from textfsmgen.core.builder import (
     BuildResult,
     FreeFormBuilder,
     TabularBuilder,
-    CategoryBuilder
+    CategoryBuilder,
 )
+
+from .config_cmd import get_config_template
 
 
 # ------------------------------------------------------------
@@ -536,7 +538,9 @@ def show_outputs(result: BuildResult, sample, show_spec):
 # ------------------------------------------------------------
 # Debug printer
 # ------------------------------------------------------------
-def debug_print(snippet, snippet_file, sample_file, cmd, params, config, sample, save, show):
+def debug_print(
+    snippet, snippet_file, sample_file, cmd, params, config, sample, save, show
+):
     if snippet_file:
         click.echo(f"[INFO] Loaded snippet from: {snippet_file}")
         click.echo(f"[INFO] Snippet size: {len(snippet)} characters")
@@ -576,6 +580,7 @@ def run_builder_workflow(
     config=None,
     debug=False,
     dry_run=False,
+    suppressed_message=False,
 ):
 
     params = params or {}
@@ -590,21 +595,23 @@ def run_builder_workflow(
             return 1
 
     # Debug
-    if debug:
-        debug_print(snippet, snippet_file, sample_file, cmd, params, config, sample, save, show)
+    if debug and not suppressed_message:
+        debug_print(
+            snippet, snippet_file, sample_file, cmd, params, config, sample, save, show
+        )
 
     # Instantiate builder
     builder = builder_class()
 
     # Apply sample/snippet depending on builder type
-    if builder_class is FreeFormBuilder:
+    if issubclass(builder_class, FreeFormBuilder):
         if snippet_file:
             builder.set_snippet_file(snippet_file)
         else:
             builder.set_snippet(snippet)
-        if sample:
-            builder.set_sample(sample)
-    elif builder_class is TabularBuilder or builder_class is CategoryBuilder:
+        builder.set_sample(sample)
+
+    elif issubclass(builder_class, (TabularBuilder, CategoryBuilder)):
         builder.set_sample(sample, **params)
     else:
         status = StatusString(
@@ -656,5 +663,248 @@ def run_builder_workflow(
 
     # Show
     status = show_outputs(result, sample, show)
-    emit_status(status)
+    if not suppressed_message:
+        emit_status(status)
     return 0 if status else 1
+
+
+def generate_or_save_config(
+    builder_name,
+    cfg_path="",
+    params=None,
+    snippet="",
+    snippet_file="",
+    sample_file="",
+    command="",
+    show="",
+    save="",
+):
+    """
+    Generate a fully resolved config JSON for the given builder.
+    If cfg_path is provided, save to file; otherwise print to stdout.
+    This function must be silent except for the final output.
+    """
+
+    # ------------------------------------------------------------
+    # 1. Load template (deep copy to avoid global mutation)
+    # ------------------------------------------------------------
+    template = get_config_template(builder_name)
+    cfg = json.loads(json.dumps(template))  # safe deep copy
+
+    # ------------------------------------------------------------
+    # 2. Overlay resolved values
+    # ------------------------------------------------------------
+    cfg["sample_file"] = sample_file
+    cfg["command"] = command
+    cfg["show"] = show
+    cfg["save"] = save
+
+    if params:
+        cfg["params"] = params.copy()
+
+    if "snippet" in cfg:
+        cfg["snippet"] = snippet
+
+    if "snippet_file" in cfg:
+        cfg["snippet_file"] = snippet_file
+
+    # ------------------------------------------------------------
+    # 3. Serialize
+    # ------------------------------------------------------------
+    content = json.dumps(cfg, indent=2, ensure_ascii=False)
+
+    # ------------------------------------------------------------
+    # 4. Save or print (silent except for final message)
+    # ------------------------------------------------------------
+    if cfg_path:
+        path = Path(cfg_path).resolve()
+        parent = path.parent
+
+        # Create parent directory if missing
+        if not parent.exists():
+            try:
+                parent.mkdir(parents=True, exist_ok=True)
+            except Exception as exc:
+                print(f"[ERROR] Cannot create directory {str(parent)!r}: {exc}")
+                raise SystemExit(1)
+
+        # Prevent overwriting existing file
+        if path.exists():
+            print(f"[ERROR] Config file {str(path)!r} already exists!")
+            raise SystemExit(1)
+
+        # Write file
+        try:
+            path.write_text(content, encoding="utf-8")
+        except Exception as exc:
+            print(f"[ERROR] Failed to write config file {str(path)!r}: {exc}")
+            raise SystemExit(1)
+
+        print(f"[INFO] Config file {str(path)!r} created!")
+        raise SystemExit(0)
+
+    # Print to stdout
+    click.echo(content)
+    raise SystemExit(0)
+
+
+def dry_run_or_create_golden_test(
+    builder_class,
+    builder_name,
+    golden_path="",
+    params=None,
+    snippet="",
+    snippet_file="",
+    sample_file="",
+    command="",
+):
+    """
+    Create or preview a golden test case for the given builder.
+
+    - If golden_path is empty:
+        Perform a DRY RUN.
+        Do NOT write any files.
+        Show which files WOULD be created.
+        Assume default path:
+            ./tests/golden/integration/<case>
+
+    - If golden_path is provided:
+        Perform ACTUAL CREATION.
+        golden_path MUST be under:
+            tests/golden/integration/
+        Auto-create parent directories.
+        Fail if files already exist.
+    """
+    params = params or {}
+
+    # ------------------------------------------------------------
+    # 1. Determine mode
+    # ------------------------------------------------------------
+    if not golden_path:
+        mode = "dry-run"
+        case_name = f"{builder_name}-case"
+        base_path = Path("tests") / "golden" / "integration" / case_name
+    else:
+        mode = "create"
+        base_path = Path(golden_path).resolve()
+
+        # Enforce directory structure only
+        if not (
+            base_path.parent.name == "integration"
+            and base_path.parent.parent.name == "golden"
+        ):
+            print(
+                f"[ERROR] Golden test path {str(base_path)!r} must be inside .../golden/integration/<case>"
+            )
+            raise SystemExit(1)
+
+    # ------------------------------------------------------------
+    # 2. Load sample (required)
+    # ------------------------------------------------------------
+    sample = None
+    if sample_file or command:
+        sample = load_sample(sample_file, command)
+
+    if not sample or not sample.strip():
+        print("[ERROR] Golden test requires a non-empty sample.")
+        raise SystemExit(1)
+
+    # ------------------------------------------------------------
+    # 3. Instantiate builder
+    # ------------------------------------------------------------
+    builder = builder_class()
+
+    # ------------------------------------------------------------
+    # 4. Apply snippet/sample depending on builder type
+    # ------------------------------------------------------------
+    # Apply sample/snippet depending on builder type
+    if issubclass(builder_class, FreeFormBuilder):
+        if snippet_file:
+            builder.set_snippet_file(snippet_file)
+        else:
+            builder.set_snippet(snippet)
+        builder.set_sample(sample)
+
+    elif issubclass(builder_class, (TabularBuilder, CategoryBuilder)):
+        builder.set_sample(sample, **params)
+
+    else:
+        print(f"[ERROR] Unsupported builder class: {builder_class!r}")
+        raise SystemExit(1)
+
+    # ------------------------------------------------------------
+    # 5. Build and get result
+    # ------------------------------------------------------------
+    builder.build()
+    result: BuildResult = builder.to_result()
+
+    # ------------------------------------------------------------
+    # 6. Validate builder output
+    # ------------------------------------------------------------
+    if result.warning:
+        print(f"[ERROR] Cannot create golden test: {result.warning}")
+        raise SystemExit(1)
+
+    # ------------------------------------------------------------
+    # 7. Prepare manifest content
+    # ------------------------------------------------------------
+    manifest = {
+        "builder": builder_name,
+        "params": params,
+        "saved": True,
+        "meta": {
+            "description": "",
+            "notes": "",
+            "schema_version": "1.0",
+        },
+    }
+
+    inputs_dir = base_path / "inputs"
+    expected_dir = base_path / "expected"
+    expected_results_dir = base_path / "expected_results"
+
+    files = {
+        "sample": inputs_dir / "sample.txt",
+        "snippet": expected_dir / "snippet.txt",
+        "template": expected_dir / "textfsm.template",
+        "result": expected_results_dir / "sample_result.json",
+        "manifest": base_path / "manifest.json",
+    }
+
+    # ------------------------------------------------------------
+    # 8. Dry-run mode
+    # ------------------------------------------------------------
+    if mode == "dry-run":
+        click.echo(f"[DRY-RUN] Golden test base path: {base_path}")
+        for label, path in files.items():
+            click.echo(f"[DRY-RUN] Would create: {path}")
+        raise SystemExit(0)
+
+    # ------------------------------------------------------------
+    # 9. Actual creation mode
+    # ------------------------------------------------------------
+    # Create directories
+    for d in (inputs_dir, expected_dir, expected_results_dir):
+        d.mkdir(parents=True, exist_ok=True)
+
+    # Prevent overwriting existing files
+    for label, path in files.items():
+        if path.exists():
+            print(f"[ERROR] {label} file {str(path)!r} already exists!")
+            raise SystemExit(1)
+
+    # Write files
+    files["sample"].write_text(sample, encoding="utf-8")
+    files["snippet"].write_text(result.snippet, encoding="utf-8")
+    files["template"].write_text(result.template, encoding="utf-8")
+    files["result"].write_text(
+        json.dumps(result.result, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    files["manifest"].write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    print(f"[INFO] Golden test created at {str(base_path)!r}")
+    raise SystemExit(0)
