@@ -16,6 +16,7 @@ from textfsmgen.tester.cli import TesterCLI
 
 from . import category_cmd
 from . import tabular_cmd
+from . import freeform_cmd
 from . import config_cmd
 
 
@@ -35,6 +36,7 @@ def cli(ctx):
 category_cmd.register(cli)
 tabular_cmd.register(cli)
 config_cmd.register(cli)
+freeform_cmd.register(cli)
 
 
 @cli.command(help="Show the textfsmgen version.")

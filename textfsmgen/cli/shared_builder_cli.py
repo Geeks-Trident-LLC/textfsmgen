@@ -24,9 +24,23 @@ def merge(cli_value, cfg, key, default=None):
 # ------------------------------------------------------------
 # Config validation (parameterized)
 # ------------------------------------------------------------
-def validate_config(config, required_params):
+def validate_config(config_path, required_top_keys, required_param_keys):
+    """
+    Validate a JSON config file.
+
+    Parameters:
+        config_path (str): Path to JSON config file.
+        required_top_keys (list[str]): Required top-level keys.
+        required_param_keys (list[str]): Required keys inside "params".
+
+    Returns:
+        StatusString: success or failure with message and reason.
+    """
+    # ------------------------------------------------------------
+    # Load JSON
+    # ------------------------------------------------------------
     try:
-        raw = click.open_file(config).read()
+        raw = click.open_file(config_path).read()
         data = json.loads(raw)
     except Exception as exc:
         return StatusString(
@@ -35,16 +49,23 @@ def validate_config(config, required_params):
             reason="error",
         )
 
-    required_keys = ["params", "sample_file", "command", "show", "save"]
-    missing_top = [k for k in required_keys if k not in data]
+    # ------------------------------------------------------------
+    # Validate top-level keys
+    # ------------------------------------------------------------
+    missing_top = [k for k in required_top_keys if k not in data]
     if missing_top:
         return StatusString(
-            f"Missing required key(s): {', '.join(missing_top)}\n"
-            f"Required: {', '.join(required_keys)}",
+            (
+                f"Missing required key(s): {', '.join(missing_top)}\n"
+                f"Required: {', '.join(required_top_keys)}"
+            ),
             status=False,
             reason="warning",
         )
 
+    # ------------------------------------------------------------
+    # Validate params block
+    # ------------------------------------------------------------
     params = data.get("params")
     if not isinstance(params, dict):
         return StatusString(
@@ -53,15 +74,20 @@ def validate_config(config, required_params):
             reason="warning",
         )
 
-    missing_params = [k for k in required_params if k not in params]
+    missing_params = [k for k in required_param_keys if k not in params]
     if missing_params:
         return StatusString(
-            f"Missing required params: {', '.join(missing_params)}\n"
-            f"Required: {', '.join(required_params)}",
+            (
+                f"Missing required params: {', '.join(missing_params)}\n"
+                f"Required: {', '.join(required_param_keys)}"
+            ),
             status=False,
             reason="warning",
         )
 
+    # ------------------------------------------------------------
+    # Validate sample_file or command
+    # ------------------------------------------------------------
     if not data.get("sample_file") and not data.get("command"):
         return StatusString(
             "Config must contain either 'sample_file' or 'command'",
@@ -69,6 +95,9 @@ def validate_config(config, required_params):
             reason="warning",
         )
 
+    # ------------------------------------------------------------
+    # Valid config
+    # ------------------------------------------------------------
     return StatusString(data, status=True)
 
 
@@ -527,15 +556,18 @@ def debug_print(sample_file, cmd, params, config, sample, save, show):
 # ------------------------------------------------------------
 def run_builder_workflow(
     builder_class,
-    sample_file,
-    cmd,
-    params,
-    save,
-    show,
-    config,
-    debug,
-    dry_run,
+    sample_file=None,
+    cmd="",
+    params=None,
+    save="",
+    show="",
+    config=None,
+    debug=False,
+    dry_run=False,
 ):
+
+    params = params or {}
+
     # Load sample
     sample = load_sample(sample_file, cmd)
     if not sample:

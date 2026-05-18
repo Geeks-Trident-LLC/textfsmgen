@@ -122,7 +122,8 @@ def tabular(
     # Load config
     config_data = {}
     if config:
-        required = [
+        required_top = ["params", "sample_file", "command", "show", "save"]
+        required_params = [
             "column_divider",
             "column_count",
             "column_widths",
@@ -134,7 +135,7 @@ def tabular(
             "has_header_row",
             "replacing_rules",
         ]
-        status = validate_config(config, required)
+        status = validate_config(config, required_top, required_params)
         if not status:
             raise SystemExit(1)
         config_data = status.raw or {}
@@ -163,13 +164,13 @@ def tabular(
     # Delegate to shared workflow
     exit_code = run_builder_workflow(
         TabularBuilder,
-        sample_file_,
-        cmd_,
-        params,
-        save_,
-        show_,
-        config_data,
-        debug,
-        dry_run,
+        sample_file=sample_file_,
+        cmd=cmd_,
+        params=params,
+        save=save_,
+        show=show_,
+        config=config_data,
+        debug=debug,
+        dry_run=dry_run,
     )
     raise SystemExit(exit_code)

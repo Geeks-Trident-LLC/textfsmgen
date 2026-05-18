@@ -45,7 +45,7 @@ def test_validate_config_valid(tmpfile):
         "save": "",
     }
     p = tmpfile("cfg.json", json.dumps(cfg))
-    status = validate_config(str(p), list(cfg["params"].keys()))
+    status = validate_config(str(p), list(cfg.keys()), list(cfg["params"].keys()))
     assert status
     assert status.raw == cfg
 

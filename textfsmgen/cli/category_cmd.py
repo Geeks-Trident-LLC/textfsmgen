@@ -101,14 +101,15 @@ def category(
     # Load config
     config_data = {}
     if config:
-        required = [
+        required_top = ["params", "sample_file", "command", "show", "save"]
+        required_params = [
             "count",
             "separator",
             "starting_from",
             "ending_at",
             "replacing_rules",
         ]
-        status = validate_config(config, required)
+        status = validate_config(config, required_top, required_params)
         if not status:
             raise SystemExit(1)
         config_data = status.raw or {}
@@ -130,13 +131,13 @@ def category(
     # Delegate to shared workflow
     exit_code = run_builder_workflow(
         CategoryBuilder,
-        sample_file_,
-        cmd_,
-        params,
-        save_,
-        show_,
-        config_data,
-        debug,
-        dry_run,
+        sample_file=sample_file_,
+        cmd=cmd_,
+        params=params,
+        save=save_,
+        show=show_,
+        config=config_data,
+        debug=debug,
+        dry_run=dry_run,
     )
     raise SystemExit(exit_code)
