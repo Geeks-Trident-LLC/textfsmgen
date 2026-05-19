@@ -38,7 +38,6 @@ def register(cli):
 )
 @click.option(
     "--command",
-    "cmd",
     default="",
     help=HELP.command,
 )
@@ -73,7 +72,7 @@ def freeform(
     snippet,
     snippet_file,
     sample_file,
-    cmd,
+    command,
     save,
     show,
     config,
@@ -147,7 +146,7 @@ def freeform(
     snippet_ = merge(snippet, config_data, "snippet", "")
     snippet_file_ = merge(snippet_file, config_data, "snippet_file", "")
     sample_file_ = merge(sample_file, config_data, "sample_file", "")
-    cmd_ = merge(cmd, config_data, "command", "")
+    command_ = merge(command, config_data, "command", "")
     save_ = merge(save, config_data, "save", "")
     show_ = merge(show, config_data, "show", "")
 
@@ -169,7 +168,7 @@ def freeform(
         snippet=snippet_,
         snippet_file=snippet_file_,
         sample_file=sample_file_,
-        cmd=cmd_,
+        command=command_,
         params=params,
         save=save_,
         show=show_,
@@ -190,7 +189,7 @@ def freeform(
             snippet=snippet_,
             snippet_file=snippet_file_,
             sample_file=sample_file_,
-            command=cmd_,
+            command=command_,
             show=show_,
             save=save_,
             json_workflow=json_workflow,
@@ -208,7 +207,7 @@ def freeform(
             snippet=snippet_,
             snippet_file=snippet_file_,
             sample_file=sample_file_,
-            command=cmd_,
+            command=command_,
             json_workflow=json_workflow,
         )
 

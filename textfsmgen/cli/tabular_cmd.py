@@ -33,7 +33,6 @@ def register(cli):
 )
 @click.option(
     "--command",
-    "cmd",
     default="",
     help=HELP.command,
 )
@@ -104,7 +103,7 @@ def register(cli):
 def tabular(
     ctx,
     sample_file,
-    cmd,
+    command,
     column_divider,
     column_count,
     column_widths,
@@ -139,7 +138,7 @@ def tabular(
     # ------------------------------------------------------------
     # Early help
     # ------------------------------------------------------------
-    if not sample_file and not cmd and config is None:
+    if not sample_file and not command and config is None:
         if json_workflow:
             json_workflow.set_status(
                 kind="warning",
@@ -191,7 +190,7 @@ def tabular(
     # Merge CLI + config
     # ------------------------------------------------------------
     sample_file_ = merge(sample_file, config_data, "sample_file", "")
-    cmd_ = merge(cmd, config_data, "command", "")
+    command_ = merge(command, config_data, "command", "")
     save_ = merge(save, config_data, "save", "")
     show_ = merge(show, config_data, "show", "")
 
@@ -223,7 +222,7 @@ def tabular(
     exit_code = run_builder_workflow(
         TabularBuilder,
         sample_file=sample_file_,
-        cmd=cmd_,
+        command=command_,
         params=params,
         save=save_,
         show=show_,
@@ -242,7 +241,7 @@ def tabular(
             cfg_path=create_config_file,
             params=params,
             sample_file=sample_file_,
-            command=cmd_,
+            command=command_,
             show=show_,
             save=save_,
             json_workflow=json_workflow,
@@ -258,7 +257,7 @@ def tabular(
             golden_path=create_golden_test_path,
             params=params,
             sample_file=sample_file_,
-            command=cmd_,
+            command=command_,
             json_workflow=json_workflow,
         )
 

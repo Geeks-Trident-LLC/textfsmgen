@@ -33,7 +33,6 @@ def register(cli):
 )
 @click.option(
     "--command",
-    "cmd",
     default="",
     help=HELP.command,
 )
@@ -88,7 +87,7 @@ def register(cli):
 def category(
     ctx,
     sample_file,
-    cmd,
+    command,
     count,
     separator,
     starting_from,
@@ -118,7 +117,7 @@ def category(
     # ------------------------------------------------------------
     # Early help
     # ------------------------------------------------------------
-    if not sample_file and not cmd and config is None:
+    if not sample_file and not command and config is None:
         if json_workflow:
             json_workflow.set_status(
                 kind="warning",
@@ -165,7 +164,7 @@ def category(
     # Merge CLI + config
     # ------------------------------------------------------------
     sample_file_ = merge(sample_file, config_data, "sample_file", "")
-    cmd_ = merge(cmd, config_data, "command", "")
+    command_ = merge(command, config_data, "command", "")
     save_ = merge(save, config_data, "save", "")
     show_ = merge(show, config_data, "show", "")
 
@@ -190,7 +189,7 @@ def category(
     exit_code = run_builder_workflow(
         CategoryBuilder,
         sample_file=sample_file_,
-        cmd=cmd_,
+        command=command_,
         params=params,
         save=save_,
         show=show_,
@@ -209,7 +208,7 @@ def category(
             cfg_path=create_config_file,
             params=params,
             sample_file=sample_file_,
-            command=cmd_,
+            command=command_,
             show=show_,
             save=save_,
             json_workflow=json_workflow,
@@ -225,7 +224,7 @@ def category(
             golden_path=create_golden_test_path,
             params=params,
             sample_file=sample_file_,
-            command=cmd_,
+            command=command_,
             json_workflow=json_workflow,
         )
 

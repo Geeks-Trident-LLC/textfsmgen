@@ -149,7 +149,7 @@ def test_run_builder_workflow_success(fake_builder):
     exit_code = run_builder_workflow(
         builder_class=fake_builder,  # <-- class, not lambda
         sample_file=None,
-        cmd="echo hello",
+        command="echo hello",
         params=params,
         save="",
         show="snippet",

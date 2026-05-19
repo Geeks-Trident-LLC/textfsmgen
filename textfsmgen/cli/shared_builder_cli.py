@@ -97,7 +97,7 @@ def validate_config(config_path, required_top_keys, required_param_keys):
 # ------------------------------------------------------------
 # Sample loading
 # ------------------------------------------------------------
-def load_sample(sample_file, cmd):
+def load_sample(sample_file, command):
     if sample_file:
         try:
             content = Path(sample_file).read_text(encoding="utf-8")
@@ -113,8 +113,8 @@ def load_sample(sample_file, cmd):
             "Empty data from input-file", status=False, reason="warning"
         )
 
-    if cmd:
-        result = shell.execute_command(cmd)
+    if command:
+        result = shell.execute_command(command)
         if not result.is_success:
             return StatusString(result.output, status=False, reason="error")
 
@@ -122,10 +122,10 @@ def load_sample(sample_file, cmd):
         if output.strip():
             return StatusString(output, status=True)
 
-        return StatusString(f"{cmd} has no output", status=False, reason="warning")
+        return StatusString(f"{command} has no output", status=False, reason="warning")
 
     return StatusString(
-        "No sample_file or cmd provided", status=False, reason="warning"
+        "No sample_file or command provided", status=False, reason="warning"
     )
 
 
@@ -419,7 +419,7 @@ def debug_print(
     snippet,
     snippet_file,
     sample_file,
-    cmd,
+    command,
     params,
     config,
     sample,
@@ -432,14 +432,14 @@ def debug_print(
         lines.append(f"[INFO] Loaded snippet from: {snippet_file}")
         lines.append(f"[INFO] Snippet size: {len(snippet)} characters")
     if sample:
-        lines.append(f"[INFO] Loaded sample from: {sample_file or cmd}")
+        lines.append(f"[INFO] Loaded sample from: {sample_file or command}")
         lines.append(f"[INFO] Sample size: {len(sample)} characters")
 
     lines.append("=== DEBUG INFO ===")
     if snippet_file:
         lines.append(f"snippet_file   = {snippet_file}")
     lines.append(f"sample_file    = {sample_file!r}")
-    lines.append(f"command        = {cmd!r}")
+    lines.append(f"command        = {command!r}")
     params_txt = json.dumps(params, indent=2, ensure_ascii=False)
     lines.append(render_text_block(params_txt, subject="params         ="))
     if isinstance(config, dict):
@@ -466,7 +466,7 @@ def run_builder_workflow(
     snippet="",
     snippet_file=None,
     sample_file=None,
-    cmd="",
+    command="",
     params=None,
     save="",
     show="",
@@ -478,8 +478,8 @@ def run_builder_workflow(
     params = params or {}
     sample_text = ""
 
-    if sample_file or cmd:
-        sample_status = load_sample(sample_file, cmd)
+    if sample_file or command:
+        sample_status = load_sample(sample_file, command)
         if not sample_status:
             if json_workflow:
                 json_workflow.set_status(
@@ -498,7 +498,7 @@ def run_builder_workflow(
             snippet,
             snippet_file,
             sample_file,
-            cmd,
+            command,
             params,
             config,
             sample_text,
@@ -580,7 +580,7 @@ def run_builder_workflow(
     result: BuildResult = builder.to_result()
     if not builder:
         message = (
-            f"Cannot create builder from sample (reference: {sample_file or cmd!r})\n"
+            f"Cannot create builder from sample (reference: {sample_file or command!r})\n"
             "===========================================\n"
             f"{sample_text}\n"
         )
