@@ -65,9 +65,7 @@ def test_freeform_debug(runner, patch_builder, patch_load_sample, tmp_path):
     assert f"snippet_file   = {str(snippet_path)}" in result.output
 
 
-def test_freeform_create_config(
-    runner, patch_builder, patch_load_sample, tmp_path
-):
+def test_freeform_create_config(runner, patch_builder, patch_load_sample, tmp_path):
     sample = tmp_path / "sample.txt"
     sample.write_text("hello")
 
@@ -86,6 +84,7 @@ def test_freeform_create_config_file(
     sample = tmp_path / "sample.txt"
     sample.write_text("hello")
 
+
 def test_freeform_create_golden_test(
     runner, patch_builder, patch_load_sample, tmp_path
 ):
@@ -94,7 +93,13 @@ def test_freeform_create_golden_test(
 
     result = runner.invoke(
         freeform,
-        ["--sample-file", str(sample), "--snippet", "word(var_v0)", "--create-golden-test"],
+        [
+            "--sample-file",
+            str(sample),
+            "--snippet",
+            "word(var_v0)",
+            "--create-golden-test",
+        ],
     )
 
     assert result.exit_code == 0

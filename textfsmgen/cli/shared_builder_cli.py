@@ -134,15 +134,19 @@ def load_sample(sample_file, cmd):
 # ------------------------------------------------------------
 def parse_save_expression(expr: str):
     """
-    Parse the unified save syntax:
-        sample-out.txt,snippet-a.txt,template-b.textfsm,result-c.json
+    Parse save syntax:
+
+        sample-out.txt,result-a.json
+        dryrun(sample-out.txt,result-a.json)
 
     Returns:
+        ("", parsed)              # normal mode
+        ("dryrun", parsed)        # dry-run mode
+
+    Where parsed is:
         [
             {"kind": "sample", "path": "out.txt"},
-            {"kind": "snippet", "path": "a.txt"},
-            {"kind": "template", "path": "b.textfsm"},
-            {"kind": "result", "path": "c.json"}
+            {"kind": "result", "path": "a.json"},
         ]
 
     Raises:
@@ -152,41 +156,202 @@ def parse_save_expression(expr: str):
     if not expr:
         raise ValueError("Empty --save expression")
 
-    items = [x.strip() for x in expr.split(",") if x.strip()]
+    mode = ""
+    inner = expr
+
+    # Detect dryrun(...) wrapper
+    if expr.startswith("dryrun(") and expr.endswith(")"):
+        mode = "dryrun"
+        inner = expr[len("dryrun(") : -1].strip()
+
+    if not inner:
+        raise ValueError("Empty save list inside expression")
+
+    allowed_kinds = {"sample", "snippet", "template", "result"}
+
+    raw_items = [x.strip() for x in inner.split(",") if x.strip()]
+    if not raw_items:
+        raise ValueError("No valid save items found")
+
     parsed = []
 
-    for item in items:
+    for item in raw_items:
         if "-" not in item:
-            raise ValueError(
-                f"Invalid save format: '{item}'. Expected: <kind>-<filename>"
-            )
+            raise ValueError(f"Invalid save item '{item}'. Expected <kind>-<filename>")
 
         kind, filename = item.split("-", 1)
         kind = kind.strip()
         filename = filename.strip()
 
-        if kind not in ("sample", "snippet", "template", "result"):
-            raise ValueError(f"Unknown save kind '{kind}'")
+        if kind not in allowed_kinds:
+            raise ValueError(
+                f"Invalid save kind '{kind}'. "
+                f"Allowed kinds: {', '.join(sorted(allowed_kinds))}"
+            )
 
         if not filename:
             raise ValueError(f"Missing filename for kind '{kind}'")
 
         parsed.append({"kind": kind, "path": filename})
 
-    return parsed
+    return mode, parsed
 
 
-def _write_file(filename: str, content: str) -> StatusString:
+def _write_file(filename: str, content: str, kind: str, mode: str) -> StatusString:
+    """
+    Write content to filename, or simulate writing in dry-run mode.
+
+    Returns:
+        StatusString with a kind-aware message.
+    """
+    is_dry_run = mode == "dryrun"
+
+    if is_dry_run:
+        return StatusString(
+            f"[DRY-RUN] {kind} → {filename}",
+            status=True,
+            reason="info",
+        )
+
     try:
-        Path(filename).write_text(content, encoding="utf-8")
-        return StatusString(f"Successfully saved {filename}", status=True)
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(content)
+
+        return StatusString(
+            f"Saved {kind} → {filename}",
+            status=True,
+            reason="info",
+        )
+
     except Exception as exc:
         return StatusString(
-            f"Failed to save {filename}: {exc}", status=False, reason="error"
+            f"Failed to save {kind} → {filename}: {exc}",
+            status=False,
+            reason="error",
         )
 
 
 def save_outputs(result: BuildResult, sample: str, save_spec: str):
+    """
+    Save outputs using the unified syntax:
+        --save=sample-out.txt,snippet-snippet.txt,template-template.textfsm,result-out.json
+        --save=dryrun(sample-out.txt,result-out.json)
+
+    Returns:
+        list[dict] with per-file info:
+            {"kind": "...", "path": "...", "severity": "...", "message": "..."}
+    """
+
+    # ------------------------------------------------------------
+    # Internal function
+    # ------------------------------------------------------------
+    def append(kind_, path, status_: StatusString):
+        results.append(
+            {
+                "kind": kind_,
+                "path": path,
+                "severity": status_.reason,
+                "message": str(status_),
+            }
+        )
+
+    # ------------------------------------------------------------
+
+    try:
+        mode, items = parse_save_expression(save_spec)
+    except ValueError as exc:
+        status = StatusString(str(exc), status=False, reason="error")
+        return [
+            {
+                "kind": "parse-expression",
+                "path": None,
+                "severity": status.reason,
+                "message": str(status),
+            }
+        ]
+
+    results: list[dict] = []
+    is_dry_run = mode == "dryrun"
+
+    for entry in items:
+        kind = entry["kind"]
+        filename = entry["path"]
+
+        # ------------------------------------------------------------
+        # sample is always allowed
+        # ------------------------------------------------------------
+        if kind == "sample":
+            content = sample
+            status = _write_file(filename, content, kind, mode)
+            append(kind, filename, status)
+            continue
+
+        # ------------------------------------------------------------
+        # builder-level warning blocks snippet/template/result
+        # ------------------------------------------------------------
+        if result.warning:
+            msg = f"Build result contains warning: {result.warning}. Cannot proceed."
+            status = StatusString(
+                f"[DRY-RUN] {msg}" if is_dry_run else msg,
+                status=False,
+                reason="error",
+            )
+            append("build-result", None, status)
+            continue
+
+        # ------------------------------------------------------------
+        # Load content
+        # ------------------------------------------------------------
+        if kind in ("snippet", "template"):
+            content = getattr(result, kind, None)
+            if not content:
+                msg = f"Builder has no '{kind}' content"
+                status = StatusString(
+                    f"[DRY-RUN] {msg}" if is_dry_run else msg,
+                    status=False,
+                    reason="warning",
+                )
+                append(kind, filename, status)
+                continue
+
+        elif kind == "result":
+            content = result.result
+            if not content:
+                msg = f"No records found for '{filename}'"
+                status = StatusString(
+                    f"[DRY-RUN] {msg}" if is_dry_run else msg,
+                    status=False,
+                    reason="warning",
+                )
+                append(kind, filename, status)
+                continue
+
+        else:
+            msg = f"Unknown save kind '{kind}'"
+            status = StatusString(
+                f"[DRY-RUN] {msg}" if is_dry_run else msg,
+                status=False,
+                reason="error",
+            )
+            append(f"unknown-{kind}", None, status)
+            continue
+
+        # ------------------------------------------------------------
+        # Normalize content to string
+        # ------------------------------------------------------------
+        if not isinstance(content, str):
+            content = json.dumps(content, indent=2, ensure_ascii=False)
+
+        # ------------------------------------------------------------
+        # Write or dry-run (delegated to _write_file)
+        # ------------------------------------------------------------
+        status = _write_file(filename, content, kind, mode)
+        append(kind, filename, status)
+
+    return results
+
+
+def save_outputs_old(result: BuildResult, sample: str, save_spec: str):
     """
     Save outputs using the unified syntax:
         --save=sample-out.txt,snippet-snippet.txt,template-template.textfsm,result-out.json
@@ -196,7 +361,7 @@ def save_outputs(result: BuildResult, sample: str, save_spec: str):
             {"kind": "...", "path": "...", "severity": "...", "message": "..."}
     """
     try:
-        items = parse_save_expression(save_spec)
+        mode, items = parse_save_expression(save_spec)
     except ValueError as exc:
         status = StatusString(str(exc), status=False, reason="error")
         return [
@@ -223,7 +388,11 @@ def save_outputs(result: BuildResult, sample: str, save_spec: str):
                     "kind": kind,
                     "path": filename,
                     "severity": status.reason,
-                    "message": str(status),
+                    "message": (
+                        f"[DRY-RUN] would save {kind!r} to '{filename}'"
+                        if mode == "dryrun"
+                        else str(status)
+                    ),
                 }
             )
             continue
@@ -236,7 +405,11 @@ def save_outputs(result: BuildResult, sample: str, save_spec: str):
                     "kind": "build-result",
                     "path": None,
                     "severity": status.reason,
-                    "message": str(status),
+                    "message": (
+                        "[DRY-RUN] build-result contain warning.  Can't proceed."
+                        if mode == "dryrun"
+                        else str(status)
+                    ),
                 }
             )
             continue
@@ -252,7 +425,9 @@ def save_outputs(result: BuildResult, sample: str, save_spec: str):
                         "kind": kind,
                         "path": filename,
                         "severity": status.reason,
-                        "message": str(status),
+                        "message": (
+                            f"[DRY-RUN] {msg}" if mode == "dryrun" else str(status)
+                        ),
                     }
                 )
                 continue
@@ -267,7 +442,9 @@ def save_outputs(result: BuildResult, sample: str, save_spec: str):
                         "kind": kind,
                         "path": filename,
                         "severity": status.reason,
-                        "message": str(status),
+                        "message": (
+                            f"[DRY-RUN] {msg}" if mode == "dryrun" else str(status)
+                        ),
                     }
                 )
                 continue
@@ -280,7 +457,9 @@ def save_outputs(result: BuildResult, sample: str, save_spec: str):
                     "kind": f"unknown-{kind}",
                     "path": None,
                     "severity": status.reason,
-                    "message": str(status),
+                    "message": (
+                        f"[DRY-RUN] {msg}" if mode == "dryrun" else str(status)
+                    ),
                 }
             )
             continue
@@ -296,7 +475,11 @@ def save_outputs(result: BuildResult, sample: str, save_spec: str):
                 "kind": kind,
                 "path": filename,
                 "severity": status.reason,
-                "message": str(status),
+                "message": (
+                    f"[DRY-RUN] would save {kind!r} to {filename!r}\n"
+                    if mode == "dryrun"
+                    else str(status)
+                ),
             }
         )
 
@@ -546,7 +729,6 @@ def run_builder_workflow(
 
     # Save
     if save:
-
         results = save_outputs(result, sample_text, save)
 
         if json_workflow:

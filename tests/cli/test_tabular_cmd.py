@@ -23,9 +23,7 @@ def patch_builder(monkeypatch, fake_tabular):
 # ------------------------------------------------------------
 
 
-def test_tabular_create_config(
-    runner, patch_builder, patch_load_sample, tmp_path
-):
+def test_tabular_create_config(runner, patch_builder, patch_load_sample, tmp_path):
     sample = tmp_path / "sample.txt"
     sample.write_text("a|b|c\n1|2|3\n")
 
@@ -88,9 +86,7 @@ def test_tabular_create_config_file(runner, patch_builder, patch_load_sample, tm
 # ------------------------------------------------------------
 
 
-def test_tabular_create_golden_test(
-    runner, patch_builder, patch_load_sample, tmp_path
-):
+def test_tabular_create_golden_test(runner, patch_builder, patch_load_sample, tmp_path):
     sample = tmp_path / "sample.txt"
     sample.write_text("a|b|c\n1|2|3\n")
 

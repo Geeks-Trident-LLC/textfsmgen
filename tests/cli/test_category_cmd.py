@@ -23,9 +23,7 @@ def patch_builder(monkeypatch, fake_category):
 # ------------------------------------------------------------
 
 
-def test_category_create_config(
-    runner, patch_builder, patch_load_sample, tmp_path
-):
+def test_category_create_config(runner, patch_builder, patch_load_sample, tmp_path):
     sample = tmp_path / "sample.txt"
     sample.write_text("hello")
 
