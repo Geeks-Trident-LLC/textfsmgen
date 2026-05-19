@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Optional
 
 import click
+
 from textfsmgen.libs.generic import StatusString
 from textfsmgen.libs.common import emit_status
 from textfsmgen.libs import shell
@@ -32,23 +33,9 @@ def merge(cli_value, cfg, key, default=None):
 
 
 # ------------------------------------------------------------
-# Config validation (parameterized)
+# Config validation
 # ------------------------------------------------------------
 def validate_config(config_path, required_top_keys, required_param_keys):
-    """
-    Validate a JSON config file.
-
-    Parameters:
-        config_path (str): Path to JSON config file.
-        required_top_keys (list[str]): Required top-level keys.
-        required_param_keys (list[str]): Required keys inside "params".
-
-    Returns:
-        StatusString: success or failure with message and reason.
-    """
-    # ------------------------------------------------------------
-    # Load JSON
-    # ------------------------------------------------------------
     try:
         raw = click.open_file(config_path).read()
         data = json.loads(raw)
@@ -59,9 +46,6 @@ def validate_config(config_path, required_top_keys, required_param_keys):
             reason="error",
         )
 
-    # ------------------------------------------------------------
-    # Validate top-level keys
-    # ------------------------------------------------------------
     missing_top = [k for k in required_top_keys if k not in data]
     if missing_top:
         return StatusString(
@@ -73,9 +57,6 @@ def validate_config(config_path, required_top_keys, required_param_keys):
             reason="warning",
         )
 
-    # ------------------------------------------------------------
-    # Validate params block
-    # ------------------------------------------------------------
     params = data.get("params")
     if not isinstance(params, dict):
         return StatusString(
@@ -95,9 +76,6 @@ def validate_config(config_path, required_top_keys, required_param_keys):
             reason="warning",
         )
 
-    # ------------------------------------------------------------
-    # Validate
-    # ------------------------------------------------------------
     if "snippet" in data:
         if not data.get("snippet") and not data.get("snippet_file"):
             return StatusString(
@@ -113,9 +91,6 @@ def validate_config(config_path, required_top_keys, required_param_keys):
                 reason="warning",
             )
 
-    # ------------------------------------------------------------
-    # Valid config
-    # ------------------------------------------------------------
     return StatusString(data, status=True)
 
 
@@ -155,7 +130,7 @@ def load_sample(sample_file, cmd):
 
 
 # ------------------------------------------------------------
-# Save Helper
+# Save helpers
 # ------------------------------------------------------------
 def parse_save_expression(expr: str):
     """
@@ -201,7 +176,7 @@ def parse_save_expression(expr: str):
     return parsed
 
 
-def _write_file(filename, content):
+def _write_file(filename: str, content: str) -> StatusString:
     try:
         Path(filename).write_text(content, encoding="utf-8")
         return StatusString(f"Successfully saved {filename}", status=True)
@@ -222,33 +197,23 @@ def dry_run_save(result: BuildResult, sample: str, save_spec: str):
     """
     try:
         items = parse_save_expression(save_spec)
-        # items = [{"kind": "sample", "path": "out.txt"}, ...]
     except ValueError as exc:
         return [f"[DRY-RUN] {exc}"]
 
-    lines = []
+    lines: list[str] = []
 
     for entry in items:
         kind = entry["kind"]
         filename = entry["path"]
 
-        # ------------------------------------------------------------
-        # sample is always allowed
-        # ------------------------------------------------------------
         if kind == "sample":
             lines.append(f"[DRY-RUN] Would write {filename}")
             continue
 
-        # ------------------------------------------------------------
-        # builder-level warning blocks snippet/template/result
-        # ------------------------------------------------------------
         if result.warning:
             lines.append(f"[DRY-RUN] Would NOT write {filename}: {result.warning}")
             continue
 
-        # ------------------------------------------------------------
-        # load content
-        # ------------------------------------------------------------
         if kind in ("snippet", "template"):
             content = getattr(result, kind, None)
             if not content:
@@ -268,9 +233,6 @@ def dry_run_save(result: BuildResult, sample: str, save_spec: str):
             lines.append(f"[DRY-RUN] Would NOT write {filename}: {msg}")
             continue
 
-        # ------------------------------------------------------------
-        # allowed → would write
-        # ------------------------------------------------------------
         lines.append(f"[DRY-RUN] Would write {filename}")
 
     return lines
@@ -280,68 +242,71 @@ def save_outputs(result: BuildResult, sample: str, save_spec: str):
     """
     Save outputs using the unified syntax:
         --save=sample-out.txt,snippet-snippet.txt,template-template.textfsm,result-out.json
+
+    Returns:
+        list[dict] with per-file info:
+            {"kind": "...", "path": "...", "severity": "...", "message": "..."}
     """
     try:
         items = parse_save_expression(save_spec)
-        # items = [{"kind": "sample", "path": "out.txt"}, ...]
     except ValueError as exc:
         status = StatusString(str(exc), status=False, reason="error")
-        return [{
-            "kind": "parsing_expressing",
-            "path": None,
-            "severity": "error",
-            "message": status
-        }]
+        return [
+            {
+                "kind": "parse-expression",
+                "path": None,
+                "severity": status.reason,
+                "message": str(status),
+            }
+        ]
 
-    results = []
+    results: list[dict] = []
 
     for entry in items:
         kind = entry["kind"]
         filename = entry["path"]
 
-        # ------------------------------------------------------------
         # sample is always allowed
-        # ------------------------------------------------------------
         if kind == "sample":
             content = sample
-            # results.append(_write_file(filename, content))
             status = _write_file(filename, content)
-            results.append({
-                "kind": kind,
-                "path": filename,
-                "severity": status.reason,
-                "message": status,
-            })
-
+            results.append(
+                {
+                    "kind": kind,
+                    "path": filename,
+                    "severity": status.reason,
+                    "message": str(status),
+                }
+            )
             continue
 
-        # ------------------------------------------------------------
         # builder-level warning blocks snippet/template/result
-        # ------------------------------------------------------------
         if result.warning:
             status = StatusString(result.warning, status=False, reason="error")
-            results.append({
-                "kind": "build-result",
-                "path": None,
-                "severity": status.reason,
-                "message": status,
-            })
+            results.append(
+                {
+                    "kind": "build-result",
+                    "path": None,
+                    "severity": status.reason,
+                    "message": str(status),
+                }
+            )
             continue
 
-        # ------------------------------------------------------------
         # load content
-        # ------------------------------------------------------------
         if kind in ("snippet", "template"):
             content = getattr(result, kind, None)
             if not content:
                 msg = f"Builder has no '{kind}' content"
                 status = StatusString(msg, status=False, reason="warning")
-                results.append({
-                    "kind": kind,
-                    "path": filename,
-                    "severity": status.reason,
-                    "message": status,
-                })
+                results.append(
+                    {
+                        "kind": kind,
+                        "path": filename,
+                        "severity": status.reason,
+                        "message": str(status),
+                    }
+                )
                 continue
 
         elif kind == "result":
@@ -349,41 +314,43 @@ def save_outputs(result: BuildResult, sample: str, save_spec: str):
             if not content:
                 msg = f"No records found for {filename}"
                 status = StatusString(msg, status=False, reason="warning")
-                results.append({
-                    "kind": kind,
-                    "path": filename,
-                    "severity": status.reason,
-                    "message": status,
-                })
+                results.append(
+                    {
+                        "kind": kind,
+                        "path": filename,
+                        "severity": status.reason,
+                        "message": str(status),
+                    }
+                )
                 continue
 
         else:
             msg = f"Unknown save kind '{kind}'"
-            status=StatusString(msg, status=False, reason="error")
-            results.append({
-                "kind": f"unknown-{kind}",
-                "path": None,
-                "severity": status.reason,
-                "message": status,
-            })
+            status = StatusString(msg, status=False, reason="error")
+            results.append(
+                {
+                    "kind": f"unknown-{kind}",
+                    "path": None,
+                    "severity": status.reason,
+                    "message": str(status),
+                }
+            )
             continue
 
-        # ------------------------------------------------------------
         # normalize content to string
-        # ------------------------------------------------------------
         if not isinstance(content, str):
             content = json.dumps(content, indent=2, ensure_ascii=False)
 
-        # ------------------------------------------------------------
         # write file
-        # ------------------------------------------------------------
         status = _write_file(filename, content)
-        results.append({
-            "kind": kind,
-            "path": filename,
-            "severity": status.reason,
-            "message": status,
-        })
+        results.append(
+            {
+                "kind": kind,
+                "path": filename,
+                "severity": status.reason,
+                "message": str(status),
+            }
+        )
 
     return results
 
@@ -401,79 +368,50 @@ def show_outputs(result: BuildResult, sample: str, show_spec: str):
             "snippet": "...",
             "tabular": "..."
         }
-
-    This function no longer prints or formats anything.
-    It returns a dict for JSON mode or a list of strings for human mode.
-    The caller decides how to render it.
     """
-    show_spec = show_spec.strip()
+    show_spec = (show_spec or "").strip()
     cases = [x.strip() for x in show_spec.split(",") if x.strip()]
 
     if not cases:
-        # default behavior: show template
         return {"template": result.template}
 
-    resolved = {}
-    global_reason = None
+    resolved: dict[str, object] = {}
 
     for case in cases:
-        # ------------------------------------------------------------
-        # sample
-        # ------------------------------------------------------------
         if case == "sample":
             resolved["sample"] = sample
             continue
 
-        # ------------------------------------------------------------
-        # snippet / template
-        # ------------------------------------------------------------
         if case in ("snippet", "template"):
             value = getattr(result, case, None)
             if not value:
                 resolved[case] = f"Builder has no '{case}' content"
-                global_reason = "warning"
             else:
                 resolved[case] = value
             continue
 
-        # ------------------------------------------------------------
-        # result (parsed output)
-        # ------------------------------------------------------------
         if case == "result":
             if result.warning:
                 resolved["result"] = result.warning
-                global_reason = "warning"
             else:
                 resolved["result"] = result.result
             continue
 
-        # ------------------------------------------------------------
-        # default = stringified parsed result
-        # ------------------------------------------------------------
         if case == "default":
             if result.warning:
                 resolved["result"] = result.warning
-                global_reason = "warning"
             else:
                 resolved["result"] = str(result.result)
             continue
 
-        # ------------------------------------------------------------
-        # tabular
-        # ------------------------------------------------------------
         if case == "tabular":
             if result.warning:
                 resolved["result"] = result.warning
-                global_reason = "warning"
             else:
                 resolved["result"] = get_data_as_tabular(result.result)
             continue
 
-        # ------------------------------------------------------------
-        # unknown target
-        # ------------------------------------------------------------
         resolved[case] = f"Unknown show target '{case}'"
-        global_reason = "error"
 
     return resolved
 
@@ -482,9 +420,16 @@ def show_outputs(result: BuildResult, sample: str, show_spec: str):
 # Debug printer
 # ------------------------------------------------------------
 def debug_print(
-    snippet, snippet_file, sample_file, cmd,
-    params, config, sample, save, show,
-    json_workflow=None
+    snippet,
+    snippet_file,
+    sample_file,
+    cmd,
+    params,
+    config,
+    sample,
+    save,
+    show,
+    json_workflow: Optional[JsonWorkflow] = None,
 ):
     lines = []
     if snippet_file:
@@ -533,44 +478,40 @@ def run_builder_workflow(
     debug=False,
     dry_run=False,
     suppressed_message=False,
-    json_workflow: Optional[JsonWorkflow]=None
+    json_workflow: Optional[JsonWorkflow] = None,
 ):
-
     params = params or {}
-
-    sample = ""
+    sample_text = ""
 
     if sample_file or cmd:
-        # Load sample
-        sample = load_sample(sample_file, cmd)
-        if not sample:
+        sample_status = load_sample(sample_file, cmd)
+        if not sample_status:
             if json_workflow:
                 json_workflow.set_status(
-                    kind=sample.reason,
-                    message=sample,
-                    exit_code=1
+                    kind=sample_status.reason,
+                    message=str(sample_status),
+                    exit_code=1,
                 )
                 click.echo(json_workflow.to_json())
                 raise SystemExit(1)
-            emit_status(sample)
+            emit_status(sample_status)
             return 1
+        sample_text = str(sample_status)
 
-    # Debug
     if debug:
-        if json_workflow:
-            debug_print(
-                snippet, snippet_file, sample_file, cmd,
-                params, config, sample, save, show,
-                json_workflow=json_workflow
-            )
-        else:
-            if not suppressed_message:
-                debug_print(
-                    snippet, snippet_file, sample_file, cmd,
-                    params, config, sample, save, show
-                )
+        debug_print(
+            snippet,
+            snippet_file,
+            sample_file,
+            cmd,
+            params,
+            config,
+            sample_text,
+            save,
+            show,
+            json_workflow=json_workflow,
+        )
 
-    # Instantiate builder
     builder = builder_class()
 
     if json_workflow:
@@ -579,25 +520,29 @@ def run_builder_workflow(
             params=params,
             snippet=snippet,
             snippet_file=snippet_file,
-            sample=sample,
+            sample=sample_text,
             sample_file=sample_file,
         )
 
     builder_name = "unknown"
-    # Apply sample/snippet depending on builder type
+
     if issubclass(builder_class, FreeFormBuilder):
         builder_name = "freeform"
         if snippet_file:
             builder.set_snippet_file(snippet_file)
         else:
             builder.set_snippet(snippet)
-        builder.set_sample(sample)
+        builder.set_sample(sample_text)
 
     elif issubclass(builder_class, (TabularBuilder, CategoryBuilder)):
-        builder_name = "category" if issubclass(builder_class, CategoryBuilder) else "tabular"
-        builder.set_sample(sample, **params)
+        builder_name = (
+            "category" if issubclass(builder_class, CategoryBuilder) else "tabular"
+        )
+        builder.set_sample(sample_text, **params)
     else:
-        message = f"Builder {builder_class.__name__} does not support sample/snippet input"
+        message = (
+            f"Builder {builder_class.__name__} does not support sample/snippet input"
+        )
         if json_workflow:
             json_workflow.update_builder(name="unknown")
             json_workflow.set_status(
@@ -608,14 +553,13 @@ def run_builder_workflow(
             click.echo(json_workflow.to_json())
             raise SystemExit(1)
 
-        status = StatusString(message, status=False, reason="error",)
+        status = StatusString(message, status=False, reason="error")
         emit_status(status)
         return 1
 
     if json_workflow:
         json_workflow.update_builder(name=builder_name)
 
-    # Build
     try:
         builder.build()
         if json_workflow:
@@ -634,17 +578,16 @@ def run_builder_workflow(
             click.echo(json_workflow.to_json())
             raise SystemExit(1)
 
-        status = StatusString(message, status=False, reason="error",)
+        status = StatusString(message, status=False, reason="error")
         emit_status(status)
         return 1
 
-    # Convert to BuildResult
     result: BuildResult = builder.to_result()
     if not builder:
         message = (
             f"Cannot create builder from sample (reference: {sample_file or cmd!r})\n"
             "===========================================\n"
-            f"{sample}\n"
+            f"{sample_text}\n"
         )
         if json_workflow:
             json_workflow.set_status(kind="warning", message=message, exit_code=1)
@@ -657,55 +600,72 @@ def run_builder_workflow(
     # Save
     if save:
         if dry_run:
-            lines = dry_run_save(result, sample, save)
+            lines = dry_run_save(result, sample_text, save)
             if json_workflow:
                 json_workflow.add_save_dry_run(lines=lines)
+                json_workflow.set_status(kind="success", message="", exit_code=0)
                 click.echo(json_workflow.to_json())
                 return 0
             print("\n".join(lines))
             return 0
 
-        results = save_outputs(result, sample, save)
+        results = save_outputs(result, sample_text, save)
 
         if json_workflow:
             json_workflow.add_save(raw=save)
 
         exit_code = 0
-        failure = ""
-        severity = ""
-        for result_info in results:
-            message = result_info.get("message")
-            severity = result_info.get("severity")
+        failure_message = ""
+        failure_severity = ""
+
+        for info in results:
+            message = info.get("message", "")
+            severity = info.get("severity") or ""
             if json_workflow:
-                json_workflow.append_save_file(result_info)
+                json_workflow.append_save_file(
+                    {"kind": info["kind"], "path": info["path"]}
+                )
             else:
                 emit_status(message)
 
             if severity in ("error", "warning"):
-                failure = message
+                failure_message = message
+                failure_severity = severity
                 exit_code = 1
 
         if json_workflow:
             if exit_code == 0:
-                json_workflow.set_status(kind="success", message="", exit_code=exit_code)
+                json_workflow.set_status(
+                    kind="success",
+                    message="",
+                    exit_code=0,
+                )
             else:
-                json_workflow.set_status(kind=severity, message=failure, exit_code=exit_code)
+                json_workflow.set_status(
+                    kind=failure_severity or "error",
+                    message=failure_message,
+                    exit_code=exit_code,
+                )
 
         return exit_code
 
     # Show
-    outputs_info = show_outputs(result, sample, show)
+    outputs_info = show_outputs(result, sample_text, show)
     if json_workflow:
         json_workflow.add_show(raw=show, resolved=outputs_info)
         json_workflow.set_status(kind="success", message="", exit_code=0)
+        click.echo(json_workflow.to_json())
     else:
         if not suppressed_message:
-            parts = []
-            for _, output in outputs_info.items():
+            parts: list[str] = []
+            for key, output in outputs_info.items():
+                header = f"=== {key} ==="
                 if isinstance(output, str):
-                    parts.append(output)
-                    continue
-                parts.append(json.dumps(output, indent=2, ensure_ascii=False))
+                    parts.append(f"{header}\n{output}")
+                else:
+                    parts.append(
+                        f"{header}\n{json.dumps(output, indent=2, ensure_ascii=False)}"
+                    )
             emit_status("\n==========\n".join(parts))
     return 0
 
@@ -723,23 +683,11 @@ def generate_or_save_config(
     command="",
     show="",
     save="",
-    json_workflow=None
+    json_workflow: Optional[JsonWorkflow] = None,
 ):
-    """
-    Generate a fully resolved config JSON for the given builder.
-    If cfg_path is provided, save to file; otherwise print to stdout.
-    This function must be silent except for the final output.
-    """
-
-    # ------------------------------------------------------------
-    # 1. Load template (deep copy to avoid global mutation)
-    # ------------------------------------------------------------
     template = get_config_template(builder_name)
-    cfg = json.loads(json.dumps(template))  # safe deep copy
+    cfg = json.loads(json.dumps(template))
 
-    # ------------------------------------------------------------
-    # 2. Overlay resolved values
-    # ------------------------------------------------------------
     cfg["sample_file"] = sample_file
     cfg["command"] = command
     cfg["show"] = show
@@ -754,49 +702,45 @@ def generate_or_save_config(
     if "snippet_file" in cfg:
         cfg["snippet_file"] = snippet_file
 
-    # ------------------------------------------------------------
-    # 3. Serialize
-    # ------------------------------------------------------------
     content = json.dumps(cfg, indent=2, ensure_ascii=False)
 
-    # ------------------------------------------------------------
-    # 4. Save or print (silent except for final message)
-    # ------------------------------------------------------------
     if cfg_path:
         path = Path(cfg_path).resolve()
         parent = path.parent
 
-        # Create parent directory if missing
         if not parent.exists():
             try:
                 parent.mkdir(parents=True, exist_ok=True)
             except Exception as exc:
                 message = f"[ERROR] Cannot create directory {str(parent)!r}: {exc}"
                 if json_workflow:
-                    json_workflow.set_status(kind="error", message=message, exit_code=1)
+                    json_workflow.set_status(
+                        kind="error", message=message, exit_code=1
+                    )
                     click.echo(json_workflow.to_json())
                     raise SystemExit(1)
-
-                print(f"[ERROR] Cannot create directory {str(parent)!r}: {exc}")
+                print(message)
                 raise SystemExit(1)
 
-        # Prevent overwriting existing file
         if path.exists():
             message = f"[ERROR] Config file {str(path)!r} already exists!"
             if json_workflow:
-                json_workflow.set_status(kind="error", message=message, exit_code=1)
+                json_workflow.set_status(
+                    kind="error", message=message, exit_code=1
+                )
                 click.echo(json_workflow.to_json())
                 raise SystemExit(1)
             print(message)
             raise SystemExit(1)
 
-        # Write file
         try:
             path.write_text(content, encoding="utf-8")
         except Exception as exc:
             message = f"[ERROR] Failed to write config file {str(path)!r}: {exc}"
             if json_workflow:
-                json_workflow.set_status(kind="error", message=message, exit_code=1)
+                json_workflow.set_status(
+                    kind="error", message=message, exit_code=1
+                )
                 click.echo(json_workflow.to_json())
                 raise SystemExit(1)
             print(message)
@@ -804,24 +748,32 @@ def generate_or_save_config(
 
         message = f"[INFO] Config file {str(path)!r} created!"
         if json_workflow:
-            json_workflow.add_generated_config(stream="io", path=str(path), payload=cfg)
-            json_workflow.set_status(kind="success", message=message, exit_code=0)
+            json_workflow.add_generated_config(
+                stream="io", path=str(path), payload=cfg
+            )
+            json_workflow.set_status(
+                kind="success", message=message, exit_code=0
+            )
             click.echo(json_workflow.to_json())
             raise SystemExit(0)
         print(message)
         raise SystemExit(0)
 
     if json_workflow:
-        json_workflow.add_generated_config(stream="console", path=None,payload=cfg)
+        json_workflow.add_generated_config(
+            stream="console", path=None, payload=cfg
+        )
         json_workflow.set_status(kind="success", message="", exit_code=0)
         click.echo(json_workflow.to_json())
         raise SystemExit(0)
 
-    # Print to stdout
     click.echo(content)
     raise SystemExit(0)
 
 
+# ------------------------------------------------------------
+# Golden Test: Dry-Run or Create
+# ------------------------------------------------------------
 def dry_run_or_create_golden_test(
     builder_class,
     builder_name,
