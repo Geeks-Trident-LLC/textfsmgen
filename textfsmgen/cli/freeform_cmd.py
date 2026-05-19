@@ -137,7 +137,7 @@ def freeform(
                 message="Required --snippet, --snippet-file, or --config",
                 exit_code=1,
             )
-            click.echo(json_workflow.to_json())
+            click.echo(json_workflow.to_json(validating=True))
             raise SystemExit(1)
 
         click.echo(ctx.get_help())
@@ -166,7 +166,7 @@ def freeform(
                     message=str(status),
                     exit_code=1,
                 )
-                click.echo(json_workflow.to_json())
+                click.echo(json_workflow.to_json(validating=True))
                 raise SystemExit(1)
             emit_status(status)
             raise SystemExit(1)
@@ -249,6 +249,6 @@ def freeform(
     # Final JSON output
     # ------------------------------------------------------------
     if json_workflow:
-        click.echo(json_workflow.to_json())
+        click.echo(json_workflow.to_json(validating=True))
 
     raise SystemExit(exit_code)

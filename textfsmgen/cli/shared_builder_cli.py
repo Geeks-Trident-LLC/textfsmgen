@@ -492,7 +492,7 @@ def run_builder_workflow(
                     message=str(sample_status),
                     exit_code=1,
                 )
-                click.echo(json_workflow.to_json())
+                click.echo(json_workflow.to_json(validating=True))
                 raise SystemExit(1)
             emit_status(sample_status)
             return 1
@@ -550,7 +550,7 @@ def run_builder_workflow(
                 message=message,
                 exit_code=1,
             )
-            click.echo(json_workflow.to_json())
+            click.echo(json_workflow.to_json(validating=True))
             raise SystemExit(1)
 
         status = StatusString(message, status=False, reason="error")
@@ -575,7 +575,7 @@ def run_builder_workflow(
         message = f"Builder {builder_class.__name__} failed with error: {exc}"
         if json_workflow:
             json_workflow.set_status(kind="error", message=message, exit_code=1)
-            click.echo(json_workflow.to_json())
+            click.echo(json_workflow.to_json(validating=True))
             raise SystemExit(1)
 
         status = StatusString(message, status=False, reason="error")
@@ -591,7 +591,7 @@ def run_builder_workflow(
         )
         if json_workflow:
             json_workflow.set_status(kind="warning", message=message, exit_code=1)
-            click.echo(json_workflow.to_json())
+            click.echo(json_workflow.to_json(validating=True))
             raise SystemExit(1)
         status = StatusString(message, status=False, reason="warning")
         emit_status(status)
@@ -604,7 +604,6 @@ def run_builder_workflow(
             if json_workflow:
                 json_workflow.add_save_dry_run(lines=lines)
                 json_workflow.set_status(kind="success", message="", exit_code=0)
-                click.echo(json_workflow.to_json())
                 return 0
             print("\n".join(lines))
             return 0
@@ -654,7 +653,6 @@ def run_builder_workflow(
     if json_workflow:
         json_workflow.add_show(raw=show, resolved=outputs_info)
         json_workflow.set_status(kind="success", message="", exit_code=0)
-        click.echo(json_workflow.to_json())
     else:
         if not suppressed_message:
             parts: list[str] = []
@@ -715,7 +713,7 @@ def generate_or_save_config(
                 message = f"[ERROR] Cannot create directory {str(parent)!r}: {exc}"
                 if json_workflow:
                     json_workflow.set_status(kind="error", message=message, exit_code=1)
-                    click.echo(json_workflow.to_json())
+                    click.echo(json_workflow.to_json(validating=True))
                     raise SystemExit(1)
                 print(message)
                 raise SystemExit(1)
@@ -724,7 +722,7 @@ def generate_or_save_config(
             message = f"[ERROR] Config file {str(path)!r} already exists!"
             if json_workflow:
                 json_workflow.set_status(kind="error", message=message, exit_code=1)
-                click.echo(json_workflow.to_json())
+                click.echo(json_workflow.to_json(validating=True))
                 raise SystemExit(1)
             print(message)
             raise SystemExit(1)
@@ -735,7 +733,7 @@ def generate_or_save_config(
             message = f"[ERROR] Failed to write config file {str(path)!r}: {exc}"
             if json_workflow:
                 json_workflow.set_status(kind="error", message=message, exit_code=1)
-                click.echo(json_workflow.to_json())
+                click.echo(json_workflow.to_json(validating=True))
                 raise SystemExit(1)
             print(message)
             raise SystemExit(1)
@@ -744,7 +742,7 @@ def generate_or_save_config(
         if json_workflow:
             json_workflow.add_generated_config(stream="io", path=str(path), payload=cfg)
             json_workflow.set_status(kind="success", message=message, exit_code=0)
-            click.echo(json_workflow.to_json())
+            click.echo(json_workflow.to_json(validating=True))
             raise SystemExit(0)
         print(message)
         raise SystemExit(0)
@@ -752,7 +750,7 @@ def generate_or_save_config(
     if json_workflow:
         json_workflow.add_generated_config(stream="console", path=None, payload=cfg)
         json_workflow.set_status(kind="success", message="", exit_code=0)
-        click.echo(json_workflow.to_json())
+        click.echo(json_workflow.to_json(validating=True))
         raise SystemExit(0)
 
     click.echo(content)
@@ -815,7 +813,7 @@ def dry_run_or_create_golden_test(
             )
             if json_workflow:
                 json_workflow.set_status(kind="error", message=message, exit_code=1)
-                click.echo(json_workflow.to_json())
+                click.echo(json_workflow.to_json(validating=True))
                 raise SystemExit(1)
             print(message)
             raise SystemExit(1)
@@ -828,7 +826,7 @@ def dry_run_or_create_golden_test(
         message = "[ERROR] Golden test requires a non-empty sample."
         if json_workflow:
             json_workflow.set_status(kind="error", message=message, exit_code=1)
-            click.echo(json_workflow.to_json())
+            click.echo(json_workflow.to_json(validating=True))
             raise SystemExit(1)
 
         print(message)
@@ -858,7 +856,7 @@ def dry_run_or_create_golden_test(
         message = f"[ERROR] Unsupported builder class: {builder_class.__name__}"
         if json_workflow:
             json_workflow.set_status("error", message, 1)
-            click.echo(json_workflow.to_json())
+            click.echo(json_workflow.to_json(validating=True))
             raise SystemExit(1)
         print(message)
         raise SystemExit(1)
@@ -871,8 +869,8 @@ def dry_run_or_create_golden_test(
     except Exception as exc:
         message = f"[ERROR] Builder failed: {exc}"
         if json_workflow:
-            json_workflow.set_status("error", message, 1)
-            click.echo(json_workflow.to_json())
+            json_workflow.set_status(kind="error", message=message, exit_code=1)
+            click.echo(json_workflow.to_json(validating=True))
             raise SystemExit(1)
         print(message)
         raise SystemExit(1)
@@ -886,7 +884,7 @@ def dry_run_or_create_golden_test(
         message = f"[ERROR] Cannot create golden test: {result.warning}"
         if json_workflow:
             json_workflow.set_status(kind="error", message=message, exit_code=1)
-            click.echo(json_workflow.to_json())
+            click.echo(json_workflow.to_json(validating=True))
             raise SystemExit(1)
 
         print(message)
@@ -898,8 +896,9 @@ def dry_run_or_create_golden_test(
     manifest = {
         "builder": builder_name,
         "params": params,
-        "saved": True,
         "meta": {
+            "author": "",
+            "email": "",
             "description": "",
             "notes": "",
             "schema_version": "1.0",
@@ -929,7 +928,7 @@ def dry_run_or_create_golden_test(
         if json_workflow:
             json_workflow.add_golden_test_dry_run(lines=lines)
             json_workflow.set_status(kind="success", message="", exit_code=0)
-            click.echo(json_workflow.to_json())
+            click.echo(json_workflow.to_json(validating=True))
             raise SystemExit(0)
 
         click.echo("\n".join(lines))
@@ -948,7 +947,7 @@ def dry_run_or_create_golden_test(
             message = f"[ERROR] {label} file {str(path)!r} already exists!"
             if json_workflow:
                 json_workflow.set_status(kind="error", message=message, exit_code=1)
-                click.echo(json_workflow.to_json())
+                click.echo(json_workflow.to_json(validating=True))
                 raise SystemExit(1)
 
             print(message)
@@ -1013,7 +1012,7 @@ def dry_run_or_create_golden_test(
         )
 
         json_workflow.set_status(kind="success", message="", exit_code=0)
-        click.echo(json_workflow.to_json())
+        click.echo(json_workflow.to_json(validating=True))
         raise SystemExit(0)
 
     # ------------------------------------------------------------

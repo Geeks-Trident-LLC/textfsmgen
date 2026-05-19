@@ -178,7 +178,7 @@ def tabular(
                 message="Required --sample-file, --command, or --config",
                 exit_code=1,
             )
-            click.echo(json_workflow.to_json())
+            click.echo(json_workflow.to_json(validating=True))
             raise SystemExit(1)
 
         click.echo(ctx.get_help())
@@ -211,7 +211,7 @@ def tabular(
                     message=str(status),
                     exit_code=1,
                 )
-                click.echo(json_workflow.to_json())
+                click.echo(json_workflow.to_json(validating=True))
                 raise SystemExit(1)
 
             emit_status(status)
@@ -299,6 +299,6 @@ def tabular(
     # Final JSON output
     # ------------------------------------------------------------
     if json_workflow:
-        click.echo(json_workflow.to_json())
+        click.echo(json_workflow.to_json(validating=True))
 
     raise SystemExit(exit_code)
