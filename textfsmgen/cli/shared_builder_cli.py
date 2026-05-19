@@ -783,7 +783,7 @@ def dry_run_or_create_golden_test(
     snippet_file="",
     sample_file="",
     command="",
-    json_workflow=None
+    json_workflow=None,
 ):
     """
     Create or preview a golden test case for the given builder.
@@ -792,8 +792,8 @@ def dry_run_or_create_golden_test(
         Perform a DRY RUN.
         Do NOT write any files.
         Show which files WOULD be created.
-        Assume default path:
-            ./tests/golden/integration/<case>
+        Default path:
+            ./tests/golden/integration/<builder>-case
 
     - If golden_path is provided:
         Perform ACTUAL CREATION.
@@ -802,10 +802,11 @@ def dry_run_or_create_golden_test(
         Auto-create parent directories.
         Fail if files already exist.
     """
+
     params = params or {}
 
     # ------------------------------------------------------------
-    # 1. Determine mode
+    # 1. Determine mode + base path
     # ------------------------------------------------------------
     if not golden_path:
         mode = "dry-run"
@@ -815,31 +816,27 @@ def dry_run_or_create_golden_test(
         mode = "create"
         base_path = Path(golden_path).resolve()
 
-        # Enforce directory structure only
+        # Must be inside .../golden/integration/<case>
         if not (
             base_path.parent.name == "integration"
             and base_path.parent.parent.name == "golden"
         ):
             message = (
-                f"[ERROR] Golden test path {str(base_path)!r} must "
-                f"be inside .../golden/integration/<case>"
+                f"[ERROR] Golden test path {str(base_path)!r} must be inside "
+                f".../golden/integration/<case>"
             )
             if json_workflow:
                 json_workflow.set_status(kind="error", message=message, exit_code=1)
                 click.echo(json_workflow.to_json())
                 raise SystemExit(1)
-
             print(message)
             raise SystemExit(1)
 
     # ------------------------------------------------------------
     # 2. Load sample (required)
     # ------------------------------------------------------------
-    sample = None
-    if sample_file or command:
-        sample = load_sample(sample_file, command)
-
-    if not sample or not sample.strip():
+    sample_status = load_sample(sample_file, command)
+    if not sample_status or not sample_status.status:
         message = "[ERROR] Golden test requires a non-empty sample."
         if json_workflow:
             json_workflow.set_status(kind="error", message=message, exit_code=1)
@@ -849,6 +846,8 @@ def dry_run_or_create_golden_test(
         print(message)
         raise SystemExit(1)
 
+    sample_text = str(sample_status)
+
     # ------------------------------------------------------------
     # 3. Instantiate builder
     # ------------------------------------------------------------
@@ -857,31 +856,39 @@ def dry_run_or_create_golden_test(
     # ------------------------------------------------------------
     # 4. Apply snippet/sample depending on builder type
     # ------------------------------------------------------------
-    # Apply sample/snippet depending on builder type
     if issubclass(builder_class, FreeFormBuilder):
         if snippet_file:
             builder.set_snippet_file(snippet_file)
         else:
             builder.set_snippet(snippet)
-        builder.set_sample(sample)
+        builder.set_sample(sample_text)
 
     elif issubclass(builder_class, (TabularBuilder, CategoryBuilder)):
-        builder.set_sample(sample, **params)
+        builder.set_sample(sample_text, **params)
 
     else:
-        message = f"[ERROR] Unsupported builder class: {builder_class!r}"
+        message = f"[ERROR] Unsupported builder class: {builder_class.__name__}"
         if json_workflow:
-            json_workflow.set_status(kind="error", message=message, exit_code=1)
+            json_workflow.set_status("error", message, 1)
             click.echo(json_workflow.to_json())
             raise SystemExit(1)
-
         print(message)
         raise SystemExit(1)
 
     # ------------------------------------------------------------
-    # 5. Build and get result
+    # 5. Build
     # ------------------------------------------------------------
-    builder.build()
+    try:
+        builder.build()
+    except Exception as exc:
+        message = f"[ERROR] Builder failed: {exc}"
+        if json_workflow:
+            json_workflow.set_status("error", message, 1)
+            click.echo(json_workflow.to_json())
+            raise SystemExit(1)
+        print(message)
+        raise SystemExit(1)
+
     result: BuildResult = builder.to_result()
 
     # ------------------------------------------------------------
@@ -898,7 +905,7 @@ def dry_run_or_create_golden_test(
         raise SystemExit(1)
 
     # ------------------------------------------------------------
-    # 7. Prepare manifest content
+    # 7. Prepare manifest + file paths
     # ------------------------------------------------------------
     manifest = {
         "builder": builder_name,
@@ -947,7 +954,7 @@ def dry_run_or_create_golden_test(
     for d in (inputs_dir, expected_dir, expected_results_dir):
         d.mkdir(parents=True, exist_ok=True)
 
-    # Prevent overwriting existing files
+    # Prevent overwriting
     for label, path in files.items():
         if path.exists():
             message = f"[ERROR] {label} file {str(path)!r} already exists!"
@@ -960,7 +967,7 @@ def dry_run_or_create_golden_test(
             raise SystemExit(1)
 
     # Write files
-    files["sample"].write_text(sample, encoding="utf-8")
+    files["sample"].write_text(sample_text, encoding="utf-8")
     files["snippet"].write_text(result.snippet, encoding="utf-8")
     files["template"].write_text(result.template, encoding="utf-8")
     files["result"].write_text(
@@ -972,51 +979,55 @@ def dry_run_or_create_golden_test(
         encoding="utf-8",
     )
 
+    # ------------------------------------------------------------
+    # 10. JSON mode output
+    # ------------------------------------------------------------
     if json_workflow:
         json_workflow.add_golden_test(
             path=str(base_path),
             manifest={
-                "path": str(files.get("manifest")),
-                "content": json.dumps(manifest, indent=2, ensure_ascii=False)
+                "path": str(files["manifest"]),
+                "content": json.dumps(manifest, indent=2, ensure_ascii=False),
             },
             inputs={
                 "path": str(inputs_dir),
                 "files": [
                     {
-                        "path": str(files.get("inputs")),
-                        "content": sample
+                        "path": str(files["sample"]),
+                        "content": sample_text,
                     }
-                ]
+                ],
             },
             expected_results={
                 "path": str(expected_results_dir),
                 "files": [
                     {
-                        "path": str(files.get("expected_results")),
-                        "content": json.dumps(result.result, indent=2, ensure_ascii=False)
+                        "path": str(files["result"]),
+                        "content": json.dumps(result.result, indent=2, ensure_ascii=False),
                     }
-                ]
+                ],
             },
             expected={
                 "path": str(expected_dir),
                 "files": [
                     {
-                        "path": str(files.get("snippet")),
-                        "content": result.snippet
+                        "path": str(files["snippet"]),
+                        "content": result.snippet,
                     },
                     {
-                        "path": str(files.get("template")),
-                        "content": result.template
-                    }
-                ]
-
-            }
-
+                        "path": str(files["template"]),
+                        "content": result.template,
+                    },
+                ],
+            },
         )
 
         json_workflow.set_status(kind="success", message="", exit_code=0)
         click.echo(json_workflow.to_json())
         raise SystemExit(0)
 
+    # ------------------------------------------------------------
+    # 11. Human mode output
+    # ------------------------------------------------------------
     print(f"[INFO] Golden test created at {str(base_path)!r}")
     raise SystemExit(0)
