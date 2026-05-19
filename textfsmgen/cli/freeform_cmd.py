@@ -120,12 +120,18 @@ def freeform(
     Build a template from free-form snippet text.
     """
 
-    json_workflow = JsonWorkflow()
-    json_workflow.add_cli_options(ctx.params.copy())
+    # ------------------------------------------------------------
+    # JSON workflow initialization
+    # ------------------------------------------------------------
+    json_workflow = JsonWorkflow() if json_mode else None
+    if json_workflow:
+        json_workflow.add_cli_options(ctx.params.copy())
 
-    # Show help if nothing provided
+    # ------------------------------------------------------------
+    # Early help
+    # ------------------------------------------------------------
     if not snippet and not snippet_file and config is None:
-        if json_mode:
+        if json_workflow:
             json_workflow.set_status(
                 kind="warning",
                 message="Required --snippet, --snippet-file, or --config",
@@ -134,11 +140,12 @@ def freeform(
             click.echo(json_workflow.to_json())
             raise SystemExit(1)
 
-        # Human mode
         click.echo(ctx.get_help())
         raise SystemExit(0)
 
-    # Load config
+    # ------------------------------------------------------------
+    # Load config (optional)
+    # ------------------------------------------------------------
     config_data = {}
     if config:
         required_top = [
@@ -151,26 +158,24 @@ def freeform(
             "show",
             "save",
         ]
-
-        required_params = []
-        status = validate_config(config, required_top, required_params)
+        status = validate_config(config, required_top, [])
         if not status:
-            if json_mode:
+            if json_workflow:
                 json_workflow.set_status(
                     kind=status.reason,
-                    message=status,
+                    message=str(status),
                     exit_code=1,
                 )
                 click.echo(json_workflow.to_json())
                 raise SystemExit(1)
-
             emit_status(status)
             raise SystemExit(1)
+
         config_data = status.raw or {}
 
-    params = {}
-
+    # ------------------------------------------------------------
     # Merge CLI + config
+    # ------------------------------------------------------------
     snippet_ = merge(snippet, config_data, "snippet", "")
     snippet_file_ = merge(snippet_file, config_data, "snippet_file", "")
     sample_file_ = merge(sample_file, config_data, "sample_file", "")
@@ -178,10 +183,19 @@ def freeform(
     save_ = merge(save, config_data, "save", "")
     show_ = merge(show, config_data, "show", "")
 
-    is_created_config = create_config or bool(create_config_file)
-    is_created_golden_test = create_golden_test or bool(create_golden_test_path)
+    params = {}
 
-    # Delegate to shared workflow
+    # ------------------------------------------------------------
+    # Determine post-build actions
+    # ------------------------------------------------------------
+    want_config = create_config or bool(create_config_file)
+    want_golden = create_golden_test or bool(create_golden_test_path)
+
+    suppressed = want_config or want_golden
+
+    # ------------------------------------------------------------
+    # Run builder workflow
+    # ------------------------------------------------------------
     exit_code = run_builder_workflow(
         FreeFormBuilder,
         snippet=snippet_,
@@ -194,23 +208,31 @@ def freeform(
         config=config_data,
         debug=debug,
         dry_run=dry_run,
-        suppressed_message=is_created_config or is_created_golden_test,
-        json_workflow=json_workflow if json_mode else None,
+        suppressed_message=suppressed,
+        json_workflow=json_workflow,
     )
 
-    if is_created_config and exit_code == 0:
+    # ------------------------------------------------------------
+    # Post-build: generate config
+    # ------------------------------------------------------------
+    if want_config and exit_code == 0:
         generate_or_save_config(
             "freeform",
             cfg_path=create_config_file,
             params=params,
+            snippet=snippet_,
+            snippet_file=snippet_file_,
             sample_file=sample_file_,
             command=cmd_,
             show=show_,
             save=save_,
-            json_workflow=json_workflow if json_mode else None,
+            json_workflow=json_workflow,
         )
 
-    if is_created_golden_test and exit_code == 0:
+    # ------------------------------------------------------------
+    # Post-build: golden test
+    # ------------------------------------------------------------
+    if want_golden and exit_code == 0:
         dry_run_or_create_golden_test(
             FreeFormBuilder,
             "freeform",
@@ -220,10 +242,13 @@ def freeform(
             snippet_file=snippet_file_,
             sample_file=sample_file_,
             command=cmd_,
-            json_workflow=json_workflow if json_mode else None,
+            json_workflow=json_workflow,
         )
 
-    if json_mode and json_workflow:
+    # ------------------------------------------------------------
+    # Final JSON output
+    # ------------------------------------------------------------
+    if json_workflow:
         click.echo(json_workflow.to_json())
 
     raise SystemExit(exit_code)
