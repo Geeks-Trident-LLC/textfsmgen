@@ -26,16 +26,16 @@ def register(cli):
     context_settings=dict(help_option_names=["-h", "--help"]),
 )
 @click.option(
-    "--snippet-file",
-    default=None,
-    type=click.Path(exists=True),
-    help=HELP.snippet_file,
-)
-@click.option(
     "--sample-file",
     default=None,
     type=click.Path(exists=True),
     help=HELP.sample_file,
+)
+@click.option(
+    "--command",
+    "cmd",
+    default="",
+    help=HELP.command,
 )
 @click.option(
     "--count",
