@@ -155,8 +155,61 @@ def load_sample(sample_file, cmd):
 
 
 # ------------------------------------------------------------
-# Dry-run save
+# Save Helper
 # ------------------------------------------------------------
+def parse_save_expression(expr: str):
+    """
+    Parse the unified save syntax:
+        sample-out.txt,snippet-a.txt,template-b.textfsm,result-c.json
+
+    Returns:
+        [
+            {"kind": "sample", "path": "out.txt"},
+            {"kind": "snippet", "path": "a.txt"},
+            {"kind": "template", "path": "b.textfsm"},
+            {"kind": "result", "path": "c.json"}
+        ]
+
+    Raises:
+        ValueError on invalid syntax.
+    """
+    expr = expr.strip()
+    if not expr:
+        raise ValueError("Empty --save expression")
+
+    items = [x.strip() for x in expr.split(",") if x.strip()]
+    parsed = []
+
+    for item in items:
+        if "-" not in item:
+            raise ValueError(
+                f"Invalid save format: '{item}'. Expected: <kind>-<filename>"
+            )
+
+        kind, filename = item.split("-", 1)
+        kind = kind.strip()
+        filename = filename.strip()
+
+        if kind not in ("sample", "snippet", "template", "result"):
+            raise ValueError(f"Unknown save kind '{kind}'")
+
+        if not filename:
+            raise ValueError(f"Missing filename for kind '{kind}'")
+
+        parsed.append({"kind": kind, "path": filename})
+
+    return parsed
+
+
+def _write_file(filename, content):
+    try:
+        Path(filename).write_text(content, encoding="utf-8")
+        return StatusString(f"Successfully saved {filename}", status=True)
+    except Exception as exc:
+        return StatusString(
+            f"Failed to save {filename}: {exc}", status=False, reason="error"
+        )
+
 
 def dry_run_save(result: BuildResult, sample: str, save_spec: str):
     """
@@ -222,10 +275,6 @@ def dry_run_save(result: BuildResult, sample: str, save_spec: str):
 
     return lines
 
-
-# ------------------------------------------------------------
-# Save outputs
-# ------------------------------------------------------------
 
 def save_outputs(result: BuildResult, sample: str, save_spec: str):
     """
@@ -339,60 +388,9 @@ def save_outputs(result: BuildResult, sample: str, save_spec: str):
     return results
 
 
-def _write_file(filename, content):
-    try:
-        Path(filename).write_text(content, encoding="utf-8")
-        return StatusString(f"Successfully saved {filename}", status=True)
-    except Exception as exc:
-        return StatusString(
-            f"Failed to save {filename}: {exc}", status=False, reason="error"
-        )
-
-
-def parse_save_expression(expr: str):
-    """
-    Parse the unified save syntax:
-        sample-out.txt,snippet-a.txt,template-b.textfsm,result-c.json
-
-    Returns:
-        [
-            {"kind": "sample", "path": "out.txt"},
-            {"kind": "snippet", "path": "a.txt"},
-            {"kind": "template", "path": "b.textfsm"},
-            {"kind": "result", "path": "c.json"}
-        ]
-
-    Raises:
-        ValueError on invalid syntax.
-    """
-    expr = expr.strip()
-    if not expr:
-        raise ValueError("Empty --save expression")
-
-    items = [x.strip() for x in expr.split(",") if x.strip()]
-    parsed = []
-
-    for item in items:
-        if "-" not in item:
-            raise ValueError(
-                f"Invalid save format: '{item}'. Expected: <kind>-<filename>"
-            )
-
-        kind, filename = item.split("-", 1)
-        kind = kind.strip()
-        filename = filename.strip()
-
-        if kind not in ("sample", "snippet", "template", "result"):
-            raise ValueError(f"Unknown save kind '{kind}'")
-
-        if not filename:
-            raise ValueError(f"Missing filename for kind '{kind}'")
-
-        parsed.append({"kind": kind, "path": filename})
-
-    return parsed
-
-
+# ------------------------------------------------------------
+# Show outputs
+# ------------------------------------------------------------
 def show_outputs(result: BuildResult, sample: str, show_spec: str):
     """
     Resolve --show targets into a dict:
@@ -517,7 +515,6 @@ def debug_print(
         json_workflow.add_debug(debug_txt)
         return
     click.echo(debug_txt)
-
 
 
 # ------------------------------------------------------------
@@ -713,6 +710,9 @@ def run_builder_workflow(
     return 0
 
 
+# ------------------------------------------------------------
+# Config generation / save
+# ------------------------------------------------------------
 def generate_or_save_config(
     builder_name,
     cfg_path="",
