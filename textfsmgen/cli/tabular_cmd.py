@@ -14,6 +14,7 @@ from .shared_builder_cli import (
 )
 
 from .json_model import JsonWorkflow
+from .help_text import HELP
 
 
 def register(cli):
@@ -25,16 +26,16 @@ def register(cli):
     context_settings=dict(help_option_names=["-h", "--help"]),
 )
 @click.option(
+    "--snippet-file",
+    default=None,
+    type=click.Path(exists=True),
+    help=HELP.snippet_file,
+)
+@click.option(
     "--sample-file",
     default=None,
     type=click.Path(exists=True),
-    help="Sample filename containing raw text sample.",
-)
-@click.option(
-    "--command",
-    "cmd",
-    default="",
-    help="Shell command to generate a real-world sample.",
+    help=HELP.sample_file,
 )
 @click.option(
     "--column-divider",
@@ -74,56 +75,30 @@ def register(cli):
 @click.option(
     "--replacing-rules", default=None, help="Replacing rules (string or JSON)."
 )
-@click.option(
-    "--show",
-    default="",
-    help="Show output: snippet, template, result, tabular, or json(...).",
-)
-@click.option(
-    "--save", default="", help="Save output to file(s). Format: type-filename."
-)
-@click.option(
-    "--config",
-    default=None,
-    type=click.Path(exists=True),
-    help="Optional JSON config file.",
-)
-@click.option(
-    "--debug",
-    is_flag=True,
-    default=False,
-    help="Print resolved parameters and sample metadata.",
-)
-@click.option(
-    "--create-config",
-    is_flag=True,
-    default=False,
-    help="Preview the generated config (dry run). Prints config to console.",
-)
+@click.option("--show", default="", help=HELP.show)
+@click.option("--save", default="", help=HELP.save)
+@click.option("--config", default=None, type=click.Path(exists=True), help=HELP.config)
+@click.option("--debug", is_flag=True, default=False, help=HELP.debug)
+@click.option("--create-config", is_flag=True, default=False, help=HELP.create_config)
 @click.option(
     "--create-config-file",
     default=None,
     type=click.Path(dir_okay=False, writable=True, allow_dash=True),
-    help="Generate the config and save it to the specified file.",
+    help=HELP.create_config_file,
 )
-@click.option(
-    "--create-golden-test",
-    is_flag=True,
-    default=False,
-    help="Preview golden test creation (dry run). Shows which files would be created.",
-)
+@click.option("--create-golden-test", is_flag=True, help=HELP.create_golden_test)
 @click.option(
     "--create-golden-test-path",
     default=None,
     type=click.Path(dir_okay=True, writable=True, allow_dash=True),
-    help="Create a golden test at the specified path under tests/golden/integration/.",
+    help=HELP.create_golden_test_path,
 )
 @click.option(
     "--json",
     "json_mode",
     is_flag=True,
     default=False,
-    help="Output machine-readable JSON instead of human text.",
+    help=HELP.json,
 )
 @click.pass_context
 def tabular(
