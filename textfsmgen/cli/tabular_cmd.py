@@ -1,6 +1,9 @@
 # textfsmgen/cli/tabular_cmd.py
 
 import click
+
+from textfsmgen.libs.common import emit_status
+
 from textfsmgen import TabularBuilder
 from .shared_builder_cli import (
     merge,
@@ -9,6 +12,8 @@ from .shared_builder_cli import (
     generate_or_save_config,
     dry_run_or_create_golden_test,
 )
+
+from .json_model import JsonWorkflow
 
 
 def register(cli):
@@ -119,6 +124,13 @@ def register(cli):
     type=click.Path(dir_okay=True, writable=True, allow_dash=True),
     help="Create a golden test at the specified path under tests/golden/integration/.",
 )
+@click.option(
+    "--json",
+    "json_mode",
+    is_flag=True,
+    default=False,
+    help="Output machine-readable JSON instead of human text.",
+)
 @click.pass_context
 def tabular(
     ctx,
@@ -143,9 +155,23 @@ def tabular(
     create_config_file,
     create_golden_test,
     create_golden_test_path,
+    json_mode
 ):
+
+    json_workflow = JsonWorkflow()
+    json_workflow.add_cli_options(ctx.params.copy())
+
     # Show help if nothing provided
     if not sample_file and not cmd and config is None:
+        if json_mode:
+            json_workflow.set_status(
+                kind="warning",
+                message="Required --sample-file, --command, or --config",
+                exit_code=1,
+            )
+            click.echo(json_workflow.to_json())
+            raise SystemExit(1)
+
         click.echo(ctx.get_help())
         raise SystemExit(0)
 
@@ -167,7 +193,18 @@ def tabular(
         ]
         status = validate_config(config, required_top, required_params)
         if not status:
+            if json_mode:
+                json_workflow.set_status(
+                    kind=status.reason,
+                    message=status,
+                    exit_code=1,
+                )
+                click.echo(json_workflow.to_json())
+                raise SystemExit(1)
+
+            emit_status(status)
             raise SystemExit(1)
+
         config_data = status.raw or {}
 
     # Merge CLI + config
@@ -206,6 +243,7 @@ def tabular(
         debug=debug,
         dry_run=dry_run,
         suppressed_message=is_created_config or is_created_golden_test,
+        json_workflow=json_workflow if json_mode else None,
     )
 
     if is_created_config and exit_code == 0:
@@ -217,6 +255,7 @@ def tabular(
             command=cmd_,
             show=show_,
             save=save_,
+            json_workflow=json_workflow if json_mode else None,
         )
 
     if is_created_golden_test and exit_code == 0:
@@ -227,6 +266,10 @@ def tabular(
             params=params,
             sample_file=sample_file_,
             command=cmd_,
+            json_workflow=json_workflow if json_mode else None,
         )
+
+    if json_mode and json_workflow:
+        click.echo(json_workflow.to_json())
 
     raise SystemExit(exit_code)
