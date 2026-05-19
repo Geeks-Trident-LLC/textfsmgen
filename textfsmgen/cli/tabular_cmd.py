@@ -155,15 +155,24 @@ def tabular(
     create_config_file,
     create_golden_test,
     create_golden_test_path,
-    json_mode
+    json_mode,
 ):
+    """
+    Build a template from tabular text.
+    """
 
-    json_workflow = JsonWorkflow()
-    json_workflow.add_cli_options(ctx.params.copy())
+    # ------------------------------------------------------------
+    # JSON workflow initialization
+    # ------------------------------------------------------------
+    json_workflow = JsonWorkflow() if json_mode else None
+    if json_workflow:
+        json_workflow.add_cli_options(ctx.params.copy())
 
-    # Show help if nothing provided
+    # ------------------------------------------------------------
+    # Early help
+    # ------------------------------------------------------------
     if not sample_file and not cmd and config is None:
-        if json_mode:
+        if json_workflow:
             json_workflow.set_status(
                 kind="warning",
                 message="Required --sample-file, --command, or --config",
@@ -175,7 +184,9 @@ def tabular(
         click.echo(ctx.get_help())
         raise SystemExit(0)
 
-    # Load config
+    # ------------------------------------------------------------
+    # Load config (optional)
+    # ------------------------------------------------------------
     config_data = {}
     if config:
         required_top = ["builder", "params", "sample_file", "command", "show", "save"]
@@ -191,12 +202,13 @@ def tabular(
             "has_header_row",
             "replacing_rules",
         ]
+
         status = validate_config(config, required_top, required_params)
         if not status:
-            if json_mode:
+            if json_workflow:
                 json_workflow.set_status(
                     kind=status.reason,
-                    message=status,
+                    message=str(status),
                     exit_code=1,
                 )
                 click.echo(json_workflow.to_json())
@@ -207,7 +219,9 @@ def tabular(
 
         config_data = status.raw or {}
 
+    # ------------------------------------------------------------
     # Merge CLI + config
+    # ------------------------------------------------------------
     sample_file_ = merge(sample_file, config_data, "sample_file", "")
     cmd_ = merge(cmd, config_data, "command", "")
     save_ = merge(save, config_data, "save", "")
@@ -219,19 +233,23 @@ def tabular(
         "column_widths": merge(column_widths, config_data, "column_widths", None),
         "headers": merge(headers, config_data, "headers", None),
         "header_rows": merge(header_rows, config_data, "header_rows", None),
-        "custom_header_text": merge(
-            custom_header, config_data, "custom_header_text", ""
-        ),
+        "custom_header_text": merge(custom_header, config_data, "custom_header_text", ""),
         "starting_from": merge(starting_from, config_data, "starting_from", None),
         "ending_at": merge(ending_at, config_data, "ending_at", None),
         "has_header_row": merge(has_header, config_data, "has_header_row", True),
         "replacing_rules": merge(replacing_rules, config_data, "replacing_rules", None),
     }
 
-    is_created_config = create_config or bool(create_config_file)
-    is_created_golden_test = create_golden_test or bool(create_golden_test_path)
+    # ------------------------------------------------------------
+    # Determine post-build actions
+    # ------------------------------------------------------------
+    want_config = create_config or bool(create_config_file)
+    want_golden = create_golden_test or bool(create_golden_test_path)
+    suppressed = want_config or want_golden
 
-    # Delegate to shared workflow
+    # ------------------------------------------------------------
+    # Run builder workflow
+    # ------------------------------------------------------------
     exit_code = run_builder_workflow(
         TabularBuilder,
         sample_file=sample_file_,
@@ -242,23 +260,29 @@ def tabular(
         config=config_data,
         debug=debug,
         dry_run=dry_run,
-        suppressed_message=is_created_config or is_created_golden_test,
-        json_workflow=json_workflow if json_mode else None,
+        suppressed_message=suppressed,
+        json_workflow=json_workflow,
     )
 
-    if is_created_config and exit_code == 0:
+    # ------------------------------------------------------------
+    # Post-build: generate config
+    # ------------------------------------------------------------
+    if want_config and exit_code == 0:
         generate_or_save_config(
-            "category",
+            "tabular",
             cfg_path=create_config_file,
             params=params,
             sample_file=sample_file_,
             command=cmd_,
             show=show_,
             save=save_,
-            json_workflow=json_workflow if json_mode else None,
+            json_workflow=json_workflow,
         )
 
-    if is_created_golden_test and exit_code == 0:
+    # ------------------------------------------------------------
+    # Post-build: golden test
+    # ------------------------------------------------------------
+    if want_golden and exit_code == 0:
         dry_run_or_create_golden_test(
             TabularBuilder,
             "tabular",
@@ -266,10 +290,13 @@ def tabular(
             params=params,
             sample_file=sample_file_,
             command=cmd_,
-            json_workflow=json_workflow if json_mode else None,
+            json_workflow=json_workflow,
         )
 
-    if json_mode and json_workflow:
+    # ------------------------------------------------------------
+    # Final JSON output
+    # ------------------------------------------------------------
+    if json_workflow:
         click.echo(json_workflow.to_json())
 
     raise SystemExit(exit_code)
