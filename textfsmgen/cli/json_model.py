@@ -86,7 +86,7 @@ class DebugSection:
 # ------------------------------------------------------------
 @dataclass
 class StatusSection:
-    kind: str                 # "success" | "warning" | "error"
+    kind: str  # "success" | "warning" | "error"
     message: Optional[str]
     exit_code: int
 
@@ -96,8 +96,8 @@ class StatusSection:
 # ------------------------------------------------------------
 @dataclass
 class ShowSection:
-    raw: Optional[str] = None          # raw --show expression
-    resolved: Optional[dict] = None    # sample/snippet/template/result/tabular
+    raw: Optional[str] = None  # raw --show expression
+    resolved: Optional[dict] = None  # sample/snippet/template/result/tabular
 
 
 # ------------------------------------------------------------
@@ -105,8 +105,8 @@ class ShowSection:
 # ------------------------------------------------------------
 @dataclass
 class SaveSection:
-    raw: Optional[str] = None                  # raw --save expression
-    files: Optional[List[dict]] = None         # [{"kind": "...", "path": "..."}]
+    raw: Optional[str] = None  # raw --save expression
+    files: Optional[List[dict]] = None  # [{"kind": "...", "path": "..."}]
 
 
 # ------------------------------------------------------------

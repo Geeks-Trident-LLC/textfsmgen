@@ -714,9 +714,7 @@ def generate_or_save_config(
             except Exception as exc:
                 message = f"[ERROR] Cannot create directory {str(parent)!r}: {exc}"
                 if json_workflow:
-                    json_workflow.set_status(
-                        kind="error", message=message, exit_code=1
-                    )
+                    json_workflow.set_status(kind="error", message=message, exit_code=1)
                     click.echo(json_workflow.to_json())
                     raise SystemExit(1)
                 print(message)
@@ -725,9 +723,7 @@ def generate_or_save_config(
         if path.exists():
             message = f"[ERROR] Config file {str(path)!r} already exists!"
             if json_workflow:
-                json_workflow.set_status(
-                    kind="error", message=message, exit_code=1
-                )
+                json_workflow.set_status(kind="error", message=message, exit_code=1)
                 click.echo(json_workflow.to_json())
                 raise SystemExit(1)
             print(message)
@@ -738,9 +734,7 @@ def generate_or_save_config(
         except Exception as exc:
             message = f"[ERROR] Failed to write config file {str(path)!r}: {exc}"
             if json_workflow:
-                json_workflow.set_status(
-                    kind="error", message=message, exit_code=1
-                )
+                json_workflow.set_status(kind="error", message=message, exit_code=1)
                 click.echo(json_workflow.to_json())
                 raise SystemExit(1)
             print(message)
@@ -748,21 +742,15 @@ def generate_or_save_config(
 
         message = f"[INFO] Config file {str(path)!r} created!"
         if json_workflow:
-            json_workflow.add_generated_config(
-                stream="io", path=str(path), payload=cfg
-            )
-            json_workflow.set_status(
-                kind="success", message=message, exit_code=0
-            )
+            json_workflow.add_generated_config(stream="io", path=str(path), payload=cfg)
+            json_workflow.set_status(kind="success", message=message, exit_code=0)
             click.echo(json_workflow.to_json())
             raise SystemExit(0)
         print(message)
         raise SystemExit(0)
 
     if json_workflow:
-        json_workflow.add_generated_config(
-            stream="console", path=None, payload=cfg
-        )
+        json_workflow.add_generated_config(stream="console", path=None, payload=cfg)
         json_workflow.set_status(kind="success", message="", exit_code=0)
         click.echo(json_workflow.to_json())
         raise SystemExit(0)
@@ -1003,7 +991,9 @@ def dry_run_or_create_golden_test(
                 "files": [
                     {
                         "path": str(files["result"]),
-                        "content": json.dumps(result.result, indent=2, ensure_ascii=False),
+                        "content": json.dumps(
+                            result.result, indent=2, ensure_ascii=False
+                        ),
                     }
                 ],
             },

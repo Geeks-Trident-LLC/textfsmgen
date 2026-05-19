@@ -233,7 +233,9 @@ def tabular(
         "column_widths": merge(column_widths, config_data, "column_widths", None),
         "headers": merge(headers, config_data, "headers", None),
         "header_rows": merge(header_rows, config_data, "header_rows", None),
-        "custom_header_text": merge(custom_header, config_data, "custom_header_text", ""),
+        "custom_header_text": merge(
+            custom_header, config_data, "custom_header_text", ""
+        ),
         "starting_from": merge(starting_from, config_data, "starting_from", None),
         "ending_at": merge(ending_at, config_data, "ending_at", None),
         "has_header_row": merge(has_header, config_data, "has_header_row", True),
