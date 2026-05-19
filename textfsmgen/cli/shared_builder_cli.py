@@ -186,58 +186,6 @@ def _write_file(filename: str, content: str) -> StatusString:
         )
 
 
-def dry_run_save(result: BuildResult, sample: str, save_spec: str):
-    """
-    Dry-run version of save_outputs().
-
-    Returns:
-        list[str] of human-style dry-run messages:
-            "[DRY-RUN] Would write out.txt"
-            "[DRY-RUN] Would NOT write out.txt: Builder has no 'template' content"
-    """
-    try:
-        items = parse_save_expression(save_spec)
-    except ValueError as exc:
-        return [f"[DRY-RUN] {exc}"]
-
-    lines: list[str] = []
-
-    for entry in items:
-        kind = entry["kind"]
-        filename = entry["path"]
-
-        if kind == "sample":
-            lines.append(f"[DRY-RUN] Would write {filename}")
-            continue
-
-        if result.warning:
-            lines.append(f"[DRY-RUN] Would NOT write {filename}: {result.warning}")
-            continue
-
-        if kind in ("snippet", "template"):
-            content = getattr(result, kind, None)
-            if not content:
-                msg = f"Builder has no '{kind}' content"
-                lines.append(f"[DRY-RUN] Would NOT write {filename}: {msg}")
-                continue
-
-        elif kind == "result":
-            content = result.result
-            if not content:
-                msg = f"No records found for {filename}"
-                lines.append(f"[DRY-RUN] Would NOT write {filename}: {msg}")
-                continue
-
-        else:
-            msg = f"Unknown save kind '{kind}'"
-            lines.append(f"[DRY-RUN] Would NOT write {filename}: {msg}")
-            continue
-
-        lines.append(f"[DRY-RUN] Would write {filename}")
-
-    return lines
-
-
 def save_outputs(result: BuildResult, sample: str, save_spec: str):
     """
     Save outputs using the unified syntax:
@@ -476,7 +424,6 @@ def run_builder_workflow(
     show="",
     config=None,
     debug=False,
-    dry_run=False,
     suppressed_message=False,
     json_workflow: Optional[JsonWorkflow] = None,
 ):
@@ -599,14 +546,6 @@ def run_builder_workflow(
 
     # Save
     if save:
-        if dry_run:
-            lines = dry_run_save(result, sample_text, save)
-            if json_workflow:
-                json_workflow.add_save_dry_run(lines=lines)
-                json_workflow.set_status(kind="success", message="", exit_code=0)
-                return 0
-            print("\n".join(lines))
-            return 0
 
         results = save_outputs(result, sample_text, save)
 
@@ -822,7 +761,7 @@ def dry_run_or_create_golden_test(
     # 2. Load sample (required)
     # ------------------------------------------------------------
     sample_status = load_sample(sample_file, command)
-    if not sample_status or not sample_status.status:
+    if not sample_status:
         message = "[ERROR] Golden test requires a non-empty sample."
         if json_workflow:
             json_workflow.set_status(kind="error", message=message, exit_code=1)

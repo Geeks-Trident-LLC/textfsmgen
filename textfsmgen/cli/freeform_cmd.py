@@ -62,12 +62,6 @@ def register(cli):
     help="Print resolved parameters and sample metadata.",
 )
 @click.option(
-    "--dry-run",
-    is_flag=True,
-    default=False,
-    help="Simulate save actions without writing files.",
-)
-@click.option(
     "--create-config",
     is_flag=True,
     default=False,
@@ -109,7 +103,6 @@ def freeform(
     show,
     config,
     debug,
-    dry_run,
     create_config,
     create_config_file,
     create_golden_test,
@@ -207,7 +200,6 @@ def freeform(
         show=show_,
         config=config_data,
         debug=debug,
-        dry_run=dry_run,
         suppressed_message=suppressed,
         json_workflow=json_workflow,
     )

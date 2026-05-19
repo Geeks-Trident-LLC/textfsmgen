@@ -23,7 +23,7 @@ def patch_builder(monkeypatch, fake_tabular):
 # ------------------------------------------------------------
 
 
-def test_tabular_create_config_dry_run(
+def test_tabular_create_config(
     runner, patch_builder, patch_load_sample, tmp_path
 ):
     sample = tmp_path / "sample.txt"
@@ -88,7 +88,7 @@ def test_tabular_create_config_file(runner, patch_builder, patch_load_sample, tm
 # ------------------------------------------------------------
 
 
-def test_tabular_create_golden_test_dry_run(
+def test_tabular_create_golden_test(
     runner, patch_builder, patch_load_sample, tmp_path
 ):
     sample = tmp_path / "sample.txt"
@@ -173,25 +173,6 @@ def test_tabular_show_snippet(tmpfile, runner, monkeypatch, fake_tabular):
 
     assert result.exit_code == 0
     assert "abc" in result.output
-
-
-# ------------------------------------------------------------
-# DRY-RUN SAVE
-# ------------------------------------------------------------
-def test_tabular_save_dry_run(tmpfile, runner, monkeypatch, fake_tabular):
-    monkeypatch.setattr(
-        "textfsmgen.cli.tabular_cmd.TabularBuilder",
-        fake_tabular,  # <-- class, not lambda
-    )
-
-    p = tmpfile("sample.txt", "hello")
-
-    result = runner.invoke(
-        tabular, ["--sample-file", str(p), "--save", "snippet-out.txt", "--dry-run"]
-    )
-
-    assert result.exit_code == 0
-    assert "[DRY-RUN]" in result.output
 
 
 # ------------------------------------------------------------

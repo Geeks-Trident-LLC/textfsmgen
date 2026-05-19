@@ -23,7 +23,7 @@ def patch_builder(monkeypatch, fake_category):
 # ------------------------------------------------------------
 
 
-def test_category_create_config_dry_run(
+def test_category_create_config(
     runner, patch_builder, patch_load_sample, tmp_path
 ):
     sample = tmp_path / "sample.txt"
@@ -90,7 +90,7 @@ def test_category_create_config_file(
 # ------------------------------------------------------------
 
 
-def test_category_create_golden_test_dry_run(
+def test_category_create_golden_test(
     runner, patch_builder, patch_load_sample, tmp_path
 ):
     sample = tmp_path / "sample.txt"
@@ -165,22 +165,6 @@ def test_category_show_snippet(tmpfile, runner, monkeypatch, fake_category):
 
     assert result.exit_code == 0
     assert "abc" in result.output
-
-
-def test_category_save_dry_run(tmpfile, runner, monkeypatch, fake_category):
-    monkeypatch.setattr(
-        "textfsmgen.cli.category_cmd.CategoryBuilder",
-        fake_category,
-    )
-
-    p = tmpfile("sample.txt", "hello")
-
-    result = runner.invoke(
-        category, ["--sample-file", str(p), "--save", "snippet-out.txt", "--dry-run"]
-    )
-
-    assert result.exit_code == 0
-    assert "[DRY-RUN]" in result.output
 
 
 def test_category_debug(tmpfile, runner, monkeypatch, fake_category):

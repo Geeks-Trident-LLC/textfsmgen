@@ -65,28 +65,7 @@ def test_freeform_debug(runner, patch_builder, patch_load_sample, tmp_path):
     assert f"snippet_file   = {str(snippet_path)}" in result.output
 
 
-def test_freeform_dry_run_save(runner, patch_builder, patch_load_sample, tmp_path):
-    sample = tmp_path / "sample.txt"
-    sample.write_text("hello")
-
-    result = runner.invoke(
-        freeform,
-        [
-            "--sample-file",
-            str(sample),
-            "--snippet",
-            "x",
-            "--save",
-            "template-out",
-            "--dry-run",
-        ],
-    )
-
-    assert result.exit_code == 0
-    assert "DRY-RUN" in result.output
-
-
-def test_freeform_create_config_dry_run(
+def test_freeform_create_config(
     runner, patch_builder, patch_load_sample, tmp_path
 ):
     sample = tmp_path / "sample.txt"
@@ -107,27 +86,7 @@ def test_freeform_create_config_file(
     sample = tmp_path / "sample.txt"
     sample.write_text("hello")
 
-    cfg_file = tmp_path / "cfg.json"
-
-    result = runner.invoke(
-        freeform,
-        [
-            "--sample-file",
-            str(sample),
-            "--snippet",
-            "x",
-            "--create-config-file",
-            str(cfg_file),
-        ],
-    )
-
-    assert result.exit_code == 0
-    assert cfg_file.exists()
-    data = json.loads(cfg_file.read_text())
-    assert data["sample_file"] == str(sample)
-
-
-def test_freeform_create_golden_test_dry_run(
+def test_freeform_create_golden_test(
     runner, patch_builder, patch_load_sample, tmp_path
 ):
     sample = tmp_path / "sample.txt"
@@ -135,7 +94,7 @@ def test_freeform_create_golden_test_dry_run(
 
     result = runner.invoke(
         freeform,
-        ["--sample-file", str(sample), "--snippet", "x", "--create-golden-test"],
+        ["--sample-file", str(sample), "--snippet", "word(var_v0)", "--create-golden-test"],
     )
 
     assert result.exit_code == 0

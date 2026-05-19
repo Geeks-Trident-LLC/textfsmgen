@@ -6,7 +6,6 @@ from textfsmgen.cli.shared_builder_cli import (
     validate_config,
     load_sample,
     save_outputs,
-    dry_run_save,
     show_outputs,
     run_builder_workflow,
 )
@@ -65,25 +64,20 @@ def test_load_sample_from_file_success(tmpfile):
 # ------------------------------------------------------------
 def test_save_outputs_invalid_format(fake_builder):
     results = save_outputs(fake_builder(), "sample", "badformat")
-    assert not results[0]
+    result = results[0]
+    assert "Invalid save format: " in result["message"]
+    assert result["severity"] == "error"
+    assert result["kind"] == "parse-expression"
 
-
-# ------------------------------------------------------------
-# dry_run_save()
-# ------------------------------------------------------------
-def test_dry_run_save_valid(fake_builder):
-    results = dry_run_save(fake_builder(), "sample", "snippet-out.txt")
-    assert results[0]
-    assert "[DRY-RUN]" in results[0]
 
 
 # ------------------------------------------------------------
 # show_outputs()
 # ------------------------------------------------------------
 def test_show_outputs_default(fake_builder):
-    status = show_outputs(fake_builder(), "ignored", "")
-    assert status
-    assert "Value" in status
+    result = show_outputs(fake_builder(), "ignored", "")
+    assert result
+    assert "Value" in str(result)
 
 
 # ------------------------------------------------------------
@@ -100,6 +94,5 @@ def test_run_builder_workflow_success(fake_builder):
         show="snippet",
         config={},
         debug=False,
-        dry_run=False,
     )
     assert exit_code == 0
