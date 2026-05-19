@@ -99,7 +99,6 @@ TOP_LEVEL_DOCS_MAPPING = {
         Formats:
           <kind>
           <kind1>,...,<kindK>
-          json(<kind1>,...,<kindK>)
 
         Kinds:
           sample, snippet, template, result
@@ -111,29 +110,26 @@ TOP_LEVEL_DOCS_MAPPING = {
           template, result
               Display both the generated template and the parsed result.
 
-          json(result, template)
-              Display both items in a single JSON object.
     """,
     "save": """
-        Selects which output to write to file(s).
-
+        Selects which output to write to file(s) or to simulate in dry‑run mode.
+        
         Formats:
           <kind>-<filename>
           <kind1>-<filename1>,...,<kindK>-<filenameK>
-          json(<kind1>-<filename1>,...,<kindK>-<filenameK>)
-
+          dryrun(<kind>-<filename>)
+          dryrun(<kind1>-<filename1>,...,<kindK>-<filenameK>)
+        
         Kinds:
           sample, snippet, template, result
-
+        
         Examples:
-          result-out.json
-              Write the parsed result to out.json.
-
           template-b.textfsm, result-out.json
-              Write the template to b.textfsm and the parsed result to out.json.
+              Write the generated template to b.textfsm and the parsed result to out.json.
+        
+          dryrun(result-out.json)
+              Show a dry‑run message describing how the result would be saved to out.json.
 
-          json(result-out.json)
-              Write the parsed result in JSON‑wrapped form to out.json.
     """,
 }
 normalize_text_values(TOP_LEVEL_DOCS_MAPPING)
