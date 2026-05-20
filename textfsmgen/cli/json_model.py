@@ -118,6 +118,25 @@ class SaveDryRunSection:
 
 
 # ------------------------------------------------------------
+# 12. JsonState
+# ------------------------------------------------------------
+@dataclass
+class JsonState:
+    """
+    Represents the high-level workflow state for JSON mode.
+    - name:    current step name
+    - status:  "" or "abort"
+    - message: human-readable message (mainly for abort)
+    - output:  human-readable output (template, result, warnings, etc.)
+    """
+    name: str = ""
+    status: str = ""
+    message: str = ""
+    output: dict = field(default_factory=dict)
+    exit_code: int = 0
+
+
+# ------------------------------------------------------------
 # 11. Top-level JSON workflow
 # ------------------------------------------------------------
 @dataclass
@@ -135,6 +154,9 @@ class JsonWorkflow:
     show: Optional[ShowSection] = None
     save: Optional[SaveSection] = None
     save_dry_run: Optional[SaveDryRunSection] = None
+
+    # ⭐ NEW: your workflow state block
+    state: JsonState = field(default_factory=JsonState)
 
     # --------------------------------------------------------
     # Serialization
@@ -297,3 +319,41 @@ class JsonWorkflow:
 
     def add_show(self, raw: str | None = None, resolved: dict | None = None) -> None:
         self.show = ShowSection(raw=raw, resolved=resolved or {})
+
+    def add_state(
+            self,
+            name: str = "",
+            status: str = "",
+            message: str = "",
+            output: Optional[dict] = None,
+            exit_code: int = 0
+    ) -> None:
+        """Replace the entire state with a new JsonState."""
+        self.state = JsonState(
+            name=name,
+            status=status,
+            message=message,
+            output=output or {},
+            exit_code=exit_code
+
+        )
+
+    def update_state(
+            self,
+            name: Optional[str] = None,
+            status: Optional[str] = None,
+            message: Optional[str] = None,
+            output: Optional[dict] = None,
+            exit_code: Optional[int] = None
+    ) -> None:
+        """Update only the provided fields of the existing state."""
+        if name is not None:
+            self.state.name = name
+        if status is not None:
+            self.state.status = status
+        if message is not None:
+            self.state.message = message
+        if output is not None:
+            self.state.output = output
+        if exit_code is not None:
+            self.state.exit_code = exit_code
