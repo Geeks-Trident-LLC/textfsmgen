@@ -30,6 +30,11 @@ FREEFORM_TEMPLATE = {
     "command": "",
     "show": "",
     "save": "",
+    "create_config": False,
+    "create_config_file": "",
+    "create_golden_test": False,
+    "create_golden_test_path": "",
+    "json_mode": False,
 }
 
 CATEGORY_TEMPLATE = {
@@ -45,6 +50,11 @@ CATEGORY_TEMPLATE = {
     "command": "",
     "show": "",
     "save": "",
+    "create_config": False,
+    "create_config_file": "",
+    "create_golden_test": False,
+    "create_golden_test_path": "",
+    "json_mode": False,
 }
 
 TABULAR_TEMPLATE = {
@@ -65,6 +75,11 @@ TABULAR_TEMPLATE = {
     "command": "",
     "show": "",
     "save": "",
+    "create_config": False,
+    "create_config_file": "",
+    "create_golden_test": False,
+    "create_golden_test_path": "",
+    "json_mode": False,
 }
 
 CONFIG_TYPES = {
@@ -131,6 +146,11 @@ TOP_LEVEL_DOCS_MAPPING = {
               Show a dry‑run message describing how the result would be saved to out.json.
 
     """,
+    "create_config": "Merge CLI options with the loaded --config and show the result.",
+    "create_config_file": "Merge CLI options with --config and save the result to FILE.",
+    "create_golden_test": "Preview golden‑test creation (dry run).",
+    "create_golden_test_path": "Generate golden‑test files at PATH.",
+    "json_mode": "Output machine‑readable results in JSON format.",
 }
 normalize_text_values(TOP_LEVEL_DOCS_MAPPING)
 
