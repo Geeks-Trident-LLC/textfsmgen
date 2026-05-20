@@ -36,11 +36,7 @@ def register(cli):
     type=click.Path(exists=True),
     help=HELP.sample_file,
 )
-@click.option(
-    "--command",
-    default="",
-    help=HELP.command,
-)
+@click.option("--command", default="", help=HELP.command)
 @click.option("--show", default="", help=HELP.show)
 @click.option("--save", default="", help=HELP.save)
 @click.option("--config", default=None, type=click.Path(exists=True), help=HELP.config)
@@ -67,32 +63,30 @@ def register(cli):
     help=HELP.json,
 )
 @click.pass_context
-def freeform(
-    ctx,
-    snippet,
-    snippet_file,
-    sample_file,
-    command,
-    save,
-    show,
-    config,
-    debug,
-    create_config,
-    create_config_file,
-    create_golden_test,
-    create_golden_test_path,
-    json_mode,
-):
+def freeform(ctx, **kwargs):
     """
     Build a template from free-form snippet text.
     """
+    snippet = kwargs.get("snippet")
+    snippet_file = kwargs.get("snippet_file")
+    sample_file = kwargs.get("sample_file")
+    command = kwargs.get("command")
+    save = kwargs.get("save")
+    show = kwargs.get("show")
+    config = kwargs.get("config")
+    debug = kwargs.get("debug")
+    create_config = kwargs.get("create_config")
+    create_config_file = kwargs.get("create_config_file")
+    create_golden_test = kwargs.get("create_golden_test")
+    create_golden_test_path = kwargs.get("create_golden_test_path")
+    json_mode = kwargs.get("json_mode")
 
     # ------------------------------------------------------------
     # JSON workflow initialization
     # ------------------------------------------------------------
     json_workflow = JsonWorkflow() if json_mode else None
     if json_workflow:
-        json_workflow.add_cli_options(ctx.params.copy())
+        json_workflow.add_cli_options(kwargs.copy())
 
     # ------------------------------------------------------------
     # Early help

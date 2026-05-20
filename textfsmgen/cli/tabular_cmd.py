@@ -100,40 +100,38 @@ def register(cli):
     help=HELP.json,
 )
 @click.pass_context
-def tabular(
-    ctx,
-    sample_file,
-    command,
-    column_divider,
-    column_count,
-    column_widths,
-    headers,
-    header_rows,
-    custom_header,
-    starting_from,
-    ending_at,
-    has_header,
-    replacing_rules,
-    show,
-    save,
-    config,
-    debug,
-    create_config,
-    create_config_file,
-    create_golden_test,
-    create_golden_test_path,
-    json_mode,
-):
+def tabular(ctx, **kwargs):
     """
     Build a template from tabular text.
     """
+    sample_file = kwargs.get("sample_file")
+    command = kwargs.get("command")
+    column_divider = kwargs.get("column_divider")
+    column_count = kwargs.get("column_count")
+    column_widths = kwargs.get("column_widths")
+    headers = kwargs.get("headers")
+    header_rows = kwargs.get("header_rows")
+    custom_header = kwargs.get("custom_header")
+    starting_from = kwargs.get("starting_from")
+    ending_at = kwargs.get("ending_at")
+    has_header = kwargs.get("has_header")
+    replacing_rules = kwargs.get("replacing_rules")
+    save = kwargs.get("save")
+    show = kwargs.get("show")
+    config = kwargs.get("config")
+    debug = kwargs.get("debug")
+    create_config = kwargs.get("create_config")
+    create_config_file = kwargs.get("create_config_file")
+    create_golden_test = kwargs.get("create_golden_test")
+    create_golden_test_path = kwargs.get("create_golden_test_path")
+    json_mode = kwargs.get("json_mode")
 
     # ------------------------------------------------------------
     # JSON workflow initialization
     # ------------------------------------------------------------
     json_workflow = JsonWorkflow() if json_mode else None
     if json_workflow:
-        json_workflow.add_cli_options(ctx.params.copy())
+        json_workflow.add_cli_options(kwargs.copy())
 
     # ------------------------------------------------------------
     # Early help

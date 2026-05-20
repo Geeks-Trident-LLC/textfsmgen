@@ -84,35 +84,34 @@ def register(cli):
     help=HELP.json,
 )
 @click.pass_context
-def category(
-    ctx,
-    sample_file,
-    command,
-    count,
-    separator,
-    starting_from,
-    ending_at,
-    replacing_rules,
-    show,
-    save,
-    config,
-    debug,
-    create_config,
-    create_config_file,
-    create_golden_test,
-    create_golden_test_path,
-    json_mode,
-):
+def category(ctx, **kwargs):
     """
     Build a template from categorized text.
     """
+
+    sample_file = kwargs.get("sample_file")
+    command = kwargs.get("command")
+    count = kwargs.get("count")
+    separator = kwargs.get("separator")
+    starting_from = kwargs.get("starting_from")
+    ending_at = kwargs.get("ending_at")
+    replacing_rules = kwargs.get("replacing_rules")
+    save = kwargs.get("save")
+    show = kwargs.get("show")
+    config = kwargs.get("config")
+    debug = kwargs.get("debug")
+    create_config = kwargs.get("create_config")
+    create_config_file = kwargs.get("create_config_file")
+    create_golden_test = kwargs.get("create_golden_test")
+    create_golden_test_path = kwargs.get("create_golden_test_path")
+    json_mode = kwargs.get("json_mode")
 
     # ------------------------------------------------------------
     # JSON workflow initialization
     # ------------------------------------------------------------
     json_workflow = JsonWorkflow() if json_mode else None
     if json_workflow:
-        json_workflow.add_cli_options(ctx.params.copy())
+        json_workflow.add_cli_options(kwargs.copy())
 
     # ------------------------------------------------------------
     # Early help
