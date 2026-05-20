@@ -13,7 +13,7 @@ from textfsmgen.exceptions import (
     raise_runtime_error,
     EscapePatternError,
 )
-from .generic import StatusString, DotObject
+from .generic import StatusString, DotDict
 from .number import word_to_digit
 
 
@@ -352,7 +352,7 @@ class KeywordPatternMappingRegister:
         return all_map
 
 
-class Pattern(DotObject):
+class Pattern(DotDict):
     """Reusable regex fragments for common character classes."""
 
     def __init__(self):

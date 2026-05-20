@@ -40,7 +40,7 @@ from textfsmgen import (
     TabularTemplateBuilder,
 )
 
-from textfsmgen.libs.generic import DotObject, StatusString
+from textfsmgen.libs.generic import DotDict, StatusString
 from textfsmgen.libs.common import parse_textfsm_to_dicts
 
 
@@ -290,7 +290,7 @@ class DataLoader:
 
     def load_canonical(self, root=""):
         canonical_path = self.case_dir / "canonical"
-        canonical_info = DotObject(
+        canonical_info = DotDict(
             sample=load_file_info(canonical_path / "sample.txt", root=root),
             snippet=load_file_info(canonical_path / "snippet.txt", root=root),
             template=load_file_info(canonical_path / "textfsm.template", root=root),
@@ -300,7 +300,7 @@ class DataLoader:
 
     def load_expected(self, root=""):
         expected_path = self.case_dir / "expected"
-        expected_info = DotObject(
+        expected_info = DotDict(
             snippet=load_file_info(expected_path / "snippet.txt", root=root),
             template=load_file_info(expected_path / "textfsm.template", root=root),
         )
@@ -592,7 +592,7 @@ def load_file_info(path: Path, root: str = ""):
     else:
         content = resolved.read_text(encoding="utf-8")
 
-    return DotObject(
+    return DotDict(
         name=rel_name,
         fullname=fullname,
         content=content,

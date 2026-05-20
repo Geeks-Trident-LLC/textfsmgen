@@ -8,7 +8,7 @@ General-purpose generic classes used across TextFSMGen.
 import re
 
 
-class DotObject(dict):
+class DotDict(dict):
     """Dictionary with dot-access for valid keys and recursive wrapping."""  # noqa
 
     _valid_key = re.compile(r"_{,2}[A-Za-z][A-Za-z0-9_]*")

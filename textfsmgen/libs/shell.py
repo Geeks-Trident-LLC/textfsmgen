@@ -14,7 +14,7 @@ import shlex
 
 
 from . import ECODE
-from .generic import DotObject
+from .generic import DotDict
 
 
 class PackageInfo:
@@ -25,8 +25,8 @@ class PackageInfo:
         self._installed: bool = False
         self._version: str = ""
         self._name: str = ""
-        self._pip_freeze_result: Optional[DotObject] = None
-        self._pip_show_result: Optional[DotObject] = None
+        self._pip_freeze_result: Optional[DotDict] = None
+        self._pip_show_result: Optional[DotDict] = None
         self._process()
 
     @property
@@ -47,14 +47,14 @@ class PackageInfo:
     @property
     def freeze_out(self) -> str:
         """Return raw output from `pip freeze`."""
-        if isinstance(self._pip_freeze_result, DotObject):
+        if isinstance(self._pip_freeze_result, DotDict):
             return self._pip_freeze_result.output
         return ""
 
     @property
     def show_out(self) -> str:
         """Return raw output from `pip show`."""
-        if isinstance(self._pip_show_result, DotObject):
+        if isinstance(self._pip_show_result, DotDict):
             return self._pip_show_result.output
         return ""
 
@@ -79,7 +79,7 @@ class PackageInfo:
                 self._version = m.group("version")
 
 
-def execute_command(cmdline: str) -> DotObject:
+def execute_command(cmdline: str) -> DotDict:
     """
     Run a shell command in the most natural way possible.
     Automatically detects PowerShell pipelines and reruns them safely.
@@ -93,7 +93,7 @@ def execute_command(cmdline: str) -> DotObject:
     proc = subprocess.run(cmdline, shell=True, capture_output=True, text=True)
 
     if proc.returncode == ECODE.SUCCESS or not is_windows:
-        return DotObject(
+        return DotDict(
             output=(proc.stdout or "") + (proc.stderr or ""),
             exit_code=proc.returncode,
             is_success=proc.returncode == ECODE.SUCCESS,
@@ -116,7 +116,7 @@ def execute_command(cmdline: str) -> DotObject:
     # ------------------------------------------------------------
     # 4. Fallback: return the failed result
     # ------------------------------------------------------------
-    return DotObject(
+    return DotDict(
         output=(proc.stdout or "") + (proc.stderr or ""),
         exit_code=proc.returncode,
         is_success=False,
@@ -141,7 +141,7 @@ def _looks_like_powershell(cmd: str) -> bool:
     return any(k in cmd_lower for k in ps_keywords)
 
 
-def _run_powershell_block(command: str) -> DotObject:
+def _run_powershell_block(command: str) -> DotDict:
     """Run a PowerShell pipeline using a script block."""
     ps_command = f"& {{ {command} }}"
     for ps in ("powershell", "pwsh"):
@@ -149,23 +149,23 @@ def _run_powershell_block(command: str) -> DotObject:
             [ps, "-command", ps_command], shell=False, capture_output=True, text=True
         )
         if proc.returncode == ECODE.SUCCESS:
-            return DotObject(
+            return DotDict(
                 output=(proc.stdout or "") + (proc.stderr or ""),
                 exit_code=proc.returncode,
                 is_success=True,
             )
-    return DotObject(
+    return DotDict(
         output=(proc.stdout or "") + (proc.stderr or ""),
         exit_code=proc.returncode,
         is_success=False,
     )
 
 
-def _run_explicit_powershell(cmdline: str) -> DotObject:
+def _run_explicit_powershell(cmdline: str) -> DotDict:
     """Run commands that already start with powershell/pwsh."""
     parts = shlex.split(cmdline)
     proc = subprocess.run(parts, shell=False, capture_output=True, text=True)
-    return DotObject(
+    return DotDict(
         output=(proc.stdout or "") + (proc.stderr or ""),
         exit_code=proc.returncode,
         is_success=proc.returncode == ECODE.SUCCESS,

@@ -5,7 +5,7 @@ textfsmgen.application
 Main logic and user interface components for the `textfsmgen` library.
 """
 
-from textfsmgen.libs.generic import DotObject
+from textfsmgen.libs.generic import DotDict
 from textfsmgen import version
 from textfsmgen.ui import common, controls, menu
 from textfsmgen import ui
@@ -49,20 +49,20 @@ class Application:
         self.build_output_textarea()
 
     def init_app_variables(self):
-        self.frames = DotObject(
+        self.frames = DotDict(
             # frame widget
             input=None,
             controls=None,
             output=None,
         )
 
-        self.textarea = DotObject(
+        self.textarea = DotDict(
             # textarea widgets
             input=None,
             output=None,
         )
 
-        self.buttons = DotObject(
+        self.buttons = DotDict(
             # button widgets
             test_data=None,
             open=None,
@@ -79,7 +79,7 @@ class Application:
             execute=None,
         )
 
-        self.settings = DotObject(
+        self.settings = DotDict(
             test_data_btn_name=ui.tk.StringVar(value="Test Data"),
             # general arguments for TemplateBuilder
             author=ui.tk.StringVar(),
@@ -116,7 +116,7 @@ class Application:
             index_flag=ui.tk.BooleanVar(),
         )
 
-        self.snapshot = DotObject(
+        self.snapshot = DotDict(
             user_data="",
             test_data="",
             result="",
@@ -124,8 +124,8 @@ class Application:
             is_built=False,
         )
 
-        self.tools = DotObject(
-            suggester=DotObject(
+        self.tools = DotDict(
+            suggester=DotDict(
                 # flag or variable
                 variable_flag=ui.tk.BooleanVar(value=True),
                 group_flag=ui.tk.BooleanVar(),
@@ -138,7 +138,7 @@ class Application:
                 code_textarea=None,
                 result_textarea=None,
             ),
-            builder=DotObject(
+            builder=DotDict(
                 # widget
                 semantic_group=None,
                 outcomes_group=None,
@@ -166,7 +166,7 @@ class Application:
                 ],
                 snippet_and_samples=None,
             ),
-            tester=DotObject(
+            tester=DotDict(
                 # widget
                 dialog=None,
                 template_area=None,

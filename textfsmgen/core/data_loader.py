@@ -19,7 +19,7 @@ from textfsmgen import (
     parse_textfsm_to_dicts,
 )
 
-from textfsmgen.libs.generic import DotObject
+from textfsmgen.libs.generic import DotDict
 
 from textfsmgen.exceptions import raise_runtime_error
 
@@ -227,8 +227,8 @@ class DataLoader:
             exp_result_filename = str(exp_result_path)
             input_sample = input_path.read_text(encoding="utf-8")
             exp_result = json.loads(exp_result_path.read_text(encoding="utf-8"))
-            input_info = DotObject(path=input_filename, data=input_sample)
-            result_info = DotObject(path=exp_result_filename, data=exp_result)
+            input_info = DotDict(path=input_filename, data=input_sample)
+            result_info = DotDict(path=exp_result_filename, data=exp_result)
             yield input_info, result_info
 
     def get_builder(self):
