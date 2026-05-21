@@ -17,13 +17,14 @@ from textfsmgen.libs.common import emit_status
 from textfsmgen.libs.generic import StatusString, DotDict
 
 from textfsmgen.cli import validator
+from textfsmgen.cli.parameters import prepare_params
 
 
 def ready_check(func):
     """Skip execution if a previous step has aborted."""
     @wraps(func)
     def wrapper(state):
-        if state.status:
+        if hasattr(state, "status") and state.status:
             return state
         return func(state)
     return wrapper
@@ -52,10 +53,12 @@ def check_mandatory_cli_options(state):
 
     # Abort if mandatory options missing
     if missing:
-        state.status = "abort"
-        state.message = emit_status(status, display=False)
-        state.output = f"{state.message}\n{state.usage}"
-        state.exit_code = 1
+        state.update(
+            status="abort",
+            message=emit_status(status, display=False),
+            output=f"{state.message}\n{state.usage}",
+            exit_code=1,
+        )
         return state
 
     return state
@@ -70,11 +73,31 @@ def load_config(state):
 
     result = validator.validate_config(state.cli_options.config)
     if not result:
-        state.status = "abort"
-        state.message = emit_status(result, display=False)
-        state.output = emit_status(result, display=False)
-        state.exit_code = 2 if result.reason == "code-error" else 1
+        state.update(
+            status="abort",
+            message=emit_status(result, display=False),
+            output=emit_status(result, display=False),
+            exit_code=2 if result.reason == "code-error" else 1
+        )
         return state
 
     state.loaded_config = DotDict(result.raw)
     return state
+
+
+@ready_check
+def prepare_run_params(state):
+    state.name = "prepare-run-params"
+    result = prepare_params(state.builder, state.cli_options, state.loaded_config)
+    if not result:
+        state.update(
+            status="abort",
+            message=result.message,
+            output=result.message,
+            exit_code=result.exit_code,
+        )
+        return state
+
+    state.api_params = result.options
+    return state
+

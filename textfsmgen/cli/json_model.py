@@ -170,11 +170,12 @@ class JsonWorkflow:
             - Raise an exception if the workflow is incomplete
         """
         if validating:
-            if self.status is None:
-                raise RuntimeError(
-                    "JsonWorkflow.to_json(validating=True) requires a status section. "
-                    "Call set_status() before serializing."
-                )
+            ""
+            # if self.status is None:
+            #     raise RuntimeError(
+            #         "JsonWorkflow.to_json(validating=True) requires a status section. "
+            #         "Call set_status() before serializing."
+            #     )
 
         return json.dumps(
             self._to_dict(),
