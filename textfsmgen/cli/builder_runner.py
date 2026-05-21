@@ -6,8 +6,7 @@ from .workflow_steps import (
     check_mandatory_cli_options,
     load_config,
     prepare_run_params,
-    # run_builder_step,
-    # finalize_json_output_step,
+    create_debug_report,
 )
 
 from .json_model import (
@@ -35,7 +34,7 @@ class BuilderRunner:
             check_mandatory_cli_options,
             load_config,
             prepare_run_params,
-            # run_builder_step,
+            create_debug_report,
             # finalize_json_output_step,
         ]
 

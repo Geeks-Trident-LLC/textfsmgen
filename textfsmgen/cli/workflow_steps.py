@@ -3,14 +3,7 @@
 from functools import wraps
 
 from textfsmgen.cli.shared_builder_cli import (
-    merge,
-    run_builder_workflow,
-    generate_or_save_config,
-    dry_run_or_create_golden_test,
-
-    run_builder_workflow_new,
-    generate_or_save_config_new,
-    dry_run_or_create_golden_test_new,
+    build_debug_report
 )
 
 from textfsmgen.libs.common import emit_status
@@ -99,5 +92,14 @@ def prepare_run_params(state):
         return state
 
     state.api_params = result.options
+    return state
+
+
+@ready_check
+def create_debug_report(state):
+    state.name = "create-debug-report"
+    state.debug_report = build_debug_report(state.api_params)
+
+    state.output = state.debug_report
     return state
 
