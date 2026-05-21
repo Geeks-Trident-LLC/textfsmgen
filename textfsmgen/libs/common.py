@@ -115,30 +115,32 @@ def extract_textfsm_headers(template: str) -> list:
         return []
 
 
-def emit_status(data):
-    """
-    Print StatusString output with correct severity routing.
-
-    Rules:
-      - Non‑StatusString → print to stdout
-      - reason == "error"   → print to stderr with [ERROR]
-      - reason == "warning" → print to stdout with [WARNING]
-      - otherwise           → print raw data to stdout
-    """
-
+def emit_status(data, display=True):
     if not isinstance(data, StatusString):
-        print(data)
-        return
+        if display:
+            print(data)
+        return data
 
-    reason = getattr(data, "reason", "")
+    reason = getattr(data, "reason", "").lower()
     message = str(data)
 
-    if reason == "error":
-        print(f"[ERROR] {message}", file=sys.stderr)
-        return
+    if reason:
+        mapping = {
+            "warning": "WARNING",
+            "error": "ERROR",
+            "code-error": "FATAL",
+        }
+        severity = mapping.get(reason, reason.upper() or "UNKNOWN")
+        stream = sys.stdout if reason == "warning" else sys.stderr
 
-    if reason == "warning":
-        print(f"[WARNING] {message}")
-        return
+        formatted = f"[{severity}] {message}"
+        if display:
+            print(formatted, file=stream)
+        return formatted
 
-    print(message)
+    if display:
+        print(message)
+    return message
+
+
+
