@@ -77,7 +77,7 @@ class DotDict(dict):
                 self.update({transformed: value})
                 return
 
-        super().__setattr__(name, value)
+        self.update({name: value})
 
     def _wrap(self, value):
         """Wrap nested dictionaries into DotDict."""
