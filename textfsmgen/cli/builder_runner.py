@@ -7,35 +7,33 @@ from .workflow_steps import (
     load_config,
     prepare_run_params,
     create_debug_report,
+    execute,
 )
 
-from .json_model import (
-    JsonWorkflow,
-    JsonState
-)
+from .json_model import JsonWorkflow, JsonState
 
 
 class BuilderRunner:
-    def __init__(self, builder="",  usage="", cli_options=None):
-        self.state = DotDict({
-            "builder": builder,
-            "cli_options": DotDict(cli_options),
-            "usage": usage,
-
-            "name": "",
-            "status": "",
-            "message": "",
-            "output": "",
-            "exit_code": 0
-
-        })
+    def __init__(self, builder="", usage="", cli_options=None):
+        self.state = DotDict(
+            {
+                "builder": builder,
+                "cli_options": DotDict(cli_options),
+                "usage": usage,
+                "name": "",
+                "status": "",
+                "message": "",
+                "output": "",
+                "exit_code": 0,
+            }
+        )
 
         self.steps = [
             check_mandatory_cli_options,
             load_config,
             prepare_run_params,
             create_debug_report,
-            # finalize_json_output_step,
+            execute,
         ]
 
     def run(self):
@@ -63,7 +61,7 @@ class BuilderRunner:
 
         output = (
             workflow.to_json()
-            if self.state.cli_options.json_mode else
-            self.state.output
+            if self.state.cli_options.json_mode
+            else self.state.output
         )
         return DotDict({"output": output, "exit_code": self.state.exit_code})

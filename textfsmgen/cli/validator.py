@@ -9,27 +9,42 @@ from textfsmgen.libs.generic import StatusString
 
 REQUIRED_TOP_KEYS = {
     "freeform": [
-        "builder", "params",
-        "snippet", "snippet_file",
-        "show", "save",
-        "create_config", "create_config_file",
-        "create_golden", "create_golden_path",
+        "builder",
+        "params",
+        "snippet",
+        "snippet_file",
+        "show",
+        "save",
+        "create_config",
+        "create_config_file",
+        "create_golden",
+        "create_golden_path",
         "json_mode",
     ],
     "category": [
-        "builder", "params",
-        "sample_file", "command",
-        "show", "save",
-        "create_config", "create_config_file",
-        "create_golden", "create_golden_path",
+        "builder",
+        "params",
+        "sample_file",
+        "command",
+        "show",
+        "save",
+        "create_config",
+        "create_config_file",
+        "create_golden",
+        "create_golden_path",
         "json_mode",
     ],
     "tabular": [
-        "builder", "params",
-        "sample_file", "command",
-        "show", "save",
-        "create_config", "create_config_file",
-        "create_golden", "create_golden_path",
+        "builder",
+        "params",
+        "sample_file",
+        "command",
+        "show",
+        "save",
+        "create_config",
+        "create_config_file",
+        "create_golden",
+        "create_golden_path",
         "json_mode",
     ],
 }
@@ -55,6 +70,7 @@ REQUIRED_PARAM_KEYS = {
 # ------------------------------------------------------------
 # Helpers
 # ------------------------------------------------------------
+
 
 def _load_json(config_path):
     try:
@@ -152,6 +168,7 @@ def _validate_snippet_rules(data, builder):
 # ------------------------------------------------------------
 # Main validator
 # ------------------------------------------------------------
+
 
 def validate_config(config_path):
     data, err = _load_json(config_path)

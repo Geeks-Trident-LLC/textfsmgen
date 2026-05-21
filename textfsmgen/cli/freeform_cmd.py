@@ -9,12 +9,6 @@ from textfsmgen.cli.shared_builder_cli import (
     run_builder_workflow,
     generate_or_save_config,
     dry_run_or_create_golden_test,
-
-    validate_config_new,
-    run_builder,
-    generate_or_save_config_new,
-    dry_run_or_create_golden_test_new,
-
 )
 
 from .builder_runner import BuilderRunner
@@ -223,7 +217,6 @@ def freeform(ctx, **kwargs):
     raise SystemExit(exit_code)
 
 
-
 @click.command(
     help="Generate a TextFSM template from user input snippet.",
     context_settings=dict(help_option_names=["-h", "--help"]),
@@ -270,9 +263,7 @@ def freeform(ctx, **kwargs):
 @click.pass_context
 def freeform2(ctx, **cli_options):
     runner = BuilderRunner(
-        builder="freeform",
-        usage=ctx.get_help(),
-        cli_options=cli_options
+        builder="freeform", usage=ctx.get_help(), cli_options=cli_options
     )
 
     result = runner.run()

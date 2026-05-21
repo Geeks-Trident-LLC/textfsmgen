@@ -2,24 +2,24 @@
 
 from functools import wraps
 
-from textfsmgen.cli.shared_builder_cli import (
-    build_debug_report
-)
+from textfsmgen.cli.shared_builder_cli import build_debug_report, execute_builder
 
 from textfsmgen.libs.common import emit_status
 from textfsmgen.libs.generic import StatusString, DotDict
 
 from textfsmgen.cli import validator
-from textfsmgen.cli.parameters import prepare_params
+from textfsmgen.cli import parameters
 
 
 def ready_check(func):
     """Skip execution if a previous step has aborted."""
+
     @wraps(func)
     def wrapper(state):
         if hasattr(state, "status") and state.status:
             return state
         return func(state)
+
     return wrapper
 
 
@@ -34,14 +34,14 @@ def check_mandatory_cli_options(state):
         status = StatusString(
             "missing required option: --snippet, --snippet-file, or --config",
             status=False,
-            reason="error"
+            reason="error",
         )
     else:
         missing = not o.sample_file and not o.command and o.config is None
         status = StatusString(
             "missing required option: --sample-file, --command, or --config",
             status=False,
-            reason="error"
+            reason="error",
         )
 
     # Abort if mandatory options missing
@@ -70,7 +70,7 @@ def load_config(state):
             status="abort",
             message=emit_status(result, display=False),
             output=emit_status(result, display=False),
-            exit_code=2 if result.reason == "code-error" else 1
+            exit_code=2 if result.reason == "code-error" else 1,
         )
         return state
 
@@ -81,7 +81,9 @@ def load_config(state):
 @ready_check
 def prepare_run_params(state):
     state.name = "prepare-run-params"
-    result = prepare_params(state.builder, state.cli_options, state.loaded_config)
+    result = parameters.prepare_params(
+        state.builder, state.cli_options, state.loaded_config
+    )
     if not result:
         state.update(
             status="abort",
@@ -103,3 +105,22 @@ def create_debug_report(state):
     state.output = state.debug_report
     return state
 
+
+@ready_check
+def execute(state):
+    state.name = "execute"
+    result = execute_builder(state.api_params)
+    state.builder_result = result.builder_result
+
+    message = emit_status(result.status, display=False)
+
+    if result.exit_code != 0:
+        state.update(
+            status="abort",
+            message=message,
+            output=f"{state.debug_report}\n{message}".strip(),
+            exit_code=result.exit_code,
+        )
+        return state
+
+    return state

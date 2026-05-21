@@ -129,6 +129,7 @@ class JsonState:
     - message: human-readable message (mainly for abort)
     - output:  human-readable output (template, result, warnings, etc.)
     """
+
     name: str = ""
     status: str = ""
     message: str = ""
@@ -322,12 +323,12 @@ class JsonWorkflow:
         self.show = ShowSection(raw=raw, resolved=resolved or {})
 
     def add_state(
-            self,
-            name: str = "",
-            status: str = "",
-            message: str = "",
-            output: Optional[dict] = None,
-            exit_code: int = 0
+        self,
+        name: str = "",
+        status: str = "",
+        message: str = "",
+        output: Optional[dict] = None,
+        exit_code: int = 0,
     ) -> None:
         """Replace the entire state with a new JsonState."""
         self.state = JsonState(
@@ -335,17 +336,16 @@ class JsonWorkflow:
             status=status,
             message=message,
             output=output or {},
-            exit_code=exit_code
-
+            exit_code=exit_code,
         )
 
     def update_state(
-            self,
-            name: Optional[str] = None,
-            status: Optional[str] = None,
-            message: Optional[str] = None,
-            output: Optional[dict] = None,
-            exit_code: Optional[int] = None
+        self,
+        name: Optional[str] = None,
+        status: Optional[str] = None,
+        message: Optional[str] = None,
+        output: Optional[dict] = None,
+        exit_code: Optional[int] = None,
     ) -> None:
         """Update only the provided fields of the existing state."""
         if name is not None:

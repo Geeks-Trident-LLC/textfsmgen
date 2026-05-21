@@ -141,6 +141,3 @@ def emit_status(data, display=True):
     if display:
         print(message)
     return message
-
-
-

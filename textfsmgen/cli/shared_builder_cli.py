@@ -6,7 +6,7 @@ from typing import Optional
 
 import click
 
-from textfsmgen.libs.generic import StatusString
+from textfsmgen.libs.generic import StatusString, DotDict
 from textfsmgen.libs.common import emit_status
 from textfsmgen.libs import shell
 from textfsmgen.libs.utils import get_data_as_tabular
@@ -21,6 +21,13 @@ from textfsmgen.core.builder import (
 
 from .config_cmd import get_config_template
 from .json_model import JsonWorkflow
+
+
+BUILDER_MAPPING = {
+    "freeform": FreeFormBuilder,
+    "tabular": TabularBuilder,
+    "category": CategoryBuilder,
+}
 
 
 # ------------------------------------------------------------
@@ -101,11 +108,18 @@ def get_required_top_keys(builder_name):
     Return required top-level keys for each builder type.
     """
     base = [
-        "builder", "params",
-        "snippet", "snippet_file", "sample_file", "command",
-        "show", "save",
-        "create_config", "create_config_file",
-        "create_golden", "create_golden_path",
+        "builder",
+        "params",
+        "snippet",
+        "snippet_file",
+        "sample_file",
+        "command",
+        "show",
+        "save",
+        "create_config",
+        "create_config_file",
+        "create_golden",
+        "create_golden_path",
         "json_mode",
     ]
 
@@ -615,8 +629,8 @@ def debug_print(
     click.echo(debug_txt)
 
 
-def build_debug_report(cli_options):
-    if not cli_options.debug:
+def build_debug_report(api_params):
+    if not api_params.debug:
         return ""
 
     lines = []
@@ -632,15 +646,17 @@ def build_debug_report(cli_options):
     # -------------------------------------------
     # High-level info
     # -------------------------------------------
-    if cli_options.snippet_file:
-        lines.append(f"[INFO] Loaded snippet from: {cli_options.snippet_file!r}")
-        if cli_options.snippet_data:
-            lines.append(f"[INFO] Snippet size: {len(cli_options.snippet_data)} characters")
+    if api_params.snippet_file:
+        lines.append(f"[INFO] Loaded snippet from: {api_params.snippet_file!r}")
+        if api_params.snippet_data:
+            lines.append(
+                f"[INFO] Snippet size: {len(api_params.snippet_data)} characters"
+            )
 
-    if cli_options.sample_data:
-        source = cli_options.sample_file or cli_options.command
+    if api_params.sample_data:
+        source = api_params.sample_file or api_params.command
         lines.append(f"[INFO] Loaded sample from: {source!r}")
-        lines.append(f"[INFO] Sample size: {len(cli_options.sample_data)} characters")
+        lines.append(f"[INFO] Sample size: {len(api_params.sample_data)} characters")
 
     # -------------------------------------------
     # Debug header
@@ -654,14 +670,14 @@ def build_debug_report(cli_options):
     # -------------------------------------------
     lines.append(" BUILDER PARAMS ".center(header_width, "-"))
 
-    if cli_options.snippet_file:
-        _add("snippet_file", cli_options.snippet_file)
+    if api_params.snippet_file:
+        _add("snippet_file", api_params.snippet_file)
 
-    _add("sample_file", cli_options.sample_file)
-    _add("command", cli_options.command)
+    _add("sample_file", api_params.sample_file)
+    _add("command", api_params.command)
 
     # Params block (pretty JSON)
-    params_json = json.dumps(cli_options.params, indent=2, ensure_ascii=False)
+    params_json = json.dumps(api_params.params, indent=2, ensure_ascii=False)
     lines.append(render_text_block(params_json, subject=f"{'params':<23} ="))
 
     # -------------------------------------------
@@ -670,19 +686,18 @@ def build_debug_report(cli_options):
     lines.append("")
     lines.append(" EXECUTION FLAGS ".center(header_width, "-"))
 
-    _add("config", cli_options.config)
-    _add("save", cli_options.save)
-    _add("show", cli_options.show)
-    _add("create_config", cli_options.create_config)
-    _add("create_config_file", cli_options.create_config_file)
-    _add("create_golden_test", cli_options.create_golden_test)
-    _add("create_golden_test_path", cli_options.create_golden_test_path)
-    _add("json_mode", cli_options.json_mode)
+    _add("config", api_params.config)
+    _add("save", api_params.save)
+    _add("show", api_params.show)
+    _add("create_config", api_params.create_config)
+    _add("create_config_file", api_params.create_config_file)
+    _add("create_golden_test", api_params.create_golden_test)
+    _add("create_golden_test_path", api_params.create_golden_test_path)
+    _add("json_mode", api_params.json_mode)
 
     lines.append("=" * header_width)
 
     return "\n".join(lines)
-
 
 
 # ------------------------------------------------------------
@@ -881,198 +896,70 @@ def run_builder_workflow(
     return 0
 
 
-def run_builder(
-    cli_options,
-    builder_class,
-    snippet="",
-    snippet_file=None,
-    sample_file=None,
-    command="",
-    params=None,
-    save="",
-    show="",
-    config=None,
-    debug=False,
-    suppressed_message=False,
-    json_workflow: Optional[JsonWorkflow] = None,
-):
-    params = params or {}
-    sample_text = ""
+def execute_builder(api_params):
+    builder_name = api_params.builder
+    builder_cls = BUILDER_MAPPING[builder_name]
+    builder = builder_cls()
 
-    if sample_file or command:
-        sample_status = load_sample(sample_file, command)
-        if not sample_status:
-            if json_workflow:
-                json_workflow.set_status(
-                    kind=sample_status.reason,
-                    message=str(sample_status),
-                    exit_code=1,
-                )
-                click.echo(json_workflow.to_json(validating=True))
-                raise SystemExit(1)
-            emit_status(sample_status)
-            return 1
-        sample_text = str(sample_status)
-
-    if debug:
-        debug_print(
-            snippet,
-            snippet_file,
-            sample_file,
-            command,
-            params,
-            config,
-            sample_text,
-            save,
-            show,
-            json_workflow=json_workflow,
-        )
-
-    builder = builder_class()
-
-    if json_workflow:
-        json_workflow.add_builder(
-            name="unknown",
-            params=params,
-            snippet=snippet,
-            snippet_file=snippet_file,
-            sample=sample_text,
-            sample_file=sample_file,
-        )
-
-    builder_name = "unknown"
-
-    if issubclass(builder_class, FreeFormBuilder):
-        builder_name = "freeform"
-        if snippet_file:
-            builder.set_snippet_file(snippet_file)
-        else:
-            builder.set_snippet(snippet)
-        builder.set_sample(sample_text)
-
-    elif issubclass(builder_class, (TabularBuilder, CategoryBuilder)):
-        builder_name = (
-            "category" if issubclass(builder_class, CategoryBuilder) else "tabular"
-        )
-        builder.set_sample(sample_text, **params)
+    # -------------------------------------------
+    # Set snippet/sample inputs
+    # -------------------------------------------
+    if builder_name == "freeform":
+        builder.set_snippet(api_params.snippet_data)
+        if api_params.sample_data.strip():
+            builder.set_sample(api_params.sample_data)
     else:
-        message = (
-            f"Builder {builder_class.__name__} does not support sample/snippet input"
-        )
-        if json_workflow:
-            json_workflow.update_builder(name="unknown")
-            json_workflow.set_status(
-                kind="error",
-                message=message,
-                exit_code=1,
-            )
-            click.echo(json_workflow.to_json(validating=True))
-            raise SystemExit(1)
+        builder.set_sample(api_params.sample_data, **api_params.params)
 
-        status = StatusString(message, status=False, reason="error")
-        emit_status(status)
-        return 1
-
-    if json_workflow:
-        json_workflow.update_builder(name=builder_name)
-
+    # -------------------------------------------
+    # Build
+    # -------------------------------------------
     try:
         builder.build()
-        if json_workflow:
-            json_workflow.update_builder(
-                name=builder_name,
-                snippet=snippet if builder_name == "freeform" else builder.snippet,
-                built=bool(builder),
-                warning=builder.warning,
-                template=builder.template,
-                result=builder.result,
-            )
     except Exception as exc:
-        message = f"Builder {builder_class.__name__} failed with error: {exc}"
-        if json_workflow:
-            json_workflow.set_status(kind="error", message=message, exit_code=1)
-            click.echo(json_workflow.to_json(validating=True))
-            raise SystemExit(1)
-
-        status = StatusString(message, status=False, reason="error")
-        emit_status(status)
-        return 1
-
-    result: BuildResult = builder.to_result()
-    if not builder:
-        message = (
-            f"Cannot create builder from sample (reference: {sample_file or command!r})\n"
-            "===========================================\n"
-            f"{sample_text}\n"
+        message = f"Builder {builder_cls.__name__} failed with error: {exc}"
+        return DotDict(
+            builder_result=None,
+            status=StatusString(message, status=False, reason="code-error"),
+            exit_code=2,
         )
-        if json_workflow:
-            json_workflow.set_status(kind="warning", message=message, exit_code=1)
-            click.echo(json_workflow.to_json(validating=True))
-            raise SystemExit(1)
-        status = StatusString(message, status=False, reason="warning")
-        emit_status(status)
-        return 1
 
-    # Save
-    if save:
-        results = save_outputs(result, sample_text, save)
+    # Convert to result object
+    result: BuildResult = builder.to_result()
 
-        if json_workflow:
-            json_workflow.add_save(raw=save)
+    # -------------------------------------------
+    # Validate result
+    # -------------------------------------------
+    if not builder:
+        if builder_name == "freeform":
+            message = (
+                f"Cannot create {builder_name} builder from snippet "
+                f"(reference: {api_params.snippet_file or 'snippet'!r})"
+                f"\n{'-' * 60}\n"
+                f"{api_params.snippet_data}"
+            )
+        else:
+            message = (
+                f"Cannot create {builder_name} builder from sample "
+                f"(reference: {api_params.sample_file or api_params.command!r})"
+                f"\n{'-' * 60}\n"
+                f"{api_params.sample_data}\n"
+            )
 
-        exit_code = 0
-        failure_message = ""
-        failure_severity = ""
+        return DotDict(
+            builder_result=result,
+            status=StatusString(message, status=False, reason="error"),
+            exit_code=1,
+        )
 
-        for info in results:
-            message = info.get("message", "")
-            severity = info.get("severity") or ""
-            if json_workflow:
-                json_workflow.append_save_file(
-                    {"kind": info["kind"], "path": info["path"]}
-                )
-            else:
-                emit_status(message)
-
-            if severity in ("error", "warning"):
-                failure_message = message
-                failure_severity = severity
-                exit_code = 1
-
-        if json_workflow:
-            if exit_code == 0:
-                json_workflow.set_status(
-                    kind="success",
-                    message="",
-                    exit_code=0,
-                )
-            else:
-                json_workflow.set_status(
-                    kind=failure_severity or "error",
-                    message=failure_message,
-                    exit_code=exit_code,
-                )
-
-        return exit_code
-
-    # Show
-    outputs_info = show_outputs(result, sample_text, show)
-    if json_workflow:
-        json_workflow.add_show(raw=show, resolved=outputs_info)
-        json_workflow.set_status(kind="success", message="", exit_code=0)
-    else:
-        if not suppressed_message:
-            parts: list[str] = []
-            for key, output in outputs_info.items():
-                header = f"=== {key} ==="
-                if isinstance(output, str):
-                    parts.append(f"{header}\n{output}")
-                else:
-                    parts.append(
-                        f"{header}\n{json.dumps(output, indent=2, ensure_ascii=False)}"
-                    )
-            emit_status("\n==========\n".join(parts))
-    return 0
+    # -------------------------------------------
+    # Success
+    # -------------------------------------------
+    return DotDict(
+        builder_result=result,
+        status=StatusString(status=True),
+        exit_code=0,
+    )
 
 
 # ------------------------------------------------------------
@@ -1248,6 +1135,7 @@ def generate_or_save_config_new(
 
     click.echo(content)
     raise SystemExit(0)
+
 
 # ------------------------------------------------------------
 # Golden Test: Dry-Run or Create
