@@ -78,13 +78,16 @@ def timed_step(func):
         if "workflow_steps" not in new_state:
             new_state["workflow_steps"] = []
 
-        new_state["workflow_steps"].append(
-            {
-                "step": new_state.name,
-                "duration_ms": duration_ms,
-                "status": new_state.status or "completed",
-            }
-        )
+        existed = any(step.step == new_state.name for step in new_state["workflow_steps"])
+
+        if not existed:
+            new_state["workflow_steps"].append(
+                DotDict({
+                    "step": new_state.name,
+                    "duration_ms": duration_ms,
+                    "status": new_state.status or "completed",
+                })
+            )
 
         return new_state
 
@@ -217,7 +220,7 @@ def create_config_step(state):
     result = create_config(state.api_params)
 
     if result.exit_code != 0:
-        return abort(state, result.status, result.exit_code)
+        return abort(state, result.status, result.exit_code, generated_config=result.generated_config)
 
     payload_txt = json.dumps(result.generated_config.payload, indent=2)
     output = (
