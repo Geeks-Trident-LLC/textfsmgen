@@ -18,28 +18,9 @@ class APIParams:
     merged: Dict[str, Any] = field(default_factory=dict)
 
 
-# ------------------------------------------------------------
-# 2. Builder section
-# ------------------------------------------------------------
 @dataclass
-class BuilderSection:
-    name: str
-    params: Dict[str, Any]
-
-    # freeform-only
-    snippet: Optional[str] = None
-    snippet_file: Optional[str] = None
-
-    # common
-    sample: Optional[str] = None
-    sample_file: Optional[str] = None
-
-    built: bool = False
-    warning: Optional[str] = None
-
-    # outputs
-    template: Optional[str] = None
-    result: Optional[Any] = None  # list or dict depending on builder
+class BuildResult:
+    result: Dict[str, Any] = field(default_factory=dict)
 
 
 # ------------------------------------------------------------
@@ -139,8 +120,7 @@ class JsonState:
 class JsonWorkflow:
     cli_options: Optional[CliOptions] = None
     api_params: Optional[APIParams] = None
-
-    builder: Optional[BuilderSection] = None
+    build_result: Optional[BuildResult] = None
 
     generated_config: Optional[GeneratedConfig] = None
     golden_test: Optional[GoldenTestSection] = None
@@ -188,154 +168,3 @@ class JsonWorkflow:
             return obj
 
         return convert(self)
-
-    # --------------------------------------------------------
-    # Mutators
-    # --------------------------------------------------------
-    def add_cli_options(self, cli_options: dict) -> None:
-        self.cli_options = CliOptions(raw=cli_options)
-
-    def add_builder(
-        self,
-        *,
-        name: str,
-        params: dict,
-        snippet: str | None = None,
-        snippet_file: str | None = None,
-        sample: str | None = None,
-        sample_file: str | None = None,
-        built: bool = False,
-        warning: str | None = None,
-        template: str | None = None,
-        result: Any = None,
-    ) -> None:
-        self.builder = BuilderSection(
-            name=name,
-            params=params,
-            snippet=snippet,
-            snippet_file=snippet_file,
-            sample=sample,
-            sample_file=sample_file,
-            built=built,
-            warning=warning,
-            template=template,
-            result=result,
-        )
-
-    def update_builder(
-        self,
-        *,
-        name: str | None = None,
-        snippet: str | None = None,
-        built: bool | None = None,
-        warning: str | None = None,
-        template: str | None = None,
-        result: Any | None = None,
-    ) -> None:
-        if self.builder is None:
-            return
-
-        mapping = {
-            "name": name,
-            "snippet": snippet,
-            "built": built,
-            "warning": warning,
-            "template": template,
-            "result": result,
-        }
-
-        for attr, val in mapping.items():
-            if val is not None:
-                setattr(self.builder, attr, val)
-
-    def add_generated_config(
-        self,
-        *,
-        stream: str,
-        path: Optional[str],
-        payload: dict,
-    ) -> None:
-        self.generated_config = GeneratedConfig(
-            stream=stream,
-            path=path,
-            payload=payload,
-        )
-
-    def add_golden_test(
-        self,
-        *,
-        path: str,
-        manifest: dict,
-        inputs: dict,
-        expected_results: dict,
-        expected: dict,
-    ) -> None:
-        self.golden_test = GoldenTestSection(
-            path=path,
-            manifest=GoldenFile(
-                path=manifest.get("path"),
-                content=manifest.get("content"),
-            ),
-            inputs=inputs,
-            expected_results=expected_results,
-            expected=expected,
-        )
-
-    def add_golden_test_dry_run(self, lines: list[str]) -> None:
-        self.golden_test_dry_run = GoldenTestDryRun(lines=lines or [])
-
-    def add_debug(self, text: str) -> None:
-        self.debug = DebugSection(text=text)
-
-    def add_save_dry_run(self, lines: list[str]) -> None:
-        self.save_dry_run = SaveDryRunSection(lines=lines or [])
-
-    def add_save(self, raw: str | None = None, files: list[dict] | None = None) -> None:
-        self.save = SaveSection(raw=raw, files=files or [])
-
-    def append_save_file(self, file: dict) -> None:
-        if self.save is None:
-            self.save = SaveSection(raw=None, files=[])
-        if self.save.files is None:
-            self.save.files = []
-        self.save.files.append(file)
-
-    def add_show(self, raw: str | None = None, resolved: dict | None = None) -> None:
-        self.show = ShowSection(raw=raw, resolved=resolved or {})
-
-    def add_state(
-        self,
-        name: str = "",
-        status: str = "",
-        message: str = "",
-        output: Optional[dict] = None,
-        exit_code: int = 0,
-    ) -> None:
-        """Replace the entire state with a new JsonState."""
-        self.state = JsonState(
-            name=name,
-            status=status,
-            message=message,
-            output=output or {},
-            exit_code=exit_code,
-        )
-
-    def update_state(
-        self,
-        name: Optional[str] = None,
-        status: Optional[str] = None,
-        message: Optional[str] = None,
-        output: Optional[dict] = None,
-        exit_code: Optional[int] = None,
-    ) -> None:
-        """Update only the provided fields of the existing state."""
-        if name is not None:
-            self.state.name = name
-        if status is not None:
-            self.state.status = status
-        if message is not None:
-            self.state.message = message
-        if output is not None:
-            self.state.output = output
-        if exit_code is not None:
-            self.state.exit_code = exit_code
