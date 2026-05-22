@@ -420,10 +420,67 @@ def create_config(api_params):
     )
 
 
+def prepare_golden_test_info(api_params):
+    """
+    Precompute all paths, manifest, and creation_result for a golden test case.
+    This function is pure: it performs no I/O and never fails.
+    """
+    base_path = Path(api_params.create_golden_test).resolve()
+
+    manifest = {
+        "builder": api_params.builder,
+        "params": api_params.params,
+        "meta": {
+            "author": "",
+            "email": "",
+            "description": "",
+            "notes": "",
+            "schema_version": "1.0",
+        },
+    }
+
+    # Directory layout
+    inputs_dir = base_path / "inputs"
+    expected_dir = base_path / "expected"
+    expected_results_dir = base_path / "expected_results"
+
+    # File layout
+    files = {
+        "sample": inputs_dir / "sample.txt",
+        "snippet": expected_dir / "snippet.txt",
+        "template": expected_dir / "textfsm.template",
+        "result": expected_results_dir / "sample_result.json",
+        "manifest": base_path / "manifest.json",
+    }
+
+    # Machine-readable creation_result (dry-run or real)
+    creation_result = DotDict(
+        stream="stream" if api_params.dry_run else "io",
+        path=str(base_path),
+        manifest={"path": str(files["manifest"]), "content": manifest},
+        inputs=[str(files["sample"])],
+        expected=[str(files["snippet"]), str(files["template"])],
+        expected_results=[str(files["result"])],
+    )
+
+    return DotDict(
+        base_path=base_path,
+        manifest=manifest,
+        inputs_dir=inputs_dir,
+        expected_dir=expected_dir,
+        expected_results_dir=expected_results_dir,
+        files=files,
+        creation_result=creation_result,
+    )
+
+
 def create_golden_test(api_params, builder_result):
     """
     Create or dry-run a golden test case based on builder output and API params.
     """
+    info = prepare_golden_test_info(api_params)
+    base_path = info.base_path
+    files = info.files
 
     # ------------------------------------------------------------
     # 0. Validate sample
@@ -436,21 +493,14 @@ def create_golden_test(api_params, builder_result):
                 status=False,
                 reason="error",
             ),
-            creation_result=None,
+            creation_result=info.creation_result,
             output="",
             exit_code=1,
         )
 
-    builder_name = api_params.builder
-
     # ------------------------------------------------------------
-    # 1. Determine mode + base path
+    # 1. Validate golden test path structure
     # ------------------------------------------------------------
-
-    mode = "dry-run" if api_params.dry_run else "create"
-    base_path = Path(api_params.create_golden_test).resolve()
-
-    # Must be inside .../golden/integration/<case>
     if not (
         base_path.parent.name == "integration"
         and base_path.parent.parent.name == "golden"
@@ -462,65 +512,31 @@ def create_golden_test(api_params, builder_result):
                 status=False,
                 reason="error",
             ),
-            creation_result=None,
+            creation_result=info.creation_result,
             output="",
             exit_code=1,
         )
 
     # ------------------------------------------------------------
-    # 2. Prepare manifest + file layout
+    # 2. Dry-run mode
     # ------------------------------------------------------------
-    manifest = {
-        "builder": builder_name,
-        "params": api_params.params,
-        "meta": {
-            "author": "",
-            "email": "",
-            "description": "",
-            "notes": "",
-            "schema_version": "1.0",
-        },
-    }
-
-    inputs_dir = base_path / "inputs"
-    expected_dir = base_path / "expected"
-    expected_results_dir = base_path / "expected_results"
-
-    files = {
-        "sample": inputs_dir / "sample.txt",
-        "snippet": expected_dir / "snippet.txt",
-        "template": expected_dir / "textfsm.template",
-        "result": expected_results_dir / "sample_result.json",
-        "manifest": base_path / "manifest.json",
-    }
-
-    # ------------------------------------------------------------
-    # 3. Dry-run mode
-    # ------------------------------------------------------------
-    if mode == "dry-run":
+    if api_params.dry_run:
         lines = [f"[DRY-RUN] Golden test base path: {str(base_path)}"]
         for label, path in files.items():
             lines.append(f"[DRY-RUN] Would create: {str(path)}")
 
         return DotDict(
-            status=StatusString(status=True),
-            creation_result=DotDict(
-                stream="stream",
-                path=str(base_path),
-                manifest={"path": str(files["manifest"]), "content": manifest},
-                inputs=[str(files["sample"])],
-                expected=[str(files["snippet"]), str(files["template"])],
-                expected_results=[str(files["result"])],
-            ),
+            status=StatusString(True),
+            creation_result=info.creation_result,
             output="\n".join(lines),
             exit_code=0,
         )
 
     # ------------------------------------------------------------
-    # 4. Actual creation mode
+    # 3. Actual creation mode
     # ------------------------------------------------------------
     # Create directories
-    for d in (inputs_dir, expected_dir, expected_results_dir):
+    for d in (info.inputs_dir, info.expected_dir, info.expected_results_dir):
         d.mkdir(parents=True, exist_ok=True)
 
     # Prevent overwriting
@@ -532,50 +548,40 @@ def create_golden_test(api_params, builder_result):
                     status=False,
                     reason="error",
                 ),
-                creation_result=None,
+                creation_result=info.creation_result,
                 output="",
                 exit_code=1,
             )
 
     # ------------------------------------------------------------
-    # 5. Write files
+    # 4. Write files
     # ------------------------------------------------------------
     lines = [f"[INFO] Golden test created at {str(base_path)!r}"]
 
     files["sample"].write_text(api_params.sample_data, encoding="utf-8")
-    lines.append(f"  - sample   => {str(files['sample'])}")
+    lines.append(f"  - sample   => {files['sample']}")
 
     files["snippet"].write_text(builder_result.snippet, encoding="utf-8")
-    lines.append(f"  - snippet  => {str(files['snippet'])}")
+    lines.append(f"  - snippet  => {files['snippet']}")
 
     files["template"].write_text(builder_result.template, encoding="utf-8")
-    lines.append(f"  - template => {str(files['template'])}")
+    lines.append(f"  - template => {files['template']}")
 
     files["result"].write_text(
         json.dumps(builder_result.result, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
-    lines.append(f"  - result   => {str(files['result'])}")
+    lines.append(f"  - result   => {files['result']}")
 
     files["manifest"].write_text(
-        json.dumps(manifest, indent=2, ensure_ascii=False),
+        json.dumps(info.manifest, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
-    lines.append(f"  - manifest => {str(files['manifest'])}")
+    lines.append(f"  - manifest => {files['manifest']}")
 
-    # ------------------------------------------------------------
-    # 6. Build creation_result structure
-    # ------------------------------------------------------------
     return DotDict(
-        status=StatusString(status=True),
-        creation_result=DotDict(
-            stream="io",
-            path=str(base_path),
-            manifest={"path": str(files["manifest"]), "content": manifest},
-            inputs=[str(files["sample"])],
-            expected=[str(files["snippet"]), str(files["template"])],
-            expected_results=[str(files["result"])],
-        ),
+        status=StatusString(True),
+        creation_result=info.creation_result,
         output="\n".join(lines),
         exit_code=0,
     )

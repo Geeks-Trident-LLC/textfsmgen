@@ -23,7 +23,7 @@ from textfsmgen.cli import parameters
 # ------------------------------------------------------------
 # Helpers
 # ------------------------------------------------------------
-def abort(state, status_obj, exit_code, *, include_debug=True):
+def abort(state, status_obj, exit_code, *, include_debug=True, **kwargs):
     """Standardized abort handler."""
     message = emit_status(status_obj, display=False)
     debug = (
@@ -32,10 +32,7 @@ def abort(state, status_obj, exit_code, *, include_debug=True):
     output = f"{debug}\n{message}".strip()
 
     state.update(
-        status="aborted",
-        message=message,
-        output=output,
-        exit_code=exit_code,
+        status="aborted", message=message, output=output, exit_code=exit_code, **kwargs
     )
     return state
 
@@ -196,7 +193,9 @@ def create_golden_test_step(state):
     result = create_golden_test(state.api_params, state.builder_result)
 
     if result.exit_code != 0:
-        return abort(state, result.status, result.exit_code)
+        return abort(
+            state, result.status, result.exit_code, golden_test=result.creation_result
+        )
 
     output = f"{state.debug_report}\n{result.output}".strip()
     return complete(
