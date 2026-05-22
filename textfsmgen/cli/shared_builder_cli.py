@@ -27,25 +27,6 @@ BUILDER_MAPPING = {
 
 
 def parse_save_expression(expr: str):
-    """
-    Parse save syntax:
-
-        sample-out.txt,result-a.json
-        dryrun(sample-out.txt,result-a.json)
-
-    Returns:
-        ("", parsed)              # normal mode
-        ("dryrun", parsed)        # dry-run mode
-
-    Where parsed is:
-        [
-            {"kind": "sample", "path": "out.txt"},
-            {"kind": "result", "path": "a.json"},
-        ]
-
-    Raises:
-        ValueError on invalid syntax.
-    """
     expr = expr.strip()
     if not expr:
         raise ValueError("Empty --save expression")
@@ -53,40 +34,25 @@ def parse_save_expression(expr: str):
     mode = ""
     inner = expr
 
-    # Detect dryrun(...) wrapper
     if expr.startswith("dryrun(") and expr.endswith(")"):
         mode = "dryrun"
-        inner = expr[len("dryrun(") : -1].strip()
+        inner = expr[7:-1].strip()  # cleaner
 
     if not inner:
         raise ValueError("Empty save list inside expression")
 
-    allowed_kinds = {"sample", "snippet", "template", "result"}
-
-    raw_items = [x.strip() for x in inner.split(",") if x.strip()]
-    if not raw_items:
-        raise ValueError("No valid save items found")
+    allowed = {"sample", "snippet", "template", "result"}
 
     parsed = []
-
-    for item in raw_items:
+    for item in (x.strip() for x in inner.split(",") if x.strip()):
         if "-" not in item:
             raise ValueError(f"Invalid save item '{item}'. Expected <kind>-<filename>")
 
         kind, filename = item.split("-", 1)
-        kind = kind.strip()
-        filename = filename.strip()
+        if kind not in allowed:
+            raise ValueError(f"Invalid save kind '{kind}'. Allowed: {', '.join(sorted(allowed))}")
 
-        if kind not in allowed_kinds:
-            raise ValueError(
-                f"Invalid save kind '{kind}'. "
-                f"Allowed kinds: {', '.join(sorted(allowed_kinds))}"
-            )
-
-        if not filename:
-            raise ValueError(f"Missing filename for kind '{kind}'")
-
-        parsed.append({"kind": kind, "path": filename})
+        parsed.append({"kind": kind, "path": filename.strip()})
 
     return mode, parsed
 
