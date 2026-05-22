@@ -19,24 +19,55 @@ from textfsmgen.cli import validator
 from textfsmgen.cli import parameters
 
 
+# ------------------------------------------------------------
+# Helpers
+# ------------------------------------------------------------
+def abort(state, status_obj, exit_code, *, include_debug=True):
+    """Standardized abort handler."""
+    message = emit_status(status_obj, display=False)
+    debug = state.debug_report if include_debug and hasattr(state, "debug_report") else ""
+    output = f"{debug}\n{message}".strip()
+
+    state.update(
+        status="aborted",
+        message=message,
+        output=output,
+        exit_code=exit_code,
+    )
+    return state
+
+
+def complete(state, name, output, exit_code=0, **extra):
+    """Standardized completion handler."""
+    state.update(
+        name=name,
+        status="completed",
+        message="",
+        output=output.strip(),
+        exit_code=exit_code,
+        **extra,
+    )
+    return state
+
+
 def ready_check(func):
     """Skip execution if a previous step has aborted."""
-
     @wraps(func)
     def wrapper(state):
-        if hasattr(state, "status") and state.status:
+        if state.status:  # already aborted
             return state
         return func(state)
-
     return wrapper
 
 
+# ------------------------------------------------------------
+# Steps
+# ------------------------------------------------------------
 @ready_check
 def check_mandatory_cli_options_step(state):
     state.name = "check-mandatory-cli-options"
     o = state.cli_options
 
-    # Determine required fields based on builder type
     if state.builder == "freeform":
         missing = not o.snippet and not o.snippet_file and o.config is None
         status = StatusString(
@@ -52,15 +83,8 @@ def check_mandatory_cli_options_step(state):
             reason="error",
         )
 
-    # Abort if mandatory options missing
     if missing:
-        state.update(
-            status="aborted",
-            message=emit_status(status, display=False),
-            output=f"{state.message}\n{state.usage}",
-            exit_code=1,
-        )
-        return state
+        return abort(state, status, exit_code=1)
 
     return state
 
@@ -68,19 +92,19 @@ def check_mandatory_cli_options_step(state):
 @ready_check
 def load_config_step(state):
     state.name = "load-config"
+
     if not state.cli_options.config:
         state.loaded_config = DotDict()
         return state
 
     result = validator.validate_config(state.cli_options.config)
     if not result:
-        state.update(
-            status="aborted",
-            message=emit_status(result, display=False),
-            output=emit_status(result, display=False),
+        return abort(
+            state,
+            result,
             exit_code=2 if result.reason == "code-error" else 1,
+            include_debug=False,
         )
-        return state
 
     state.loaded_config = DotDict(result.raw)
     return state
@@ -89,17 +113,12 @@ def load_config_step(state):
 @ready_check
 def prepare_params_step(state):
     state.name = "prepare-run-params"
+
     result = parameters.prepare_params(
         state.builder, state.cli_options, state.loaded_config
     )
     if not result:
-        state.update(
-            status="aborted",
-            message=result.message,
-            output=result.message,
-            exit_code=result.exit_code,
-        )
-        return state
+        return abort(state, StatusString(result.message, False, result.reason), result.exit_code)
 
     state.api_params = result.options
     return state
@@ -109,7 +128,6 @@ def prepare_params_step(state):
 def build_debug_report_step(state):
     state.name = "create-debug-report"
     state.debug_report = build_debug_report(state.api_params)
-
     state.output = state.debug_report
     return state
 
@@ -117,155 +135,106 @@ def build_debug_report_step(state):
 @ready_check
 def execute_step(state):
     state.name = "execute"
+
     result = execute_builder(state.api_params)
     state.builder_result = result.builder_result
 
-    message = emit_status(result.status, display=False)
-
     if result.exit_code != 0:
-        state.update(
-            status="aborted",
-            message=message,
-            output=f"{state.debug_report}\n{message}".strip(),
-            exit_code=result.exit_code,
-        )
-        return state
+        return abort(state, result.status, result.exit_code)
 
     return state
 
 
 @ready_check
 def create_golden_test_step(state):
-
-    if (
-        not state.api_params.create_golden_test
-        and not state.api_params.create_golden_test_path
-    ):
+    if not (state.api_params.create_golden_test or state.api_params.create_golden_test_path):
         return state
 
     state.name = "create-golden-test"
     result = create_golden_test(state.api_params, state.builder_result)
 
-    message = emit_status(result.status, display=False)
-
     if result.exit_code != 0:
-        state.update(
-            status="aborted",
-            message=message,
-            output=f"{state.debug_report}\n{message}".strip(),
-            exit_code=result.exit_code,
-        )
-        return state
+        return abort(state, result.status, result.exit_code)
 
-    state.update(
-        golden_test=result.creation_result,
-        status="completed",
-        message="",
-        output=f"{state.debug_report}\n{result.output}".strip(),
+    output = f"{state.debug_report}\n{result.output}".strip()
+    return complete(
+        state,
+        "create-golden-test",
+        output,
         exit_code=result.exit_code,
+        golden_test=result.creation_result,
     )
-    return state
 
 
 @ready_check
 def create_config_step(state):
-
-    if not state.api_params.create_config and not state.api_params.create_config_file:
+    if not (state.api_params.create_config or state.api_params.create_config_file):
         return state
 
     state.name = "create-config"
     result = create_config(state.api_params)
 
-    message = emit_status(result.status, display=False)
+    if result.exit_code != 0:
+        return abort(state, result.status, result.exit_code)
 
     payload_txt = json.dumps(result.generated_config.payload, indent=2)
-
-    if result.exit_code != 0:
-        state.update(
-            status="aborted",
-            message=message,
-            output=f"{state.debug_report}\n{message}".strip(),
-            exit_code=result.exit_code,
-        )
-        return state
-
-    state.update(
-        generated_config=result.generated_config,
-        status="completed",
-        message="",
-        output=(
-            f"{state.debug_report}\n{payload_txt}".strip()
-            if result.generated_config.stream == "stream"
-            else f"{state.debug_report}\n{message}".strip()
-        ),
-        exit_code=result.exit_code,
+    output = (
+        f"{state.debug_report}\n{payload_txt}"
+        if result.generated_config.stream == "stream"
+        else f"{state.debug_report}\n{emit_status(result.status, display=False)}"
     )
-    return state
+
+    return complete(
+        state,
+        "create-config",
+        output,
+        exit_code=result.exit_code,
+        generated_config=result.generated_config,
+    )
 
 
 @ready_check
 def save_step(state):
-
     if not state.api_params.save:
         return state
 
     state.name = "save-output"
-
     result = save_outputs(state.api_params, state.builder_result)
 
-    message = emit_status(result.status, display=False)
-
     if result.exit_code != 0:
-        state.update(
-            status="aborted",
-            message=message,
-            output=f"{state.debug_report}\n{message}".strip(),
-            exit_code=result.exit_code,
-        )
-        return state
+        return abort(state, result.status, result.exit_code)
 
     output = "\n".join(item["message"] for item in result.save_info.files)
-    state.update(
-        save=result.save_info,
-        status="completed",
-        message="",
-        output=(f"{state.debug_report}\n{output}".strip()),
+    output = f"{state.debug_report}\n{output}"
+
+    return complete(
+        state,
+        "save-output",
+        output,
         exit_code=result.exit_code,
+        save=result.save_info,
     )
-    return state
 
 
 @ready_check
 def show_step(state):
-
     state.name = "show-output"
 
     result = show_outputs(state.api_params, state.builder_result)
 
-    message = emit_status(result.status, display=False)
-
     if result.exit_code != 0:
-        state.update(
-            status="aborted",
-            message=message,
-            output=f"{state.debug_report}\n{message}".strip(),
-            exit_code=result.exit_code,
-        )
-        return state
+        return abort(state, result.status, result.exit_code)
 
     parts = []
     for item in result.show_info.resolved.values():
-        if isinstance(item, str):
-            parts.append(item)
-            continue
-        parts.append(json.dumps(item, indent=2))
+        parts.append(item if isinstance(item, str) else json.dumps(item, indent=2))
 
-    output = f"\n{'-' * 60}\n".join(parts)
-    state.update(
-        show=result.show_info,
-        status="completed",
-        message="",
-        output=(f"{state.debug_report}\n{output}".strip()),
+    output = f"{state.debug_report}\n" + "\n" + ("-" * 60 + "\n").join(parts)
+
+    return complete(
+        state,
+        "show-output",
+        output,
         exit_code=result.exit_code,
+        show=result.show_info,
     )
-    return state
