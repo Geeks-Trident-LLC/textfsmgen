@@ -92,37 +92,15 @@ def parse_save_expression(expr: str):
 
 
 def _write_file(filename: str, content: str, kind: str, mode: str = "") -> StatusString:
-    """
-    Write content to filename, or simulate writing in dry-run mode.
-
-    Returns:
-        StatusString with a kind-aware message.
-    """
-    is_dry_run = mode == "dryrun"
-
-    if is_dry_run:
-        return StatusString(
-            f"[DRY-RUN] {kind} → {filename}",
-            status=True,
-            reason="info",
-        )
+    if mode == "dryrun":
+        return StatusString(f"[DRY-RUN] {kind} → {filename}", True, "info")
 
     try:
-        with open(filename, "w", encoding="utf-8") as f:
-            f.write(content)
-
-        return StatusString(
-            f"Saved {kind} → {filename}",
-            status=True,
-            reason="info",
-        )
-
+        Path(filename).write_text(content, encoding="utf-8")
+        return StatusString(f"Saved {kind} → {filename}", True, "info")
     except Exception as exc:
-        return StatusString(
-            f"Failed to save {kind} → {filename}: {exc}",
-            status=False,
-            reason="code-error",
-        )
+        return StatusString(f"Failed to save {kind} → {filename}: {exc}", False, "code-error")
+
 
 
 def save_outputs(api_params, builder_result):
