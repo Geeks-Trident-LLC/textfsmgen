@@ -378,69 +378,46 @@ def build_debug_report(api_params):
 
 
 def execute_builder(api_params):
-    builder_name = api_params.builder
-    builder_cls = BUILDER_MAPPING[builder_name]
+    builder_cls = BUILDER_MAPPING[api_params.builder]
     builder = builder_cls()
 
-    # -------------------------------------------
-    # Set snippet/sample inputs
-    # -------------------------------------------
-    if builder_name == "freeform":
-        builder.set_snippet(api_params.snippet_data)
-        if api_params.sample_data.strip():
-            builder.set_sample(api_params.sample_data)
-    else:
-        builder.set_sample(api_params.sample_data, **api_params.params)
-
-    # -------------------------------------------
-    # Build
-    # -------------------------------------------
     try:
+        if api_params.builder == "freeform":
+            builder.set_snippet(api_params.snippet_data)
+            if api_params.sample_data.strip():
+                builder.set_sample(api_params.sample_data)
+        else:
+            builder.set_sample(api_params.sample_data, **api_params.params)
+
         builder.build()
     except Exception as exc:
-        message = f"Builder {builder_cls.__name__} failed with error: {exc}"
         return DotDict(
             builder_result=None,
-            status=StatusString(message, status=False, reason="code-error"),
+            status=StatusString(f"Builder {builder_cls.__name__} failed: {exc}", False, "code-error"),
             exit_code=2,
         )
 
-    # Convert to result object
-    result: BuildResult = builder.to_result()
+    result = builder.to_result()
 
-    # -------------------------------------------
-    # Validate result
-    # -------------------------------------------
     if not builder:
-        if builder_name == "freeform":
-            message = (
-                f"Cannot create {builder_name} builder from snippet "
-                f"(reference: {api_params.snippet_file or 'snippet'!r})"
-                f"\n{'-' * 60}\n"
-                f"{api_params.snippet_data}"
-            )
-        else:
-            message = (
-                f"Cannot create {builder_name} builder from sample "
-                f"(reference: {api_params.sample_file or api_params.command!r})"
-                f"\n{'-' * 60}\n"
-                f"{api_params.sample_data}\n"
-            )
-
+        ref = (
+            api_params.snippet_file or "snippet"
+            if api_params.builder == "freeform" else
+            api_params.sample_file or api_params.command
+        )
+        msg = f"Cannot create {api_params.builder} builder from {ref!r}\n{'-'*60}\n{api_params.sample_data}"
         return DotDict(
             builder_result=result,
-            status=StatusString(message, status=False, reason="error"),
+            status=StatusString(msg, False, "error"),
             exit_code=1,
         )
 
-    # -------------------------------------------
-    # Success
-    # -------------------------------------------
     return DotDict(
         builder_result=result,
-        status=StatusString(status=True),
+        status=StatusString(True),
         exit_code=0,
     )
+
 
 
 def create_config(api_params):
