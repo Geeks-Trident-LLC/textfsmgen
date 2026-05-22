@@ -263,83 +263,45 @@ def save_outputs(api_params, builder_result):
 
 
 def show_outputs(api_params, builder_result):
-    """
-    Resolve --show targets into a dict:
-        {
-            "sample": "...",
-            "result": [...],
-            "template": "...",
-            "snippet": "...",
-            "tabular": "..."
-        }
-    """
-
     show_spec = (api_params.show or "").strip()
-    cases = [c.strip() for c in show_spec.split(",") if c.strip()]
+    cases = [c for c in (x.strip() for x in show_spec.split(",")) if c]
 
-    # Default behavior: show template only
     if not cases:
         return DotDict(
-            status=StatusString(status=True),
+            status=StatusString(True),
             show_info=DotDict(
-                raw=show_spec,
-                resolved={"template": builder_result.template},
+                raw=show_spec, resolved={"template": builder_result.template}
             ),
             exit_code=0,
         )
 
-    resolved: dict[str, object] = {}
+    resolved = {}
 
-    # ------------------------------------------------------------
-    # Helper: resolve result-like outputs (result/default/tabular)
-    # ------------------------------------------------------------
-    def resolve_result(case: str):
+    def resolve_result(kind):
         if builder_result.warning:
             return builder_result.warning
-
-        if case == "result":
+        if kind == "result":
             return builder_result.result
-
-        if case == "default":
+        if kind == "default":
             return str(builder_result.result)
-
-        if case == "tabular":
+        if kind == "tabular":
             return get_data_as_tabular(builder_result.result)
 
-        raise KeyError(case)
-
-    # ------------------------------------------------------------
-    # Process each case
-    # ------------------------------------------------------------
     for case in cases:
-        # sample
         if case == "sample":
             resolved["sample"] = api_params.sample_data
-            continue
-
-        # snippet / template
-        if case in ("snippet", "template"):
-            value = getattr(builder_result, case, None)
-            resolved[case] = value or f"Builder has no '{case}' content"
-            continue
-
-        # result / default / tabular
-        if case in ("result", "default", "tabular"):
+        elif case in ("snippet", "template"):
+            resolved[case] = (
+                getattr(builder_result, case) or f"Builder has no '{case}' content"
+            )
+        elif case in ("result", "default", "tabular"):
             resolved["result"] = resolve_result(case)
-            continue
+        else:
+            resolved[case] = f"Unknown show target '{case}'"
 
-        # unknown
-        resolved[case] = f"Unknown show target '{case}'"
-
-    # ------------------------------------------------------------
-    # Final return
-    # ------------------------------------------------------------
     return DotDict(
-        status=StatusString(status=True),
-        show_info=DotDict(
-            raw=show_spec,
-            resolved=resolved,
-        ),
+        status=StatusString(True),
+        show_info=DotDict(raw=show_spec, resolved=resolved),
         exit_code=0,
     )
 
