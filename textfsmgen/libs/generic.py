@@ -8,7 +8,6 @@ General-purpose generic classes used across TextFSMGen.
 import re
 
 
-import re
 from typing import Any, Mapping, Iterable
 
 
@@ -20,11 +19,14 @@ class DotDict(dict):
     _valid_attr = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
     _reserved = (
-        set(dir(dict)) |
-        set(dir(object)) |
-        {
-            "_valid_attr", "_reserved", "_wrap",
-            "from_mapping", "from_pairs",
+        set(dir(dict))
+        | set(dir(object))
+        | {
+            "_valid_attr",
+            "_reserved",
+            "_wrap",
+            "from_mapping",
+            "from_pairs",
             "_find_normalized_key",
         }
     )

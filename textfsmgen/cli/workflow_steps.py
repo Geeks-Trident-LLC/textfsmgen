@@ -8,8 +8,8 @@ from textfsmgen.cli.shared_builder_cli import (
     execute_builder,
     create_golden_test,
     create_config,
-    save_outputs_v2,
-    show_outputs_v2
+    save_outputs,
+    show_outputs,
 )
 
 from textfsmgen.libs.common import emit_status
@@ -20,7 +20,7 @@ from textfsmgen.cli import parameters
 
 
 def ready_check(func):
-    """Skip execution if a previous step has aborteded."""
+    """Skip execution if a previous step has aborted."""
 
     @wraps(func)
     def wrapper(state):
@@ -137,7 +137,10 @@ def execute_step(state):
 @ready_check
 def create_golden_test_step(state):
 
-    if not state.api_params.create_golden_test and not state.api_params.create_golden_test_path:
+    if (
+        not state.api_params.create_golden_test
+        and not state.api_params.create_golden_test_path
+    ):
         return state
 
     state.name = "create-golden-test"
@@ -192,8 +195,8 @@ def create_config_step(state):
         message="",
         output=(
             f"{state.debug_report}\n{payload_txt}".strip()
-            if result.generated_config.stream == "stream" else
-            f"{state.debug_report}\n{message}".strip()
+            if result.generated_config.stream == "stream"
+            else f"{state.debug_report}\n{message}".strip()
         ),
         exit_code=result.exit_code,
     )
@@ -208,7 +211,7 @@ def save_step(state):
 
     state.name = "save-output"
 
-    result = save_outputs_v2(state.api_params, state.builder_result)
+    result = save_outputs(state.api_params, state.builder_result)
 
     message = emit_status(result.status, display=False)
 
@@ -221,14 +224,12 @@ def save_step(state):
         )
         return state
 
-    output = '\n'.join(item['message'] for item in result.save_info.files)
+    output = "\n".join(item["message"] for item in result.save_info.files)
     state.update(
         save=result.save_info,
         status="completed",
         message="",
-        output=(
-            f"{state.debug_report}\n{output}".strip()
-        ),
+        output=(f"{state.debug_report}\n{output}".strip()),
         exit_code=result.exit_code,
     )
     return state
@@ -239,7 +240,7 @@ def show_step(state):
 
     state.name = "show-output"
 
-    result = show_outputs_v2(state.api_params, state.builder_result)
+    result = show_outputs(state.api_params, state.builder_result)
 
     message = emit_status(result.status, display=False)
 
@@ -264,9 +265,7 @@ def show_step(state):
         show=result.show_info,
         status="completed",
         message="",
-        output=(
-            f"{state.debug_report}\n{output}".strip()
-        ),
+        output=(f"{state.debug_report}\n{output}".strip()),
         exit_code=result.exit_code,
     )
     return state

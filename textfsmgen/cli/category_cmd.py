@@ -2,18 +2,8 @@
 
 import click
 
-from textfsmgen.libs.common import emit_status
-from textfsmgen import CategoryBuilder
+from .builder_runner import BuilderRunner
 
-from .shared_builder_cli import (
-    merge,
-    validate_config,
-    run_builder_workflow,
-    generate_or_save_config,
-    dry_run_or_create_golden_test,
-)
-
-from .json_model import JsonWorkflow
 from .help_text import HELP
 
 
@@ -84,153 +74,12 @@ def register(cli):
     help=HELP.json,
 )
 @click.pass_context
-def category(ctx, **kwargs):
-    """
-    Build a template from categorized text.
-    """
-
-    sample_file = kwargs.get("sample_file")
-    command = kwargs.get("command")
-    count = kwargs.get("count")
-    separator = kwargs.get("separator")
-    starting_from = kwargs.get("starting_from")
-    ending_at = kwargs.get("ending_at")
-    replacing_rules = kwargs.get("replacing_rules")
-    save = kwargs.get("save")
-    show = kwargs.get("show")
-    config = kwargs.get("config")
-    debug = kwargs.get("debug")
-    create_config = kwargs.get("create_config")
-    create_config_file = kwargs.get("create_config_file")
-    create_golden_test = kwargs.get("create_golden_test")
-    create_golden_test_path = kwargs.get("create_golden_test_path")
-    json_mode = kwargs.get("json_mode")
-
-    # ------------------------------------------------------------
-    # JSON workflow initialization
-    # ------------------------------------------------------------
-    json_workflow = JsonWorkflow() if json_mode else None
-    if json_workflow:
-        json_workflow.add_cli_options(kwargs.copy())
-
-    # ------------------------------------------------------------
-    # Early help
-    # ------------------------------------------------------------
-    if not sample_file and not command and config is None:
-        if json_workflow:
-            json_workflow.set_status(
-                kind="warning",
-                message="Required --sample-file, --command, or --config",
-                exit_code=1,
-            )
-            click.echo(json_workflow.to_json(validating=True))
-            raise SystemExit(1)
-
-        click.echo(ctx.get_help())
-        raise SystemExit(0)
-
-    # ------------------------------------------------------------
-    # Load config (optional)
-    # ------------------------------------------------------------
-    config_data = {}
-    if config:
-        required_top = ["builder", "params", "sample_file", "command", "show", "save"]
-        required_params = [
-            "count",
-            "separator",
-            "starting_from",
-            "ending_at",
-            "replacing_rules",
-        ]
-
-        status = validate_config(config, required_top, required_params)
-        if not status:
-            if json_workflow:
-                json_workflow.set_status(
-                    kind=status.reason,
-                    message=str(status),
-                    exit_code=1,
-                )
-                click.echo(json_workflow.to_json(validating=True))
-                raise SystemExit(1)
-
-            emit_status(status)
-            raise SystemExit(1)
-
-        config_data = status.raw or {}
-
-    # ------------------------------------------------------------
-    # Merge CLI + config
-    # ------------------------------------------------------------
-    sample_file_ = merge(sample_file, config_data, "sample_file", "")
-    command_ = merge(command, config_data, "command", "")
-    save_ = merge(save, config_data, "save", "")
-    show_ = merge(show, config_data, "show", "")
-
-    params = {
-        "count": merge(count, config_data, "count", 1),
-        "separator": merge(separator, config_data, "separator", ":"),
-        "starting_from": merge(starting_from, config_data, "starting_from", None),
-        "ending_at": merge(ending_at, config_data, "ending_at", None),
-        "replacing_rules": merge(replacing_rules, config_data, "replacing_rules", None),
-    }
-
-    # ------------------------------------------------------------
-    # Determine post-build actions
-    # ------------------------------------------------------------
-    want_config = create_config or bool(create_config_file)
-    want_golden = create_golden_test or bool(create_golden_test_path)
-    suppressed = want_config or want_golden
-
-    # ------------------------------------------------------------
-    # Run builder workflow
-    # ------------------------------------------------------------
-    exit_code = run_builder_workflow(
-        CategoryBuilder,
-        sample_file=sample_file_,
-        command=command_,
-        params=params,
-        save=save_,
-        show=show_,
-        config=config_data,
-        debug=debug,
-        suppressed_message=suppressed,
-        json_workflow=json_workflow,
+def category(ctx, **cli_options):
+    runner = BuilderRunner(
+        builder="category", usage=ctx.get_help(), cli_options=cli_options
     )
 
-    # ------------------------------------------------------------
-    # Post-build: generate config
-    # ------------------------------------------------------------
-    if want_config and exit_code == 0:
-        generate_or_save_config(
-            "category",
-            cfg_path=create_config_file,
-            params=params,
-            sample_file=sample_file_,
-            command=command_,
-            show=show_,
-            save=save_,
-            json_workflow=json_workflow,
-        )
+    result = runner.run()
 
-    # ------------------------------------------------------------
-    # Post-build: golden test
-    # ------------------------------------------------------------
-    if want_golden and exit_code == 0:
-        dry_run_or_create_golden_test(
-            CategoryBuilder,
-            "category",
-            golden_path=create_golden_test_path,
-            params=params,
-            sample_file=sample_file_,
-            command=command_,
-            json_workflow=json_workflow,
-        )
-
-    # ------------------------------------------------------------
-    # Final JSON output
-    # ------------------------------------------------------------
-    if json_workflow:
-        click.echo(json_workflow.to_json(validating=True))
-
-    raise SystemExit(exit_code)
+    click.echo(result.output)
+    raise SystemExit(result.exit_code)

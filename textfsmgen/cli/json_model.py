@@ -13,7 +13,6 @@ class CliOptions:
     raw: Dict[str, Any] = field(default_factory=dict)
 
 
-
 @dataclass
 class APIParams:
     merged: Dict[str, Any] = field(default_factory=dict)
@@ -88,16 +87,6 @@ class DebugSection:
 
 
 # ------------------------------------------------------------
-# 7. Status section
-# ------------------------------------------------------------
-@dataclass
-class StatusSection:
-    kind: str  # "success" | "warning" | "error"
-    message: Optional[str]
-    exit_code: int
-
-
-# ------------------------------------------------------------
 # 8. Show section
 # ------------------------------------------------------------
 @dataclass
@@ -158,7 +147,6 @@ class JsonWorkflow:
     golden_test_dry_run: Optional[GoldenTestDryRun] = None
 
     debug: Optional[DebugSection] = None
-    status: Optional[StatusSection] = None
 
     show: Optional[ShowSection] = None
     save: Optional[SaveSection] = None
@@ -170,7 +158,7 @@ class JsonWorkflow:
     # --------------------------------------------------------
     # Serialization
     # --------------------------------------------------------
-    def to_json(self, validating: bool = False) -> str:
+    def to_json(self) -> str:
         """
         Serialize the workflow to JSON.
 
@@ -178,14 +166,6 @@ class JsonWorkflow:
             - Ensure that required fields are present
             - Raise an exception if the workflow is incomplete
         """
-        if validating:
-            ""
-            # if self.status is None:
-            #     raise RuntimeError(
-            #         "JsonWorkflow.to_json(validating=True) requires a status section. "
-            #         "Call set_status() before serializing."
-            #     )
-
         return json.dumps(
             self._to_dict(),
             indent=2,
@@ -306,13 +286,6 @@ class JsonWorkflow:
 
     def add_debug(self, text: str) -> None:
         self.debug = DebugSection(text=text)
-
-    def set_status(self, *, kind: str, message: str, exit_code: int) -> None:
-        self.status = StatusSection(
-            kind=kind,
-            message=message,
-            exit_code=exit_code,
-        )
 
     def add_save_dry_run(self, lines: list[str]) -> None:
         self.save_dry_run = SaveDryRunSection(lines=lines or [])

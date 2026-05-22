@@ -12,31 +12,29 @@ from textfsmgen.libs.common import emit_status
 
 
 DEFAULT_VALUES = {
-        "sample_file": None,
-        "command": "",
-        "debug": False,
-        "show": "",
-        "save": "",
-        "create_config": False,
-        "create_config_file": None,
-        "create_golden_test": False,
-        "create_golden_test_path": None,
-        "json_mode": False,
-
-        "count": 1,
-        "separator": ":",
-
-        "column_divider": "",
-        "column_count": 0,
-        "column_widths": "",
-        "headers": None,
-        "header_rows": None,
-        "custom_header_text": "",
-        "starting_from": None,
-        "ending_at": None,
-        "has_header_row": None,
-        "replacing_rules": None
-    }
+    "sample_file": None,
+    "command": "",
+    "debug": False,
+    "show": "",
+    "save": "",
+    "create_config": False,
+    "create_config_file": None,
+    "create_golden_test": False,
+    "create_golden_test_path": None,
+    "json_mode": False,
+    "count": 1,
+    "separator": ":",
+    "column_divider": "",
+    "column_count": 0,
+    "column_widths": "",
+    "headers": None,
+    "header_rows": None,
+    "custom_header_text": "",
+    "starting_from": None,
+    "ending_at": None,
+    "has_header_row": None,
+    "replacing_rules": None,
+}
 
 
 @dataclass
@@ -46,7 +44,8 @@ class PreparedParams:
     message: str = ""
     exit_code: int = 0
 
-    def __bool__(self): return self.exit_code == 0
+    def __bool__(self):
+        return self.exit_code == 0
 
     def to_json(self):
         return {
@@ -109,7 +108,6 @@ def validate_required_params(merged_options):
     # FREEFORM BUILDER
     # -------------------------------
     if merged_options.builder == "freeform":
-
         # Require snippet OR snippet_file
         if not merged_options.snippet and not merged_options.snippet_file:
             return StatusString(
