@@ -126,140 +126,87 @@ def _write_file(filename: str, content: str, kind: str, mode: str = "") -> Statu
 
 
 def save_outputs(api_params, builder_result):
-    """
-    Save outputs using the unified syntax:
-        --save=sample-out.txt,snippet-snippet.txt,template-template.textfsm,result-out.json
-
-    Returns:
-        DotDict(
-            status=StatusString(...),
-            files=[...],
-            exit_code=int,
-        )
-    """
-
-    # ------------------------------------------------------------
-    # Helpers
-    # ------------------------------------------------------------
-    def append(kind_, path, status_):
-        files.append(
-            {
-                "kind": kind_,
-                "path": path,
-                "severity": status_.reason,
-                "message": str(status_),
-            }
-        )
-
-    def record_failure(status_):
-        msg = emit_status(status_)
-        failure_messages.append(msg)
-        return "[FATAL]" in msg
-
-    # ------------------------------------------------------------
-    # Parse save expression
-    # ------------------------------------------------------------
     try:
         _, items = parse_save_expression(api_params.save)
     except ValueError as exc:
-        message = f"Parse-Expression ({type(exc).__name__}: {exc})"
         return DotDict(
-            status=StatusString(message, status=False, reason="code-error"),
+            status=StatusString(f"Parse-Expression ({exc})", False, "code-error"),
             save_info={"raw": api_params.save, "files": []},
             exit_code=2,
         )
 
     files = []
-    failure_messages = []
+    failures = []
     fatal = False
 
-    # ------------------------------------------------------------
-    # Process each save item
-    # ------------------------------------------------------------
-    for entry in items:
-        kind = entry["kind"]
-        filename = entry["path"]
+    def record(status_):
+        msg = emit_status(status_)
+        failures.append(msg)
+        return "[FATAL]" in msg
 
-        # ------------------------------------------------------------
-        # sample is always allowed
-        # ------------------------------------------------------------
-        if kind == "sample":
-            content = api_params.sample_data
-            status = _write_file(filename, content, kind)
-            if not status:
-                fatal |= record_failure(status)
-            append(kind, filename, status)
-            continue
+    def append(kind_, path, status_):
+        files.append({
+            "kind": kind_,
+            "path": path,
+            "severity": status_.reason,
+            "message": str(status_),
+        })
 
-        # ------------------------------------------------------------
-        # builder-level warning blocks snippet/template/result
-        # ------------------------------------------------------------
+    def load_content(kind_, filename_):
+        if kind_ == "sample":
+            return api_params.sample_data
+
         if builder_result.warning:
-            msg = f"Build result contains warning: {builder_result.warning}. Cannot proceed."
-            status = StatusString(msg, status=False, reason="error")
-            fatal |= record_failure(status)
-            append("build-result", None, status)
+            return StatusString(
+                f"Build result contains warning: {builder_result.warning}. Cannot proceed.",
+                False, "error"
+            )
+
+        if kind_ in ("snippet", "template"):
+            value = getattr(builder_result, kind_, None)
+            if not value:
+                return StatusString(f"Builder has no '{kind_}' content", False, "warning")
+            return value
+
+        if kind_ == "result":
+            if not builder_result.result:
+                return StatusString(f"No records found for '{filename_}'", False, "warning")
+            return builder_result.result
+
+        return StatusString(f"Unknown save kind '{kind_}'", False, "error")
+
+    # main loop
+    for entry in items:
+        kind, filename = entry["kind"], entry["path"]
+
+        content = load_content(kind, filename)
+        if isinstance(content, StatusString) and not content:
+            fatal |= record(content)
+            append(kind, filename, content)
             continue
 
-        # ------------------------------------------------------------
-        # Load content
-        # ------------------------------------------------------------
-        if kind in ("snippet", "template"):
-            content = getattr(builder_result, kind, None)
-            if not content:
-                msg = f"Builder has no '{kind}' content"
-                status = StatusString(msg, status=False, reason="warning")
-                fatal |= record_failure(status)
-                append(kind, filename, status)
-                continue
-
-        elif kind == "result":
-            content = builder_result.result
-            if not content:
-                msg = f"No records found for '{filename}'"
-                status = StatusString(msg, status=False, reason="warning")
-                fatal |= record_failure(status)
-                append(kind, filename, status)
-                continue
-
-        else:
-            msg = f"Unknown save kind '{kind}'"
-            status = StatusString(msg, status=False, reason="error")
-            fatal |= record_failure(status)
-            append(f"unknown-{kind}", None, status)
-            continue
-
-        # ------------------------------------------------------------
-        # Normalize content to string
-        # ------------------------------------------------------------
         if not isinstance(content, str):
             content = json.dumps(content, indent=2, ensure_ascii=False)
 
-        # ------------------------------------------------------------
-        # Write file
-        # ------------------------------------------------------------
         status = _write_file(filename, content, kind)
         if not status:
-            fatal |= record_failure(status)
+            fatal |= record(status)
+
         append(kind, filename, status)
 
-    # ------------------------------------------------------------
-    # Final result
-    # ------------------------------------------------------------
-    if failure_messages:
+    if failures:
         return DotDict(
-            status=StatusString(
-                "\n".join(failure_messages), status=False, reason="error"
-            ),
+            status=StatusString("\n".join(failures), False, "error"),
             save_info={"raw": api_params.save, "files": files},
             exit_code=2 if fatal else 1,
         )
 
     return DotDict(
-        status=StatusString(status=True),
+        status=StatusString(True),
         save_info={"raw": api_params.save, "files": files},
         exit_code=0,
     )
+
 
 
 def show_outputs(api_params, builder_result):
