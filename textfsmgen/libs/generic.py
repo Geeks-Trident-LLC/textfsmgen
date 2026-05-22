@@ -8,82 +8,134 @@ General-purpose generic classes used across TextFSMGen.
 import re
 
 
+import re
+from typing import Any, Mapping, Iterable
+
+
 class DotDict(dict):
-    """Dictionary with dot-access for valid keys and recursive wrapping."""  # noqa
+    """
+    Dictionary with attribute-style access, normalization, and safe shadowing rules.
+    """
 
-    _valid_key = re.compile(r"_{,2}[A-Za-z][A-Za-z0-9_]*")
-    _dict_members = dir(dict) + ["_valid_key", "_dict_members", "_wrap", "__getattr__"]
+    _valid_attr = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
+    _reserved = (
+        set(dir(dict)) |
+        set(dir(object)) |
+        {
+            "_valid_attr", "_reserved", "_wrap",
+            "from_mapping", "from_pairs",
+            "_find_normalized_key",
+        }
+    )
+
+    # ------------------------------------------------------------
+    # Construction helpers
+    # ------------------------------------------------------------
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__()
+        self.update(*args, **kwargs)
 
-    def __getattr__(self, name):
-        if name in self._dict_members:
-            return super().__getattribute__(name)
+    @classmethod
+    def from_mapping(cls, mapping: Mapping[str, Any]) -> "DotDict":
+        obj = cls()
+        for k, v in mapping.items():
+            obj[k] = cls._wrap(v)
+        return obj
 
-        if not self._valid_key.fullmatch(name):
-            raise AttributeError(
-                f"Invalid attribute name {name!r}. Expected attribute "
-                f"matching pattern {self._valid_key.pattern!r}."
-            )
+    @classmethod
+    def from_pairs(cls, pairs: Iterable[tuple[str, Any]]) -> "DotDict":
+        obj = cls()
+        for k, v in pairs:
+            obj[k] = cls._wrap(v)
+        return obj
 
+    @staticmethod
+    def _wrap(value: Any) -> Any:
+        if isinstance(value, dict) and not isinstance(value, DotDict):
+            return DotDict.from_mapping(value)
+        if isinstance(value, list):
+            return [DotDict._wrap(v) for v in value]
+        if isinstance(value, tuple):
+            return tuple(DotDict._wrap(v) for v in value)
+        return value
+
+    # ------------------------------------------------------------
+    # Normalization helper (used for both get + set)
+    # ------------------------------------------------------------
+    def _find_normalized_key(self, name: str) -> str | None:
+        """
+        Return the actual dict key that corresponds to attribute name.
+        """
         # Direct match
         if name in self:
-            return self._wrap(self[name])
+            return name
 
-        # Allow trailing underscore for dict-member shadowing
-        if name[:-1] in self._dict_members and name.endswith("_") and name[:-1] in self:
-            return self._wrap(self[name[:-1]])
+        # Trailing underscore shadowing
+        if name.endswith("_"):
+            base = name[:-1]
+            if base in self:
+                return base
 
         # Normalization attempts
-        space_key = name.replace("_", " ").strip()
-        if space_key in self:
-            return self._wrap(self[space_key])
-
-        dot_key = name.replace("_", ".").strip(".")
-        if dot_key in self:
-            return self._wrap(self[dot_key])
-
-        dash_key = name.replace("_", "-").strip("-")
-        if dash_key in self:
-            return self._wrap(self[dash_key])
-
-        raise AttributeError(f"Invalid attribute name {name!r}.")
-
-    def __setattr__(self, name, value):
-        """Block overriding dict-backed keys; require update() instead."""
-        # Built‑in DotObject attributes cannot be overridden
-        if name in self._dict_members:
-            raise AttributeError(f"Cannot override DotObject attribute {name!r}.")
-
-        # Direct key match
-        if name in self:
-            self.update({name: value})
-            return
-
-        # Shadowing via trailing underscore (e.g., "key_")
-        base = name[:-1]
-        if name.endswith("_") and base in self._dict_members and base in self:
-            self.update({base: value})
-            return
-
-        # Alternate key forms (space, dot, dash)
-        for transformed in (
+        candidates = (
             name.replace("_", " ").strip(),
             name.replace("_", ".").strip("."),
             name.replace("_", "-").strip("-"),
+        )
+        for key in candidates:
+            if key in self:
+                return key
+
+        return None
+
+    # ------------------------------------------------------------
+    # Attribute access
+    # ------------------------------------------------------------
+    def __getattr__(self, name: str) -> Any:
+        if not self._valid_attr.fullmatch(name):
+            raise AttributeError(
+                f"Invalid attribute name {name!r}. Expected pattern "
+                f"{self._valid_attr.pattern!r}."
+            )
+
+        key = self._find_normalized_key(name)
+        if key is not None:
+            return self._wrap(self[key])
+
+        raise AttributeError(f"Invalid attribute name {name!r}.")
+
+    # ------------------------------------------------------------
+    # Attribute assignment
+    # ------------------------------------------------------------
+    def __setattr__(self, name: str, value: Any) -> None:
+        # Internal attributes
+        if (
+            name.startswith("_")
+            or name in self._reserved
+            or name in type(self).__dict__
         ):
-            if transformed in self:
-                self.update({transformed: value})
-                return
+            object.__setattr__(self, name, value)
+            return
 
-        self.update({name: value})
+        # Try to find normalized key
+        key = self._find_normalized_key(name)
+        if key is not None:
+            self[key] = self._wrap(value)
+            return
 
-    def _wrap(self, value):
-        """Wrap nested dictionaries into DotDict."""
-        if isinstance(value, dict) and not isinstance(value, self.__class__):
-            return self.__class__(value)
-        return value
+        # Otherwise create new key using attribute name
+        self[name] = self._wrap(value)
+
+    # ------------------------------------------------------------
+    # Dict overrides
+    # ------------------------------------------------------------
+    def __setitem__(self, key: str, value: Any) -> None:
+        super().__setitem__(key, self._wrap(value))
+
+    def update(self, *args, **kwargs) -> None:
+        for k, v in dict(*args, **kwargs).items():
+            self[k] = v
 
 
 class StatusString(str):
