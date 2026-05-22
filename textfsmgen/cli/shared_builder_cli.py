@@ -10,7 +10,6 @@ from textfsmgen.libs.utils import get_data_as_tabular
 from textfsmgen.libs.text import render_text_block
 
 from textfsmgen.core.builder import (
-    BuildResult,
     FreeFormBuilder,
     TabularBuilder,
     CategoryBuilder,
@@ -50,7 +49,9 @@ def parse_save_expression(expr: str):
 
         kind, filename = item.split("-", 1)
         if kind not in allowed:
-            raise ValueError(f"Invalid save kind '{kind}'. Allowed: {', '.join(sorted(allowed))}")
+            raise ValueError(
+                f"Invalid save kind '{kind}'. Allowed: {', '.join(sorted(allowed))}"
+            )
 
         parsed.append({"kind": kind, "path": filename.strip()})
 
@@ -65,8 +66,9 @@ def _write_file(filename: str, content: str, kind: str, mode: str = "") -> Statu
         Path(filename).write_text(content, encoding="utf-8")
         return StatusString(f"Saved {kind} → {filename}", True, "info")
     except Exception as exc:
-        return StatusString(f"Failed to save {kind} → {filename}: {exc}", False, "code-error")
-
+        return StatusString(
+            f"Failed to save {kind} → {filename}: {exc}", False, "code-error"
+        )
 
 
 def save_outputs(api_params, builder_result):
@@ -75,13 +77,15 @@ def save_outputs(api_params, builder_result):
     except ValueError as exc:
         return DotDict(
             status=StatusString(f"Parse-Expression ({exc})", False, "code-error"),
-            save_info={"raw": api_params.save, "files": []},
+            save_info={"raw": api_params.save, "stream": None, "files": []},
+            output="",
             exit_code=2,
         )
 
     files = []
     failures = []
     fatal = False
+    mode = "dryrun" if api_params.dry_run else "create"
 
     def record(status_):
         msg = emit_status(status_)
@@ -89,12 +93,14 @@ def save_outputs(api_params, builder_result):
         return "[FATAL]" in msg
 
     def append(kind_, path, status_):
-        files.append({
-            "kind": kind_,
-            "path": path,
-            "severity": status_.reason,
-            "message": str(status_),
-        })
+        files.append(
+            {
+                "kind": kind_,
+                "path": path,
+                "severity": status_.reason,
+                "message": str(status_),
+            }
+        )
 
     def load_content(kind_, filename_):
         if kind_ == "sample":
@@ -103,23 +109,29 @@ def save_outputs(api_params, builder_result):
         if builder_result.warning:
             return StatusString(
                 f"Build result contains warning: {builder_result.warning}. Cannot proceed.",
-                False, "error"
+                False,
+                "error",
             )
 
         if kind_ in ("snippet", "template"):
             value = getattr(builder_result, kind_, None)
             if not value:
-                return StatusString(f"Builder has no '{kind_}' content", False, "warning")
+                return StatusString(
+                    f"Builder has no '{kind_}' content", False, "warning"
+                )
             return value
 
         if kind_ == "result":
             if not builder_result.result:
-                return StatusString(f"No records found for '{filename_}'", False, "warning")
+                return StatusString(
+                    f"No records found for '{filename_}'", False, "warning"
+                )
             return builder_result.result
 
         return StatusString(f"Unknown save kind '{kind_}'", False, "error")
 
     # main loop
+    lines = []
     for entry in items:
         kind, filename = entry["kind"], entry["path"]
 
@@ -132,7 +144,8 @@ def save_outputs(api_params, builder_result):
         if not isinstance(content, str):
             content = json.dumps(content, indent=2, ensure_ascii=False)
 
-        status = _write_file(filename, content, kind)
+        status = _write_file(filename, content, kind, mode=mode)
+        lines.append(status if mode == "dryrun" else emit_status(status))
         if not status:
             fatal |= record(status)
 
@@ -141,16 +154,25 @@ def save_outputs(api_params, builder_result):
     if failures:
         return DotDict(
             status=StatusString("\n".join(failures), False, "error"),
-            save_info={"raw": api_params.save, "files": files},
+            save_info={
+                "raw": api_params.save,
+                "stream": "stream" if mode == "dryrun" else "io",
+                "files": files,
+            },
+            output="\n".join(lines),
             exit_code=2 if fatal else 1,
         )
 
     return DotDict(
         status=StatusString(True),
-        save_info={"raw": api_params.save, "files": files},
+        save_info={
+            "raw": api_params.save,
+            "stream": "stream" if mode == "dryrun" else "io",
+            "files": files,
+        },
+        output="\n".join(lines),
         exit_code=0,
     )
-
 
 
 def show_outputs(api_params, builder_result):
@@ -177,6 +199,7 @@ def show_outputs(api_params, builder_result):
             return str(builder_result.result)
         if kind == "tabular":
             return get_data_as_tabular(builder_result.result)
+        return builder_result.result
 
     for case in cases:
         if case == "sample":
@@ -258,9 +281,7 @@ def build_debug_report(api_params):
     _add("save", api_params.save)
     _add("show", api_params.show)
     _add("create_config", api_params.create_config)
-    _add("create_config_file", api_params.create_config_file)
     _add("create_golden_test", api_params.create_golden_test)
-    _add("create_golden_test_path", api_params.create_golden_test_path)
     _add("json_mode", api_params.json_mode)
 
     lines.append("=" * header_width)
@@ -284,7 +305,9 @@ def execute_builder(api_params):
     except Exception as exc:
         return DotDict(
             builder_result=None,
-            status=StatusString(f"Builder {builder_cls.__name__} failed: {exc}", False, "code-error"),
+            status=StatusString(
+                f"Builder {builder_cls.__name__} failed: {exc}", False, "code-error"
+            ),
             exit_code=2,
         )
 
@@ -293,10 +316,10 @@ def execute_builder(api_params):
     if not builder:
         ref = (
             api_params.snippet_file or "snippet"
-            if api_params.builder == "freeform" else
-            api_params.sample_file or api_params.command
+            if api_params.builder == "freeform"
+            else api_params.sample_file or api_params.command
         )
-        msg = f"Cannot create {api_params.builder} builder from {ref!r}\n{'-'*60}\n{api_params.sample_data}"
+        msg = f"Cannot create {api_params.builder} builder from {ref!r}\n{'-' * 60}\n{api_params.sample_data}"
         return DotDict(
             builder_result=result,
             status=StatusString(msg, False, "error"),
@@ -308,7 +331,6 @@ def execute_builder(api_params):
         status=StatusString(True),
         exit_code=0,
     )
-
 
 
 def create_config(api_params):
@@ -324,20 +346,18 @@ def create_config(api_params):
     for key in cfg:
         cfg[key] = copy.deepcopy(api_params[key])
 
-    path = (
-        Path(api_params.create_config_file) if api_params.create_config_file else None
-    )
+    path = Path(api_params.create_config) if api_params.create_config else None
 
     generated_config = DotDict(
-        stream="stream" if not api_params.create_config_file else "io",
-        path=None if not api_params.create_config_file else str(path.resolve()),
+        stream="stream" if api_params.dry_run else "io",
+        path=str(path.resolve()),
         payload=cfg,
     )
 
     # ------------------------------------------------------------
     # 2. Stream mode (print to stdout)
     # ------------------------------------------------------------
-    if not api_params.create_config_file:
+    if api_params.dry_run:
         return DotDict(
             status=StatusString(status=True),
             generated_config=generated_config,
@@ -347,7 +367,7 @@ def create_config(api_params):
     # ------------------------------------------------------------
     # 3. File mode (write to disk)
     # ------------------------------------------------------------
-    path = Path(api_params.create_config_file)
+    path = Path(api_params.create_config)
     parent = path.parent
 
     # Ensure parent directory exists
@@ -426,31 +446,26 @@ def create_golden_test(api_params, builder_result):
     # ------------------------------------------------------------
     # 1. Determine mode + base path
     # ------------------------------------------------------------
-    if api_params.create_golden_test_path:
-        mode = "create"
-        base_path = Path(api_params.create_golden_test_path).resolve()
 
-        # Must be inside .../golden/integration/<case>
-        if not (
-            base_path.parent.name == "integration"
-            and base_path.parent.parent.name == "golden"
-        ):
-            return DotDict(
-                status=StatusString(
-                    f"Golden test path {str(base_path)!r} must be inside "
-                    f".../golden/integration/<case>",
-                    status=False,
-                    reason="error",
-                ),
-                creation_result=None,
-                output="",
-                exit_code=1,
-            )
+    mode = "dry-run" if api_params.dry_run else "create"
+    base_path = Path(api_params.create_golden_test).resolve()
 
-    else:
-        mode = "dry-run"
-        case_name = f"{builder_name}-case"
-        base_path = Path("tests") / "golden" / "integration" / case_name
+    # Must be inside .../golden/integration/<case>
+    if not (
+        base_path.parent.name == "integration"
+        and base_path.parent.parent.name == "golden"
+    ):
+        return DotDict(
+            status=StatusString(
+                f"Golden test path {str(base_path)!r} must be inside "
+                f".../golden/integration/<case>",
+                status=False,
+                reason="error",
+            ),
+            creation_result=None,
+            output="",
+            exit_code=1,
+        )
 
     # ------------------------------------------------------------
     # 2. Prepare manifest + file layout
@@ -489,7 +504,14 @@ def create_golden_test(api_params, builder_result):
 
         return DotDict(
             status=StatusString(status=True),
-            creation_result=None,
+            creation_result=DotDict(
+                stream="stream",
+                path=str(base_path),
+                manifest={"path": str(files["manifest"]), "content": manifest},
+                inputs=[str(files["sample"])],
+                expected=[str(files["snippet"]), str(files["template"])],
+                expected_results=[str(files["result"])],
+            ),
             output="\n".join(lines),
             exit_code=0,
         )
@@ -544,50 +566,16 @@ def create_golden_test(api_params, builder_result):
     # ------------------------------------------------------------
     # 6. Build creation_result structure
     # ------------------------------------------------------------
-    creation_result = DotDict(
-        path=str(base_path),
-        manifest={
-            "path": str(files["manifest"]),
-            "content": json.dumps(manifest, indent=2, ensure_ascii=False),
-        },
-        inputs={
-            "path": str(inputs_dir),
-            "files": [
-                {
-                    "path": str(files["sample"]),
-                    "content": api_params.sample_data,
-                }
-            ],
-        },
-        expected_results={
-            "path": str(expected_results_dir),
-            "files": [
-                {
-                    "path": str(files["result"]),
-                    "content": json.dumps(
-                        builder_result.result, indent=2, ensure_ascii=False
-                    ),
-                }
-            ],
-        },
-        expected={
-            "path": str(expected_dir),
-            "files": [
-                {
-                    "path": str(files["snippet"]),
-                    "content": builder_result.snippet,
-                },
-                {
-                    "path": str(files["template"]),
-                    "content": builder_result.template,
-                },
-            ],
-        },
-    )
-
     return DotDict(
         status=StatusString(status=True),
-        creation_result=creation_result,
+        creation_result=DotDict(
+            stream="io",
+            path=str(base_path),
+            manifest={"path": str(files["manifest"]), "content": manifest},
+            inputs=[str(files["sample"])],
+            expected=[str(files["snippet"]), str(files["template"])],
+            expected_results=[str(files["result"])],
+        ),
         output="\n".join(lines),
         exit_code=0,
     )

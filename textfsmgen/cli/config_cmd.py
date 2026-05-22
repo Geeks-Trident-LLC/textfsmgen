@@ -28,13 +28,13 @@ FREEFORM_TEMPLATE = {
     "snippet_file": "",
     "sample_file": "",
     "command": "",
+    "config": "",
     "debug": False,
+    "dry_run": False,
     "show": "",
     "save": "",
-    "create_config": False,
-    "create_config_file": "",
-    "create_golden_test": False,
-    "create_golden_test_path": "",
+    "create_config": "",
+    "create_golden_test": "",
     "json_mode": False,
 }
 
@@ -49,13 +49,13 @@ CATEGORY_TEMPLATE = {
     },
     "sample_file": "",
     "command": "",
+    "config": "",
     "debug": False,
+    "dry_run": False,
     "show": "",
     "save": "",
-    "create_config": False,
-    "create_config_file": "",
-    "create_golden_test": False,
-    "create_golden_test_path": "",
+    "create_config": "",
+    "create_golden_test": "",
     "json_mode": False,
 }
 
@@ -75,13 +75,13 @@ TABULAR_TEMPLATE = {
     },
     "sample_file": "",
     "command": "",
+    "config": "",
     "debug": False,
+    "dry_run": False,
     "show": "",
     "save": "",
-    "create_config": False,
-    "create_config_file": "",
-    "create_golden_test": False,
-    "create_golden_test_path": "",
+    "create_config": "",
+    "create_golden_test": "",
     "json_mode": False,
 }
 
@@ -111,6 +111,9 @@ TOP_LEVEL_DOCS_MAPPING = {
         Shell command used to generate sample text dynamically.
         If provided, its output is used instead of sample_file.
     """,
+    "config": "Optional JSON config file.",
+    "debug": "Print resolved parameters and sample metadata.",
+    "dry_run": "Simulate all write operations; no files are created.",
     "show": """
         Selects which output to display on the console.
 
@@ -135,8 +138,6 @@ TOP_LEVEL_DOCS_MAPPING = {
         Formats:
           <kind>-<filename>
           <kind1>-<filename1>,...,<kindK>-<filenameK>
-          dryrun(<kind>-<filename>)
-          dryrun(<kind1>-<filename1>,...,<kindK>-<filenameK>)
         
         Kinds:
           sample, snippet, template, result
@@ -144,15 +145,10 @@ TOP_LEVEL_DOCS_MAPPING = {
         Examples:
           template-b.textfsm, result-out.json
               Write the generated template to b.textfsm and the parsed result to out.json.
-        
-          dryrun(result-out.json)
-              Show a dry‑run message describing how the result would be saved to out.json.
 
     """,
-    "create_config": "Merge CLI options with the loaded --config and show the result.",
-    "create_config_file": "Merge CLI options with --config and save the result to FILE.",
-    "create_golden_test": "Preview golden‑test creation (dry run).",
-    "create_golden_test_path": "Generate golden‑test files at PATH.",
+    "create_config": "Merge CLI options with --config and save the result to FILE.",
+    "create_golden_test": "Generate golden‑test files at PATH.",
     "json_mode": "Output machine‑readable results in JSON format.",
 }
 normalize_text_values(TOP_LEVEL_DOCS_MAPPING)

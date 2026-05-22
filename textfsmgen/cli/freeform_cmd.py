@@ -27,23 +27,27 @@ def register(cli):
     help=HELP.sample_file,
 )
 @click.option("--command", default="", help=HELP.command)
-@click.option("--show", default="", help=HELP.show)
-@click.option("--save", default="", help=HELP.save)
-@click.option("--config", default=None, type=click.Path(exists=True), help=HELP.config)
-@click.option("--debug", is_flag=True, default=False, help=HELP.debug)
-@click.option("--create-config", is_flag=True, default=False, help=HELP.create_config)
 @click.option(
-    "--create-config-file",
+    "--config",
     default=None,
     type=click.Path(dir_okay=False, writable=True, allow_dash=True),
-    help=HELP.create_config_file,
+    help=HELP.config,
 )
-@click.option("--create-golden-test", is_flag=True, help=HELP.create_golden_test)
+@click.option("--debug", is_flag=True, default=False, help=HELP.debug)
+@click.option("--dry-run", is_flag=True, default=False, help=HELP.dry_run)
+@click.option("--show", default="", help=HELP.show)
+@click.option("--save", default="", help=HELP.save)
 @click.option(
-    "--create-golden-test-path",
+    "--create-config",
+    default=None,
+    type=click.Path(dir_okay=False, writable=True, allow_dash=True),
+    help=HELP.create_config,
+)
+@click.option(
+    "--create-golden-test",
     default=None,
     type=click.Path(dir_okay=True, writable=True, allow_dash=True),
-    help=HELP.create_golden_test_path,
+    help=HELP.create_golden_test,
 )
 @click.option(
     "--json",

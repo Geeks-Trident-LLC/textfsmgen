@@ -25,7 +25,9 @@ from textfsmgen.cli import parameters
 def abort(state, status_obj, exit_code, *, include_debug=True):
     """Standardized abort handler."""
     message = emit_status(status_obj, display=False)
-    debug = state.debug_report if include_debug and hasattr(state, "debug_report") else ""
+    debug = (
+        state.debug_report if include_debug and hasattr(state, "debug_report") else ""
+    )
     output = f"{debug}\n{message}".strip()
 
     state.update(
@@ -52,11 +54,13 @@ def complete(state, name, output, exit_code=0, **extra):
 
 def ready_check(func):
     """Skip execution if a previous step has aborted."""
+
     @wraps(func)
     def wrapper(state):
         if state.status:  # already aborted
             return state
         return func(state)
+
     return wrapper
 
 
@@ -118,7 +122,9 @@ def prepare_params_step(state):
         state.builder, state.cli_options, state.loaded_config
     )
     if not result:
-        return abort(state, StatusString(result.message, False, result.reason), result.exit_code)
+        return abort(
+            state, StatusString(result.message, False, result.reason), result.exit_code
+        )
 
     state.api_params = result.options
     return state
@@ -147,7 +153,7 @@ def execute_step(state):
 
 @ready_check
 def create_golden_test_step(state):
-    if not (state.api_params.create_golden_test or state.api_params.create_golden_test_path):
+    if not state.api_params.create_golden_test:
         return state
 
     state.name = "create-golden-test"
@@ -168,7 +174,7 @@ def create_golden_test_step(state):
 
 @ready_check
 def create_config_step(state):
-    if not (state.api_params.create_config or state.api_params.create_config_file):
+    if not state.api_params.create_config:
         return state
 
     state.name = "create-config"
@@ -180,9 +186,9 @@ def create_config_step(state):
     payload_txt = json.dumps(result.generated_config.payload, indent=2)
     output = (
         f"{state.debug_report}\n{payload_txt}"
-        if result.generated_config.stream == "stream"
+        if state.api_params.dry_run
         else f"{state.debug_report}\n{emit_status(result.status, display=False)}"
-    )
+    ).strip()
 
     return complete(
         state,

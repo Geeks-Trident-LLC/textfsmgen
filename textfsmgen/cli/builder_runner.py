@@ -67,16 +67,7 @@ class BuilderRunner:
         # ------------------------------------------------------------
         # Golden test handling
         # ------------------------------------------------------------
-        golden_test = None
-        golden_test_dry_run = None
-
-        if name == "create-golden-test" and status == "completed":
-            if state.api_params.create_golden_test_path:
-                golden_test = state.get("golden_test")
-                golden_test_dry_run = []
-            else:
-                golden_test = None
-                golden_test_dry_run = state.output.splitlines()
+        golden_test = state.get("golden_test")
 
         # ------------------------------------------------------------
         # Build JsonWorkflow
@@ -87,7 +78,6 @@ class BuilderRunner:
             build_result=state.get("builder_result"),
             debug=state.get("debug_report"),
             golden_test=golden_test,
-            golden_test_dry_run=golden_test_dry_run,
             generated_config=state.get("generated_config"),
             save=state.get("save"),
             show=state.get("show"),
@@ -102,10 +92,6 @@ class BuilderRunner:
         # ------------------------------------------------------------
         # Output selection
         # ------------------------------------------------------------
-        output = (
-            workflow.to_json()
-            if state.cli_options.json_mode
-            else state.output
-        )
+        output = workflow.to_json() if state.cli_options.json_mode else state.output
 
         return DotDict(output=output, exit_code=state.exit_code)

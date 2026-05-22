@@ -44,19 +44,12 @@ class GoldenFile:
 
 @dataclass
 class GoldenTestSection:
+    stream: Optional[str] = None
     path: Optional[str] = None
     manifest: Optional[GoldenFile] = None
-    inputs: Optional[Dict[str, Any]] = None
-    expected_results: Optional[Dict[str, Any]] = None
-    expected: Optional[Dict[str, Any]] = None
-
-
-# ------------------------------------------------------------
-# 5. Golden test dry run section
-# ------------------------------------------------------------
-@dataclass
-class GoldenTestDryRun:
-    lines: List[str] = field(default_factory=list)
+    inputs: Optional[List[str]] = None
+    expected_results: Optional[List[str]] = None
+    expected: Optional[List[str]] = None
 
 
 # ------------------------------------------------------------
@@ -73,6 +66,7 @@ class DebugSection:
 @dataclass
 class ShowSection:
     raw: Optional[str] = None  # raw --show expression
+    output: Optional[str] = None
     resolved: Optional[dict] = None  # sample/snippet/template/result/tabular
 
 
@@ -82,15 +76,8 @@ class ShowSection:
 @dataclass
 class SaveSection:
     raw: Optional[str] = None  # raw --save expression
+    stream: Optional[str] = None
     files: Optional[List[dict]] = None  # [{"kind": "...", "path": "..."}]
-
-
-# ------------------------------------------------------------
-# 10. Save dry run section
-# ------------------------------------------------------------
-@dataclass
-class SaveDryRunSection:
-    lines: List[str] = field(default_factory=list)
 
 
 # ------------------------------------------------------------
@@ -124,15 +111,12 @@ class JsonWorkflow:
 
     generated_config: Optional[GeneratedConfig] = None
     golden_test: Optional[GoldenTestSection] = None
-    golden_test_dry_run: Optional[GoldenTestDryRun] = None
 
     debug: Optional[DebugSection] = None
 
     show: Optional[ShowSection] = None
     save: Optional[SaveSection] = None
-    save_dry_run: Optional[SaveDryRunSection] = None
 
-    # ⭐ NEW: your workflow state block
     state: JsonState = field(default_factory=JsonState)
 
     # --------------------------------------------------------
