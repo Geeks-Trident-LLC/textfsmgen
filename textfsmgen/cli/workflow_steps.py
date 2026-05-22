@@ -2,6 +2,7 @@
 
 import json
 from functools import wraps
+import time
 
 from textfsmgen.cli.shared_builder_cli import (
     build_debug_report,
@@ -64,9 +65,39 @@ def ready_check(func):
     return wrapper
 
 
+def timed_step(func):
+    """
+    Decorator that measures execution time of each workflow step.
+    Stores timing info in state.workflow_steps (list of dicts).
+    """
+
+    def wrapper(state):
+        start = time.perf_counter()
+        new_state = func(state)
+        end = time.perf_counter()
+
+        duration_ms = int((end - start) * 1000)
+
+        if "workflow_steps" not in new_state:
+            new_state["workflow_steps"] = []
+
+        new_state["workflow_steps"].append(
+            {
+                "step": new_state.name,
+                "duration_ms": duration_ms,
+                "status": new_state.status or "completed",
+            }
+        )
+
+        return new_state
+
+    return wrapper
+
+
 # ------------------------------------------------------------
 # Steps
 # ------------------------------------------------------------
+@timed_step
 @ready_check
 def check_mandatory_cli_options_step(state):
     state.name = "check-mandatory-cli-options"
@@ -93,6 +124,7 @@ def check_mandatory_cli_options_step(state):
     return state
 
 
+@timed_step
 @ready_check
 def load_config_step(state):
     state.name = "load-config"
@@ -114,6 +146,7 @@ def load_config_step(state):
     return state
 
 
+@timed_step
 @ready_check
 def prepare_params_step(state):
     state.name = "prepare-run-params"
@@ -130,6 +163,7 @@ def prepare_params_step(state):
     return state
 
 
+@timed_step
 @ready_check
 def build_debug_report_step(state):
     state.name = "create-debug-report"
@@ -138,6 +172,7 @@ def build_debug_report_step(state):
     return state
 
 
+@timed_step
 @ready_check
 def execute_step(state):
     state.name = "execute"
@@ -151,6 +186,7 @@ def execute_step(state):
     return state
 
 
+@timed_step
 @ready_check
 def create_golden_test_step(state):
     if not state.api_params.create_golden_test:
@@ -172,6 +208,7 @@ def create_golden_test_step(state):
     )
 
 
+@timed_step
 @ready_check
 def create_config_step(state):
     if not state.api_params.create_config:
@@ -199,6 +236,7 @@ def create_config_step(state):
     )
 
 
+@timed_step
 @ready_check
 def save_step(state):
     if not state.api_params.save:
@@ -222,6 +260,7 @@ def save_step(state):
     )
 
 
+@timed_step
 @ready_check
 def show_step(state):
     state.name = "show-output"

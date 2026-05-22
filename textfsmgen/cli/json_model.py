@@ -100,11 +100,45 @@ class JsonState:
     exit_code: int = 0
 
 
+@dataclass
+class WorkflowMeta:
+    workflow_version: str = "1.0"
+    builder_version: Optional[str] = None
+    timestamp: Optional[str] = None  # ISO-8601
+    duration_ms: Optional[int] = None
+
+
+@dataclass
+class ErrorInfo:
+    type: Optional[str] = None  # e.g. "validation-error", "builder-error"
+    code: Optional[str] = None  # e.g. "MISSING_SAMPLE"
+    fatal: bool = False
+    details: Optional[str] = None
+
+
+@dataclass
+class ArtifactIndex:
+    config: Optional[str] = None
+    golden_test: Optional[str] = None
+    save_files: List[str] = field(default_factory=list)
+    show_outputs: List[str] = field(default_factory=list)
+
+
+@dataclass
+class WorkflowSteps:
+    steps: List[str] = field(default_factory=list)
+
+
 # ------------------------------------------------------------
 # 11. Top-level JSON workflow
 # ------------------------------------------------------------
 @dataclass
 class JsonWorkflow:
+    meta: Optional[WorkflowMeta] = field(default_factory=WorkflowMeta)
+    error: Optional[ErrorInfo] = None
+    artifacts: Optional[ArtifactIndex] = field(default_factory=ArtifactIndex)
+    steps: Optional[WorkflowSteps] = field(default_factory=WorkflowSteps)
+
     cli_options: Optional[CliOptions] = None
     api_params: Optional[APIParams] = None
     build_result: Optional[BuildResult] = None

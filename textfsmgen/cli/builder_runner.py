@@ -1,5 +1,8 @@
 # builder_runner.py
 
+import time
+from datetime import datetime, timezone
+
 from textfsmgen.libs.generic import DotDict
 from .workflow_steps import (
     check_mandatory_cli_options_step,
@@ -12,7 +15,9 @@ from .workflow_steps import (
     save_step,
     show_step,
 )
-from .json_model import JsonWorkflow, JsonState
+from .json_model import JsonWorkflow, JsonState, ErrorInfo
+
+import textfsmgen
 
 
 class BuilderRunner:
@@ -42,18 +47,26 @@ class BuilderRunner:
             message="",
             output="",
             exit_code=0,
+            workflow_steps=[],
         )
+        self._start_timestamp = ""
+        self._duration_ms = 0
 
     # ------------------------------------------------------------
     # Main runner
     # ------------------------------------------------------------
     def run(self):
+        start = time.perf_counter()
+        self._start_timestamp = (
+            datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        )
+
         for step in self.WORKFLOW_STEPS:
             self.state = step(self.state)
-
             if self.state.get("status") == "aborted":
                 break
 
+        self._duration_ms = int((time.perf_counter() - start) * 1000)
         return self._finalize()
 
     # ------------------------------------------------------------
@@ -65,11 +78,6 @@ class BuilderRunner:
         status = state.get("status", "")
 
         # ------------------------------------------------------------
-        # Golden test handling
-        # ------------------------------------------------------------
-        golden_test = state.get("golden_test")
-
-        # ------------------------------------------------------------
         # Build JsonWorkflow
         # ------------------------------------------------------------
         workflow = JsonWorkflow(
@@ -77,7 +85,7 @@ class BuilderRunner:
             api_params=state.get("api_params"),
             build_result=state.get("builder_result"),
             debug=state.get("debug_report"),
-            golden_test=golden_test,
+            golden_test=state.get("golden_test"),
             generated_config=state.get("generated_config"),
             save=state.get("save"),
             show=state.get("show"),
@@ -87,7 +95,44 @@ class BuilderRunner:
                 message=state.get("message", ""),
                 output=state.get("output", {}),
             ),
+            steps=state.get("workflow_steps"),
         )
+
+        # ------------------------------------------------------------
+        # Populate meta
+        # ------------------------------------------------------------
+        workflow.meta.workflow_version = "1.0"
+        workflow.meta.builder_version = getattr(textfsmgen, "__version__", None)
+        workflow.meta.timestamp = self._start_timestamp
+        workflow.meta.duration_ms = self._duration_ms
+
+        # ------------------------------------------------------------
+        # Populate artifacts
+        # ------------------------------------------------------------
+        if state.get("generated_config"):
+            workflow.artifacts.config = state.generated_config.path
+
+        if state.get("golden_test"):
+            workflow.artifacts.golden_test = state.golden_test.path
+
+        if state.get("save"):
+            workflow.artifacts.save_files = [
+                f["path"] for f in state.save.files if f.get("path")
+            ]
+
+        if state.get("show"):
+            workflow.artifacts.show_outputs = list(state.show.resolved.keys())
+
+        # ------------------------------------------------------------
+        # Populate error (only if aborted)
+        # ------------------------------------------------------------
+        if status == "aborted":
+            workflow.error = ErrorInfo(
+                type="workflow-error",
+                code=name,
+                fatal=True,
+                details=state.get("message", ""),
+            )
 
         # ------------------------------------------------------------
         # Output selection
