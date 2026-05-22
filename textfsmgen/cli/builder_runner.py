@@ -11,6 +11,7 @@ from .workflow_steps import (
     create_golden_test_step,
     create_config_step,
     save_step,
+    show_step
 )
 
 from .json_model import JsonWorkflow, JsonState
@@ -40,6 +41,7 @@ class BuilderRunner:
             create_golden_test_step,
             create_config_step,
             save_step,
+            show_step
         ]
 
     def run(self):

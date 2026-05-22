@@ -8,7 +8,8 @@ from textfsmgen.cli.shared_builder_cli import (
     execute_builder,
     create_golden_test,
     create_config,
-    save_outputs_v2
+    save_outputs_v2,
+    show_outputs_v2
 )
 
 from textfsmgen.libs.common import emit_status
@@ -226,6 +227,44 @@ def save_step(state):
         message="",
         output=(
             f"{state.debug_report}\n{'\n'.join(item['message'] for item in result.files)}".strip()
+        ),
+        exit_code=result.exit_code,
+    )
+    return state
+
+
+@ready_check
+def show_step(state):
+
+    state.name = "show-output"
+
+    result = show_outputs_v2(state.api_params, state.builder_result)
+
+    message = emit_status(result.status, display=False)
+
+    if result.exit_code != 0:
+        state.update(
+            status="aborted",
+            message=message,
+            output=f"{state.debug_report}\n{message}".strip(),
+            exit_code=result.exit_code,
+        )
+        return state
+
+    parts = []
+    for item in result.show_info.resolved.values():
+        if isinstance(item, str):
+            parts.append(item)
+            continue
+        parts.append(json.dumps(item, indent=2))
+
+    output = f"\n{'-' * 60}\n".join(parts)
+    state.update(
+        show=result.show_info,
+        status="completed",
+        message="",
+        output=(
+            f"{state.debug_report}\n{output}".strip()
         ),
         exit_code=result.exit_code,
     )
