@@ -94,6 +94,7 @@ class BuilderRunner:
                 status=status,
                 message=state.get("message", ""),
                 output=state.get("output", {}),
+                exit_code=state.get("exit_code", 0),
             ),
             steps=state.get("workflow_steps"),
         )
