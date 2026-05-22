@@ -562,7 +562,10 @@ def save_outputs_v2(api_params, builder_result):
         message = f"Parse-Expression ({type(exc).__name__}: {exc})"
         return DotDict(
             status=StatusString(message, status=False, reason="code-error"),
-            files=[],
+            save_info={
+                "raw": api_params.save,
+                "files": []
+            },
             exit_code=2,
         )
 
@@ -646,13 +649,19 @@ def save_outputs_v2(api_params, builder_result):
     if failure_messages:
         return DotDict(
             status=StatusString("\n".join(failure_messages), status=False, reason="error"),
-            files=files,
+            save_info={
+                "raw": api_params.save,
+                "files": files
+            },
             exit_code=2 if fatal else 1,
         )
 
     return DotDict(
         status=StatusString(status=True),
-        files=files,
+        save_info={
+            "raw": api_params.save,
+            "files": files
+        },
         exit_code=0,
     )
 

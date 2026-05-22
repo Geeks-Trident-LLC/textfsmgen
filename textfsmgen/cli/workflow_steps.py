@@ -221,12 +221,13 @@ def save_step(state):
         )
         return state
 
+    output = '\n'.join(item['message'] for item in result.save_info.files)
     state.update(
-        save=DotDict(raw=state.api_params.save, files=result.files),
+        save=result.save_info,
         status="completed",
         message="",
         output=(
-            f"{state.debug_report}\n{'\n'.join(item['message'] for item in result.files)}".strip()
+            f"{state.debug_report}\n{output}".strip()
         ),
         exit_code=result.exit_code,
     )
