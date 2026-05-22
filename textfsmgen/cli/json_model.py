@@ -13,6 +13,12 @@ class CliOptions:
     raw: Dict[str, Any] = field(default_factory=dict)
 
 
+
+@dataclass
+class APIParams:
+    merged: Dict[str, Any] = field(default_factory=dict)
+
+
 # ------------------------------------------------------------
 # 2. Builder section
 # ------------------------------------------------------------
@@ -143,6 +149,8 @@ class JsonState:
 @dataclass
 class JsonWorkflow:
     cli_options: Optional[CliOptions] = None
+    api_params: Optional[APIParams] = None
+
     builder: Optional[BuilderSection] = None
 
     generated_config: Optional[GeneratedConfig] = None

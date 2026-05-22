@@ -1,5 +1,5 @@
 # textfsmgen/cli/shared_builder_cli.py
-
+import copy
 import json
 from pathlib import Path
 from typing import Optional
@@ -368,7 +368,7 @@ def parse_save_expression(expr: str):
     return mode, parsed
 
 
-def _write_file(filename: str, content: str, kind: str, mode: str) -> StatusString:
+def _write_file(filename: str, content: str, kind: str, mode: str="") -> StatusString:
     """
     Write content to filename, or simulate writing in dry-run mode.
 
@@ -398,7 +398,7 @@ def _write_file(filename: str, content: str, kind: str, mode: str) -> StatusStri
         return StatusString(
             f"Failed to save {kind} → {filename}: {exc}",
             status=False,
-            reason="error",
+            reason="code-error",
         )
 
 
@@ -520,6 +520,142 @@ def save_outputs(result: BuildResult, sample: str, save_spec: str):
         append(kind, filename, status)
 
     return results
+
+
+def save_outputs_v2(api_params, builder_result):
+    """
+    Save outputs using the unified syntax:
+        --save=sample-out.txt,snippet-snippet.txt,template-template.textfsm,result-out.json
+
+    Returns:
+        DotDict(
+            status=StatusString(...),
+            files=[...],
+            exit_code=int,
+        )
+    """
+
+    # ------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------
+    def append(kind_, path, status_):
+        files.append(
+            {
+                "kind": kind_,
+                "path": path,
+                "severity": status_.reason,
+                "message": str(status_),
+            }
+        )
+
+    def record_failure(status_):
+        msg = emit_status(status_)
+        failure_messages.append(msg)
+        return "[FATAL]" in msg
+
+    # ------------------------------------------------------------
+    # Parse save expression
+    # ------------------------------------------------------------
+    try:
+        _, items = parse_save_expression(api_params.save)
+    except ValueError as exc:
+        message = f"Parse-Expression ({type(exc).__name__}: {exc})"
+        return DotDict(
+            status=StatusString(message, status=False, reason="code-error"),
+            files=[],
+            exit_code=2,
+        )
+
+    files = []
+    failure_messages = []
+    fatal = False
+
+    # ------------------------------------------------------------
+    # Process each save item
+    # ------------------------------------------------------------
+    for entry in items:
+        kind = entry["kind"]
+        filename = entry["path"]
+
+        # ------------------------------------------------------------
+        # sample is always allowed
+        # ------------------------------------------------------------
+        if kind == "sample":
+            content = api_params.sample_data
+            status = _write_file(filename, content, kind)
+            if not status:
+                fatal |= record_failure(status)
+            append(kind, filename, status)
+            continue
+
+        # ------------------------------------------------------------
+        # builder-level warning blocks snippet/template/result
+        # ------------------------------------------------------------
+        if builder_result.warning:
+            msg = f"Build result contains warning: {builder_result.warning}. Cannot proceed."
+            status = StatusString(msg, status=False, reason="error")
+            fatal |= record_failure(status)
+            append("build-result", None, status)
+            continue
+
+        # ------------------------------------------------------------
+        # Load content
+        # ------------------------------------------------------------
+        if kind in ("snippet", "template"):
+            content = getattr(builder_result, kind, None)
+            if not content:
+                msg = f"Builder has no '{kind}' content"
+                status = StatusString(msg, status=False, reason="warning")
+                fatal |= record_failure(status)
+                append(kind, filename, status)
+                continue
+
+        elif kind == "result":
+            content = builder_result.result
+            if not content:
+                msg = f"No records found for '{filename}'"
+                status = StatusString(msg, status=False, reason="warning")
+                fatal |= record_failure(status)
+                append(kind, filename, status)
+                continue
+
+        else:
+            msg = f"Unknown save kind '{kind}'"
+            status = StatusString(msg, status=False, reason="error")
+            fatal |= record_failure(status)
+            append(f"unknown-{kind}", None, status)
+            continue
+
+        # ------------------------------------------------------------
+        # Normalize content to string
+        # ------------------------------------------------------------
+        if not isinstance(content, str):
+            content = json.dumps(content, indent=2, ensure_ascii=False)
+
+        # ------------------------------------------------------------
+        # Write file
+        # ------------------------------------------------------------
+        status = _write_file(filename, content, kind)
+        if not status:
+            fatal |= record_failure(status)
+        append(kind, filename, status)
+
+    # ------------------------------------------------------------
+    # Final result
+    # ------------------------------------------------------------
+    if failure_messages:
+        return DotDict(
+            status=StatusString("\n".join(failure_messages), status=False, reason="error"),
+            files=files,
+            exit_code=2 if fatal else 1,
+        )
+
+    return DotDict(
+        status=StatusString(status=True),
+        files=files,
+        exit_code=0,
+    )
+
 
 
 # ------------------------------------------------------------
@@ -1051,90 +1187,91 @@ def generate_or_save_config(
     raise SystemExit(0)
 
 
-def generate_or_save_config_new(
-    builder_name,
-    cfg_path="",
-    params=None,
-    snippet="",
-    snippet_file="",
-    sample_file="",
-    command="",
-    show="",
-    save="",
-    json_workflow: Optional[JsonWorkflow] = None,
-):
+def create_config(api_params):
+    builder_name = api_params.builder
+
+    # ------------------------------------------------------------
+    # 1. Build config payload
+    # ------------------------------------------------------------
     template = get_config_template(builder_name)
-    cfg = json.loads(json.dumps(template))
+    cfg = json.loads(json.dumps(template))  # safe deep copy
 
-    cfg["sample_file"] = sample_file
-    cfg["command"] = command
-    cfg["show"] = show
-    cfg["save"] = save
+    # Overlay resolved values
+    for key in cfg:
+        cfg[key] = copy.deepcopy(api_params[key])
 
-    if params:
-        cfg["params"] = params.copy()
+    path = Path(api_params.create_config_file) if api_params.create_config_file else None
 
-    if "snippet" in cfg:
-        cfg["snippet"] = snippet
+    generated_config = DotDict(
+        stream="stream" if not api_params.create_config_file else "io",
+        path=None if not api_params.create_config_file else str(path.resolve()),
+        payload=cfg,
+    )
 
-    if "snippet_file" in cfg:
-        cfg["snippet_file"] = snippet_file
+    # ------------------------------------------------------------
+    # 2. Stream mode (print to stdout)
+    # ------------------------------------------------------------
+    if not api_params.create_config_file:
+        return DotDict(
+            status=StatusString(status=True),
+            generated_config=generated_config,
+            exit_code=0,
+        )
 
-    content = json.dumps(cfg, indent=2, ensure_ascii=False)
+    # ------------------------------------------------------------
+    # 3. File mode (write to disk)
+    # ------------------------------------------------------------
+    path = Path(api_params.create_config_file)
+    parent = path.parent
 
-    if cfg_path:
-        path = Path(cfg_path).resolve()
-        parent = path.parent
-
-        if not parent.exists():
-            try:
-                parent.mkdir(parents=True, exist_ok=True)
-            except Exception as exc:
-                message = f"[ERROR] Cannot create directory {str(parent)!r}: {exc}"
-                if json_workflow:
-                    json_workflow.set_status(kind="error", message=message, exit_code=1)
-                    click.echo(json_workflow.to_json(validating=True))
-                    raise SystemExit(1)
-                print(message)
-                raise SystemExit(1)
-
-        if path.exists():
-            message = f"[ERROR] Config file {str(path)!r} already exists!"
-            if json_workflow:
-                json_workflow.set_status(kind="error", message=message, exit_code=1)
-                click.echo(json_workflow.to_json(validating=True))
-                raise SystemExit(1)
-            print(message)
-            raise SystemExit(1)
-
+    # Ensure parent directory exists
+    if not parent.exists():
         try:
-            path.write_text(content, encoding="utf-8")
+            parent.mkdir(parents=True, exist_ok=True)
         except Exception as exc:
-            message = f"[ERROR] Failed to write config file {str(path)!r}: {exc}"
-            if json_workflow:
-                json_workflow.set_status(kind="error", message=message, exit_code=1)
-                click.echo(json_workflow.to_json(validating=True))
-                raise SystemExit(1)
-            print(message)
-            raise SystemExit(1)
+            return DotDict(
+                status=StatusString(
+                    f"Cannot create directory {str(parent)!r}: {exc}",
+                    status=False,
+                    reason="code-error",
+                ),
+                generated_config=generated_config,
+                exit_code=2,
+            )
 
-        message = f"[INFO] Config file {str(path)!r} created!"
-        if json_workflow:
-            json_workflow.add_generated_config(stream="io", path=str(path), payload=cfg)
-            json_workflow.set_status(kind="success", message=message, exit_code=0)
-            click.echo(json_workflow.to_json(validating=True))
-            raise SystemExit(0)
-        print(message)
-        raise SystemExit(0)
+    # Prevent overwriting
+    if path.exists():
+        return DotDict(
+            status=StatusString(
+                f"Config file {str(path)!r} already exists!",
+                status=False,
+                reason="error",
+            ),
+            generated_config=generated_config,
+            exit_code=1,
+        )
 
-    if json_workflow:
-        json_workflow.add_generated_config(stream="console", path=None, payload=cfg)
-        json_workflow.set_status(kind="success", message="", exit_code=0)
-        click.echo(json_workflow.to_json(validating=True))
-        raise SystemExit(0)
+    # Write file
+    try:
+        content = json.dumps(cfg, indent=2, ensure_ascii=False)
+        path.write_text(content, encoding="utf-8")
+    except Exception as exc:
+        return DotDict(
+            status=StatusString(
+                f"Failed to write config file {str(path)!r}: {exc}",
+                status=False,
+                reason="code-error",
+            ),
+            generated_config=generated_config,
+            exit_code=2,
+        )
 
-    click.echo(content)
-    raise SystemExit(0)
+    # Success
+    return DotDict(
+        status=StatusString(f"[INFO] Config file {str(path)!r} created!", status=True),
+        generated_config=generated_config,
+        exit_code=0,
+    )
 
 
 # ------------------------------------------------------------
@@ -1402,142 +1539,64 @@ def dry_run_or_create_golden_test(
     raise SystemExit(0)
 
 
-def dry_run_or_create_golden_test_new(
-    builder_class,
-    builder_name,
-    golden_path="",
-    params=None,
-    snippet="",
-    snippet_file="",
-    sample_file="",
-    command="",
-    json_workflow=None,
-):
+def create_golden_test(api_params, builder_result):
     """
-    Create or preview a golden test case for the given builder.
-
-    - If golden_path is empty:
-        Perform a DRY RUN.
-        Do NOT write any files.
-        Show which files WOULD be created.
-        Default path:
-            ./tests/golden/integration/<builder>-case
-
-    - If golden_path is provided:
-        Perform ACTUAL CREATION.
-        golden_path MUST be under:
-            tests/golden/integration/
-        Auto-create parent directories.
-        Fail if files already exist.
+    Create or dry-run a golden test case based on builder output and API params.
     """
 
-    params = params or {}
+    # ------------------------------------------------------------
+    # 0. Validate sample
+    # ------------------------------------------------------------
+    if not api_params.sample_data.strip():
+        ref = api_params.sample_file or api_params.command
+        return DotDict(
+            status=StatusString(
+                f"Cannot create Golden Test without sample (reference: {ref!r}).",
+                status=False,
+                reason="error",
+            ),
+            creation_result=None,
+            output="",
+            exit_code=1,
+        )
+
+    builder_name = api_params.builder
 
     # ------------------------------------------------------------
     # 1. Determine mode + base path
     # ------------------------------------------------------------
-    if not golden_path:
-        mode = "dry-run"
-        case_name = f"{builder_name}-case"
-        base_path = Path("tests") / "golden" / "integration" / case_name
-    else:
+    if api_params.create_golden_test_path:
         mode = "create"
-        base_path = Path(golden_path).resolve()
+        base_path = Path(api_params.create_golden_test_path).resolve()
 
         # Must be inside .../golden/integration/<case>
         if not (
             base_path.parent.name == "integration"
             and base_path.parent.parent.name == "golden"
         ):
-            message = (
-                f"[ERROR] Golden test path {str(base_path)!r} must be inside "
-                f".../golden/integration/<case>"
+            return DotDict(
+                status=StatusString(
+                    f"Golden test path {str(base_path)!r} must be inside "
+                    f".../golden/integration/<case>",
+                    status=False,
+                    reason="error",
+                ),
+                creation_result=None,
+                output="",
+                exit_code=1,
             )
-            if json_workflow:
-                json_workflow.set_status(kind="error", message=message, exit_code=1)
-                click.echo(json_workflow.to_json(validating=True))
-                raise SystemExit(1)
-            print(message)
-            raise SystemExit(1)
-
-    # ------------------------------------------------------------
-    # 2. Load sample (required)
-    # ------------------------------------------------------------
-    sample_status = load_sample(sample_file, command)
-    if not sample_status:
-        message = "[ERROR] Golden test requires a non-empty sample."
-        if json_workflow:
-            json_workflow.set_status(kind="error", message=message, exit_code=1)
-            click.echo(json_workflow.to_json(validating=True))
-            raise SystemExit(1)
-
-        print(message)
-        raise SystemExit(1)
-
-    sample_text = str(sample_status)
-
-    # ------------------------------------------------------------
-    # 3. Instantiate builder
-    # ------------------------------------------------------------
-    builder = builder_class()
-
-    # ------------------------------------------------------------
-    # 4. Apply snippet/sample depending on builder type
-    # ------------------------------------------------------------
-    if issubclass(builder_class, FreeFormBuilder):
-        if snippet_file:
-            builder.set_snippet_file(snippet_file)
-        else:
-            builder.set_snippet(snippet)
-        builder.set_sample(sample_text)
-
-    elif issubclass(builder_class, (TabularBuilder, CategoryBuilder)):
-        builder.set_sample(sample_text, **params)
 
     else:
-        message = f"[ERROR] Unsupported builder class: {builder_class.__name__}"
-        if json_workflow:
-            json_workflow.set_status("error", message, 1)
-            click.echo(json_workflow.to_json(validating=True))
-            raise SystemExit(1)
-        print(message)
-        raise SystemExit(1)
+        mode = "dry-run"
+        case_name = f"{builder_name}-case"
+        base_path = Path("tests") / "golden" / "integration" / case_name
 
     # ------------------------------------------------------------
-    # 5. Build
-    # ------------------------------------------------------------
-    try:
-        builder.build()
-    except Exception as exc:
-        message = f"[ERROR] Builder failed: {exc}"
-        if json_workflow:
-            json_workflow.set_status(kind="error", message=message, exit_code=1)
-            click.echo(json_workflow.to_json(validating=True))
-            raise SystemExit(1)
-        print(message)
-        raise SystemExit(1)
-
-    result: BuildResult = builder.to_result()
-
-    # ------------------------------------------------------------
-    # 6. Validate builder output
-    # ------------------------------------------------------------
-    if result.warning:
-        message = f"[ERROR] Cannot create golden test: {result.warning}"
-        if json_workflow:
-            json_workflow.set_status(kind="error", message=message, exit_code=1)
-            click.echo(json_workflow.to_json(validating=True))
-            raise SystemExit(1)
-
-        print(message)
-        raise SystemExit(1)
-
-    # ------------------------------------------------------------
-    # 7. Prepare manifest + file paths
+    # 2. Prepare manifest + file layout
     # ------------------------------------------------------------
     manifest = {
         "builder": builder_name,
-        "params": params,
+        "params": api_params.params,
         "meta": {
             "author": "",
             "email": "",
@@ -1560,24 +1619,22 @@ def dry_run_or_create_golden_test_new(
     }
 
     # ------------------------------------------------------------
-    # 8. Dry-run mode
+    # 3. Dry-run mode
     # ------------------------------------------------------------
     if mode == "dry-run":
         lines = [f"[DRY-RUN] Golden test base path: {str(base_path)}"]
         for label, path in files.items():
             lines.append(f"[DRY-RUN] Would create: {str(path)}")
 
-        if json_workflow:
-            json_workflow.add_golden_test_dry_run(lines=lines)
-            json_workflow.set_status(kind="success", message="", exit_code=0)
-            click.echo(json_workflow.to_json(validating=True))
-            raise SystemExit(0)
-
-        click.echo("\n".join(lines))
-        raise SystemExit(0)
+        return DotDict(
+            status=StatusString(status=True),
+            creation_result=None,
+            output="\n".join(lines),
+            exit_code=0,
+        )
 
     # ------------------------------------------------------------
-    # 9. Actual creation mode
+    # 4. Actual creation mode
     # ------------------------------------------------------------
     # Create directories
     for d in (inputs_dir, expected_dir, expected_results_dir):
@@ -1586,79 +1643,91 @@ def dry_run_or_create_golden_test_new(
     # Prevent overwriting
     for label, path in files.items():
         if path.exists():
-            message = f"[ERROR] {label} file {str(path)!r} already exists!"
-            if json_workflow:
-                json_workflow.set_status(kind="error", message=message, exit_code=1)
-                click.echo(json_workflow.to_json(validating=True))
-                raise SystemExit(1)
+            return DotDict(
+                status=StatusString(
+                    f"{label} file {str(path)!r} already exists!",
+                    status=False,
+                    reason="error",
+                ),
+                creation_result=None,
+                output="",
+                exit_code=1,
+            )
 
-            print(message)
-            raise SystemExit(1)
+    # ------------------------------------------------------------
+    # 5. Write files
+    # ------------------------------------------------------------
+    lines = [f"[INFO] Golden test created at {str(base_path)!r}"]
 
-    # Write files
-    files["sample"].write_text(sample_text, encoding="utf-8")
-    files["snippet"].write_text(result.snippet, encoding="utf-8")
-    files["template"].write_text(result.template, encoding="utf-8")
+    files["sample"].write_text(api_params.sample_data, encoding="utf-8")
+    lines.append(f"  - sample   => {str(files['sample'])}")
+
+    files["snippet"].write_text(builder_result.snippet, encoding="utf-8")
+    lines.append(f"  - snippet  => {str(files['snippet'])}")
+
+    files["template"].write_text(builder_result.template, encoding="utf-8")
+    lines.append(f"  - template => {str(files['template'])}")
+
     files["result"].write_text(
-        json.dumps(result.result, indent=2, ensure_ascii=False),
+        json.dumps(builder_result.result, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
+    lines.append(f"  - result   => {str(files['result'])}")
+
     files["manifest"].write_text(
         json.dumps(manifest, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
+    lines.append(f"  - manifest => {str(files['manifest'])}")
 
     # ------------------------------------------------------------
-    # 10. JSON mode output
+    # 6. Build creation_result structure
     # ------------------------------------------------------------
-    if json_workflow:
-        json_workflow.add_golden_test(
-            path=str(base_path),
-            manifest={
-                "path": str(files["manifest"]),
-                "content": json.dumps(manifest, indent=2, ensure_ascii=False),
-            },
-            inputs={
-                "path": str(inputs_dir),
-                "files": [
-                    {
-                        "path": str(files["sample"]),
-                        "content": sample_text,
-                    }
-                ],
-            },
-            expected_results={
-                "path": str(expected_results_dir),
-                "files": [
-                    {
-                        "path": str(files["result"]),
-                        "content": json.dumps(
-                            result.result, indent=2, ensure_ascii=False
-                        ),
-                    }
-                ],
-            },
-            expected={
-                "path": str(expected_dir),
-                "files": [
-                    {
-                        "path": str(files["snippet"]),
-                        "content": result.snippet,
-                    },
-                    {
-                        "path": str(files["template"]),
-                        "content": result.template,
-                    },
-                ],
-            },
-        )
+    creation_result = DotDict(
+        path=str(base_path),
+        manifest={
+            "path": str(files["manifest"]),
+            "content": json.dumps(manifest, indent=2, ensure_ascii=False),
+        },
+        inputs={
+            "path": str(inputs_dir),
+            "files": [
+                {
+                    "path": str(files["sample"]),
+                    "content": api_params.sample_data,
+                }
+            ],
+        },
+        expected_results={
+            "path": str(expected_results_dir),
+            "files": [
+                {
+                    "path": str(files["result"]),
+                    "content": json.dumps(
+                        builder_result.result, indent=2, ensure_ascii=False
+                    ),
+                }
+            ],
+        },
+        expected={
+            "path": str(expected_dir),
+            "files": [
+                {
+                    "path": str(files["snippet"]),
+                    "content": builder_result.snippet,
+                },
+                {
+                    "path": str(files["template"]),
+                    "content": builder_result.template,
+                },
+            ],
+        },
+    )
 
-        json_workflow.set_status(kind="success", message="", exit_code=0)
-        click.echo(json_workflow.to_json(validating=True))
-        raise SystemExit(0)
+    return DotDict(
+        status=StatusString(status=True),
+        creation_result=creation_result,
+        output="\n".join(lines),
+        exit_code=0,
+    )
 
-    # ------------------------------------------------------------
-    # 11. Human mode output
-    # ------------------------------------------------------------
-    print(f"[INFO] Golden test created at {str(base_path)!r}")
-    raise SystemExit(0)
