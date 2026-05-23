@@ -103,6 +103,20 @@ def fake_builder(fake_builder_factory):
     return fake_builder_factory(FreeFormBuilder)
 
 
+@pytest.fixture
+def patch_builder(monkeypatch):
+    """
+    Patch BUILDER_MAPPING so CLI uses fake builders.
+    This fixture does NOT know which builder is needed.
+    Tests must call it like:
+
+        patch_builder("tabular", fake_tabular)
+    """
+    def _patch(name, fake_cls):
+        import textfsmgen.cli.shared_builder_cli as sbc
+        monkeypatch.setitem(sbc.BUILDER_MAPPING, name, fake_cls)
+    return _patch
+
 # ------------------------------------------------------------
 # Patch load_sample globally for all CLI tests
 # ------------------------------------------------------------

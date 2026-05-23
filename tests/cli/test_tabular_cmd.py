@@ -1,51 +1,8 @@
 import json
-import pytest
 from click.testing import CliRunner
 from textfsmgen.cli.tabular_cmd import tabular
-
-
-# ------------------------------------------------------------
-# HELPERS
-# ------------------------------------------------------------
-
-
-@pytest.fixture
-def patch_builder(monkeypatch, fake_tabular):
-    """Patch TabularBuilder with FakeBuilder."""
-    monkeypatch.setattr(
-        "textfsmgen.cli.tabular_cmd.TabularBuilder",
-        fake_tabular,
-    )
-
-
-# ------------------------------------------------------------
-# --create-config (dry run)
-# ------------------------------------------------------------
-
-
-def test_tabular_create_config(runner, patch_builder, patch_load_sample, tmp_path):
-    sample = tmp_path / "sample.txt"
-    sample.write_text("a|b|c\n1|2|3\n")
-
-    result = runner.invoke(
-        tabular,
-        [
-            "--sample-file",
-            str(sample),
-            "--column-divider",
-            "|",
-            "--column-count",
-            "3",
-            "--create-config",
-        ],
-    )
-
-    assert result.exit_code == 0
-
-    data = json.loads(result.output)
-    assert data["sample_file"] == str(sample)
-    assert data["params"]["column_divider"] == "|"
-    assert data["params"]["column_count"] == 3
+import textfsmgen
+from textfsmgen.cli.shared_builder_cli import BUILDER_MAPPING
 
 
 # ------------------------------------------------------------
@@ -53,23 +10,19 @@ def test_tabular_create_config(runner, patch_builder, patch_load_sample, tmp_pat
 # ------------------------------------------------------------
 
 
-def test_tabular_create_config_file(runner, patch_builder, patch_load_sample, tmp_path):
-    sample = tmp_path / "sample.txt"
-    sample.write_text("a|b|c\n1|2|3\n")
+def test_create_config(runner, patch_builder, fake_tabular, tmpfile):
+    patch_builder("tabular", fake_tabular)
+    sample_path = tmpfile("sample.txt", "a|b|c\n1|2|3\n")
 
-    cfg_file = tmp_path / "tabular_cfg.json"
+    cfg_file = sample_path.parent / "config.cfg"
 
     result = runner.invoke(
         tabular,
         [
-            "--sample-file",
-            str(sample),
-            "--column-divider",
-            ",",
-            "--column-count",
-            "4",
-            "--create-config-file",
-            str(cfg_file),
+            "--sample-file", str(sample_path),
+            "--column-divider", "|",
+            "--column-count", "3",
+            "--create-config", str(cfg_file),
         ],
     )
 
@@ -77,61 +30,27 @@ def test_tabular_create_config_file(runner, patch_builder, patch_load_sample, tm
     assert cfg_file.exists()
 
     data = json.loads(cfg_file.read_text())
-    assert data["params"]["column_divider"] == ","
-    assert data["params"]["column_count"] == 4
+    assert data["params"]["column_divider"] == "|"
+    assert data["params"]["column_count"] == 3
 
 
 # ------------------------------------------------------------
-# --create-golden-test (dry run)
+# --create-golden-test (actual creation)
 # ------------------------------------------------------------
 
+def test_create_golden_test(runner, patch_builder, fake_tabular, tmpfile):
+    patch_builder("tabular", fake_tabular)
+    sample_path = tmpfile("sample.txt", "a|b|c\n1|2|3\n")
 
-def test_tabular_create_golden_test(runner, patch_builder, patch_load_sample, tmp_path):
-    sample = tmp_path / "sample.txt"
-    sample.write_text("a|b|c\n1|2|3\n")
+    golden_dir = sample_path.parent / "golden" / "integration" / "case1"
 
     result = runner.invoke(
         tabular,
         [
-            "--sample-file",
-            str(sample),
-            "--column-divider",
-            "|",
-            "--column-count",
-            "3",
-            "--create-golden-test",
-        ],
-    )
-
-    assert result.exit_code == 0
-    assert "DRY-RUN" in result.output
-    assert "tabular-case" in result.output
-
-
-# ------------------------------------------------------------
-# --create-golden-test-path (actual creation)
-# ------------------------------------------------------------
-
-
-def test_tabular_create_golden_test_path(
-    runner, patch_builder, patch_load_sample, tmp_path
-):
-    sample = tmp_path / "sample.txt"
-    sample.write_text("a|b|c\n1|2|3\n")
-
-    golden_dir = tmp_path / "golden" / "integration" / "case1"
-
-    result = runner.invoke(
-        tabular,
-        [
-            "--sample-file",
-            str(sample),
-            "--column-divider",
-            "|",
-            "--column-count",
-            "3",
-            "--create-golden-test-path",
-            str(golden_dir),
+            "--sample-file", str(sample_path),
+            "--column-divider", "|",
+            "--column-count", "3",
+            "--create-golden-test", str(golden_dir),
         ],
     )
 
@@ -148,25 +67,21 @@ def test_tabular_create_golden_test_path(
 # ------------------------------------------------------------
 # HELP
 # ------------------------------------------------------------
-def test_tabular_help(runner):
+def test_help(runner):
     result = runner.invoke(tabular, [])
-    assert result.exit_code == 0
-    assert "Generate a TextFSM template" in result.output
+    assert result.exit_code == 1
+    assert "missing required option" in result.output
 
 
 # ------------------------------------------------------------
 # SHOW SNIPPET
 # ------------------------------------------------------------
-def test_tabular_show_snippet(tmpfile, runner, monkeypatch, fake_tabular):
-    monkeypatch.setattr(
-        "textfsmgen.cli.tabular_cmd.TabularBuilder",
-        fake_tabular,
-    )
+def test_show_snippet(tmpfile, runner, patch_builder, fake_tabular):
+    patch_builder("tabular", fake_tabular)
 
     p = tmpfile("sample.txt", "hello")
 
     result = runner.invoke(tabular, ["--sample-file", str(p), "--show", "snippet"])
-
     assert result.exit_code == 0
     assert "abc" in result.output
 
@@ -174,11 +89,8 @@ def test_tabular_show_snippet(tmpfile, runner, monkeypatch, fake_tabular):
 # ------------------------------------------------------------
 # DEBUG MODE
 # ------------------------------------------------------------
-def test_tabular_debug(tmpfile, runner, monkeypatch, fake_tabular):
-    monkeypatch.setattr(
-        "textfsmgen.cli.tabular_cmd.TabularBuilder",
-        fake_tabular,  # <-- class, not lambda
-    )
+def test_debug(tmpfile, runner, patch_builder, fake_tabular):
+    patch_builder("tabular", fake_tabular)
 
     p = tmpfile("sample.txt", "hello")
 
@@ -194,7 +106,7 @@ def test_tabular_debug(tmpfile, runner, monkeypatch, fake_tabular):
 # ------------------------------------------------------------
 # PARAMETER PASSING
 # ------------------------------------------------------------
-def test_tabular_params_passed(tmpfile, runner, monkeypatch, fake_tabular):
+def test_params_passed(tmpfile, runner, monkeypatch, fake_tabular):
     captured = {}
 
     class CapturingBuilder(fake_tabular):
@@ -202,53 +114,41 @@ def test_tabular_params_passed(tmpfile, runner, monkeypatch, fake_tabular):
             super().set_sample(sample, **params)
             captured["params"] = params
 
-    monkeypatch.setattr(
-        "textfsmgen.cli.tabular_cmd.TabularBuilder",
+    monkeypatch.setitem(
+        textfsmgen.cli.shared_builder_cli.BUILDER_MAPPING,
+        "tabular",
         CapturingBuilder,
     )
 
     p = tmpfile("sample.txt", "hello")
-
     runner.invoke(
         tabular,
         [
-            "--sample-file",
-            str(p),
-            "--column-divider",
-            "|",
-            "--column-count",
-            "4",
-            "--has-header",
-            "--show",
-            "snippet",
+            "--sample-file", str(p),
+            "--column-divider", "|",
+            "--column-count", "4", "--has-header",
+            "--show", "snippet",
         ],
     )
-
     assert captured["params"]["column_divider"] == "|"
     assert captured["params"]["column_count"] == 4
     assert captured["params"]["has_header_row"] is True
 
 
-def test_tabular_column_divider_flag(tmp_path):
+def test_column_divider_flag(tmpfile):
     runner = CliRunner()
 
-    sample = tmp_path / "table.txt"
-    sample.write_text("a|b|c\n1|2|3\n")
+    sample_path = tmpfile("table.txt", "a|b|c\n1|2|3\n")
 
     result = runner.invoke(
         tabular,
-        [  # noqa
-            "--sample-file",
-            str(sample),
-            "--column-divider",
-            "|",
-            "--column-count",
-            "3",
-            "--show",
-            "snippet",
+        [
+            "--sample-file", str(sample_path),
+            "--column-divider", "|",
+            "--column-count", "3",
+            "--show", "snippet",
         ],
     )
 
     assert result.exit_code == 0
-    assert "a" in result.output
-    assert "b" in result.output
+    assert "start() " in result.output
