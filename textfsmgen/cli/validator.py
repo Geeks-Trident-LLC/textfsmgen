@@ -1,6 +1,7 @@
 import json
 import click
 from textfsmgen.libs.generic import StatusString
+from .config_cmd import CONFIG_TYPES
 
 
 # ------------------------------------------------------------
@@ -8,61 +9,15 @@ from textfsmgen.libs.generic import StatusString
 # ------------------------------------------------------------
 
 REQUIRED_TOP_KEYS = {
-    "freeform": [
-        "builder",
-        "params",
-        "snippet",
-        "snippet_file",
-        "sample_file",
-        "command",
-        "debug",
-        "dry_runshow",
-        "save",
-        "create_config",
-        "create_golden",
-        "json_mode",
-    ],
-    "category": [
-        "builder",
-        "params",
-        "sample_file",
-        "command",
-        "debug",
-        "dry_runshow",
-        "save",
-        "create_config",
-        "create_golden",
-        "json_mode",
-    ],
-    "tabular": [
-        "builder",
-        "params",
-        "sample_file",
-        "command",
-        "debug",
-        "dry_runshow",
-        "save",
-        "create_config",
-        "create_golden",
-        "json_mode",
-    ],
+    "freeform": list(CONFIG_TYPES["freeform"]),
+    "category": list(CONFIG_TYPES["category"]),
+    "tabular": list(CONFIG_TYPES["tabular"]),
 }
 
 REQUIRED_PARAM_KEYS = {
-    "freeform": [],
-    "category": ["count", "separator", "starting_from", "ending_at", "replacing_rules"],
-    "tabular": [
-        "column_divider",
-        "column_count",
-        "column_widths",
-        "headers",
-        "header_rows",
-        "custom_header_text",
-        "has_header_row",
-        "starting_from",
-        "ending_at",
-        "replacing_rules",
-    ],
+    "freeform": list(CONFIG_TYPES["freeform"]["params"]),
+    "category": list(CONFIG_TYPES["category"]["params"]),
+    "tabular": list(CONFIG_TYPES["tabular"]["params"]),
 }
 
 
@@ -74,7 +29,7 @@ REQUIRED_PARAM_KEYS = {
 def _load_json(config_path):
     try:
         raw = click.open_file(config_path).read()
-        return json.loads(raw), None
+        return json.loads(raw), StatusString(status=True)
     except Exception as exc:
         return None, StatusString(
             f"Failed to load config JSON: {exc}",
@@ -170,25 +125,25 @@ def _validate_snippet_rules(data, builder):
 
 
 def validate_config(config_path):
-    data, err = _load_json(config_path)
-    if err:
-        return err
+    data, ok = _load_json(config_path)
+    if not ok:
+        return ok
 
     builder = _validate_builder(data, config_path)
     if not builder:
         return builder
 
     builder_name = str(builder)
-    err = _validate_required_keys(data, builder_name)
-    if err:
-        return err
+    ok = _validate_required_keys(data, builder_name)
+    if not ok:
+        return ok
 
-    err = _validate_params(data, builder_name)
-    if err:
-        return err
+    ok = _validate_params(data, builder_name)
+    if not ok:
+        return ok
 
-    err = _validate_snippet_rules(data, builder_name)
-    if err:
-        return err
+    ok = _validate_snippet_rules(data, builder_name)
+    if not ok:
+        return ok
 
     return StatusString(data, status=True)

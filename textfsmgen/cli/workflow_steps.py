@@ -274,7 +274,7 @@ def prepare_run_params_step(state):
     )
     if not result:
         return abort(
-            state, StatusString(result.message, False, result.reason), result.exit_code
+            state, StatusString(result.message, False, result.status), result.exit_code
         )
 
     state.api_params = result.options

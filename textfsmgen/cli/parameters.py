@@ -209,7 +209,7 @@ def prepare_params(builder_name, cli_options, loaded_config):
 
     # Determine status
     if validated:
-        status = "ok"
+        status = ""
     else:
         status = validated.reason  # "error" or "code-error"
 
