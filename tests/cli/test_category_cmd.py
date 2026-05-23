@@ -1,217 +1,414 @@
 import json
 import pytest
 from click.testing import CliRunner
+
 from textfsmgen.cli.category_cmd import category
+from textfsmgen.libs import file
 
 
-# ------------------------------------------------------------
-# HELPERS
-# ------------------------------------------------------------
+# -------------------------------------------------------------------
+# Fixtures
+# -------------------------------------------------------------------
 
 
 @pytest.fixture
-def patch_builder(monkeypatch, fake_category):
-    """Patch CategoryBuilder with FakeBuilder."""
-    monkeypatch.setattr(
-        "textfsmgen.cli.category_cmd.CategoryBuilder",
-        fake_category,
-    )
+def runner():
+    return CliRunner()
 
 
-# ------------------------------------------------------------
-# --create-config (dry run)
-# ------------------------------------------------------------
+@pytest.fixture
+def sample(tmpfile):
+    return tmpfile("sample.txt", "item1: 1")
 
 
-def test_category_create_config(runner, patch_builder, patch_load_sample, tmp_path):
-    sample = tmp_path / "sample.txt"
-    sample.write_text("hello")
+@pytest.fixture
+def sample1(tmpfile):
+    return tmpfile("sample1.txt", "item a: a   item b: b\nitem c: c")
 
-    result = runner.invoke(
-        category,
-        [
-            "--sample-file",
-            str(sample),
-            "--count",
-            "3",
-            "--separator",
-            ":",
-            "--create-config",
-        ],
+
+@pytest.fixture
+def sample2(tmpfile):
+    return tmpfile("sample1.txt", "item a = a")
+
+
+@pytest.fixture
+def run(runner):
+    """Helper to invoke CLI with cleaner syntax."""
+
+    def _run(*args):
+        return runner.invoke(category, list(args))
+
+    return _run
+
+
+# -------------------------------------------------------------------
+# Tests: Basic behavior
+# -------------------------------------------------------------------
+
+
+def test_help_when_no_input(run):
+    result = run()
+    assert result.exit_code == 1
+    assert "missing required option" in result.output
+
+
+def test_with_count_param(run, sample1):
+    result = run(
+        "--sample-file",
+        sample1,
+        "--count",
+        "2",
+        "--show",
+        "result",
     )
 
     assert result.exit_code == 0
 
     data = json.loads(result.output)
-    assert data["sample_file"] == str(sample)
-    assert data["params"]["count"] == 3
-    assert data["params"]["separator"] == ":"
+
+    assert data == [
+        {
+            "item_a": "a",
+            "item_b": "b",
+            "item_c": "c",
+        }
+    ]
 
 
-# ------------------------------------------------------------
-# --create-config-file (writes file)
-# ------------------------------------------------------------
-
-
-def test_category_create_config_file(
-    runner, patch_builder, patch_load_sample, tmp_path
-):
-    sample = tmp_path / "sample.txt"
-    sample.write_text("hello")
-
-    cfg_file = tmp_path / "category_cfg.json"
-
-    result = runner.invoke(
-        category,
-        [
-            "--sample-file",
-            str(sample),
-            "--count",
-            "2",
-            "--separator",
-            "=",
-            "--create-config-file",
-            str(cfg_file),
-        ],
-    )
-
-    assert result.exit_code == 0
-    assert cfg_file.exists()
-
-    data = json.loads(cfg_file.read_text())
-    assert data["params"]["count"] == 2
-    assert data["params"]["separator"] == "="
-
-
-# ------------------------------------------------------------
-# --create-golden-test (dry run)
-# ------------------------------------------------------------
-
-
-def test_category_create_golden_test(
-    runner, patch_builder, patch_load_sample, tmp_path
-):
-    sample = tmp_path / "sample.txt"
-    sample.write_text("hello")
-
-    result = runner.invoke(
-        category,
-        [
-            "--sample-file",
-            str(sample),
-            "--count",
-            "1",
-            "--create-golden-test",
-        ],
-    )
-
-    assert result.exit_code == 0
-    assert "DRY-RUN" in result.output
-    assert "category-case" in result.output
-
-
-# ------------------------------------------------------------
-# --create-golden-test-path (actual creation)
-# ------------------------------------------------------------
-
-
-def test_category_create_golden_test_path(
-    runner, patch_builder, patch_load_sample, tmp_path
-):
-    sample = tmp_path / "sample.txt"
-    sample.write_text("hello")
-
-    golden_dir = tmp_path / "golden" / "integration" / "case1"
-
-    result = runner.invoke(
-        category,
-        [
-            "--sample-file",
-            str(sample),
-            "--count",
-            "1",
-            "--create-golden-test-path",
-            str(golden_dir),
-        ],
+def test_with_separator_param(run, sample2):
+    result = run(
+        "--sample-file",
+        sample2,
+        "--separator",
+        "=",
+        "--show",
+        "result",
     )
 
     assert result.exit_code == 0
 
-    # Validate golden test structure
-    assert (golden_dir / "inputs" / "sample.txt").exists()
-    assert (golden_dir / "expected" / "snippet.txt").exists()
-    assert (golden_dir / "expected" / "textfsm.template").exists()
-    assert (golden_dir / "expected_results" / "sample_result.json").exists()
-    assert (golden_dir / "manifest.json").exists()
+    data = json.loads(result.output)
+    assert data == [{"item_a": "a"}]
 
 
-def test_category_help(runner):
-    result = runner.invoke(category, [])
-    assert result.exit_code == 0
-    assert "Generate a TextFSM template" in result.output
+def test_debug(run, tmpfile, sample):
 
-
-def test_category_show_snippet(tmpfile, runner, monkeypatch, fake_category):
-    monkeypatch.setattr(
-        "textfsmgen.cli.category_cmd.CategoryBuilder",
-        fake_category,  # <-- class, not lambda
-    )
-
-    p = tmpfile("sample.txt", "hello")
-
-    result = runner.invoke(category, ["--sample-file", str(p), "--show", "snippet"])
-
-    assert result.exit_code == 0
-    assert "abc" in result.output
-
-
-def test_category_debug(tmpfile, runner, monkeypatch, fake_category):
-    monkeypatch.setattr(
-        "textfsmgen.cli.category_cmd.CategoryBuilder",
-        fake_category,
-    )
-
-    p = tmpfile("sample.txt", "hello")
-
-    result = runner.invoke(
-        category, ["--sample-file", str(p), "--show", "snippet", "--debug"]
+    result = run(
+        "--sample-file",
+        sample,
+        "--debug",
     )
 
     assert result.exit_code == 0
-    assert "[INFO] Loaded sample" in result.output
-    assert "=== DEBUG INFO ===" in result.output
+    assert f" = {file.path_name(sample)!r}" in result.output
 
 
-def test_category_sample_file_flag(tmp_path):
-    runner = CliRunner()
+# -------------------------------------------------------------------
+# Tests: Config loading
+# -------------------------------------------------------------------
 
-    sample = tmp_path / "sample.txt"
-    sample.write_text("key: value\n")
 
-    result = runner.invoke(
-        category,
-        [  # noqa
-            "--sample-file",
-            str(sample),
-            "--show",
-            "sample",
-        ],
+def test_load_config(run, sample, tmpfile):
+    cfg = {
+        "builder": "category",
+        "params": {
+            "count": 1,
+            "separator": ":",
+            "starting_from": None,
+            "ending_at": None,
+            "replacing_rules": None,
+        },
+        "sample_file": file.path_name(sample),
+        "command": "",
+        "config": "",
+        "debug": False,
+        "dry_run": False,
+        "show": "",
+        "save": "",
+        "create_config": "",
+        "create_golden_test": "",
+        "json_mode": False,
+    }
+
+    cfg_path = tmpfile("config.cfg", json.dumps(cfg))
+
+    result = run("--config", cfg_path)
+
+    assert result.exit_code == 0
+    assert "Value item1 " in result.output
+
+
+def test_invalid_config(run, tmpfile):
+    bad_cfg = tmpfile("bad.json", "{}")
+
+    result = run("--config", bad_cfg)
+    assert result.exit_code == 1
+
+
+# -------------------------------------------------------------------
+# Tests: Show modes
+# -------------------------------------------------------------------
+
+
+def test_show_sample(run, sample):
+    result = run(
+        "--sample-file",
+        sample,
+        "--show",
+        "sample",
     )
 
     assert result.exit_code == 0
-    assert "key: value" in result.output
+    assert "item1: 1" in result.output
 
 
-def test_category_debug_print_shows_sample_file(tmp_path):
-    runner = CliRunner()
+def test_show_snippet(run, sample):
+    result = run("--sample-file", sample, "--show", "snippet")
 
-    sample = tmp_path / "sample.txt"
-    sample.write_text("alpha: beta\n", encoding="utf-8")
+    assert result.exit_code == 0
+    assert "item1: digits(var_item1)" in result.output
 
-    result = runner.invoke(
-        category, ["--sample-file", str(sample), "--show", "sample", "--debug"]
+
+def test_show_template(run, sample):
+    result = run(
+        "--sample-file",
+        sample,
+        "--show",
+        "template",
     )
 
     assert result.exit_code == 0
-    assert "sample_file    =" in result.output
-    assert "[DEBUG]" in result.output or "DEBUG" in result.output
+    assert "Value item1 " in result.output
+    assert "Start" in result.output
+
+
+def test_show_result(run, sample):
+    result = run(
+        "--sample-file",
+        sample,
+        "--show",
+        "result",
+    )
+
+    assert result.exit_code == 0
+
+    data = json.loads(result.output)
+    assert data == [{"item1": "1"}]
+
+
+# -------------------------------------------------------------------
+# Tests: Save (dry-run)
+# -------------------------------------------------------------------
+
+
+def test_save_sample_with_dryrun(run, sample):
+    out_file = sample.parent / "out.txt"
+
+    result = run(
+        "--sample-file",
+        sample,
+        "--save",
+        f"sample-{file.path_name(out_file)}",
+        "--dry-run",
+    )
+
+    assert result.exit_code == 0
+    assert "[DRY-RUN] sample " in result.output
+    assert file.path_name(out_file) in result.output
+
+
+def test_save_snippet_with_dryrun(run, sample):
+    out_file = sample.parent / "snippet.txt"
+
+    result = run(
+        "--sample-file",
+        sample,
+        "--save",
+        f"snippet-{file.path_name(out_file)}",
+        "--dry-run",
+    )
+
+    assert result.exit_code == 0
+    assert "[DRY-RUN] snippet " in result.output
+    assert file.path_name(out_file) in result.output
+
+
+def test_save_template_with_dryrun(run, sample):
+    out_file = sample.parent / "textfsm.template"
+
+    result = run(
+        "--sample-file",
+        sample,
+        "--save",
+        f"template-{file.path_name(out_file)}",
+        "--dry-run",
+    )
+
+    assert result.exit_code == 0
+    assert "[DRY-RUN] template " in result.output
+    assert file.path_name(out_file) in result.output
+
+
+def test_save_result_with_dryrun(run, sample):
+    out_file = sample.parent / "result.json"
+
+    result = run(
+        "--sample-file",
+        sample,
+        "--save",
+        f"result-{file.path_name(out_file)}",
+        "--dry-run",
+    )
+
+    assert result.exit_code == 0
+    assert "[DRY-RUN] result " in result.output
+    assert file.path_name(out_file) in result.output
+
+
+# -------------------------------------------------------------------
+# Tests: Save (real)
+# -------------------------------------------------------------------
+
+
+def test_save_sample(run, sample):
+    out_file = sample.parent / "out.txt"
+
+    result = run(
+        "--sample-file",
+        sample,
+        "--save",
+        f"sample-{out_file}",
+    )
+
+    assert result.exit_code == 0
+    assert "Saved sample " in result.output
+    assert out_file.exists()
+
+
+def test_save_snippet(run, sample):
+    out_file = sample.parent / "snippet.txt"
+
+    result = run(
+        "--sample-file",
+        sample,
+        "--save",
+        f"snippet-{out_file}",
+    )
+
+    assert result.exit_code == 0
+    assert "Saved snippet " in result.output
+    assert out_file.exists()
+
+
+def test_save_template(run, sample):
+    out_file = sample.parent / "textfsm.template"
+
+    result = run(
+        "--sample-file",
+        sample,
+        "--save",
+        f"template-{out_file}",
+    )
+
+    assert result.exit_code == 0
+    assert "Saved template " in result.output
+    assert out_file.exists()
+
+
+def test_save_result(run, sample):
+    out_file = sample.parent / "result.json"
+
+    result = run(
+        "--sample-file",
+        sample,
+        "--save",
+        f"result-{out_file}",
+    )
+
+    assert result.exit_code == 0
+    assert "Saved result " in result.output
+    assert out_file.exists()
+
+
+# -------------------------------------------------------------------
+# Tests: Create config
+# -------------------------------------------------------------------
+
+
+def test_create_config_with_dryrun(run, sample):
+    cfg_path = sample.parent / "config.cfg"
+
+    result = run(
+        "--sample-file",
+        file.path_name(sample),
+        "--create-config",
+        file.path_name(cfg_path),
+        "--dry-run",
+    )
+    assert result.exit_code == 0
+
+    data = json.loads(result.output)
+    assert data["sample_file"] == file.path_name(sample)
+
+
+def test_create_config(run, sample):
+    cfg_path = sample.parent / "config.cfg"
+
+    result = run(
+        "--sample-file",
+        file.path_name(sample),
+        "--create-config",
+        file.path_name(cfg_path),
+    )
+    assert result.exit_code == 0
+    assert f"Config file {file.path_name(cfg_path)!r} created!" in result.output
+
+    data = json.loads(cfg_path.read_text())
+    assert data["sample_file"] == file.path_name(sample)
+
+
+# -------------------------------------------------------------------
+# Tests: Golden tests
+# -------------------------------------------------------------------
+
+
+def test_create_golden_test_with_dryrun(run, sample):
+    case_path = sample.parent / "tests" / "golden" / "integration" / "case1"
+
+    result = run(
+        "--sample-file",
+        sample,
+        "--create-golden-test",
+        case_path,
+        "--dry-run",
+    )
+
+    assert result.exit_code == 0
+    out = result.output
+
+    assert "[DRY-RUN]" in out
+    assert file.path_name(case_path / "inputs" / "sample.txt") in out
+    assert file.path_name(case_path / "expected" / "snippet.txt") in out
+    assert file.path_name(case_path / "expected" / "textfsm.template") in out
+    assert file.path_name(case_path / "expected_results" / "sample_result.json") in out
+    assert file.path_name(case_path / "manifest.json") in out
+
+
+def test_create_golden_test(run, sample):
+    case_path = sample.parent / "tests" / "golden" / "integration" / "case1"
+
+    result = run(
+        "--sample-file",
+        sample,
+        "--create-golden-test",
+        case_path,
+    )
+
+    assert result.exit_code == 0
+    assert f"Golden test created at {file.path_name(case_path)!r}" in result.output
+
+    assert (case_path / "inputs" / "sample.txt").exists()
+    assert (case_path / "expected" / "snippet.txt").exists()
+    assert (case_path / "expected" / "textfsm.template").exists()
+    assert (case_path / "expected_results" / "sample_result.json").exists()
+    assert (case_path / "manifest.json").exists()
