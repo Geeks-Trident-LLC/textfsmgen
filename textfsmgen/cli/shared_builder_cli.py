@@ -242,7 +242,7 @@ def build_debug_report(api_params):
     # -------------------------------------------
     # High-level info
     # -------------------------------------------
-    if api_params.snippet_file:
+    if "snippet_file" in api_params:
         lines.append(f"[INFO] Loaded snippet from: {api_params.snippet_file!r}")
         if api_params.snippet_data:
             lines.append(
@@ -266,7 +266,7 @@ def build_debug_report(api_params):
     # -------------------------------------------
     lines.append(" BUILDER PARAMS ".center(header_width, "-"))
 
-    if api_params.snippet_file:
+    if "snippet_file" in api_params:
         _add("snippet_file", api_params.snippet_file)
 
     _add("sample_file", api_params.sample_file)
