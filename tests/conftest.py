@@ -112,10 +112,14 @@ def patch_builder(monkeypatch):
 
         patch_builder("tabular", fake_tabular)
     """
+
     def _patch(name, fake_cls):
         import textfsmgen.cli.shared_builder_cli as sbc
+
         monkeypatch.setitem(sbc.BUILDER_MAPPING, name, fake_cls)
+
     return _patch
+
 
 # ------------------------------------------------------------
 # Patch load_sample globally for all CLI tests
