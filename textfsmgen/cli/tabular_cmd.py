@@ -57,6 +57,7 @@ def register(cli):
 )
 @click.option(
     "--has-header",
+    "has_header_row",
     is_flag=True,
     default=True,
     help="Indicates whether the table contains a header row.",
