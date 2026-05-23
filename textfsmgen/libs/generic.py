@@ -1,143 +1,55 @@
-"""
-textfsmgen.libs.common
-=====================
-
-General-purpose generic classes used across TextFSMGen.
-"""
-
-import re
-
-
-from typing import Any, Mapping, Iterable
+# textfsmgen/libs/generic.py
 
 
 class DotDict(dict):
     """
-    Dictionary with attribute-style access, normalization, and safe shadowing rules.
+    Dictionary with attribute-style access.
+    Nested dicts and lists of dicts are automatically wrapped.
     """
 
-    _valid_attr = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
-
-    _reserved = (
-        set(dir(dict))
-        | set(dir(object))
-        | {
-            "_valid_attr",
-            "_reserved",
-            "_wrap",
-            "from_mapping",
-            "from_pairs",
-            "_find_normalized_key",
-        }
-    )
-
-    # ------------------------------------------------------------
-    # Construction helpers
-    # ------------------------------------------------------------
     def __init__(self, *args, **kwargs):
         super().__init__()
         self.update(*args, **kwargs)
 
-    @classmethod
-    def from_mapping(cls, mapping: Mapping[str, Any]) -> "DotDict":
-        obj = cls()
-        for k, v in mapping.items():
-            obj[k] = cls._wrap(v)
-        return obj
+    # ------------------------------------------------------------
+    # Attribute access
+    # ------------------------------------------------------------
+    def __getattr__(self, key):
+        if not key.isidentifier():
+            raise AttributeError(key)
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(key)
 
-    @classmethod
-    def from_pairs(cls, pairs: Iterable[tuple[str, Any]]) -> "DotDict":
-        obj = cls()
-        for k, v in pairs:
-            obj[k] = cls._wrap(v)
-        return obj
+    def __setattr__(self, key, value):
+        self[key] = value
 
+    # ------------------------------------------------------------
+    # Ensure wrapping on assignment
+    # ------------------------------------------------------------
+    def __setitem__(self, key, value):
+        super().__setitem__(key, self._wrap(value))
+
+    # ------------------------------------------------------------
+    # Ensure wrapping on update()
+    # ------------------------------------------------------------
+    def update(self, *args, **kwargs):
+        for k, v in dict(*args, **kwargs).items():
+            self[k] = v
+
+    # ------------------------------------------------------------
+    # Recursive wrapping logic
+    # ------------------------------------------------------------
     @staticmethod
-    def _wrap(value: Any) -> Any:
-        if isinstance(value, dict) and not isinstance(value, DotDict):
-            return DotDict.from_mapping(value)
+    def _wrap(value):
+        if isinstance(value, dict):
+            return DotDict(value)
         if isinstance(value, list):
             return [DotDict._wrap(v) for v in value]
         if isinstance(value, tuple):
             return tuple(DotDict._wrap(v) for v in value)
         return value
-
-    # ------------------------------------------------------------
-    # Normalization helper (used for both get + set)
-    # ------------------------------------------------------------
-    def _find_normalized_key(self, name: str) -> str | None:
-        """
-        Return the actual dict key that corresponds to attribute name.
-        """
-        # Direct match
-        if name in self:
-            return name
-
-        # Trailing underscore shadowing
-        if name.endswith("_"):
-            base = name[:-1]
-            if base in self:
-                return base
-
-        # Normalization attempts
-        candidates = (
-            name.replace("_", " ").strip(),
-            name.replace("_", ".").strip("."),
-            name.replace("_", "-").strip("-"),
-        )
-        for key in candidates:
-            if key in self:
-                return key
-
-        return None
-
-    # ------------------------------------------------------------
-    # Attribute access
-    # ------------------------------------------------------------
-    def __getattr__(self, name: str) -> Any:
-        if not self._valid_attr.fullmatch(name):
-            raise AttributeError(
-                f"Invalid attribute name {name!r}. Expected pattern "
-                f"{self._valid_attr.pattern!r}."
-            )
-
-        key = self._find_normalized_key(name)
-        if key is not None:
-            return self._wrap(self[key])
-
-        raise AttributeError(f"Invalid attribute name {name!r}.")
-
-    # ------------------------------------------------------------
-    # Attribute assignment
-    # ------------------------------------------------------------
-    def __setattr__(self, name: str, value: Any) -> None:
-        # Internal attributes
-        if (
-            name.startswith("_")
-            or name in self._reserved
-            or name in type(self).__dict__
-        ):
-            object.__setattr__(self, name, value)
-            return
-
-        # Try to find normalized key
-        key = self._find_normalized_key(name)
-        if key is not None:
-            self[key] = self._wrap(value)
-            return
-
-        # Otherwise create new key using attribute name
-        self[name] = self._wrap(value)
-
-    # ------------------------------------------------------------
-    # Dict overrides
-    # ------------------------------------------------------------
-    def __setitem__(self, key: str, value: Any) -> None:
-        super().__setitem__(key, self._wrap(value))
-
-    def update(self, *args, **kwargs) -> None:
-        for k, v in dict(*args, **kwargs).items():
-            self[k] = v
 
 
 class StatusString(str):
