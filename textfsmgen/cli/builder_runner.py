@@ -7,17 +7,17 @@ from textfsmgen.libs.generic import DotDict
 from .workflow_steps import (
     check_mandatory_cli_options_step,
     load_config_step,
-    prepare_params_step,
+    prepare_run_params_step,
     build_debug_report_step,
     execute_step,
     create_golden_test_step,
     create_config_step,
-    save_step,
-    show_step,
+    save_outputs_step,
+    show_outputs_step,
+    build_step_summary,
+    finalize_steps,
 )
 from .json_model import JsonWorkflow, JsonState, ErrorInfo
-
-import textfsmgen
 
 
 class BuilderRunner:
@@ -28,13 +28,13 @@ class BuilderRunner:
     WORKFLOW_STEPS = [
         check_mandatory_cli_options_step,
         load_config_step,
-        prepare_params_step,
+        prepare_run_params_step,
         build_debug_report_step,
         execute_step,
         create_golden_test_step,
         create_config_step,
-        save_step,
-        show_step,
+        save_outputs_step,
+        show_outputs_step,
     ]
 
     def __init__(self, builder="", usage="", cli_options=None):
@@ -47,7 +47,6 @@ class BuilderRunner:
             message="",
             output="",
             exit_code=0,
-            workflow_steps=[],
         )
         self._start_timestamp = ""
         self._duration_ms = 0
@@ -63,10 +62,12 @@ class BuilderRunner:
 
         for step in self.WORKFLOW_STEPS:
             self.state = step(self.state)
-            if self.state.get("status") == "aborted":
+            if self.state.get("status"):
                 break
 
         self._duration_ms = int((time.perf_counter() - start) * 1000)
+
+        finalize_steps(self.state, self._start_timestamp, self._duration_ms)
         return self._finalize()
 
     # ------------------------------------------------------------
@@ -96,16 +97,10 @@ class BuilderRunner:
                 output=state.get("output", {}),
                 exit_code=state.get("exit_code", 0),
             ),
+            meta=state.get("meta"),
             steps=state.get("workflow_steps"),
+            step_summary=build_step_summary(state.workflow_steps, state),
         )
-
-        # ------------------------------------------------------------
-        # Populate meta
-        # ------------------------------------------------------------
-        workflow.meta.workflow_version = "1.0"
-        workflow.meta.builder_version = getattr(textfsmgen, "__version__", None)
-        workflow.meta.timestamp = self._start_timestamp
-        workflow.meta.duration_ms = self._duration_ms
 
         # ------------------------------------------------------------
         # Populate artifacts

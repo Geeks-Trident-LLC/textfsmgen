@@ -1,5 +1,5 @@
 # workflow_steps.py
-
+import copy
 import json
 from functools import wraps
 import time
@@ -20,10 +20,36 @@ from textfsmgen.cli import validator
 from textfsmgen.cli import parameters
 
 
+def create_step(index, name):
+    return DotDict(
+        index=index,
+        name=name,
+        duration_ms=0,
+        status="pending",
+        skipped=True,
+        reason=None,
+    )
+
+
+STEP_NAMES = [
+    "check-mandatory-cli-options",
+    "load-config",
+    "prepare-run-params",
+    "build-debug-report",
+    "execute",
+    "create-golden-test",
+    "create-config",
+    "save-outputs",
+    "show-outputs",
+]
+
+WORKFLOW_STEPS = [create_step(i, name) for i, name in enumerate(STEP_NAMES)]
+
+
 # ------------------------------------------------------------
 # Helpers
 # ------------------------------------------------------------
-def abort(state, status_obj, exit_code, *, include_debug=True, **kwargs):
+def abort(state, status_obj, exit_code, *, include_debug=True, **extra):
     """Standardized abort handler."""
     message = emit_status(status_obj, display=False)
     debug = (
@@ -32,15 +58,14 @@ def abort(state, status_obj, exit_code, *, include_debug=True, **kwargs):
     output = f"{debug}\n{message}".strip()
 
     state.update(
-        status="aborted", message=message, output=output, exit_code=exit_code, **kwargs
+        status="aborted", message=message, output=output, exit_code=exit_code, **extra
     )
     return state
 
 
-def complete(state, name, output, exit_code=0, **extra):
+def complete(state, output, exit_code=0, **extra):
     """Standardized completion handler."""
     state.update(
-        name=name,
         status="completed",
         message="",
         output=output.strip(),
@@ -55,8 +80,11 @@ def ready_check(func):
 
     @wraps(func)
     def wrapper(state):
-        if state.status:  # already aborted
+        state.step_name = func.__name__.replace("_step", "").replace("_", "-")
+        if state.status:  # aborted or completed
             return state
+
+        state.step_skipped = False
         return func(state)
 
     return wrapper
@@ -69,6 +97,7 @@ def timed_step(func):
     """
 
     def wrapper(state):
+
         start = time.perf_counter()
         new_state = func(state)
         end = time.perf_counter()
@@ -76,26 +105,113 @@ def timed_step(func):
         duration_ms = int((end - start) * 1000)
 
         if "workflow_steps" not in new_state:
-            new_state["workflow_steps"] = []
+            new_state.workflow_steps = copy.deepcopy(WORKFLOW_STEPS)
 
-        existed = any(
-            step.step == new_state.name for step in new_state["workflow_steps"]
-        )
+        step = None
 
-        if not existed:
-            new_state["workflow_steps"].append(
-                DotDict(
-                    {
-                        "step": new_state.name,
-                        "duration_ms": duration_ms,
-                        "status": new_state.status or "completed",
-                    }
-                )
-            )
+        for i in state.workflow_steps:
+            if i.name == new_state.step_name:
+                step = i
+                break
+
+        if step is not None:
+            step.duration_ms = duration_ms
+            step.status = new_state.status or "complete"
+            step.skipped = new_state.step_skipped
+            step.reason = new_state.message
 
         return new_state
 
     return wrapper
+
+
+# ------------------------------------------------------------
+# Finalize helpers
+# ------------------------------------------------------------
+
+
+def build_step_summary(steps, state):
+    total_steps = len(steps)
+    skipped_steps = sum(1 for s in steps if s.get("skipped"))
+    executed_steps = total_steps - skipped_steps
+
+    aborted = state.get("status") == "aborted"
+
+    failed_step = None
+    if aborted:
+        for s in reversed(steps):
+            if not s.get("skipped"):
+                failed_step = s["name"]
+                break
+
+    longest_step = None
+    if steps:
+        longest = max(steps, key=lambda s: s.get("duration_ms", 0))
+        longest_step = {
+            "name": longest["name"],
+            "duration_ms": longest["duration_ms"],
+        }
+
+    return {
+        "total_steps": total_steps,
+        "executed_steps": executed_steps,
+        "skipped_steps": skipped_steps,
+        "aborted": aborted,
+        "failed_step": failed_step,
+        "longest_step": longest_step,
+    }
+
+
+def finalize_steps(state, start_timestamp, duration_ms):
+    """
+    Post-process workflow:
+    - ensure all steps exist
+    - mark skipped steps and reasons
+    - compute total_duration_ms
+    - compute step_summary
+    - attach meta
+    """
+    # Ensure workflow_steps exists
+    if "workflow_steps" not in state:
+        state.workflow_steps = copy.deepcopy(WORKFLOW_STEPS)
+
+    steps = state.workflow_steps
+    steps_by_name = {s["name"]: s for s in steps}
+
+    # Ensure every static step exists
+    for template in WORKFLOW_STEPS:
+        if template["name"] not in steps_by_name:
+            steps.append(copy.deepcopy(template))
+
+    # Sort by index
+    steps.sort(key=lambda s: s["index"])
+
+    # Mark skipped + reason for steps that never ran
+    aborted = state.get("status") == "aborted"
+    for s in steps:
+        if s["status"] == "pending":
+            s["skipped"] = True
+            s["status"] = "skipped"
+            if aborted:
+                s["reason"] = "workflow-aborted"
+            else:
+                s["reason"] = "flag-disabled"
+
+    total_duration_ms = sum(s.get("duration_ms", 0) for s in steps)
+
+    state.step_summary = build_step_summary(steps, state)
+
+    if "meta" not in state:
+        state.meta = {}
+    state.meta.update(
+        workflow_version="1.0",
+        builder_version="0.6.3",
+        timestamp=start_timestamp,
+        duration_ms=duration_ms,
+        total_duration_ms=total_duration_ms,
+    )
+
+    return state
 
 
 # ------------------------------------------------------------
@@ -104,7 +220,7 @@ def timed_step(func):
 @timed_step
 @ready_check
 def check_mandatory_cli_options_step(state):
-    state.name = "check-mandatory-cli-options"
+
     o = state.cli_options
 
     if state.builder == "freeform":
@@ -131,7 +247,6 @@ def check_mandatory_cli_options_step(state):
 @timed_step
 @ready_check
 def load_config_step(state):
-    state.name = "load-config"
 
     if not state.cli_options.config:
         state.loaded_config = DotDict()
@@ -152,8 +267,7 @@ def load_config_step(state):
 
 @timed_step
 @ready_check
-def prepare_params_step(state):
-    state.name = "prepare-run-params"
+def prepare_run_params_step(state):
 
     result = parameters.prepare_params(
         state.builder, state.cli_options, state.loaded_config
@@ -170,7 +284,7 @@ def prepare_params_step(state):
 @timed_step
 @ready_check
 def build_debug_report_step(state):
-    state.name = "create-debug-report"
+
     state.debug_report = build_debug_report(state.api_params)
     state.output = state.debug_report
     return state
@@ -179,7 +293,6 @@ def build_debug_report_step(state):
 @timed_step
 @ready_check
 def execute_step(state):
-    state.name = "execute"
 
     result = execute_builder(state.api_params)
     state.builder_result = result.builder_result
@@ -196,7 +309,6 @@ def create_golden_test_step(state):
     if not state.api_params.create_golden_test:
         return state
 
-    state.name = "create-golden-test"
     result = create_golden_test(state.api_params, state.builder_result)
 
     if result.exit_code != 0:
@@ -207,7 +319,6 @@ def create_golden_test_step(state):
     output = f"{state.debug_report}\n{result.output}".strip()
     return complete(
         state,
-        "create-golden-test",
         output,
         exit_code=result.exit_code,
         golden_test=result.creation_result,
@@ -217,10 +328,9 @@ def create_golden_test_step(state):
 @timed_step
 @ready_check
 def create_config_step(state):
+
     if not state.api_params.create_config:
         return state
-
-    state.name = "create-config"
     result = create_config(state.api_params)
 
     if result.exit_code != 0:
@@ -240,7 +350,6 @@ def create_config_step(state):
 
     return complete(
         state,
-        "create-config",
         output,
         exit_code=result.exit_code,
         generated_config=result.generated_config,
@@ -249,11 +358,10 @@ def create_config_step(state):
 
 @timed_step
 @ready_check
-def save_step(state):
+def save_outputs_step(state):
     if not state.api_params.save:
         return state
 
-    state.name = "save-output"
     result = save_outputs(state.api_params, state.builder_result)
 
     if result.exit_code != 0:
@@ -264,7 +372,6 @@ def save_step(state):
 
     return complete(
         state,
-        "save-output",
         output,
         exit_code=result.exit_code,
         save=result.save_info,
@@ -273,9 +380,7 @@ def save_step(state):
 
 @timed_step
 @ready_check
-def show_step(state):
-    state.name = "show-output"
-
+def show_outputs_step(state):
     result = show_outputs(state.api_params, state.builder_result)
 
     if result.exit_code != 0:
@@ -289,7 +394,6 @@ def show_step(state):
 
     return complete(
         state,
-        "show-output",
         output,
         exit_code=result.exit_code,
         show=result.show_info,

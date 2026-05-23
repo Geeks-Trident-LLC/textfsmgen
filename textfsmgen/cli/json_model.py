@@ -129,6 +129,11 @@ class WorkflowSteps:
     steps: List[str] = field(default_factory=list)
 
 
+@dataclass
+class StepSummary:
+    summary: Dict[str, Any] = field(default_factory=dict)
+
+
 # ------------------------------------------------------------
 # 11. Top-level JSON workflow
 # ------------------------------------------------------------
@@ -138,6 +143,7 @@ class JsonWorkflow:
     error: Optional[ErrorInfo] = None
     artifacts: Optional[ArtifactIndex] = field(default_factory=ArtifactIndex)
     steps: Optional[WorkflowSteps] = field(default_factory=WorkflowSteps)
+    step_summary: Optional[StepSummary] = field(default_factory=StepSummary)
 
     cli_options: Optional[CliOptions] = None
     api_params: Optional[APIParams] = None
