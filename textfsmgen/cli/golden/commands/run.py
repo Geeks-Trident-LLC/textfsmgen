@@ -24,35 +24,44 @@ from __future__ import annotations
 from pathlib import Path
 import shutil
 
-from .shared import run_canonical, run_expected
+from .shared import run_canonical, run_expected, print_status
 from ..core.utils import catch_path_errors
 
 from ..core.golden_case import GoldenCase
 
+from textfsmgen.libs import file
+
 
 @catch_path_errors
-def run(case_path: Path, *, dry_run: bool = False) -> int:
-    """
-    Execute a non-destructive test run for a single golden test case.
-
-    dry-run:
-        - Copy <case> → <case>.temp
-        - Run inside temp
-        - Delete temp on success
-        - Keep temp on failure
-
-    Returns:
-        0 on success
-        1 on error
-    """
+def run(
+    case_path: Path,
+    *,
+    sandbox: bool = False,
+    sandbox_keep: bool = False,
+    quicktest: bool = False,
+) -> int:
     case_path = case_path.resolve()
 
     # --------------------------------------------------------------
-    # Dry-run: redirect to <case>.temp
+    # Quicktest: fast, no writes, no temp dirs
     # --------------------------------------------------------------
-    if dry_run:
+    if quicktest:
+        case = GoldenCase.from_path(case_path)
+        return (
+            run_canonical(case, quicktest=True)
+            if case.is_main()
+            else run_expected(case, quicktest=True)
+        )
+
+    # --------------------------------------------------------------
+    # Sandbox modes: create <case>.temp and run inside it
+    # --------------------------------------------------------------
+    if sandbox or sandbox_keep:
         temp_path = case_path.with_name(case_path.name + ".temp")
-        print(f"[DRY-RUN] Using temporary directory: {temp_path}")
+        print_status(
+            f"Using temporary directory: {file.path_name(temp_path)}",
+            sandbox=True,
+        )
 
         if temp_path.exists():
             shutil.rmtree(temp_path)
@@ -60,24 +69,30 @@ def run(case_path: Path, *, dry_run: bool = False) -> int:
         shutil.copytree(case_path, temp_path)
         case_path = temp_path
 
+        case = GoldenCase.from_path(case_path)
+        rc = (
+            run_canonical(case, quicktest=False)
+            if case.is_main()
+            else run_expected(case, quicktest=False)
+        )
+
+        if sandbox:
+            if rc == 0:
+                print_status("Cleaning up temporary directory.", sandbox=True)
+                shutil.rmtree(case_path)
+            else:
+                print_status("Run failed. Temporary directory preserved.", sandbox=True)
+        else:
+            print_status("Preserving temporary directory.", sandbox=True)
+
+        return rc
+
     # --------------------------------------------------------------
-    # Dispatch to canonical or expected run
+    # Normal run (in-place)
     # --------------------------------------------------------------
     case = GoldenCase.from_path(case_path)
-
-    if case.is_main():
-        rc = run_canonical(case, is_quicktest=False)
-    else:
-        rc = run_expected(case, is_quicktest=False)
-
-    # --------------------------------------------------------------
-    # Dry-run cleanup
-    # --------------------------------------------------------------
-    if dry_run:
-        if rc == 0:
-            print("[DRY-RUN] Cleaning up temporary directory.")
-            shutil.rmtree(case_path)
-        else:
-            print("[DRY-RUN] Run failed. Temporary directory preserved for inspection.")
-
-    return rc
+    return (
+        run_canonical(case, quicktest=False)
+        if case.is_main()
+        else run_expected(case, quicktest=False)
+    )

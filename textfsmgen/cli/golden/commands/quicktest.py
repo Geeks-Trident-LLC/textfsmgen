@@ -63,9 +63,9 @@ def quicktest(case_path: Path, *, dry_run: bool = False) -> int:
     case = GoldenCase.from_path(case_path)
 
     if case.is_main():
-        rc = run_canonical(case, is_quicktest=True)
+        rc = run_canonical(case, quicktest=True)
     else:
-        rc = run_expected(case, is_quicktest=True)
+        rc = run_expected(case, quicktest=True)
 
     # --------------------------------------------------------------
     # Dry-run cleanup

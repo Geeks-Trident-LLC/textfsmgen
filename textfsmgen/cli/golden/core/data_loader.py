@@ -578,13 +578,13 @@ def load_file_info(path: Path, root: str = ""):
     JSON files are automatically parsed; all others are returned as text.
     """
     resolved = path.resolve()
-    fullname = str(resolved)
+    fullname = resolved.as_posix()
 
     # Compute relative name if root is provided
     if root:
-        rel_name = str(extract_subpath_after(root, resolved))
+        rel_name = extract_subpath_after(root, resolved).as_posix()
     else:
-        rel_name = str(resolved)
+        rel_name = resolved.as_posix()
 
     # Parse JSON files
     if resolved.suffix == ".json":

@@ -19,7 +19,6 @@ def patch_cmd(cmd_name: str):
         "regen": "regen",
         "diff": "diff",
         "drift": "drift",
-        "quicktest": "quicktest",
         "copy": "copy_case",
         "duplicate": "duplicate_case",
         "new": "new",
@@ -42,11 +41,10 @@ def patch_cmd(cmd_name: str):
 @pytest.mark.parametrize(
     "argv, cmd_name",
     [
-        (["run", "--dry-run", "case-dir"], "run"),
+        (["run", "--sandbox", "case-dir"], "run"),
         (["regen", "--dry-run", "case-dir"], "regen"),
         (["diff", "case-dir"], "diff"),
         (["drift", "case-dir"], "drift"),
-        (["quicktest", "--dry-run", "case-dir"], "quicktest"),
         (["copy", "--dry-run", "--force", "me", "src", "dst"], "copy"),
         (["duplicate", "--dry-run", "--force", "me", "src"], "duplicate"),
         (["new", "case-dir"], "new"),
@@ -87,18 +85,18 @@ def test_subcommand_invokes_correct_target(runner, argv, cmd_name):
         mock_cmd.assert_called_once()
 
 
-def test_run_parsing_with_dry_run_and_case(runner):
+def test_run_parsing_with_sandbox_and_case(runner):
     with patch_cmd("run") as mock_run:
         mock_run.return_value = 0
 
-        result = runner.invoke(cli, ["run", "--dry-run", "case-dir"])
+        result = runner.invoke(cli, ["run", "--sandbox", "case-dir"])
 
         assert result.exit_code == 0
         mock_run.assert_called_once()
         args, kwargs = mock_run.call_args
         # first arg is Path(case)
         assert str(args[0]).endswith("case-dir")
-        assert kwargs["dry_run"] is True
+        assert kwargs["sandbox"] is True
 
 
 def test_regen_parsing_with_dry_run(runner):
@@ -110,19 +108,6 @@ def test_regen_parsing_with_dry_run(runner):
         assert result.exit_code == 0
         mock_regen.assert_called_once()
         args, kwargs = mock_regen.call_args
-        assert str(args[0]).endswith("case-dir")
-        assert kwargs["dry_run"] is True
-
-
-def test_quicktest_parsing_with_dry_run(runner):
-    with patch_cmd("quicktest") as mock_qt:
-        mock_qt.return_value = 0
-
-        result = runner.invoke(cli, ["quicktest", "--dry-run", "case-dir"])
-
-        assert result.exit_code == 0
-        mock_qt.assert_called_once()
-        args, kwargs = mock_qt.call_args
         assert str(args[0]).endswith("case-dir")
         assert kwargs["dry_run"] is True
 

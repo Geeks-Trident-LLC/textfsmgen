@@ -4,6 +4,7 @@ from __future__ import annotations
 # Imports
 # ============================================================================
 
+import re
 import difflib
 from datetime import datetime
 from pathlib import Path
@@ -12,6 +13,7 @@ from typing import List, Dict, Any
 from textfsmgen import parse_textfsm_to_dicts
 from textfsmgen.libs.text import decorate_text
 from textfsmgen.libs.utils import get_data_as_tabular
+from textfsmgen.libs import file
 
 from ..core.data_loader import extract_subpath_after
 from ..core.golden_case import GoldenCase
@@ -41,7 +43,7 @@ def describe_file_update(path: Path, exist=False) -> str:
 # ============================================================================
 
 
-def run_canonical(case, is_quicktest=False) -> int:
+def run_canonical(case, quicktest=False) -> int:
     """
     Run the canonical golden test for a case.
 
@@ -59,36 +61,46 @@ def run_canonical(case, is_quicktest=False) -> int:
     builder = case.data.build(sample=canonical.sample.content)
 
     if not builder:
-        print(
-            f"[FAIL] {tc_name} — failed to generate builder from {canonical.sample.name}"
+        print_status(
+            f"{file.path_name(tc_name)} — failed to generate "
+            f"builder from {file.path_name(canonical.sample.name)}",
+            fail=True,
         )
         return 1
 
     # --- Snippet + Template Checks ------------------------------------------
     for kind in ("snippet", "template"):
-        if diff_against_canonical(case, kind=kind, is_quicktest=is_quicktest):
-            print(
-                f"[FAIL] {tc_name} — diff found between canonical and generated "
-                f"{kind} from {canonical.sample.name}"
+        if diff_against_canonical(case, kind=kind, quicktest=quicktest):
+            print_status(
+                f"{file.path_name(tc_name)} — "
+                "diff found between canonical and generated "
+                f"{kind} from {file.path_name(canonical.sample.name)}",
+                fail=True,
             )
             return 1
 
     # --- Canonical Result Check ---------------------------------------------
-    if diff_against_canonical_result(case, is_quicktest=is_quicktest):
-        print(
-            f"[FAIL] {tc_name} — diff found between canonical result and parsed result "
-            f"from {canonical.sample.name}"
+    if diff_against_canonical_result(case, quicktest=quicktest):
+        print_status(
+            f"{file.path_name(tc_name)} — diff found between "
+            "canonical result and parsed result "
+            f"from {file.path_name(canonical.sample.name)}",
+            fail=True,
         )
         return 1
 
     # --- Expected Result Check (integration inputs) -------------------------
-    if diff_against_result(case, is_quicktest=is_quicktest):
-        print(f"[FAIL] {tc_name} — diff found between expected and generated results")
+    if diff_against_result(case, quicktest=quicktest):
+        print_status(
+            f"{file.path_name(tc_name)} — "
+            "diff found between expected and generated results",
+            fail=True,
+        )
         return 1
 
     # --- Quicktest Mode: No Writes ------------------------------------------
-    if is_quicktest:
-        print(f"[OK] {tc_name} — quicktest completed")
+    if quicktest:
+        print_status(f"{file.path_name(tc_name)} — quicktest completed", ok=True)
         return 0
 
     # --- Full Run: Write meta.json + golden.hash ----------------------------
@@ -104,10 +116,11 @@ def run_canonical(case, is_quicktest=False) -> int:
     meta_status = describe_file_update(meta_path, exist=meta_status_before)
     hash_status = describe_file_update(hash_path, exist=hash_status_before)
 
-    print(
-        f"[OK] {tc_name} — run completed\n"
-        f"  Updated: {meta_path} ({meta_status})\n"
-        f"  Updated: {hash_path} ({hash_status})\n"
+    print_status(
+        f"{file.path_name(tc_name)} — run completed\n"
+        f"  Updated: {file.path_name(meta_path)} ({meta_status})\n"
+        f"  Updated: {file.path_name(hash_path)} ({hash_status})",
+        ok=True,
     )
     return 0
 
@@ -117,7 +130,7 @@ def run_canonical(case, is_quicktest=False) -> int:
 # ============================================================================
 
 
-def run_expected(case, is_quicktest=False) -> int:
+def run_expected(case, quicktest=False) -> int:
     """
     Run the expected-based golden test for a case.
 
@@ -130,20 +143,26 @@ def run_expected(case, is_quicktest=False) -> int:
 
     # --- Snippet + Template Checks ------------------------------------------
     for kind in ("snippet", "template"):
-        if diff_expected(case, kind=kind, is_quicktest=is_quicktest):
-            print(
-                f"[FAIL] {tc_name} — diff found between expected and generated {kind}"
+        if diff_expected(case, kind=kind, quicktest=quicktest):
+            print_status(
+                f"{file.path_name(tc_name)} — "
+                f"diff found between expected and generated {kind}",
+                fail=True,
             )
             return 1
 
     # --- Expected Result Check ----------------------------------------------
-    if diff_against_result(case, is_quicktest=is_quicktest):
-        print(f"[FAIL] {tc_name} — diff found between expected and generated results")
+    if diff_against_result(case, quicktest=quicktest):
+        print_status(
+            f"{file.path_name(tc_name)} — "
+            "diff found between expected and generated results",
+            fail=True,
+        )
         return 1
 
     # --- Success Message -----------------------------------------------------
-    type_ = "quicktest" if is_quicktest else "run"
-    print(f"[OK] {tc_name} — {type_} completed")
+    type_ = "quicktest" if quicktest else "run"
+    print_status(f"{file.path_name(tc_name)} — {type_} completed", ok=True)
     return 0
 
 
@@ -211,7 +230,7 @@ def print_block(title: str, content: str):
 # ============================================================================
 
 
-def diff_canonical(case: GoldenCase, kind: str, is_quicktest=False) -> int:
+def diff_canonical(case: GoldenCase, kind: str, quicktest=False) -> int:
     canonical = case.data.load_canonical(root="golden")
     info = canonical.get(kind)
 
@@ -220,11 +239,11 @@ def diff_canonical(case: GoldenCase, kind: str, is_quicktest=False) -> int:
         ref_name=info.name,
         ref_text=info.content,
         kind=kind,
-        is_quicktest=is_quicktest,
+        quicktest=quicktest,
     )
 
 
-def diff_expected(case: GoldenCase, kind: str, is_quicktest=False) -> int:
+def diff_expected(case: GoldenCase, kind: str, quicktest=False) -> int:
     expected = case.data.load_expected(root="golden")
     info = expected.get(kind)
 
@@ -233,11 +252,11 @@ def diff_expected(case: GoldenCase, kind: str, is_quicktest=False) -> int:
         ref_name=info.name,
         ref_text=info.content,
         kind=kind,
-        is_quicktest=is_quicktest,
+        quicktest=quicktest,
     )
 
 
-def diff_against_canonical(case: GoldenCase, kind: str, is_quicktest=False) -> int:
+def diff_against_canonical(case: GoldenCase, kind: str, quicktest=False) -> int:
     """
     Public API: Compare generated <kind> against canonical reference.
     """
@@ -251,7 +270,7 @@ def diff_against_canonical(case: GoldenCase, kind: str, is_quicktest=False) -> i
     generated_clean = strip_header_block(generated_text)
 
     # --- Quicktest Fast Path -------------------------------------------------
-    if is_quicktest:
+    if quicktest:
         return 0 if generated_clean.strip() == ref_clean.strip() else 1
 
     # --- Full Diff -----------------------------------------------------------
@@ -259,15 +278,17 @@ def diff_against_canonical(case: GoldenCase, kind: str, is_quicktest=False) -> i
     exit_code = 1 if diff_text else 0
 
     if diff_text:
-        print(f"[INFO] diff-{kind} for case: {case.case_dir.name}")
-        print_block(f"Reference {kind} (canonical): {info.name}", info.content)
+        print_block(f"diff-{kind} for case: {file.path_name(case.case_dir.name)}")
         print_block(
-            f"Generated {kind} from (canonical) input: {canonical.sample.name}",
+            f"Reference {kind} (canonical): {file.path_name(info.name)}", info.content
+        )
+        print_block(
+            f"Generated {kind} from (canonical) input: {file.path_name(canonical.sample.name)}",
             generated_text,
         )
         print_block(
-            f"Diff: {info.name}\n"
-            f"      vs generated {kind} (from {canonical.sample.name})",
+            f"Diff: {file.path_name(info.name)}\n"
+            f"      vs generated {kind} (from {file.path_name(canonical.sample.name)})",
             diff_text,
         )
     return exit_code
@@ -279,7 +300,7 @@ def diff_against_canonical(case: GoldenCase, kind: str, is_quicktest=False) -> i
 
 
 def diff_against_reference(
-    case: GoldenCase, ref_name: str, ref_text: str, kind: str, is_quicktest=False
+    case: GoldenCase, ref_name: str, ref_text: str, kind: str, quicktest=False
 ) -> int:
     """
     Compare generated snippet/template against a reference (canonical or expected).
@@ -296,7 +317,7 @@ def diff_against_reference(
         generated_clean = strip_header_block(generated_text)
 
         # --- Quicktest Fast Path ---------------------------------------------
-        if is_quicktest:
+        if quicktest:
             if generated_clean.strip() == ref_clean.strip():
                 at_least_one_match = True
             continue
@@ -309,18 +330,20 @@ def diff_against_reference(
 
         groups.append(
             (
-                f"Generated {kind} from input: {fileinfo.name}",
+                f"Generated {kind} from input: {file.path_name(fileinfo.name)}",
                 generated_text,
-                f"Diff: {ref_name}\n      vs generated {kind} (from {fileinfo.name})",
+                f"Diff: {ref_name}\n      vs generated {kind} (from {file.path_name(fileinfo.name)})",
                 diff_text,
             )
         )
 
     # --- Print Groups --------------------------------------------------------
     if groups:
-        print(f"[INFO] diff-{kind} for case: {case.case_dir.name}")
+        print_status(f"diff-{kind} for case: {file.path_name(case.case_dir.name)}")
         category = "canonical" if case.is_main() else "expected"
-        print_block(f"Reference {kind} ({category}): {ref_name}", ref_text)
+        print_block(
+            f"Reference {kind} ({category}): {file.path_name(ref_name)}", ref_text
+        )
 
         for gen_title, gen_text, diff_title, diff_text in groups:
             print_block(gen_title, gen_text)
@@ -334,7 +357,7 @@ def diff_against_reference(
 # ============================================================================
 
 
-def diff_against_canonical_result(case: GoldenCase, is_quicktest=False):
+def diff_against_canonical_result(case: GoldenCase, quicktest=False):
     canonical = case.data.load_canonical(root="golden")
 
     result = parse_textfsm_to_dicts(
@@ -344,7 +367,7 @@ def diff_against_canonical_result(case: GoldenCase, is_quicktest=False):
     exp_result = canonical.result.content
 
     # --- Quicktest Fast Path -------------------------------------------------
-    if is_quicktest:
+    if quicktest:
         return 0 if result == exp_result else 1
 
     # --- Full Diff -----------------------------------------------------------
@@ -352,16 +375,18 @@ def diff_against_canonical_result(case: GoldenCase, is_quicktest=False):
     exit_code = 1 if diff_text else 0
 
     if diff_text:
-        print(f"[INFO] canonical diff-result for case: {case.case_dir.name}")
+        print_status(
+            f"canonical diff-result for case: {file.path_name(case.case_dir.name)}"
+        )
         print_block(
-            f"Diff: {canonical.result.name}\n"
-            f"      vs parsed canonical sample (from {canonical.sample.name})",
+            f"Diff: {file.path_name(canonical.result.name)}\n"
+            f"      vs parsed canonical sample (from {file.path_name(canonical.sample.name)})",
             diff_text,
         )
     return exit_code
 
 
-def diff_against_result(case: GoldenCase, is_quicktest=False):
+def diff_against_result(case: GoldenCase, quicktest=False):
     exit_code = 0
 
     # Choose template source
@@ -379,7 +404,7 @@ def diff_against_result(case: GoldenCase, is_quicktest=False):
         )
 
         # --- Quicktest Fast Path ---------------------------------------------
-        if is_quicktest:
+        if quicktest:
             if result == exp_result:
                 continue
             return 1
@@ -390,8 +415,8 @@ def diff_against_result(case: GoldenCase, is_quicktest=False):
         if diff_text:
             exit_code = 1
             print_block(
-                f"Diff: {result_info.name}\n"
-                f"      vs parsed sample (from {input_info.name})",
+                f"Diff: {file.path_name(result_info.name)}\n"
+                f"      vs parsed sample (from {file.path_name(input_info.name)})",
                 diff_text,
             )
 
@@ -450,3 +475,43 @@ def have_same_columns(list_a, list_b):
     cols_a = set(list_a[0].keys()) if list_a else set()
     cols_b = set(list_b[0].keys()) if list_b else set()
     return cols_a == cols_b and cols_a
+
+
+_PREFIX_RE = re.compile(r"^\[[A-Z]+\]\s*")
+
+
+def print_status(
+    message: str,
+    *,
+    ok: bool = False,
+    success: bool = False,
+    fail: bool = False,
+    sandbox: bool = False,
+) -> None:
+    """
+    Print a standardized status message.
+
+    Behavior:
+      - Strip any existing [...] prefix.
+      - fail=True     → [FAIL]
+      - sandbox=True  → [SANDBOX]
+      - success=True  → [SUCCESS]
+      - fallback      → [INFO]
+    """
+
+    # Strip any existing prefix like [FAIL], [SUCCESS], [XYZ], etc.
+    message = _PREFIX_RE.sub("", message).lstrip()
+
+    pairs = (
+        (fail, f"[FAIL] {message}"),
+        (sandbox, f"[SANDBOX] {message}"),
+        (success, f"[SUCCESS] {message}"),
+        (ok, f"[OK] {message}"),
+    )
+    for flag, msg in pairs:
+        if flag:
+            print(msg)
+            return
+
+    # Fallback
+    print(f"[INFO] {message}")

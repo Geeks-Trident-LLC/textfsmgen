@@ -4,12 +4,14 @@ import json
 from pathlib import Path
 import click
 
+import time as time_module
+import functools
+
 from .commands import (
     run as cmd_run,
     regen as cmd_regen,
     diff as cmd_diff,
     drift as cmd_drift,
-    quicktest as cmd_quicktest,
     copy as cmd_copy,
     duplicate as cmd_duplicate,
     new as cmd_new,
@@ -25,21 +27,79 @@ from .commands import (
     identical as cmd_identical,
 )
 
+__version__ = "1.0.0"
 
-@click.group()
-def cli():
-    """Golden test utilities."""
-    pass
+__all__ = [
+    "cli",
+    "__version__",
+]
 
 
-@cli.command()
+def timed_command(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time_module.perf_counter()
+        rc = func(*args, **kwargs)
+        end = time_module.perf_counter()
+
+        ctx = click.get_current_context(silent=True)
+        if ctx and ctx.obj and ctx.obj.get("time"):
+            elapsed = end - start
+            click.echo(f"[TIME] Completed in {elapsed:.3f}s")
+
+        return rc
+
+    return wrapper
+
+
+@click.group(
+    help="Golden test utilities for TextFSMGen.",
+    context_settings=dict(help_option_names=["-h", "--help"]),
+)
+@click.version_option(
+    version=__version__,
+    prog_name="textfsmgen-golden-tests",
+    message="%(prog)s %(version)s",
+)
+@click.option("--time", is_flag=True, help="Show execution time for the command.")
+@click.pass_context
+def cli(ctx, time):
+    """Golden test utilities for TextFSMGen."""
+    ctx.ensure_object(dict)
+    ctx.obj["time"] = time
+
+
+@cli.command(name="version", help="Show the Golden Tests CLI version.")
+def version():
+    click.echo(f"textfsmgen-golden-tests {__version__}")
+
+
+@cli.command(help="Run a golden test case in normal, sandbox, or quicktest modes.")
+@timed_command
 @click.option(
-    "--dry-run", is_flag=True, help="Run inside <case>.temp and delete it on success."
+    "--sandbox",
+    is_flag=True,
+    help="Run inside <case>.temp and delete the sandbox on success.",
+)
+@click.option(
+    "--sandbox-keep",
+    is_flag=True,
+    help="Run inside <case>.temp and preserve the sandbox directory.",
+)
+@click.option(
+    "--quicktest",
+    is_flag=True,
+    help="Run a fast, no-write, logic-only validation (no temp dirs).",
 )
 @click.argument("case", type=click.Path())
-def run(dry_run, case):
-    """Execute a non-destructive test run for a golden test case."""
-    return cmd_run.run(Path(case).resolve(), dry_run=dry_run)
+def run(sandbox, sandbox_keep, quicktest, case):
+    """Execute a golden test case."""
+    return cmd_run.run(
+        Path(case).resolve(),
+        sandbox=sandbox,
+        sandbox_keep=sandbox_keep,
+        quicktest=quicktest,
+    )
 
 
 @cli.command()
@@ -66,18 +126,6 @@ def diff(case):
 def drift(case):
     """Detect drift between current outputs and golden expected results."""
     return cmd_drift.drift(Path(case).resolve())
-
-
-@cli.command()
-@click.option(
-    "--dry-run",
-    is_flag=True,
-    help="Run quicktest inside <case>.temp and delete it on success.",
-)
-@click.argument("case", type=click.Path())
-def quicktest(dry_run, case):
-    """Run quicktest validation for a golden test case."""
-    return cmd_quicktest.quicktest(Path(case).resolve(), dry_run=dry_run)
 
 
 @cli.command()
