@@ -439,7 +439,7 @@ def prepare_golden_test_info(api_params):
 
     manifest = {
         "builder": api_params.builder,
-        "params": api_params.params,
+        "parameters": api_params.params,
         "meta": {
             "author": "",
             "email": "",
