@@ -1,18 +1,5 @@
-"""
-Top-level CLI for the textfsmgen application.
-
-This dispatcher handles commands such as:
-
-    textfsmgen tester run <case>
-    textfsmgen tester regen <case>
-
-All tester subcommands are forwarded to TesterCLI with correct
-argument forwarding.
-"""
-
 import click
 from textfsmgen import __version__
-from textfsmgen.tester.cli import TesterCLI
 
 from . import category_cmd
 from . import tabular_cmd
@@ -42,12 +29,3 @@ freeform_cmd.register(cli)
 @cli.command(help="Show the textfsmgen version.")
 def version():
     click.echo(f"textfsmgen {__version__}")
-
-
-@cli.command(
-    help="Golden Master Testing utilities. All arguments after 'tester' are forwarded."
-)
-@click.argument("remaining", nargs=-1)
-def tester(remaining):
-    tester_cli = TesterCLI()
-    return tester_cli.run_from_argv(list(remaining))
