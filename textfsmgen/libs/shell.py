@@ -1,175 +1,105 @@
-"""
-textfsmgen.libs.shell
-=====================
+# textfsmgen/libs/shell.py
 
-General-purpose shell (CLI interaction) functions used across TextFSMGen.
-"""  # noqa
-
-from typing import Optional
-
-import subprocess
-import re
 import platform
+
+import os
 import shlex
+import subprocess
+import asyncio
+from dataclasses import dataclass
 
 
-from . import ECODE
-from .generic import DotDict
-
-
-class PackageInfo:
-    """Retrieve and store package info using pip."""
-
-    def __init__(self, name: str):
-        self.pkg = name.lower()
-        self._installed: bool = False
-        self._version: str = ""
-        self._name: str = ""
-        self._pip_freeze_result: Optional[DotDict] = None
-        self._pip_show_result: Optional[DotDict] = None
-        self._process()
+@dataclass
+class CommandResult:
+    output: str
+    exit_code: int
 
     @property
-    def is_installed(self) -> bool:
-        """Return True if the package is installed."""
-        return self._installed
-
-    @property
-    def version(self) -> str:
-        """Return the detected package version."""
-        return self._version
-
-    @property
-    def name(self) -> str:
-        """Return the package name."""
-        return self._name
-
-    @property
-    def freeze_out(self) -> str:
-        """Return raw output from `pip freeze`."""
-        if isinstance(self._pip_freeze_result, DotDict):
-            return self._pip_freeze_result.output
-        return ""
-
-    @property
-    def show_out(self) -> str:
-        """Return raw output from `pip show`."""
-        if isinstance(self._pip_show_result, DotDict):
-            return self._pip_show_result.output
-        return ""
-
-    def _process(self) -> None:
-        """Populate package info using `pip freeze` and `pip show`."""
-        self._pip_freeze_result = execute_command("pip freeze")
-
-        pat_freeze = rf"(?i)(?P<name>{self.pkg}) *(?P<sep>==|@) *(?P<version>.+)\s*$"
-        for line in self.freeze_out.splitlines():
-            m = re.match(pat_freeze, line)
-            if m:
-                self._name = m.group("name")
-                self._installed = True
-                self._version = m.group("version") if m.group("sep") == "==" else ""
-                break
-
-        if self.is_installed and not self._version:
-            self._pip_show_result = execute_command(f"pip show {self.pkg}")
-            pat_show = r"(?i)^version:\s+(?P<version>.+)\s*$"
-            m = re.search(pat_show, self.show_out, flags=re.M)
-            if m:
-                self._version = m.group("version")
+    def is_success(self):
+        return self.exit_code == 0
 
 
-def execute_command(cmdline: str) -> DotDict:
-    """
-    Run a shell command in the most natural way possible.
-    Automatically detects PowerShell pipelines and reruns them safely.
-    """
-
-    is_windows = platform.system() == "Windows"
-
-    # ------------------------------------------------------------
-    # 1. Try running normally (cmd.exe or bash/zsh)
-    # ------------------------------------------------------------
-    proc = subprocess.run(cmdline, shell=True, capture_output=True, text=True)
-
-    if proc.returncode == ECODE.SUCCESS or not is_windows:
-        return DotDict(
-            output=(proc.stdout or "") + (proc.stderr or ""),
-            exit_code=proc.returncode,
-            is_success=proc.returncode == ECODE.SUCCESS,
-        )
-
-    # ------------------------------------------------------------
-    # 2. If on Windows and command looks like PowerShell syntax,
-    #    run it through PowerShell safely.
-    # ------------------------------------------------------------
-    if _looks_like_powershell(cmdline):
-        return _run_powershell_block(cmdline)
-
-    # ------------------------------------------------------------
-    # 3. If user explicitly typed "powershell ..." or "pwsh ...",
-    #    run it directly with shell=False.
-    # ------------------------------------------------------------
-    if cmdline.strip().lower().startswith(("powershell ", "pwsh ")):
-        return _run_explicit_powershell(cmdline)
-
-    # ------------------------------------------------------------
-    # 4. Fallback: return the failed result
-    # ------------------------------------------------------------
-    return DotDict(
-        output=(proc.stdout or "") + (proc.stderr or ""),
-        exit_code=proc.returncode,
-        is_success=False,
+async def execute_command_async(cmdline: str) -> CommandResult:
+    proc = await asyncio.create_subprocess_shell(
+        cmdline,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
     )
 
+    stdout, stderr = await proc.communicate()
+    output = (stdout or b"").decode() + (stderr or b"").decode()
 
-def _looks_like_powershell(cmd: str) -> bool:
-    """Heuristics to detect PowerShell pipelines."""
-    ps_keywords = [
-        "|",
-        "select-object",
-        "where-object",
-        "format-",
-        "get-",
-        "set-",
-        "new-",
-        "remove-",
-        "& {",
-        ";",
-    ]
-    cmd_lower = cmd.lower()
-    return any(k in cmd_lower for k in ps_keywords)
+    return CommandResult(output, proc.returncode)
 
 
-def _run_powershell_block(command: str) -> DotDict:
-    """Run a PowerShell pipeline using a script block."""
-    ps_command = f"& {{ {command} }}"
-    for ps in ("powershell", "pwsh"):
+def execute_command(cmdline: str) -> CommandResult:
+    if os.name != "nt":
+        return _run_shell(cmdline)
+
+    # Windows: try cmd.exe first
+    result = _run_shell(cmdline)
+    if result.is_success:
+        return result
+
+    # Try direct exec (no shell)
+    result = _run_direct(cmdline)
+    if result.is_success:
+        return result
+
+    # If user already invoked PowerShell/pwsh, do not wrap again
+    if _is_explicit_powershell(cmdline):
+        return result  # propagate failure
+
+    # Final fallback: wrap in PowerShell or pwsh
+    return _run_powershell(cmdline)
+
+
+# -------------------------------------------------------------------
+# Helpers
+# -------------------------------------------------------------------
+
+def _run_shell(cmdline: str) -> CommandResult:
+    proc = subprocess.run(
+        cmdline,
+        shell=True,
+        capture_output=True,
+        text=True,
+    )
+    return CommandResult(proc.stdout + proc.stderr, proc.returncode)
+
+
+def _run_direct(cmdline: str) -> CommandResult:
+    try:
         proc = subprocess.run(
-            [ps, "-command", ps_command], shell=False, capture_output=True, text=True
+            shlex.split(cmdline),
+            shell=False,
+            capture_output=True,
+            text=True,
         )
-        if proc.returncode == ECODE.SUCCESS:
-            return DotDict(
-                output=(proc.stdout or "") + (proc.stderr or ""),
-                exit_code=proc.returncode,
-                is_success=True,
+        return CommandResult(proc.stdout + proc.stderr, proc.returncode)
+    except Exception:   # noqa
+        return CommandResult("", 1)
+
+
+def _is_explicit_powershell(cmdline: str) -> bool:
+    lowered = cmdline.lower().lstrip()
+    return lowered.startswith("powershell ") or lowered.startswith("pwsh ")
+
+
+def _run_powershell(cmdline: str) -> CommandResult:
+    for ps in ("powershell", "pwsh"):
+        try:
+            wrapped = f"{ps} -command {shlex.quote(cmdline)}"
+            proc = subprocess.run(
+                shlex.split(wrapped),
+                shell=False,
+                capture_output=True,
+                text=True,
             )
-    return DotDict(
-        output=(proc.stdout or "") + (proc.stderr or ""),
-        exit_code=proc.returncode,
-        is_success=False,
-    )
-
-
-def _run_explicit_powershell(cmdline: str) -> DotDict:
-    """Run commands that already start with powershell/pwsh."""
-    parts = shlex.split(cmdline)
-    proc = subprocess.run(parts, shell=False, capture_output=True, text=True)
-    return DotDict(
-        output=(proc.stdout or "") + (proc.stderr or ""),
-        exit_code=proc.returncode,
-        is_success=proc.returncode == ECODE.SUCCESS,
-    )
+            return CommandResult(proc.stdout + proc.stderr, proc.returncode)
+        except Exception:   # noqa
+            continue
+    return CommandResult("", 1)
 
 
 def is_macos_dark_mode() -> bool:
