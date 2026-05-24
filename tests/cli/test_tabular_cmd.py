@@ -59,17 +59,24 @@ def test_debug(run, tmpfile, sample):
     assert f" = {file.path_name(sample)!r}" in result.output
 
 
-# def test_with_headerless_tabular_text(run, tmpfile, sample1):
-#
-#     result = run(
-#         "--sample-file", sample1,
-#         "--column-count", "2",
-#         "--show", "result"
-#     )
-#
-#     assert result.exit_code == 0
-#     data = json.loads(result.output)
-#     assert data == [{"fruits": "orange", "meats": "beef"}]
+def test_with_headerless_tabular_text(run, tmpfile, sample1):
+
+    result = run(
+        "--sample-file",
+        sample1,
+        "--column-count",
+        "2",
+        "--headerless",
+        "--show",
+        "result",
+    )
+
+    assert result.exit_code == 0
+    data = json.loads(result.output)
+    assert data == [
+        {"col0": "apple", "col1": "pork"},
+        {"col0": "orange", "col1": "beef"},
+    ]
 
 
 # -------------------------------------------------------------------

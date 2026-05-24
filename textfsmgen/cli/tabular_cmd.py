@@ -56,11 +56,11 @@ def register(cli):
     "--ending-at", default=None, help="Stop parsing when this marker is reached."
 )
 @click.option(
-    "--has-header",
+    "--headered/--headerless",
     "has_header_row",
     is_flag=True,
     default=True,
-    help="Indicates whether the table contains a header row.",
+    help="Treat the table as headered or headerless."
 )
 @click.option(
     "--replacing-rules", default=None, help="Replacing rules (string or JSON)."
