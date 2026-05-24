@@ -8,6 +8,7 @@ from textfsmgen.libs.generic import StatusString, DotDict
 from textfsmgen.libs.common import emit_status
 from textfsmgen.libs.utils import get_data_as_tabular
 from textfsmgen.libs.text import render_text_block
+from textfsmgen.libs import file
 
 from textfsmgen.core.builder import (
     FreeFormBuilder,
@@ -60,7 +61,7 @@ def parse_save_expression(expr: str):
 
 def _write_file(filename: str, content: str, kind: str, mode: str = "") -> StatusString:
     path = Path(filename).resolve()
-    file_name = str(path)
+    file_name = file.path_name(path)
     if mode == "dryrun":
         return StatusString(f"[DRY-RUN] {kind} → {file_name}", True, "info")
     try:
@@ -243,14 +244,16 @@ def build_debug_report(api_params):
     # High-level info
     # -------------------------------------------
     if "snippet_file" in api_params:
-        lines.append(f"[INFO] Loaded snippet from: {api_params.snippet_file!r}")
+        lines.append(
+            f"[INFO] Loaded snippet from: {file.path_name(api_params.snippet_file)!r}"
+        )
         if api_params.snippet_data:
             lines.append(
                 f"[INFO] Snippet size: {len(api_params.snippet_data)} characters"
             )
 
     if api_params.sample_data:
-        source = api_params.sample_file or api_params.command
+        source = file.path_name(api_params.sample_file) or api_params.command
         lines.append(f"[INFO] Loaded sample from: {source!r}")
         lines.append(f"[INFO] Sample size: {len(api_params.sample_data)} characters")
 
@@ -267,9 +270,9 @@ def build_debug_report(api_params):
     lines.append(" BUILDER PARAMS ".center(header_width, "-"))
 
     if "snippet_file" in api_params:
-        _add("snippet_file", api_params.snippet_file)
+        _add("snippet_file", file.path_name(api_params.snippet_file))
 
-    _add("sample_file", api_params.sample_file)
+    _add("sample_file", file.path_name(api_params.sample_file))
     _add("command", api_params.command)
 
     # Params block (pretty JSON)
@@ -320,9 +323,9 @@ def execute_builder(api_params):
 
     if not builder:
         ref = (
-            api_params.snippet_file or "snippet"
+            file.path_name(api_params.snippet_file) or "snippet"
             if api_params.builder == "freeform"
-            else api_params.sample_file or api_params.command
+            else file.path_name(api_params.sample_file) or api_params.command
         )
         msg = f"Cannot create {api_params.builder} builder from {ref!r}\n{'-' * 60}\n{api_params.sample_data}"
         return DotDict(
@@ -355,7 +358,7 @@ def create_config(api_params):
 
     generated_config = DotDict(
         stream="stream" if api_params.dry_run else "io",
-        path=str(path.resolve()),
+        path=file.path_name(path.resolve()),
         payload=cfg,
     )
 
@@ -382,7 +385,7 @@ def create_config(api_params):
         except Exception as exc:
             return DotDict(
                 status=StatusString(
-                    f"Cannot create directory {str(parent)!r}: {exc}",
+                    f"Cannot create directory {file.path_name(parent)!r}: {exc}",
                     status=False,
                     reason="code-error",
                 ),
@@ -394,7 +397,7 @@ def create_config(api_params):
     if path.exists():
         return DotDict(
             status=StatusString(
-                f"Config file {str(path)!r} already exists!",
+                f"Config file {file.path_name(path)!r} already exists!",
                 status=False,
                 reason="error",
             ),
@@ -409,7 +412,7 @@ def create_config(api_params):
     except Exception as exc:
         return DotDict(
             status=StatusString(
-                f"Failed to write config file {str(path)!r}: {exc}",
+                f"Failed to write config file {file.path_name(path)!r}: {exc}",
                 status=False,
                 reason="code-error",
             ),
@@ -419,7 +422,9 @@ def create_config(api_params):
 
     # Success
     return DotDict(
-        status=StatusString(f"[INFO] Config file {str(path)!r} created!", status=True),
+        status=StatusString(
+            f"[INFO] Config file {file.path_name(path)!r} created!", status=True
+        ),
         generated_config=generated_config,
         exit_code=0,
     )
@@ -461,11 +466,11 @@ def prepare_golden_test_info(api_params):
     # Machine-readable creation_result (dry-run or real)
     creation_result = DotDict(
         stream="stream" if api_params.dry_run else "io",
-        path=str(base_path),
-        manifest={"path": str(files["manifest"]), "content": manifest},
-        inputs=[str(files["sample"])],
-        expected=[str(files["snippet"]), str(files["template"])],
-        expected_results=[str(files["result"])],
+        path=file.path_name(base_path),
+        manifest={"path": file.path_name(files["manifest"]), "content": manifest},
+        inputs=[file.path_name(files["sample"])],
+        expected=[file.path_name(files["snippet"]), file.path_name(files["template"])],
+        expected_results=[file.path_name(files["result"])],
     )
 
     return DotDict(
@@ -491,7 +496,7 @@ def create_golden_test(api_params, builder_result):
     # 0. Validate sample
     # ------------------------------------------------------------
     if not api_params.sample_data.strip():
-        ref = api_params.sample_file or api_params.command
+        ref = file.path_name(api_params.sample_file) or api_params.command
         return DotDict(
             status=StatusString(
                 f"Cannot create Golden Test without sample (reference: {ref!r}).",
@@ -512,7 +517,7 @@ def create_golden_test(api_params, builder_result):
     ):
         return DotDict(
             status=StatusString(
-                f"Golden test path {str(base_path)!r} must be inside "
+                f"Golden test path {file.path_name(base_path)!r} must be inside "
                 f".../golden/integration/<case>",
                 status=False,
                 reason="error",
@@ -526,9 +531,9 @@ def create_golden_test(api_params, builder_result):
     # 2. Dry-run mode
     # ------------------------------------------------------------
     if api_params.dry_run:
-        lines = [f"[DRY-RUN] Golden test base path: {str(base_path)}"]
+        lines = [f"[DRY-RUN] Golden test base path: {file.path_name(base_path)}"]
         for label, path in files.items():
-            lines.append(f"[DRY-RUN] Would create: {str(path)}")
+            lines.append(f"[DRY-RUN] Would create: {file.path_name(path)}")
 
         return DotDict(
             status=StatusString(True),
@@ -549,7 +554,7 @@ def create_golden_test(api_params, builder_result):
         if path.exists():
             return DotDict(
                 status=StatusString(
-                    f"{label} file {str(path)!r} already exists!",
+                    f"{label} file {file.path_name(path)!r} already exists!",
                     status=False,
                     reason="error",
                 ),
@@ -561,7 +566,7 @@ def create_golden_test(api_params, builder_result):
     # ------------------------------------------------------------
     # 4. Write files
     # ------------------------------------------------------------
-    lines = [f"[INFO] Golden test created at {str(base_path)!r}"]
+    lines = [f"[INFO] Golden test created at {file.path_name(base_path)!r}"]
 
     files["sample"].write_text(api_params.sample_data, encoding="utf-8")
     lines.append(f"  - sample   => {files['sample']}")

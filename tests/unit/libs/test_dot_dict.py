@@ -64,15 +64,7 @@ def test_list_of_dicts_wrapping():
 # Deep nesting
 # ------------------------------------------------------------
 def test_deep_nesting():
-    d = DotDict({
-        "a": {
-            "b": {
-                "c": {
-                    "d": 123
-                }
-            }
-        }
-    })
+    d = DotDict({"a": {"b": {"c": {"d": 123}}}})
     assert d.a.b.c.d == 123
 
 

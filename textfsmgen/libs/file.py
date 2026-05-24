@@ -6,7 +6,7 @@ General-purpose file functions used across TextFSMGen.
 """  # noqa
 
 import yaml
-
+import pathlib
 from .common import sys_exit
 from textfsmgen.exceptions import raise_exception
 
@@ -41,3 +41,9 @@ def safe_load_yaml(filename: str):
         raise_exception(ex, msg=f"Failed to parse YAML file {filename}: {ex}")
     except Exception as ex:
         raise ex
+
+
+def path_name(value):
+    if isinstance(value, pathlib.Path):
+        return value.as_posix()
+    return str(value).replace("\\", "/")

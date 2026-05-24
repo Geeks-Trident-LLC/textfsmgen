@@ -9,6 +9,7 @@ from textfsmgen.libs.generic import StatusString
 from textfsmgen.libs.generic import DotDict
 from textfsmgen.libs.shell import execute_command
 from textfsmgen.libs.common import emit_status
+from textfsmgen.libs import file
 
 
 DEFAULT_VALUES = {
@@ -123,7 +124,7 @@ def validate_required_params(merged_options):
                 content = path.read_text()
                 if not content.strip():
                     return StatusString(
-                        f"{str(path)!r} has no content.",
+                        f"{file.path_name(path)!r} has no content.",
                         status=False,
                         reason="error",
                     )

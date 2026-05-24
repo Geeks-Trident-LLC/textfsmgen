@@ -1,6 +1,8 @@
 import json
 import click
 from textfsmgen.libs.generic import StatusString
+from textfsmgen.libs import file
+
 from .config_cmd import CONFIG_TYPES
 
 
@@ -41,14 +43,14 @@ def _load_json(config_path):
 def _validate_builder(data, config_path):
     if not isinstance(data, dict):
         return StatusString(
-            f"{str(config_path)} must be a dictionary-JSON format.",
+            f"{file.path_name(config_path)} must be a dictionary-JSON format.",
             status=False,
             reason="error",
         )
 
     if "builder" not in data:
         return StatusString(
-            f"{str(config_path)} does not have 'builder' key",
+            f"{file.path_name(config_path)} does not have 'builder' key",
             status=False,
             reason="error",
         )
