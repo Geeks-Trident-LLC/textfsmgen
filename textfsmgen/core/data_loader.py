@@ -14,8 +14,8 @@ import textfsm
 import textfsmgen
 
 from textfsmgen import (
-    TabularTemplateBuilder,
-    CategoryTemplateBuilder,
+    TabularBuilder,
+    CategoryBuilder,
     parse_textfsm_to_dicts,
 )
 
@@ -233,8 +233,8 @@ class DataLoader:
 
     def get_builder(self):
         mapping = {
-            "tabular": TabularTemplateBuilder,
-            "category": CategoryTemplateBuilder,
+            "tabular": TabularBuilder,
+            "category": CategoryBuilder,
         }
 
         if self.builder_type not in mapping:
@@ -396,7 +396,10 @@ class DataLoader:
             return
 
         Builder = self.get_builder()
-        builder = Builder(user_data=self.canonical_sample, **self.parameters)
+        builder = Builder()
+        builder.set_sample(self.canonical_sample, **self.parameters)
+        builder.build()
+        # builder = Builder(user_data=self.canonical_sample, **self.parameters)
 
         sample_path = str(self.file_path / "canonical" / "sample.txt")
         error = (
@@ -447,24 +450,7 @@ class DataLoader:
 
 
 def is_identical_templates(template1, template2):
-    # --------------------------------------------------------------------------
-    def extract_template(template):
-        parts = []
-        started = False
-        for line in template.splitlines():
-            if started:
-                parts.append(line)
-                continue
-
-            if line.startswith("Value "):
-                started = True
-                parts.append(line)
-        return "\n".join(parts)
-
-    # --------------------------------------------------------------------------
-    normalized_template1 = extract_template(template1)
-    normalized_template2 = extract_template(template2)
-    return normalized_template1 == normalized_template2 and normalized_template1.strip()
+    return template1.strip() and template1.strip() == template2.strip()
 
 
 def is_identical_snippet(snippet1, snippet2):
