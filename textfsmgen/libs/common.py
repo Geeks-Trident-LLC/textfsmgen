@@ -124,6 +124,12 @@ def emit_status(data, display=True):
     reason = getattr(data, "reason", "").lower()
     message = str(data)
 
+    # If message already starts with a severity prefix, keep it as-is
+    if message.startswith("[") and "]" in message.split(" ", 1)[0]:
+        if display:
+            print(message)
+        return message
+
     if reason:
         mapping = {
             "warning": "WARNING",

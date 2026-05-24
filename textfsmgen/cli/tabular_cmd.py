@@ -60,7 +60,7 @@ def register(cli):
     "has_header_row",
     is_flag=True,
     default=True,
-    help="Treat the table as headered or headerless."
+    help="Treat the table as headered or headerless.",
 )
 @click.option(
     "--replacing-rules", default=None, help="Replacing rules (string or JSON)."
