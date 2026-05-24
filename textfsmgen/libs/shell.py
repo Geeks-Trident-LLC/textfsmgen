@@ -58,6 +58,7 @@ def execute_command(cmdline: str) -> CommandResult:
 # Helpers
 # -------------------------------------------------------------------
 
+
 def _run_shell(cmdline: str) -> CommandResult:
     proc = subprocess.run(
         cmdline,
@@ -77,7 +78,7 @@ def _run_direct(cmdline: str) -> CommandResult:
             text=True,
         )
         return CommandResult(proc.stdout + proc.stderr, proc.returncode)
-    except Exception:   # noqa
+    except Exception:  # noqa
         return CommandResult("", 1)
 
 
@@ -97,7 +98,7 @@ def _run_powershell(cmdline: str) -> CommandResult:
                 text=True,
             )
             return CommandResult(proc.stdout + proc.stderr, proc.returncode)
-        except Exception:   # noqa
+        except Exception:  # noqa
             continue
     return CommandResult("", 1)
 

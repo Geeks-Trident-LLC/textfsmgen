@@ -1,8 +1,6 @@
-import os
-import pytest
 from unittest.mock import patch, MagicMock
 
-from textfsmgen.libs.shell import execute_command, CommandResult
+from textfsmgen.libs.shell import execute_command
 
 
 def make_proc(stdout="", stderr="", returncode=0):
@@ -16,6 +14,7 @@ def make_proc(stdout="", stderr="", returncode=0):
 # -------------------------------------------------------------------
 # Non‑Windows behavior
 # -------------------------------------------------------------------
+
 
 @patch("os.name", "posix")
 @patch("subprocess.run")
@@ -33,6 +32,7 @@ def test_non_windows_shell(mock_run):
 # Windows: cmd.exe success
 # -------------------------------------------------------------------
 
+
 @patch("os.name", "nt")
 @patch("subprocess.run")
 def test_windows_cmd_success(mock_run):
@@ -47,6 +47,7 @@ def test_windows_cmd_success(mock_run):
 # -------------------------------------------------------------------
 # Windows: cmd.exe fails, direct exec succeeds
 # -------------------------------------------------------------------
+
 
 @patch("os.name", "nt")
 def test_windows_direct_exec_success():
@@ -66,6 +67,7 @@ def test_windows_direct_exec_success():
 # Windows: PowerShell fallback
 # -------------------------------------------------------------------
 
+
 @patch("os.name", "nt")
 def test_windows_powershell_fallback():
     with patch("subprocess.run") as mock_run:
@@ -84,6 +86,7 @@ def test_windows_powershell_fallback():
 # -------------------------------------------------------------------
 # Windows: explicit powershell should NOT be wrapped again
 # -------------------------------------------------------------------
+
 
 @patch("os.name", "nt")
 def test_explicit_powershell_not_wrapped():

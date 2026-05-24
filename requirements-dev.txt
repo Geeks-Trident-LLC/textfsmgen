@@ -3,6 +3,7 @@
 
 # Development & testing
 pytest
+pytest-asyncio
 pytest-cov
 requests
 
