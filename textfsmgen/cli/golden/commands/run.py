@@ -45,7 +45,6 @@ def run(case_path: Path, *, dry_run: bool = False) -> int:
         0 on success
         1 on error
     """
-
     case_path = case_path.resolve()
 
     # --------------------------------------------------------------

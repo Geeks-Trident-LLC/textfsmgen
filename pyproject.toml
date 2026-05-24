@@ -70,10 +70,10 @@ Issues = "https://github.com/Geeks-Trident-LLC/textfsmgen/issues"
 # textfsmgen = "textfsmgen.main:execute"
 # textfsmgen = "textfsmgen.cli:main"
 # textfsmgen = "textfsmgen.cli:main"
-textfsmgen-golden-tests = "textfsmgen.tester.cli:cli"
-textfsmgen-golden-test = "textfsmgen.tester.cli:cli"
-textfsmgen-golden = "textfsmgen.tester.cli:cli"
-textfsmgen-gt = "textfsmgen.tester.cli:cli"
+textfsmgen-golden-tests = "textfsmgen.cli.golden.cli:cli"
+textfsmgen-golden-test = "textfsmgen.cli.golden.cli:cli"
+textfsmgen-golden = "textfsmgen.cli.golden.cli:cli"
+textfsmgen-gt = "textfsmgen.cli.golden.cli:cli"
 textfsmgen = "textfsmgen.cli.top:cli"
 textfsmgen-gui = "textfsmgen.application:execute"
 textfsmgen-app = "textfsmgen.application:execute"
@@ -92,3 +92,6 @@ exclude = [
 "*" = ["LICENSE", "README.md"]
 textfsmgen = ["tests/golden/**/*"]
 
+[tool.ruff]
+src = ["textfsmgen", "tests"]
+extend-exclude = ["tests/golden",]

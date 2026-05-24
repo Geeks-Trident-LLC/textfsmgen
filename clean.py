@@ -89,7 +89,9 @@ def clean_recursive(dry_run: bool = False) -> None:
 def main() -> None:
     import argparse
 
-    parser = argparse.ArgumentParser(description="Clean Python build and cache artifacts.")
+    parser = argparse.ArgumentParser(
+        description="Clean Python build and cache artifacts."
+    )
     parser.add_argument(
         "--dry-run",
         action="store_true",

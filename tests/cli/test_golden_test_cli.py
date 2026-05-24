@@ -2,7 +2,7 @@ import pytest
 from click.testing import CliRunner
 from unittest.mock import patch
 
-from textfsmgen.tester.cli import cli
+from textfsmgen.cli.golden.cli import cli
 
 
 @pytest.fixture
@@ -10,33 +10,46 @@ def runner() -> CliRunner:
     return CliRunner()
 
 
+def patch_cmd(cmd_name: str):
+    """
+    Patch the function actually called by the Click command.
+    """
+    mapping = {
+        "run": "run",
+        "regen": "regen",
+        "diff": "diff",
+        "drift": "drift",
+        "quicktest": "quicktest",
+        "copy": "copy_case",
+        "duplicate": "duplicate_case",
+        "new": "new",
+        "new_from_input": "new_from_input",
+        "generate": "generate",
+        "batch_generate": "batch_generate",
+        "batch_regen": "batch_regen",
+        "batch_quicktest": "batch_quicktest",
+        "merge": "merge",
+        "merge_review": "merge_review",
+        "merge_preview": "merge_preview",
+        "merge_diff": "merge_diff",
+        "identical": "run_identical",
+    }
+
+    func = mapping[cmd_name]
+    return patch(f"textfsmgen.cli.golden.cli.cmd_{cmd_name}.{func}")
+
+
 @pytest.mark.parametrize(
-    "argv, target_path, target_name",
+    "argv, cmd_name",
     [
-        (["run", "--dry-run", "case-dir"], "textfsmgen.tester.cli.cmd_run.run", "run"),
-        (
-            ["regen", "--dry-run", "case-dir"],
-            "textfsmgen.tester.cli.cmd_regen.regen",
-            "regen",
-        ),
-        (["diff", "case-dir"], "textfsmgen.tester.cli.cmd_diff.diff", "diff"),
-        (["drift", "case-dir"], "textfsmgen.tester.cli.cmd_drift.drift", "drift"),
-        (
-            ["quicktest", "--dry-run", "case-dir"],
-            "textfsmgen.tester.cli.cmd_quicktest.quicktest",
-            "quicktest",
-        ),
-        (
-            ["copy", "--dry-run", "--force", "me", "src-dir", "dst-dir"],
-            "textfsmgen.tester.cli.cmd_copy.copy_case",
-            "copy",
-        ),
-        (
-            ["duplicate", "--dry-run", "--force", "me", "src-dir"],
-            "textfsmgen.tester.cli.cmd_duplicate.duplicate_case",
-            "duplicate",
-        ),
-        (["new", "case-dir"], "textfsmgen.tester.cli.cmd_new.new", "new"),
+        (["run", "--dry-run", "case-dir"], "run"),
+        (["regen", "--dry-run", "case-dir"], "regen"),
+        (["diff", "case-dir"], "diff"),
+        (["drift", "case-dir"], "drift"),
+        (["quicktest", "--dry-run", "case-dir"], "quicktest"),
+        (["copy", "--dry-run", "--force", "me", "src", "dst"], "copy"),
+        (["duplicate", "--dry-run", "--force", "me", "src"], "duplicate"),
+        (["new", "case-dir"], "new"),
         (
             [
                 "new-from-input",
@@ -47,69 +60,35 @@ def runner() -> CliRunner:
                 "case-dir",
                 "inputs-dir",
             ],
-            "textfsmgen.tester.cli.cmd_new_from_input.new_from_input",
-            "new-from-input",
+            "new_from_input",
         ),
         pytest.param(
             ["generate", "case-dir"],
-            "textfsmgen.tester.cli.cmd_generate.generate",
             "generate",
-            marks=pytest.mark.skip(reason="generate command not migrated yet"),
+            marks=pytest.mark.skip(reason="generate command not ready yet"),
         ),
-        (
-            ["batch-generate", "root-dir"],
-            "textfsmgen.tester.cli.cmd_batch_generate.batch_generate",
-            "batch-generate",
-        ),
-        (
-            ["batch-regen", "root-dir"],
-            "textfsmgen.tester.cli.cmd_batch_regen.batch_regen",
-            "batch-regen",
-        ),
-        (
-            ["batch-quicktest", "root-dir"],
-            "textfsmgen.tester.cli.cmd_batch_quicktest.batch_quicktest",
-            "batch-quicktest",
-        ),
-        (
-            ["merge", "--author", "me", "dst-dir", "src-a", "src-b"],
-            "textfsmgen.tester.cli.cmd_merge.merge",
-            "merge",
-        ),
-        (
-            ["merge-review", "dst-dir", "src-a", "src-b"],
-            "textfsmgen.tester.cli.cmd_merge_review.merge_review",
-            "merge-review",
-        ),
-        (
-            ["merge-preview", "src-a", "src-b"],
-            "textfsmgen.tester.cli.cmd_merge_preview.merge_preview",
-            "merge-preview",
-        ),
-        (
-            ["merge-diff", "src-a", "src-b"],
-            "textfsmgen.tester.cli.cmd_merge_diff.merge_diff",
-            "merge-diff",
-        ),
-        (
-            ["identical", "src-a", "src-b"],
-            "textfsmgen.tester.cli.cmd_identical.run_identical",
-            "identical",
-        ),
+        (["batch-generate", "root-dir"], "batch_generate"),
+        (["batch-regen", "root-dir"], "batch_regen"),
+        (["batch-quicktest", "root-dir"], "batch_quicktest"),
+        (["merge", "--author", "me", "dst", "src-a", "src-b"], "merge"),
+        (["merge-review", "dst", "src-a", "src-b"], "merge_review"),
+        (["merge-preview", "src-a", "src-b"], "merge_preview"),
+        (["merge-diff", "src-a", "src-b"], "merge_diff"),
+        (["identical", "src-a", "src-b"], "identical"),
     ],
 )
-def test_subcommand_invokes_correct_target(runner, argv, target_path, target_name):
-    with patch(target_path) as mock_target:
-        mock_target.return_value = 0
+def test_subcommand_invokes_correct_target(runner, argv, cmd_name):
+    with patch_cmd(cmd_name) as mock_cmd:
+        mock_cmd.return_value = 0
 
         result = runner.invoke(cli, argv)
 
         assert result.exit_code == 0, result.output
-        mock_target.assert_called_once()
+        mock_cmd.assert_called_once()
 
 
 def test_run_parsing_with_dry_run_and_case(runner):
-    with patch("textfsmgen.tester.cli.cmd_run.run") as mock_run:
+    with patch_cmd("run") as mock_run:
         mock_run.return_value = 0
 
         result = runner.invoke(cli, ["run", "--dry-run", "case-dir"])
@@ -123,7 +102,7 @@ def test_run_parsing_with_dry_run_and_case(runner):
 
 
 def test_regen_parsing_with_dry_run(runner):
-    with patch("textfsmgen.tester.cli.cmd_regen.regen") as mock_regen:
+    with patch_cmd("regen") as mock_regen:
         mock_regen.return_value = 0
 
         result = runner.invoke(cli, ["regen", "--dry-run", "case-dir"])
@@ -136,7 +115,7 @@ def test_regen_parsing_with_dry_run(runner):
 
 
 def test_quicktest_parsing_with_dry_run(runner):
-    with patch("textfsmgen.tester.cli.cmd_quicktest.quicktest") as mock_qt:
+    with patch_cmd("quicktest") as mock_qt:
         mock_qt.return_value = 0
 
         result = runner.invoke(cli, ["quicktest", "--dry-run", "case-dir"])
@@ -149,7 +128,7 @@ def test_quicktest_parsing_with_dry_run(runner):
 
 
 def test_copy_parsing_flags(runner):
-    with patch("textfsmgen.tester.cli.cmd_copy.copy_case") as mock_copy:
+    with patch_cmd("copy") as mock_copy:
         mock_copy.return_value = 0
 
         result = runner.invoke(
@@ -169,9 +148,7 @@ def test_copy_parsing_flags(runner):
 
 
 def test_new_from_input_required_flags(runner):
-    with patch(
-        "textfsmgen.tester.cli.cmd_new_from_input.new_from_input"
-    ) as mock_new_in:
+    with patch_cmd("new_from_input") as mock_new_in:
         mock_new_in.return_value = 0
 
         result = runner.invoke(
@@ -201,7 +178,7 @@ def test_new_from_input_required_flags(runner):
 
 
 def test_merge_preview_compact_and_json(runner):
-    with patch("textfsmgen.tester.cli.cmd_merge_preview.merge_preview") as mock_mp:
+    with patch_cmd("merge_preview") as mock_mp:
         mock_mp.return_value = 0
 
         result = runner.invoke(
@@ -220,7 +197,7 @@ def test_merge_preview_compact_and_json(runner):
 
 
 def test_merge_diff_flags(runner):
-    with patch("textfsmgen.tester.cli.cmd_merge_diff.merge_diff") as mock_md:
+    with patch_cmd("merge_diff") as mock_md:
         mock_md.return_value = 0
 
         result = runner.invoke(
@@ -250,7 +227,7 @@ def test_merge_diff_flags(runner):
 
 
 def test_identical_modes(runner):
-    with patch("textfsmgen.tester.cli.cmd_identical.run_identical") as mock_ident:
+    with patch_cmd("identical") as mock_ident:
         mock_ident.return_value = 0
 
         result = runner.invoke(
