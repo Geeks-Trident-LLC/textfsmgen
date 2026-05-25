@@ -1,185 +1,147 @@
 from __future__ import annotations
 
+import json
 import shutil
 from pathlib import Path
+import click
+import sys
+import os
+import subprocess
 
-from ..core.utils import require_case_dir
-from ..core.golden_case import GoldenCase
-from ..core.data_loader import DataLoader, extract_subpath_after
+from textfsmgen.libs import file
+
+from ..core.utils import catch_path_errors
 
 
-def copy_case(
-    author: str = "",
-    src: Path = None,
-    dst: Path = None,
-    dry_run: bool = False,
-    force: bool = False,
-) -> int:
-    """
-    Copy an existing golden test case into a new case directory.
+@catch_path_errors
+def copy(
+    src: Path,
+    dst: Path,
+    author="",
+    sandbox=False,
+    sandbox_keep=False,
+    dry_run=False,
+    no_quicktest=False,
+    open_after=False,
+    verbose=False,
+):
+    # ------------------------------------------------------------
+    # Determine category from SRC
+    # ------------------------------------------------------------
+    def detect_category(path: Path) -> str:
+        parts = path.parts
+        if "main" in parts:
+            return "main"
+        if "integration" in parts:
+            return "integration"
+        raise click.ClickException(f"Cannot determine category for: {path}")
 
-    Rules:
-      - src must be a valid golden test case.
-      - dst must be inside a golden/ directory.
-      - dst must not exist unless --force is used.
+    src_category = detect_category(src)
+    dst_category = detect_category(dst)
 
-      - Copy authoritative content:
-            canonical/  (if main)
-            expected/   (if integration)
-            inputs/
-            expected_results/ (if present)
-
-      - Copy manifest.json, but reset:
-            email, notes, description
-        and update:
-            author=<author>
-
-      - Never copy meta.json or golden.hash.
-      - Never generate golden.hash during copy.
-
-      - --dry-run:
-            Copy into <dst>.temp, run quicktest, delete temp on success.
-            Keep temp on failure.
-    """
-
-    # Normalize author=NAME → NAME
-    if "=" in author:
-        _, author = author.split("=", maxsplit=1)
-
-    # --------------------------------------------------------------
-    # Validate source case
-    # --------------------------------------------------------------
-    try:
-        require_case_dir(src)
-    except Exception as exc:
-        print(
-            "[FAIL]: Copy failed because source folder is not a test case folder\n"
-            f"  {type(exc).__name__}: {exc}"
+    if src_category != dst_category:
+        raise click.ClickException(
+            f"Cannot copy between categories: {src_category} → {dst_category}"
         )
-        return 1
 
-    # --------------------------------------------------------------
-    # Determine actual destination (dry-run uses temp)
-    # --------------------------------------------------------------
-    real_dst = dst
-    temp_dst = dst.with_name(dst.name + ".temp") if dry_run else None
-    target_dst = temp_dst if dry_run else real_dst
-
-    # --------------------------------------------------------------
-    # Validate destination path
-    # --------------------------------------------------------------
-    if target_dst.exists():
-        if not force:
-            print(f"[FAIL]: Destination already exists: {target_dst}")
-            return 1
-        else:
-            print(
-                f"[WARN]: Overwriting existing destination due to --force: {target_dst}"
-            )
-            shutil.rmtree(target_dst)
-
-    if "golden" not in target_dst.parts:
-        print(f"[FAIL]: Destination must be inside a golden/ directory: {target_dst}")
-        return 1
-
-    try:
-        target_dst.mkdir(parents=True, exist_ok=False)
-    except Exception as exc:
-        print(f"[FAIL]: Could not create destination directory: {target_dst}\n  {exc}")
-        return 1
-
-    # --------------------------------------------------------------
-    # Load source case
-    # --------------------------------------------------------------
-    try:
-        source_case = GoldenCase.from_path(src)
-        source_loader = DataLoader(src)
-    except Exception as exc:
-        print(f"[FAIL]: Could not load source case: {src}\n  {exc}")
-        return 1
-
-    # --------------------------------------------------------------
-    # Copy authoritative directories
-    # --------------------------------------------------------------
-    try:
-        if source_case.is_main():
-            _copy_dir_if_exists(src / "canonical", target_dst / "canonical")
-        else:
-            _copy_dir_if_exists(src / "expected", target_dst / "expected")
-
-        _copy_dir_if_exists(src / "inputs", target_dst / "inputs")
-        _copy_dir_if_exists(src / "expected_results", target_dst / "expected_results")
-
-    except Exception as exc:
-        print(f"[FAIL]: Failed copying authoritative files\n  {exc}")
-        return 1
-
-    # --------------------------------------------------------------
-    # Load and rewrite manifest.json
-    # --------------------------------------------------------------
-    try:
-        manifest = source_loader.load_manifest()
-
-        meta = manifest["meta"]
-        meta["email"] = ""
-        meta["notes"] = ""
-        meta["description"] = ""
-        meta["author"] = author
-
-        new_loader = DataLoader(target_dst)
-        new_loader.write_manifest(manifest)
-
-    except Exception as exc:
-        print(f"[FAIL]: Failed writing manifest.json\n  {exc}")
-        return 1
-
-    # --------------------------------------------------------------
-    # DRY-RUN MODE: run quicktest on <dst>.temp
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------
+    # Dry-run: show what would happen
+    # ------------------------------------------------------------
     if dry_run:
-        from . import quicktest as cmd_quicktest
+        click.echo(f"[DRY-RUN] Copy {file.path_name(src)} → {file.path_name(dst)}")
+        click.echo(f"  category : {src_category}")
+        click.echo(f"  author   : {author}")
+        click.echo(f"  quicktest: {'no' if no_quicktest else 'yes'}")
+        click.echo(f"  regen    : {'yes' if src_category == 'main' else 'no'}")
+        click.echo(f"  sandbox  : {sandbox or sandbox_keep}")
+        return
 
-        print(f"[INFO]: Running quicktest on dry-run copy: {temp_dst}")
-        rc = cmd_quicktest.quicktest(temp_dst)
+    # ------------------------------------------------------------
+    # Determine actual destination (sandbox or real)
+    # ------------------------------------------------------------
+    if sandbox or sandbox_keep:
+        real_dst = dst
+        dst = dst.with_name(dst.name + ".temp")
+        if verbose:
+            click.echo(f"[sandbox] Using temp directory: {file.path_name(dst)}")
 
-        if rc == 0:
-            src_tc = extract_subpath_after("golden", src)
-            dst_tc = extract_subpath_after("golden", real_dst)
-            print(f"[OK] Dry-run passed. Safe to copy '{src_tc}' -> '{dst_tc}'.")
-            shutil.rmtree(temp_dst)
-            return 0
-        else:
-            print(
-                f"[FAIL]: Dry-run failed. Temp case kept for inspection:\n  {temp_dst}"
-            )
-            return 1
+    # ------------------------------------------------------------
+    # Ensure destination does not exist
+    # ------------------------------------------------------------
+    if dst.exists():
+        raise click.ClickException(f"Destination already exists: {file.path_name(dst)}")
 
-    # --------------------------------------------------------------
-    # Normal success output
-    # --------------------------------------------------------------
-    src_tc = extract_subpath_after("golden", src)
-    dst_tc = extract_subpath_after("golden", real_dst)
+    # ------------------------------------------------------------
+    # Perform the copy
+    # ------------------------------------------------------------
+    if verbose:
+        click.echo(f"[copy] {file.path_name(src)} → {file.path_name(dst)}")
 
-    print(f"[OK] Copied case '{src_tc}' -> '{dst_tc}'")
-    print(f"  Author: {author}")
-    print("  Copied:")
-    if source_case.is_main():
-        print("    - canonical/")
+    shutil.copytree(src, dst)
+
+    # ------------------------------------------------------------
+    # Update metadata
+    # ------------------------------------------------------------
+    meta_path = dst / "meta.json"
+    if meta_path.exists():
+        meta = json.loads(meta_path.read_text())
     else:
-        print("    - expected/")
-    print("    - inputs/")
-    if (src / "expected_results").exists():
-        print("    - expected_results/")
-    print("  Generated:")
-    print("    - manifest.json")
+        meta = {}
 
-    return 0
+    meta["author"] = author
+    meta["notes"] = ""
+    meta["description"] = ""
+
+    meta_path.write_text(json.dumps(meta, indent=2))
+
+    # ------------------------------------------------------------
+    # Quicktest (optional)
+    # ------------------------------------------------------------
+    if not no_quicktest:
+        from .run import run
+
+        rc = run(dst, quicktest=True)
+        if rc != 0:
+            raise click.ClickException(f"Quicktest failed for copied case: {dst}")
+
+    # ------------------------------------------------------------
+    # Auto-regen for MAIN cases
+    # ------------------------------------------------------------
+    if src_category == "main":
+        from .regen import regen
+
+        regen(dst)
+
+    # ------------------------------------------------------------
+    # Sandbox cleanup
+    # ------------------------------------------------------------
+    if sandbox:
+        if verbose:
+            click.echo(f"[sandbox] Cleaning up temp directory: {file.path_name(dst)}")
+        shutil.rmtree(dst)
+        click.echo(
+            f"[SUCCESS] sandbox copy completed for {file.path_name(real_dst.name)}"
+        )
+        return
+
+    # sandbox-keep → preserve temp directory
+    if sandbox_keep:
+        click.echo(f"[SUCCESS] sandbox-keep: preserved {file.path_name(dst)}")
+        return
+
+    # ------------------------------------------------------------
+    # Normal success
+    # ------------------------------------------------------------
+    click.echo(f"[SUCCESS] Copied {src_category} case to {file.path_name(dst)}")
+
+    if open_after:
+        _open_directory(dst)
 
 
-# ----------------------------------------------------------------------
-# Internal helper
-# ----------------------------------------------------------------------
-def _copy_dir_if_exists(src: Path, dst: Path) -> None:
-    """Copy a directory if it exists."""
-    if src.exists():
-        shutil.copytree(src, dst)
+def _open_directory(path: Path):
+    if sys.platform.startswith("win"):
+        os.startfile(path)
+    elif sys.platform == "darwin":
+        subprocess.run(["open", str(path)])
+    else:
+        subprocess.run(["xdg-open", str(path)])

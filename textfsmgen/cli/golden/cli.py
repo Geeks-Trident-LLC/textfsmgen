@@ -315,23 +315,43 @@ def drift(case, names_only, drift_type, json_mode, summary, fail_on_drift, quiet
 
 
 @cli.command()
-@click.argument("author")
-@click.argument("src", type=click.Path())
-@click.argument("dst")
+@timed_command
+@click.argument("src", type=click.Path(exists=True, file_okay=False))
+@click.argument("dst", type=click.Path())
+@click.option("--author", required=True, help="Set the author for the new case.")
 @click.option(
-    "--dry-run", is_flag=True, help="Copy into <dst>.temp and delete temp on success."
+    "--sandbox", is_flag=True, help="Copy into <dst>.temp and delete temp on success."
 )
 @click.option(
-    "--force", is_flag=True, help="Allow overwriting an existing destination directory."
+    "--sandbox-keep", is_flag=True, help="Copy into <dst>.temp and preserve it."
 )
-def copy(author, src, dst, dry_run, force):
+@click.option(
+    "--dry-run", is_flag=True, help="Simulate the copy without writing anything."
+)
+@click.option(
+    "--no-quicktest", is_flag=True, help="Skip running a quick test after copying."
+)
+@click.option(
+    "--open",
+    "open_after",
+    is_flag=True,
+    help="Open the new case directory after creation.",
+)
+@click.option("--verbose", is_flag=True, help="Show detailed copy operations.")
+def copy(
+    src, dst, author, sandbox, sandbox_keep, dry_run, no_quicktest, open_after, verbose
+):
     """Copy a golden test case into a new case directory."""
-    return cmd_copy.copy_case(
+    return cmd_copy.copy(
+        Path(src),
+        Path(dst),
         author=author,
-        src=Path(src),
-        dst=Path(dst),
+        sandbox=sandbox,
+        sandbox_keep=sandbox_keep,
         dry_run=dry_run,
-        force=force,
+        no_quicktest=no_quicktest,
+        open_after=open_after,
+        verbose=verbose,
     )
 
 
