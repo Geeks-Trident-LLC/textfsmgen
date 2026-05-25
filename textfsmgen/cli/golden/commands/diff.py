@@ -18,6 +18,7 @@ from ..core.data_loader import extract_subpath_after
 # Diff Item Model
 # ---------------------------------------------------------------------------
 
+
 class DiffItem(DotDict):
     """
     Represents a single diff result.
@@ -30,6 +31,7 @@ class DiffItem(DotDict):
         passed: True if no diff
         reason: explanation
     """
+
     pass
 
 
@@ -37,27 +39,34 @@ class DiffItem(DotDict):
 # Unified diff helpers
 # ---------------------------------------------------------------------------
 
-def make_unified_diff(expected: str, generated: str,
-                      *, fromfile="expected", tofile="generated") -> str:
-    diff = difflib.unified_diff(
-        expected.splitlines(keepends=True),
-        generated.splitlines(keepends=True),
+
+def make_unified_diff(
+    expected: str, generated: str, *, fromfile="expected", tofile="generated"
+) -> str:
+    diff_ = difflib.unified_diff(
+        expected.rstrip().splitlines(keepends=True),
+        generated.rstrip().splitlines(keepends=True),
         fromfile=fromfile,
         tofile=tofile,
         lineterm="",
     )
-    return "".join(diff)
+    return "".join(diff_)
 
 
 def make_json_diff(expected_list: list, generated_list: list, unified: int) -> str:
-    left = json.dumps(expected_list[:unified], indent=2, ensure_ascii=False, sort_keys=True)
-    right = json.dumps(generated_list[:unified], indent=2, ensure_ascii=False, sort_keys=True)
+    left = json.dumps(
+        expected_list[:unified], indent=2, ensure_ascii=False, sort_keys=True
+    )
+    right = json.dumps(
+        generated_list[:unified], indent=2, ensure_ascii=False, sort_keys=True
+    )
     return make_unified_diff(left, right)
 
 
 # ---------------------------------------------------------------------------
 # Printing helpers
 # ---------------------------------------------------------------------------
+
 
 def print_diff_item(item: DiffItem, *, names_only=False, verbose=False):
     """Print a diff item according to flags."""
@@ -78,10 +87,18 @@ def print_diff_item(item: DiffItem, *, names_only=False, verbose=False):
 # Main entrypoint
 # ---------------------------------------------------------------------------
 
+
 @catch_path_errors
 def diff(
-        case_path: Path, names_only=False, diff_type="all", unified=3,
-        json_output=False, summary=False, fail_on_diff=False, verbose=False
+    case_path: Path,
+    names_only=False,
+    diff_type="all",
+    unified=3,
+    json_mode=False,
+    summary=False,
+    fail_on_diff=False,
+    quiet=False,
+    verbose=False,
 ) -> int:
     """
     Display differences for a single golden test case.
@@ -119,12 +136,14 @@ def diff(
     any_diff = any(not item.passed for item in items)
 
     # JSON output mode
-    if json_output:
+    if json_mode:
         print(json.dumps(items, indent=2, ensure_ascii=False))
         return 1 if any_diff and fail_on_diff else 0
 
     # Print items
     for item in items:
+        if quiet and item.passed:
+            continue
         print_diff_item(item, names_only=names_only, verbose=verbose)
 
     # Summary mode
@@ -132,12 +151,15 @@ def diff(
         total = len(items)
         failed = sum(1 for i in items if not i.passed)
         passed = total - failed
-        print_status(f"Summary: {passed}/{total} passed, {failed} failed",
-                     ok=(failed == 0), fail=(failed > 0))
+        print_status(
+            f"Summary: {passed}/{total} passed, {failed} failed",
+            ok=(failed == 0),
+            fail=(failed > 0),
+        )
 
     # Final no-diff message
-    if not any_diff:
-        print_status(f"{tc_name} — no differences found", ok=True)
+    if not any_diff and not quiet:
+        print_status(f"{file.path_name(tc_name)} — no differences found", ok=True)
 
     # Fail-on-diff behavior
     return 1 if any_diff and fail_on_diff else 0
@@ -146,6 +168,7 @@ def diff(
 # ---------------------------------------------------------------------------
 # MAIN CASE DIFFS
 # ---------------------------------------------------------------------------
+
 
 def diff_canonical_snippet(case: GoldenCase) -> DiffItem:
     canonical = case.data.load_canonical("golden")
@@ -236,14 +259,16 @@ def diff_results_using_canonical_template(case: GoldenCase, unified=3):
         generated = parse_textfsm_to_dicts(template, inp.content)
         diff_text = make_json_diff(expected, generated, unified)
 
-        items.append(DiffItem(
-            name=res.name,
-            expected=expected,
-            generated=generated,
-            diff_text=diff_text,
-            passed=(diff_text == ""),
-            reason="No diff" if diff_text == "" else "Diff found",
-        ))
+        items.append(
+            DiffItem(
+                name=res.name,
+                expected=expected,
+                generated=generated,
+                diff_text=diff_text,
+                passed=(diff_text == ""),
+                reason="No diff" if diff_text == "" else "Diff found",
+            )
+        )
 
     return items
 
@@ -252,33 +277,38 @@ def diff_results_using_canonical_template(case: GoldenCase, unified=3):
 # INTEGRATION CASE DIFFS
 # ---------------------------------------------------------------------------
 
+
 def diff_expected_snippet(case: GoldenCase):
     items = []
     expected = case.data.load_expected("golden")
     for inp in case.data.load_inputs("golden"):
         builder = case.data.build(sample=inp.content)
         if not builder:
-            items.append(DiffItem(
-                name=expected.snippet.name,
-                expected=expected.snippet.content,
-                generated="",
-                diff_text="",
-                passed=False,
-                reason=f"Failed to build snippet from sample {inp.name}",
-            ))
+            items.append(
+                DiffItem(
+                    name=expected.snippet.name,
+                    expected=expected.snippet.content,
+                    generated="",
+                    diff_text="",
+                    passed=False,
+                    reason=f"Failed to build snippet from sample {inp.name}",
+                )
+            )
             continue
 
         generated = builder.snippet
         diff_text = make_unified_diff(expected.snippet.content, generated)
 
-        items.append(DiffItem(
-            name=expected.snippet.name,
-            expected=expected.snippet.content,
-            generated=generated,
-            diff_text=diff_text,
-            passed=(diff_text == ""),
-            reason="No diff" if diff_text == "" else "Diff found",
-        ))
+        items.append(
+            DiffItem(
+                name=expected.snippet.name,
+                expected=expected.snippet.content,
+                generated=generated,
+                diff_text=diff_text,
+                passed=(diff_text == ""),
+                reason="No diff" if diff_text == "" else "Diff found",
+            )
+        )
     return items
 
 
@@ -288,27 +318,31 @@ def diff_expected_template(case: GoldenCase):
     for inp in case.data.load_inputs("golden"):
         builder = case.data.build(sample=inp.content)
         if not builder:
-            items.append(DiffItem(
-                name=expected.template.name,
-                expected=expected.template.content,
-                generated="",
-                diff_text="",
-                passed=False,
-                reason=f"Failed to build template from sample {inp.name}",
-            ))
+            items.append(
+                DiffItem(
+                    name=expected.template.name,
+                    expected=expected.template.content,
+                    generated="",
+                    diff_text="",
+                    passed=False,
+                    reason=f"Failed to build template from sample {inp.name}",
+                )
+            )
             continue
 
         generated = builder.template
         diff_text = make_unified_diff(expected.template.content, generated)
 
-        items.append(DiffItem(
-            name=expected.template.name,
-            expected=expected.template.content,
-            generated=generated,
-            diff_text=diff_text,
-            passed=(diff_text == ""),
-            reason="No diff" if diff_text == "" else "Diff found",
-        ))
+        items.append(
+            DiffItem(
+                name=expected.template.name,
+                expected=expected.template.content,
+                generated=generated,
+                diff_text=diff_text,
+                passed=(diff_text == ""),
+                reason="No diff" if diff_text == "" else "Diff found",
+            )
+        )
     return items
 
 
@@ -320,12 +354,14 @@ def diff_results_using_expected_template(case: GoldenCase, unified=3):
         generated = parse_textfsm_to_dicts(template, inp.content)
         diff_text = make_json_diff(res.content, generated, unified)
 
-        items.append(DiffItem(
-            name=res.name,
-            expected=res.content,
-            generated=generated,
-            diff_text=diff_text,
-            passed=(diff_text == ""),
-            reason="No diff" if diff_text == "" else "Diff found",
-        ))
+        items.append(
+            DiffItem(
+                name=res.name,
+                expected=res.content,
+                generated=generated,
+                diff_text=diff_text,
+                passed=(diff_text == ""),
+                reason="No diff" if diff_text == "" else "Diff found",
+            )
+        )
     return items

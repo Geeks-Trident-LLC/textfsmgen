@@ -38,9 +38,7 @@ __all__ = [
 
 
 import time
-import sys
-from io import StringIO
-import functools
+
 
 def timed_command_v2(func):
     @functools.wraps(func)
@@ -119,7 +117,6 @@ def _is_json_object(obj):
     if isinstance(obj, list) and obj and isinstance(obj[0], dict):
         return True
     return False
-
 
 
 @click.group(
@@ -221,6 +218,7 @@ def regen(sandbox, sandbox_keep, dry_run, force, case, verbose):
 @click.argument("case", type=click.Path())
 @click.option(
     "--names-only",
+    "--names",
     is_flag=True,
     help="List only files that differ, without showing diff text.",
 )
@@ -233,19 +231,38 @@ def regen(sandbox, sandbox_keep, dry_run, force, case, verbose):
 )
 @click.option(
     "--unified",
+    "--context",
     type=int,
     default=3,
     help="Number of context lines to show in unified diff (default: 3).",
 )
-@click.option("--json", "json_output", is_flag=True, help="Emit machine-readable JSON diff.")
+@click.option(
+    "--json", "json_output", is_flag=True, help="Emit machine-readable JSON diff."
+)
 @click.option("--summary", is_flag=True, help="Show summary of diff results.")
-@click.option("--fail-on-diff", is_flag=True, help="Exit with code 1 if any diff is found.")
+@click.option(
+    "--fail-on-diff",
+    "--exit-code",
+    is_flag=True,
+    help="Exit with code 1 if any diff is found.",
+)
+@click.option("--quiet", is_flag=True, help="Suppress OK lines; only show failures.")
 @click.option(
     "--verbose",
     is_flag=True,
     help="Show detailed internal steps during diff.",
 )
-def diff(case, names_only, diff_type, unified, verbose, json_output, summary, fail_on_diff):
+def diff(
+    case,
+    names_only,
+    diff_type,
+    unified,
+    json_output,
+    summary,
+    fail_on_diff,
+    quiet,
+    verbose,
+):
     """Show differences between expected and generated results."""
     return cmd_diff.diff(
         Path(case).resolve(),
@@ -255,6 +272,7 @@ def diff(case, names_only, diff_type, unified, verbose, json_output, summary, fa
         json_output=json_output,
         summary=summary,
         fail_on_diff=fail_on_diff,
+        quiet=quiet,
         verbose=verbose,
     )
 
