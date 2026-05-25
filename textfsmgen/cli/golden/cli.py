@@ -138,7 +138,7 @@ def regen(sandbox, sandbox_keep, dry_run, force, case, verbose):
         sandbox_keep=sandbox_keep,
         dry_run=dry_run,
         force=force,
-        verbose=verbose
+        verbose=verbose,
     )
 
 

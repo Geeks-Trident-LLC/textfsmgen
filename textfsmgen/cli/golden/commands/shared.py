@@ -525,4 +525,3 @@ def print_status(
         return
 
     print(f"[INFO] {message}")
-

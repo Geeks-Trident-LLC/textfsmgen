@@ -1,33 +1,38 @@
 """
-Implementation of:
+Regenerate *derived artifacts* for a golden test case.
 
-    textfsmgen tester regen <case>
+Derived artifacts:
+  MAIN CASE:
+      expected_results/*.json
+      meta.json
+      golden.hash
 
-Rebuilds *derived artifacts* for a golden test case.
+  INTEGRATION CASE:
+      expected/snippet.txt
+      expected/textfsm.template
+      expected_results/*.json
 
-MAIN CASE (derived artifacts):
-    - expected_results/*.json
-    - meta.json
-    - golden.hash
+Authoritative data (never modified):
+      canonical/
+      inputs/
+      manifest.json
 
-INTEGRATION CASE (derived artifacts):
-    - expected/snippet.txt
-    - expected/textfsm.template
-    - expected_results/*.json
+Modes:
+  Normal (default):
+      Regenerate derived artifacts in-place.
 
-Never modifies authoritative data:
-    - canonical/        (ground‑truth snippet/template)
-    - inputs/           (user‑authored test inputs)
-    - manifest.json     (case identity and configuration)
+  --sandbox:
+      Run regen inside <case>.temp and delete it on success.
 
-Sandbox modes (--sandbox, --sandbox-keep):
-    - Work inside <case>.temp
-    - If <case>.temp exists:
-          * require --force to overwrite
-    - --sandbox deletes temp on success
-    - --sandbox-keep preserves temp always
+  --sandbox-keep:
+      Run regen inside <case>.temp and preserve it.
 
-Normal regen always overwrites derived artifacts; no --force needed.
+  --dry-run:
+      Show what would be regenerated without writing files.
+
+Sandbox rules:
+  • <case>.temp is created as a working copy.
+  • If it already exists, --force is required to overwrite.
 """
 
 from __future__ import annotations
@@ -46,6 +51,31 @@ from ..core.data_loader import extract_subpath_after
 from ..commands.shared import print_status
 
 
+# ---------------------------------------------------------------------------
+# VERBOSE HELPER
+# ---------------------------------------------------------------------------
+
+
+def _v(message: str, verbose: bool, *, path: Path | None = None, case_name: str = ""):
+    """Print a verbose message with optional path formatting."""
+    if not verbose:
+        return
+
+    if path is None:
+        print_status(message, ok=True)
+        return
+
+    path = Path(path)
+    case_name = case_name or "golden"
+    rel = file.path_name(extract_subpath_after(case_name, path))
+    print_status(f"{message} {rel}", ok=True)
+
+
+# ---------------------------------------------------------------------------
+# MAIN ENTRYPOINT
+# ---------------------------------------------------------------------------
+
+
 @catch_path_errors
 def regen(
     case_path: Path,
@@ -61,14 +91,13 @@ def regen(
     _v("Resolved case path:", verbose, path=case_path)
 
     # --------------------------------------------------------------
-    # Sandbox modes
+    # Sandbox mode
     # --------------------------------------------------------------
     if sandbox or sandbox_keep:
         temp_path = case_path.with_name(case_path.name + ".temp")
 
         print_status(
-            f"Using temporary directory: {file.path_name(temp_path)}",
-            sandbox=True,
+            f"Using temporary directory: {file.path_name(temp_path)}", sandbox=True
         )
         _v("Preparing sandbox directory", verbose)
 
@@ -92,9 +121,7 @@ def regen(
         case = GoldenCase.from_path(case_path)
         _v("Loaded sandbox case:", verbose, path=case_path)
 
-        rc = regen_main(case, dry_run=dry_run, verbose=verbose) \
-            if case.is_main() else \
-            regen_integration(case, dry_run=dry_run, verbose=verbose)
+        rc = _dispatch_regen(case, dry_run=dry_run, verbose=verbose)
 
         if sandbox:
             if rc == 0:
@@ -117,15 +144,26 @@ def regen(
     # --------------------------------------------------------------
     _v("Performing normal regen (no sandbox)", verbose)
     case = GoldenCase.from_path(case_path)
-    rc = regen_main(case, dry_run=dry_run, verbose=verbose) \
-        if case.is_main() else \
-        regen_integration(case, dry_run=dry_run, verbose=verbose)
-    return rc
+    return _dispatch_regen(case, dry_run=dry_run, verbose=verbose)
+
+
+# ---------------------------------------------------------------------------
+# DISPATCH
+# ---------------------------------------------------------------------------
+
+
+def _dispatch_regen(case: GoldenCase, *, dry_run: bool, verbose: bool) -> int:
+    """Dispatch to main or integration regen."""
+    if case.is_main():
+        return regen_main(case, dry_run=dry_run, verbose=verbose)
+    return regen_integration(case, dry_run=dry_run, verbose=verbose)
 
 
 # ---------------------------------------------------------------------------
 # MAIN CASE REGEN
 # ---------------------------------------------------------------------------
+
+
 def regen_main(case: GoldenCase, dry_run=False, verbose=False) -> int:
     _v("MAIN case detected", verbose)
 
@@ -134,9 +172,8 @@ def regen_main(case: GoldenCase, dry_run=False, verbose=False) -> int:
     _v("Loaded canonical snippet/template", verbose)
 
     updated = []
-
     case_name = case.case_dir.name
-    # 1. expected_results
+
     for input_info in loader.load_inputs():
         _v("Processing input:", verbose, path=input_info.fullname, case_name=case_name)
 
@@ -152,13 +189,11 @@ def regen_main(case: GoldenCase, dry_run=False, verbose=False) -> int:
 
         updated.append(file.path_name(out_path))
 
-    # meta.json
     if not dry_run:
         _v("Writing meta.json", verbose)
         loader.write_meta()
     updated.append(file.path_name(case.case_dir / "meta.json"))
 
-    # golden.hash
     if not dry_run:
         _v("Writing golden.hash", verbose)
         loader.write_golden_hash()
@@ -167,19 +202,22 @@ def regen_main(case: GoldenCase, dry_run=False, verbose=False) -> int:
     _print(case, updated, dry_run=dry_run)
     return 0
 
+
 # ---------------------------------------------------------------------------
 # INTEGRATION CASE REGEN
 # ---------------------------------------------------------------------------
+
+
 def regen_integration(case: GoldenCase, dry_run=False, verbose=False) -> int:
     _v("INTEGRATION case detected:", verbose, path=case.case_dir)
 
     loader = case.data
     expected = loader.load_expected()
 
-    snippet_written = False
     updated = []
-
+    snippet_written = False
     case_name = case.case_dir.name
+
     for input_info in loader.load_inputs():
         _v("Processing input:", verbose, path=input_info.fullname, case_name=case_name)
 
@@ -213,29 +251,15 @@ def regen_integration(case: GoldenCase, dry_run=False, verbose=False) -> int:
     _print(case, updated, dry_run=dry_run)
     return 0
 
+
 # ---------------------------------------------------------------------------
-# UTIL
+# PRINT SUMMARY
 # ---------------------------------------------------------------------------
+
 
 def _print(case: GoldenCase, files: list[str], dry_run=False) -> None:
     tc_name = extract_subpath_after("golden", case.case_dir)
     message = f"regenerated {file.path_name(tc_name)}"
-    if dry_run:
-        print_status(message, dryrun=True)
-    else:
-        print_status(message, success=True)
+    print_status(message, dryrun=True if dry_run else False, success=not dry_run)
     for f in files:
         print(f"  - {file.path_name(f)}")
-
-
-def _v(message: str, verbose: bool, path=None, case_name=""):
-    case_name = case_name or "golden"
-    if not verbose:
-        return
-    if not path:
-        print_status(message, ok=True)
-        return
-
-    path = path if isinstance(path, Path) else Path(path)
-    extracted_path = file.path_name(extract_subpath_after(case_name, path))
-    print_status(f"{message} {extracted_path}", ok=True)
