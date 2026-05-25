@@ -66,6 +66,19 @@ def timed_command_v2(func):
 def timed_command(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
+        ctx = click.get_current_context(silent=True)
+        timing_enabled = bool(ctx and ctx.obj and ctx.obj.get("time"))
+        json_mode = kwargs.get("json_mode", False)
+
+        # ------------------------------------------------------------
+        # FAST PATH: timing disabled → run normally, no stdout capture
+        # ------------------------------------------------------------
+        if not timing_enabled:
+            return func(*args, **kwargs)
+
+        # ------------------------------------------------------------
+        # TIMING ENABLED → capture stdout
+        # ------------------------------------------------------------
         buffer = StringIO()
         old_stdout = sys.stdout
         sys.stdout = buffer
@@ -80,15 +93,11 @@ def timed_command(func):
         output = buffer.getvalue()
         elapsed = end - start
 
-        ctx = click.get_current_context(silent=True)
-        if not (ctx and ctx.obj and ctx.obj.get("time")):
-            # Timing disabled → just return original result
-            click.echo(output, nl=False)
-            return rc
-
-        # Timing enabled → try JSON wrapping
-        json_obj = _safe_json_parse(output)
-        if _is_json_object(json_obj):
+        # ------------------------------------------------------------
+        # JSON MODE
+        # ------------------------------------------------------------
+        if json_mode:
+            json_obj = _safe_json_parse(output)
             wrapped = {
                 "time": f"{elapsed:.3f}",
                 "output": json_obj,
@@ -96,7 +105,9 @@ def timed_command(func):
             click.echo(json.dumps(wrapped, indent=2, ensure_ascii=False))
             return rc
 
-        # Not JSON → print raw + timing
+        # ------------------------------------------------------------
+        # RAW MODE
+        # ------------------------------------------------------------
         click.echo(output, nl=False)
         click.echo(f"[TIME] Completed in {elapsed:.3f}s")
         return rc
@@ -109,14 +120,6 @@ def _safe_json_parse(text):
         return json.loads(text)
     except Exception:
         return None
-
-
-def _is_json_object(obj):
-    if isinstance(obj, dict):
-        return True
-    if isinstance(obj, list) and obj and isinstance(obj[0], dict):
-        return True
-    return False
 
 
 @click.group(
@@ -237,7 +240,7 @@ def regen(sandbox, sandbox_keep, dry_run, force, case, verbose):
     help="Number of context lines to show in unified diff (default: 3).",
 )
 @click.option(
-    "--json", "json_output", is_flag=True, help="Emit machine-readable JSON diff."
+    "--json", "json_mode", is_flag=True, help="Emit machine-readable JSON diff."
 )
 @click.option("--summary", is_flag=True, help="Show summary of diff results.")
 @click.option(
@@ -257,7 +260,7 @@ def diff(
     names_only,
     diff_type,
     unified,
-    json_output,
+    json_mode,
     summary,
     fail_on_diff,
     quiet,
@@ -269,7 +272,7 @@ def diff(
         names_only=names_only,
         diff_type=diff_type,
         unified=unified,
-        json_output=json_output,
+        json_mode=json_mode,
         summary=summary,
         fail_on_diff=fail_on_diff,
         quiet=quiet,
@@ -278,10 +281,37 @@ def diff(
 
 
 @cli.command()
+@timed_command
 @click.argument("case", type=click.Path())
-def drift(case):
+@click.option(
+    "--names-only", "--names", is_flag=True, help="List only files that have drift."
+)
+@click.option(
+    "--type",
+    "drift_type",
+    type=click.Choice(["all", "results", "snippet", "template"]),
+    default="all",
+    help="Limit drift check to specific artifact types.",
+)
+@click.option(
+    "--json", "json_mode", is_flag=True, help="Emit machine-readable JSON drift report."
+)
+@click.option("--summary", is_flag=True, help="Show summary of drift results.")
+@click.option(
+    "--fail-on-drift", is_flag=True, help="Exit with code 1 if any drift is detected."
+)
+@click.option("--quiet", is_flag=True, help="Suppress OK lines; only show drift.")
+def drift(case, names_only, drift_type, json_mode, summary, fail_on_drift, quiet):
     """Detect drift between current outputs and golden expected results."""
-    return cmd_drift.drift(Path(case).resolve())
+    return cmd_drift.drift(
+        Path(case).resolve(),
+        names_only=names_only,
+        drift_type=drift_type,
+        json_mode=json_mode,
+        summary=summary,
+        fail_on_drift=fail_on_drift,
+        quiet=quiet,
+    )
 
 
 @cli.command()

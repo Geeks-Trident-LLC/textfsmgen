@@ -27,7 +27,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from .data_loader import DataLoader
+from .data_loader import DataLoader, extract_subpath_after
 
 
 @dataclass
@@ -50,6 +50,10 @@ class GoldenCase:
     def from_path(cls, case_path: str | Path) -> "GoldenCase":
         case_dir = Path(case_path).resolve()
         return cls(case_dir=case_dir, data=DataLoader(case_dir))
+
+    @property
+    def name(self):
+        return extract_subpath_after("golden", self.case_dir).as_posix()
 
     # ------------------------------------------------------------------
     # Case type helpers

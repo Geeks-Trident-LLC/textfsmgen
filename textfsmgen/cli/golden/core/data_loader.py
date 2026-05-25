@@ -471,47 +471,105 @@ class DataLoader:
     # ----------------------------------------------------------------------
     # Golden hash
     # ----------------------------------------------------------------------
-    def compute_golden_hash(self) -> str:
+    def compute_golden_hash(self, drift_type="all", return_changed_files=False):
         """
-        Compute a deterministic hash over the golden case.
+        Compute a deterministic hash over the authoritative golden surface.
 
-        IMPORTANT:
-        - Does NOT read or write canonical/, inputs/, expected/, expected_results/.
-        - Only includes files that define the golden surface:
+        MAIN CASES ONLY:
+            canonical/sample.txt
+            canonical/snippet.txt
+            canonical/textfsm.template
+            canonical/result.json
+            inputs/
+            expected_results/
             manifest.json
-            meta.json (if present)
+
+        INTEGRATION CASES:
+            No authoritative truth → return (None, [])
         """
         import hashlib
 
+        # ------------------------------------------------------------
+        # Integration cases do NOT define authoritative truth
+        # ------------------------------------------------------------
+        if not self.is_main_case():
+            if return_changed_files:
+                return None, []
+            return None
+
+        # ------------------------------------------------------------
+        # MAIN CASE: compute authoritative hash
+        # ------------------------------------------------------------
         hasher = hashlib.sha256()
+        changed_files: list[str] = []
 
-        # Determine authoritative directories
-        if self.is_main_case():
-            dirs = ["canonical", "inputs", "expected_results"]
-        else:
-            dirs = ["expected", "inputs", "expected_results"]
+        # ------------------------------------------------------------
+        # Authoritative file map for main cases
+        # ------------------------------------------------------------
+        file_map = {
+            # Only the canonical snippet
+            "snippet": [
+                "canonical/snippet.txt",
+            ],
+            # Only the canonical template
+            "template": [
+                "canonical/textfsm.template",
+            ],
+            # Inputs + expected_results define authoritative results
+            "results": [
+                "inputs",
+                "expected_results",
+            ],
+            # Full authoritative surface
+            "all": [
+                "manifest.json",
+                "canonical/sample.txt",
+                "canonical/snippet.txt",
+                "canonical/textfsm.template",
+                "canonical/result.json",
+                "inputs",
+                "expected_results",
+            ],
+        }
 
-        # Include manifest.json if present
-        manifest_path = self.case_dir / MANIFEST_FILENAME
-        if manifest_path.is_file():
-            hasher.update(b"manifest.json\n")
-            hasher.update(manifest_path.read_bytes())
+        selected = file_map.get(drift_type, file_map["all"])
+
+        # ------------------------------------------------------------
+        # Helper: hash a single file
+        # ------------------------------------------------------------
+        def hash_file(path: Path):
+            rel = path.relative_to(self.case_dir).as_posix().encode()
+            hasher.update(rel + b"\n")
+            hasher.update(path.read_bytes())
             hasher.update(b"\n")
+            changed_files.append(rel.decode())
 
-        # Hash authoritative directories
-        for d in dirs:
-            dir_path = self.case_dir / d
-            if not dir_path.exists():
+        # ------------------------------------------------------------
+        # Process each entry (file or directory)
+        # ------------------------------------------------------------
+        for entry in selected:
+            entry_path = self.case_dir / entry
+
+            if entry_path.is_file():
+                hash_file(entry_path)
                 continue
 
-            for file in sorted(dir_path.rglob("*")):
-                if file.is_file():
-                    rel = file.relative_to(self.case_dir).as_posix().encode()
-                    hasher.update(rel + b"\n")
-                    hasher.update(file.read_bytes())
-                    hasher.update(b"\n")
+            if entry_path.is_dir():
+                for file in sorted(entry_path.rglob("*")):
+                    if file.is_file():
+                        hash_file(file)
+                continue
 
-        return hasher.hexdigest()
+            # Missing file/directory → skip silently
+            # (This allows partial drift_type filtering)
+            continue
+
+        final_hash = hasher.hexdigest()
+
+        if return_changed_files:
+            return final_hash, changed_files
+
+        return final_hash
 
     def write_golden_hash(self) -> None:
         """
