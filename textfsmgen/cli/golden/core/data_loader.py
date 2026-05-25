@@ -36,8 +36,9 @@ import textfsm
 import textfsmgen
 
 from textfsmgen import (
-    CategoryTemplateBuilder,
-    TabularTemplateBuilder,
+    CategoryBuilder,
+    TabularBuilder,
+    # FreeFormBuilder,
 )
 
 from textfsmgen.libs.generic import DotDict, StatusString
@@ -278,11 +279,14 @@ class DataLoader:
 
         # Instantiate correct builder
         if builder_name == "category":
-            builder = CategoryTemplateBuilder(user_data=sample, **params)
+            builder = CategoryBuilder()
+            builder.set_sample(sample, **params)
+            builder.build()
 
         elif builder_name == "tabular":
-            builder = TabularTemplateBuilder(user_data=sample, **params)
-
+            builder = TabularBuilder()
+            builder.set_sample(sample, **params)
+            builder.build()
         else:
             raise ValueError(f"Unknown builder type: {builder_name}")
 
