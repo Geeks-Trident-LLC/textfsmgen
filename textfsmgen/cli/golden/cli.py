@@ -102,16 +102,44 @@ def run(sandbox, sandbox_keep, quicktest, case):
     )
 
 
-@cli.command()
+@cli.command(help="Regen a golden test case in normal, sandbox, or dryrun.")
+@timed_command
 @click.option(
-    "--dry-run",
+    "--sandbox",
     is_flag=True,
     help="Run regen inside <case>.temp and delete it on success.",
 )
+@click.option(
+    "--sandbox-keep",
+    is_flag=True,
+    help="Run regen inside <case>.temp and preserve it.",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Simulate what would be regenerated without writing files.",
+)
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Overwrite existing files without confirmation.",
+)
+@click.option(
+    "--verbose",
+    is_flag=True,
+    help="Show detailed internal steps during regen.",
+)
 @click.argument("case", type=click.Path())
-def regen(dry_run, case):
-    """Regenerate derived artifacts for a golden test case."""
-    return cmd_regen.regen(Path(case).resolve(), dry_run=dry_run)
+def regen(sandbox, sandbox_keep, dry_run, force, case, verbose):
+    """Regenerate authoritative golden artifacts for a test case."""
+    return cmd_regen.regen(
+        Path(case).resolve(),
+        sandbox=sandbox,
+        sandbox_keep=sandbox_keep,
+        dry_run=dry_run,
+        force=force,
+        verbose=verbose
+    )
 
 
 @cli.command()

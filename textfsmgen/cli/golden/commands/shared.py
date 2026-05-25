@@ -477,7 +477,7 @@ def have_same_columns(list_a, list_b):
     return cols_a == cols_b and cols_a
 
 
-_PREFIX_RE = re.compile(r"^\[[A-Z]+\]\s*")
+_PREFIX_RE = re.compile(r"^\[[A-Z]+(-[A-Z]+)?]\s*")
 
 
 def print_status(
@@ -487,31 +487,42 @@ def print_status(
     success: bool = False,
     fail: bool = False,
     sandbox: bool = False,
+    dryrun: bool = False,
 ) -> None:
     """
     Print a standardized status message.
 
-    Behavior:
-      - Strip any existing [...] prefix.
-      - fail=True     → [FAIL]
-      - sandbox=True  → [SANDBOX]
-      - success=True  → [SUCCESS]
-      - fallback      → [INFO]
+    Priority:
+        1. fail=True     → [FAIL]
+        2. dryrun=True   → [DRY-RUN]
+        3. sandbox=True  → [SANDBOX]
+        4. success=True  → [SUCCESS]
+        5. ok=True       → [OK]
+        6. fallback      → [INFO]
     """
 
     # Strip any existing prefix like [FAIL], [SUCCESS], [XYZ], etc.
     message = _PREFIX_RE.sub("", message).lstrip()
 
-    pairs = (
-        (fail, f"[FAIL] {message}"),
-        (sandbox, f"[SANDBOX] {message}"),
-        (success, f"[SUCCESS] {message}"),
-        (ok, f"[OK] {message}"),
-    )
-    for flag, msg in pairs:
-        if flag:
-            print(msg)
-            return
+    if fail:
+        print(f"[FAIL] {message}")
+        return
 
-    # Fallback
+    if dryrun:
+        print(f"[DRY-RUN] {message}")
+        return
+
+    if sandbox:
+        print(f"[SANDBOX] {message}")
+        return
+
+    if success:
+        print(f"[SUCCESS] {message}")
+        return
+
+    if ok:
+        print(f"[OK] {message}")
+        return
+
     print(f"[INFO] {message}")
+
