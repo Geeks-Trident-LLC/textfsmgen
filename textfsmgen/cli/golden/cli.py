@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from io import StringIO
+import sys
 import json
 from pathlib import Path
 import click
@@ -35,21 +37,89 @@ __all__ = [
 ]
 
 
+import time
+import sys
+from io import StringIO
+import functools
+
+def timed_command_v2(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        buffer = StringIO()
+        old_stdout = sys.stdout
+        sys.stdout = buffer
+
+        start = time.perf_counter()
+        try:
+            result = func(*args, **kwargs)
+        finally:
+            duration = time.perf_counter() - start
+            sys.stdout = old_stdout
+
+        return {
+            "stdout": buffer.getvalue(),
+            "result": result,
+            "duration": duration,
+        }
+
+    return wrapper
+
+
 def timed_command(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
+        buffer = StringIO()
+        old_stdout = sys.stdout
+        sys.stdout = buffer
+
         start = time_module.perf_counter()
-        rc = func(*args, **kwargs)
-        end = time_module.perf_counter()
+        try:
+            rc = func(*args, **kwargs)
+        finally:
+            end = time_module.perf_counter()
+            sys.stdout = old_stdout
+
+        output = buffer.getvalue()
+        elapsed = end - start
 
         ctx = click.get_current_context(silent=True)
-        if ctx and ctx.obj and ctx.obj.get("time"):
-            elapsed = end - start
-            click.echo(f"[TIME] Completed in {elapsed:.3f}s")
+        if not (ctx and ctx.obj and ctx.obj.get("time")):
+            # Timing disabled → just return original result
+            click.echo(output, nl=False)
+            return rc
 
+        # Timing enabled → try JSON wrapping
+        json_obj = _safe_json_parse(output)
+        if _is_json_object(json_obj):
+            wrapped = {
+                "time": f"{elapsed:.3f}",
+                "output": json_obj,
+            }
+            click.echo(json.dumps(wrapped, indent=2, ensure_ascii=False))
+            return rc
+
+        # Not JSON → print raw + timing
+        click.echo(output, nl=False)
+        click.echo(f"[TIME] Completed in {elapsed:.3f}s")
         return rc
 
     return wrapper
+
+
+def _safe_json_parse(text):
+    try:
+        return json.loads(text)
+    except Exception:
+        return None
+
+
+def _is_json_object(obj):
+    if isinstance(obj, dict):
+        return True
+    if isinstance(obj, list) and obj and isinstance(obj[0], dict):
+        return True
+    return False
+
 
 
 @click.group(
