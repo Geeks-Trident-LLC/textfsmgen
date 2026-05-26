@@ -8,6 +8,7 @@ from typing import cast
 
 from .cli_decorator import validate_sandbox_flags, timed_command
 
+from .commands.new import cmd_new
 from .commands.generate import cmd_generate
 from .commands.batch_generate import cmd_batch_generate
 from .commands.batch_regen import cmd_batch_regen
@@ -20,7 +21,7 @@ from .commands import (
     drift as cmd_drift,
     copy as cmd_copy,
     duplicate as cmd_duplicate,
-    new as cmd_new,
+    # new as cmd_new,
     merge as cmd_merge,
     merge_review as cmd_merge_review,
     merge_preview as cmd_merge_preview,
@@ -323,54 +324,7 @@ def duplicate(
     )
 
 
-@cli.command()
-@timed_command
-@validate_sandbox_flags
-@click.argument("case", type=str)
-@click.option(
-    "--builder",
-    "builder",
-    required=True,
-    type=click.Choice(["tabular", "category"]),
-    help="Builder type for the new integration case.",
-)
-@click.option("--author", required=True, help="Author name for manifest.json.")
-@click.option(
-    "--sandbox",
-    is_flag=True,
-    help="Create into <case>.temp and delete temp on success.",
-)
-@click.option(
-    "--sandbox-keep", is_flag=True, help="Create into <case>.temp and preserve it."
-)
-@click.option(
-    "--dry-run",
-    "--dryrun",
-    is_flag=True,
-    help="Simulate creation without writing anything.",
-)
-@click.option(
-    "--open",
-    "open_after",
-    is_flag=True,
-    help="Open the new case directory after creation.",
-)
-@click.option("--verbose", is_flag=True, help="Show detailed creation steps.")
-def new(case, builder, author, sandbox, sandbox_keep, dry_run, open_after, verbose):
-    """Create a new INTEGRATION golden test case."""
-
-    return cmd_new.new(
-        case=Path(case).resolve(),
-        builder=builder,
-        author=author,
-        sandbox=sandbox,
-        sandbox_keep=sandbox_keep,
-        dry_run=dry_run,
-        open_after=open_after,
-        verbose=verbose,
-    )
-
-
+cli.add_command(cast(click.Command, cmd_new))
 cli.add_command(cast(click.Command, cmd_generate))
 cli.add_command(cast(click.Command, cmd_batch_generate))
 cli.add_command(cast(click.Command, cmd_batch_regen))

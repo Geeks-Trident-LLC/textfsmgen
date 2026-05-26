@@ -6,22 +6,49 @@ from pathlib import Path
 import click
 
 from textfsmgen.libs import file
+from ..cli_decorator import (
+    timed_command,
+    validate_sandbox_flags,
+)
 
-from ..core.utils import catch_path_errors
 from .shared import _open_directory
 
 
-@catch_path_errors
-def new(
-    case: Path,
-    builder: str,
-    author: str,
-    sandbox: bool,
-    sandbox_keep: bool,
-    dry_run: bool,
-    open_after: bool,
-    verbose: bool,
-):
+@click.command(name="new")
+@timed_command
+@validate_sandbox_flags
+@click.argument("case", type=str)
+@click.option(
+    "--builder",
+    "builder",
+    required=True,
+    type=click.Choice(["tabular", "category"]),
+    help="Builder type for the new integration case.",
+)
+@click.option("--author", required=True, help="Author name for manifest.json.")
+@click.option(
+    "--sandbox",
+    is_flag=True,
+    help="Create into <case>.temp and delete temp on success.",
+)
+@click.option(
+    "--sandbox-keep", is_flag=True, help="Create into <case>.temp and preserve it."
+)
+@click.option(
+    "--dry-run",
+    "--dryrun",
+    is_flag=True,
+    help="Simulate creation without writing anything.",
+)
+@click.option(
+    "--open",
+    "open_after",
+    is_flag=True,
+    help="Open the new case directory after creation.",
+)
+@click.option("--verbose", is_flag=True, help="Show detailed creation steps.")
+def cmd_new(case, builder, author, sandbox, sandbox_keep, dry_run, open_after, verbose):
+    """Create a new INTEGRATION golden test case."""
 
     # ------------------------------------------------------------
     # Resolve and validate case path
