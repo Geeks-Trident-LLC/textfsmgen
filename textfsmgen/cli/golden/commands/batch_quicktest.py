@@ -16,7 +16,6 @@ from .shared import discover_cases
 @timed_command
 @validate_sandbox_flags
 @integration_only
-@click.argument("base")
 @click.option(
     "--sandbox",
     is_flag=True,
@@ -31,7 +30,18 @@ from .shared import discover_cases
     "--summary", is_flag=True, help="Show summary after processing all cases."
 )
 @click.option("--verbose", is_flag=True, help="Show detailed quicktest steps.")
+@click.argument("base", type=click.Path(exists=True, file_okay=False))
 def cmd_batch_quicktest(base, sandbox, sandbox_keep, summary, verbose):
+    return cmd_batch_quicktest(
+        Path(base).resolve(),
+        sandbox=sandbox,
+        sandbox_keep=sandbox_keep,
+        summary=summary,
+        verbose=verbose,
+    )
+
+
+def cmd_batch_quicktest_(base, sandbox, sandbox_keep, summary, verbose):
     """
     Batch version of `quicktest` — processes all integration cases under <base>.
     """
