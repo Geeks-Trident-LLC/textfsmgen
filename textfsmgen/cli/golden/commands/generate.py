@@ -20,7 +20,6 @@ from .shared import _open_directory
 @click.command(name="generate")
 @timed_command
 @validate_sandbox_flags
-@click.argument("case", type=click.Path(exists=True, file_okay=False))
 @click.option("--author", required=True, help="Set the author for the generating case.")
 @click.option(
     "--dry-run",
@@ -42,11 +41,26 @@ from .shared import _open_directory
 )
 @click.option("--summary", is_flag=True, help="Show summary of generated case.")
 @click.option("--verbose", is_flag=True, help="Show detailed generation steps.")
+@click.argument("case", type=click.Path(exists=True, file_okay=False))
 def cmd_generate(
     case, author, dry_run, sandbox, sandbox_keep, open_after, summary, verbose
 ):
+    return cmd_generate_(
+        Path(case).resolve(),
+        author=author,
+        dry_run=dry_run,
+        sandbox=sandbox,
+        sandbox_keep=sandbox_keep,
+        open_after=open_after,
+        summary=summary,
+        verbose=verbose,
+    )
+
+
+def cmd_generate_(
+    case_path, author, dry_run, sandbox, sandbox_keep, open_after, summary, verbose
+):
     """Generate expected artifacts for an existing case."""
-    case_path = Path(case).resolve()
     ok = validate_case_path(case_path)
     if not ok:
         click.echo(f"[FAIL] {ok}")
@@ -169,7 +183,7 @@ def cmd_generate(
             click.echo(
                 f"  result → {file.path_name(results_dir / f'{base}_result.json')}"
             )
-        return
+        return 0
 
     # ------------------------------------------------------------------
     # 8. Write manifest
@@ -230,3 +244,5 @@ def cmd_generate(
 
     if open_after:
         _open_directory(case_path)
+
+    return 0

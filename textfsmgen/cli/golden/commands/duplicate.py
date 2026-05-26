@@ -64,8 +64,14 @@ def cmd_duplicate(
 
 
 def cmd_duplicate_(
-    src, author="", sandbox=False, sandbox_keep=False,
-    dry_run=False, no_quicktest=False, open_after=False, verbose=False
+    src,
+    author="",
+    sandbox=False,
+    sandbox_keep=False,
+    dry_run=False,
+    no_quicktest=False,
+    open_after=False,
+    verbose=False,
 ):
 
     # ------------------------------------------------------------
