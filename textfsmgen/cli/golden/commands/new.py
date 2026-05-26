@@ -8,7 +8,7 @@ import click
 from textfsmgen.libs import file
 
 from ..core.utils import catch_path_errors
-from .copy import _open_directory
+from .shared import _open_directory
 
 
 @catch_path_errors

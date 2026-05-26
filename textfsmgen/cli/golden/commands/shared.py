@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import os
 # ============================================================================
 # Imports
 # ============================================================================
 
 import re
 import difflib
+import subprocess
+import sys
+
 import click
 from datetime import datetime
 from pathlib import Path
@@ -547,3 +551,12 @@ def discover_cases(base_dir):
             continue
         if (path / "manifest.json").exists() and (path / "inputs").exists():
             yield GoldenCase.from_path(path)
+
+
+def _open_directory(path: Path):
+    if sys.platform.startswith("win"):
+        os.startfile(path)
+    elif sys.platform == "darwin":
+        subprocess.run(["open", str(path)])
+    else:
+        subprocess.run(["xdg-open", str(path)])

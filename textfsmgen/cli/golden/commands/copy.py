@@ -4,11 +4,9 @@ import json
 import shutil
 from pathlib import Path
 import click
-import sys
-import os
-import subprocess
 
 from textfsmgen.libs import file
+from .shared import _open_directory
 
 from ..core.utils import catch_path_errors
 
@@ -136,12 +134,3 @@ def copy(
 
     if open_after:
         _open_directory(dst)
-
-
-def _open_directory(path: Path):
-    if sys.platform.startswith("win"):
-        os.startfile(path)
-    elif sys.platform == "darwin":
-        subprocess.run(["open", str(path)])
-    else:
-        subprocess.run(["xdg-open", str(path)])

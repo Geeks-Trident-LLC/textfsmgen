@@ -10,7 +10,7 @@ from textfsmgen.libs import file
 
 from ..core.golden_case import GoldenCase
 from ..core.utils import catch_path_errors
-from .copy import _open_directory
+from .shared import _open_directory
 
 
 @catch_path_errors
