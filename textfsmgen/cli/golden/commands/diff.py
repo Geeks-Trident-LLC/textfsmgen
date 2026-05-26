@@ -76,6 +76,29 @@ def cmd_diff(
     quiet,
     verbose,
 ):
+    return cmd_diff_(
+        Path(case).resolve(),
+        names_only=names_only,
+        diff_type=diff_type,
+        unified=unified,
+        json_mode=json_mode,
+        summary=summary,
+        quiet=quiet,
+        verbose=verbose,
+    )
+
+
+def cmd_diff_(
+    case_path,
+    names_only=False,
+    diff_type="all",
+    unified=3,
+    json_mode=False,
+    summary=False,
+    fail_on_diff=False,
+    quiet=False,
+    verbose=False,
+):
     """
     Display differences for a single golden test case.
 
@@ -84,7 +107,6 @@ def cmd_diff(
         1 if any diff is found
     """
 
-    case_path = Path(case).resolve()
     ok = validate_case_path(case_path)
     if not ok:
         click.echo(f"[FAIL] {ok}")
@@ -142,7 +164,7 @@ def cmd_diff(
 
     # Final no-diff message
     if not any_diff and not quiet:
-        print_status(f"{file.path_name(tc_name)} — no differences found", ok=True)
+        click.echo(f"[OK] {file.path_name(tc_name)} — no differences found")
 
     # Fail-on-diff behavior
     return 1 if any_diff and fail_on_diff else 0
@@ -206,15 +228,15 @@ def print_diff_item(item: DiffItem, *, names_only=False, verbose=False):
     """Print a diff item according to flags."""
     if item.passed:
         if verbose:
-            print_status(f"{item.name} — no differences", ok=True)
+            click.echo(f"[OK] {item.name} — no differences")
         return
 
     if names_only:
-        print_status(f"DIFF: {item.name}", fail=True)
+        click.echo(f"[FAIL] DIFF: {item.name}")
         return
 
-    print_status(f"DIFF: {item.name}", fail=True)
-    print(item.diff_text)
+    click.echo(f"[FAIL] DIFF: {item.name}")
+    click.echo(item.diff_text)
 
 
 # ---------------------------------------------------------------------------
