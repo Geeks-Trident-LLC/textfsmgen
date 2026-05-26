@@ -36,32 +36,6 @@ __all__ = [
 ]
 
 
-import time
-
-
-def timed_command_v2(func):
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        buffer = StringIO()
-        old_stdout = sys.stdout
-        sys.stdout = buffer
-
-        start = time.perf_counter()
-        try:
-            result = func(*args, **kwargs)
-        finally:
-            duration = time.perf_counter() - start
-            sys.stdout = old_stdout
-
-        return {
-            "stdout": buffer.getvalue(),
-            "result": result,
-            "duration": duration,
-        }
-
-    return wrapper
-
-
 def timed_command(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -117,7 +91,7 @@ def timed_command(func):
 def _safe_json_parse(text):
     try:
         return json.loads(text)
-    except Exception:
+    except Exception:   # noqa
         return None
 
 
@@ -185,6 +159,7 @@ def run(sandbox, sandbox_keep, quicktest, case):
 )
 @click.option(
     "--dry-run",
+    "--dryrun",
     is_flag=True,
     help="Simulate what would be regenerated without writing files.",
 )
@@ -325,7 +300,10 @@ def drift(case, names_only, drift_type, json_mode, summary, fail_on_drift, quiet
     "--sandbox-keep", is_flag=True, help="Copy into <dst>.temp and preserve it."
 )
 @click.option(
-    "--dry-run", is_flag=True, help="Simulate the copy without writing anything."
+    "--dry-run",
+    "--dryrun",
+    is_flag=True,
+    help="Simulate the copy without writing anything.",
 )
 @click.option(
     "--no-quicktest", is_flag=True, help="Skip running a quick test after copying."
@@ -379,6 +357,7 @@ def copy(
 )
 @click.option(
     "--dry-run",
+    "--dryrun",
     is_flag=True,
     help="Simulate the duplicate operation without writing anything.",
 )
@@ -439,10 +418,16 @@ def duplicate(
     "--sandbox-keep", is_flag=True, help="Create into <case>.temp and preserve it."
 )
 @click.option(
-    "--dry-run", is_flag=True, help="Simulate creation without writing anything."
+    "--dry-run",
+    "--dryrun",
+    is_flag=True,
+    help="Simulate creation without writing anything.",
 )
 @click.option(
-    "--open-after", is_flag=True, help="Open the new case directory after creation."
+    "--open",
+    "open_after",
+    is_flag=True,
+    help="Open the new case directory after creation.",
 )
 @click.option("--verbose", is_flag=True, help="Show detailed creation steps.")
 def new(case, builder, author, sandbox, sandbox_keep, dry_run, open_after, verbose):
@@ -456,7 +441,7 @@ def new(case, builder, author, sandbox, sandbox_keep, dry_run, open_after, verbo
         raise click.ClickException("--dry-run cannot be combined with sandbox modes.")
 
     if open_after and (sandbox or sandbox_keep):
-        raise click.ClickException("--open-after cannot be used with sandbox modes.")
+        raise click.ClickException("--open cannot be used with sandbox modes.")
 
     return cmd_new.new(
         case=Path(case).resolve(),
@@ -488,7 +473,6 @@ def new(case, builder, author, sandbox, sandbox_keep, dry_run, open_after, verbo
 )
 @click.option(
     "--open",
-    "--open-after",
     "open_after",
     is_flag=True,
     help="Open the case directory after generation.",
