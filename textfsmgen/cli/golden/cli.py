@@ -7,6 +7,10 @@ import click
 from typing import cast
 
 from .cli_decorator import validate_sandbox_flags, timed_command
+
+from .commands.batch_generate import cmd_batch_generate
+from .commands.batch_regen import cmd_batch_regen
+
 from .commands import (
     run as cmd_run,
     regen as cmd_regen,
@@ -16,7 +20,6 @@ from .commands import (
     duplicate as cmd_duplicate,
     new as cmd_new,
     generate as cmd_generate,
-    batch_regen as cmd_batch_regen,
     batch_quicktest as cmd_batch_quicktest,
     merge as cmd_merge,
     merge_review as cmd_merge_review,
@@ -413,18 +416,8 @@ def generate(
     )
 
 
-from .commands.batch_generate import cmd_batch_generate
-
-cmd_batch_generate.batch_generate = cmd_batch_generate
 cli.add_command(cast(click.Command, cmd_batch_generate))
-
-
-@cli.command("batch-regen")
-@click.option("--dry-run", is_flag=True)
-@click.argument("root", type=click.Path())
-def batch_regen(dry_run, root):
-    """Run `regen` on all cases inside a directory."""
-    return cmd_batch_regen.batch_regen(Path(root).resolve(), dry_run=dry_run)
+cli.add_command(cast(click.Command, cmd_batch_regen))
 
 
 @cli.command("batch-quicktest")
