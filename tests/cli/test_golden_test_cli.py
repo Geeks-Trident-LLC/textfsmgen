@@ -45,7 +45,6 @@ def patch_cmd(cmd_name: str):
         (["diff", "case-dir"], "diff"),
         (["drift", "case-dir"], "drift"),
         (["new", "--author", "dummy-user", "--builder", "category", "case-dir"], "new"),
-        (["batch-generate", "root-dir"], "batch_generate"),
         (["batch-regen", "root-dir"], "batch_regen"),
         (["batch-quicktest", "root-dir"], "batch_quicktest"),
         (["merge", "--author", "dummy-user", "dst", "src-a", "src-b"], "merge"),

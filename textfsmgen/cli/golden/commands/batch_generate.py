@@ -1,73 +1,103 @@
-from __future__ import annotations
-
-
+import click
 from pathlib import Path
 
-from .generate import generate as run_generate
+from textfsmgen.libs import file
+from ..cli_decorator import integration_only, validate_sandbox_flags, timed_command
+from .shared import discover_cases
 
 
-def batch_generate(root_dir: Path, *, dry_run: bool) -> int:
+@click.command(
+    name="batch-generate",
+    help="Run `generate` on all integration cases under a directory.",
+)
+@timed_command
+@validate_sandbox_flags
+@integration_only
+@click.argument("base", type=click.Path(exists=True, file_okay=False))
+@click.option("--author", required=True, help="Set the author for all generated cases.")
+@click.option(
+    "--dry-run", is_flag=True, help="Simulate generation without writing files."
+)
+@click.option(
+    "--sandbox",
+    is_flag=True,
+    help="Run each case inside <case>.temp and delete on success.",
+)
+@click.option(
+    "--sandbox-keep",
+    is_flag=True,
+    help="Run each case inside <case>.temp and preserve temp.",
+)
+@click.option(
+    "--summary", is_flag=True, help="Show summary after processing all cases."
+)
+@click.option("--verbose", is_flag=True, help="Show detailed generation steps.")
+def cmd_batch_generate(base, author, dry_run, sandbox, sandbox_keep, summary, verbose):
     """
-    Run `generate` on all cases under a directory.
-
-    Rules:
-      - A valid case contains manifest.json and inputs/
-      - Each case is processed independently
-      - dry-run: each case uses <case>.temp
-      - Summary printed at the end
+    Batch version of `generate` — processes all integration cases under <base>.
     """
 
-    root_dir = root_dir.resolve()
+    from .generate import generate as generate_single
 
-    if not root_dir.exists() or not root_dir.is_dir():
-        print(f"[FAIL] Directory does not exist: {root_dir}")
-        return 1
-
-    # --------------------------------------------------------------
-    # Discover cases
-    # --------------------------------------------------------------
-    cases = []
-    for p in sorted(root_dir.iterdir()):
-        if not p.is_dir():
-            continue
-        if (p / "manifest.json").exists() and (p / "inputs").exists():
-            cases.append(p)
+    base_dir = Path(base).resolve()
+    cases = list(discover_cases(base_dir))
 
     if not cases:
-        print(f"[FAIL] No valid cases found under: {root_dir}")
-        return 1
+        raise click.ClickException(
+            f"No valid golden test cases found under: {file.path_name(base_dir)}"
+        )
 
-    print(f"[INFO] Found {len(cases)} case(s) to process.")
+    if verbose:
+        click.echo(
+            f"[info] Found {len(cases)} case(s) under {file.path_name(base_dir)}"
+        )
 
-    # --------------------------------------------------------------
-    # Process each case
-    # --------------------------------------------------------------
     passed = []
     failed = []
 
-    for case_path in cases:
-        print(f"\n[INFO] Processing case: {case_path}")
+    for gc in cases:
+        if gc.is_main():
+            failed.append(gc)
+            click.echo(f"[skip] {gc.name} (not an integration case)")
+            continue
 
-        rc = run_generate(case_path, dry_run=dry_run)
+        if verbose:
+            click.echo(f"\n[info] Processing case: {gc.name}")
 
-        if rc == 0:
-            passed.append(case_path)
-        else:
-            failed.append(case_path)
+        try:
+            generate_single(
+                gc.case_dir,
+                author=author,
+                dry_run=dry_run,
+                sandbox=sandbox,
+                sandbox_keep=sandbox_keep,
+                open_after=False,
+                verbose=verbose,
+                summary=False,
+            )
+            passed.append(gc)
+        except Exception as e:
+            failed.append(gc)
+            click.echo(f"[FAIL] {gc.name}: {e}")
 
-    # --------------------------------------------------------------
     # Summary
-    # --------------------------------------------------------------
-    print("\n==================== SUMMARY ====================")
-    print(f"Total cases: {len(cases)}")
-    print(f"Passed     : {len(passed)}")
-    print(f"Failed     : {len(failed)}")
+    if summary:
+        click.echo("\n==================== SUMMARY ====================")
+        click.echo(f"Total cases: {len(cases)}")
+        click.echo(f"Passed     : {len(passed)}")
+        click.echo(f"Failed     : {len(failed)}")
 
+        if failed:
+            click.echo("\nFailed cases:")
+            for gc in failed:
+                click.echo(f"  - {gc.name}")
+
+        click.echo("=================================================\n")
+
+    # Exit code
     if failed:
-        print("\nFailed cases:")
-        for c in failed:
-            print(f"  - {c}")
+        raise click.ClickException("Some cases failed during batch-generate.")
 
-    print("=================================================\n")
 
-    return 0 if not failed else 1
+# Required for test suite patching
+cmd_batch_generate.batch_generate = cmd_batch_generate

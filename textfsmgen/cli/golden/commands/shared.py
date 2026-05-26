@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import re
 import difflib
+import click
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any
@@ -525,3 +526,24 @@ def print_status(
         return
 
     print(f"[INFO] {message}")
+
+
+def discover_cases(base_dir):
+    """
+    Yield GoldenCase objects for all valid cases under base_dir.
+    A valid case contains: manifest.json + inputs/
+    """
+    from ..core.golden_case import GoldenCase
+
+    base_dir = Path(base_dir).resolve()
+
+    if not base_dir.exists():
+        raise click.ClickException(
+            f"Directory does not exist: {file.path_name(base_dir)}"
+        )
+
+    for path in sorted(base_dir.iterdir()):
+        if not path.is_dir():
+            continue
+        if (path / "manifest.json").exists() and (path / "inputs").exists():
+            yield GoldenCase.from_path(path)

@@ -1,14 +1,12 @@
+# ruff: noqa: E402
+
 from __future__ import annotations
 
-from io import StringIO
-import sys
-import json
 from pathlib import Path
 import click
+from typing import cast
 
-import time as time_module
-import functools
-
+from .cli_decorator import validate_sandbox_flags, timed_command
 from .commands import (
     run as cmd_run,
     regen as cmd_regen,
@@ -18,7 +16,6 @@ from .commands import (
     duplicate as cmd_duplicate,
     new as cmd_new,
     generate as cmd_generate,
-    batch_generate as cmd_batch_generate,
     batch_regen as cmd_batch_regen,
     batch_quicktest as cmd_batch_quicktest,
     merge as cmd_merge,
@@ -34,65 +31,6 @@ __all__ = [
     "cli",
     "__version__",
 ]
-
-
-def timed_command(func):
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        ctx = click.get_current_context(silent=True)
-        timing_enabled = bool(ctx and ctx.obj and ctx.obj.get("time"))
-        json_mode = kwargs.get("json_mode", False)
-
-        # ------------------------------------------------------------
-        # FAST PATH: timing disabled → run normally, no stdout capture
-        # ------------------------------------------------------------
-        if not timing_enabled:
-            return func(*args, **kwargs)
-
-        # ------------------------------------------------------------
-        # TIMING ENABLED → capture stdout
-        # ------------------------------------------------------------
-        buffer = StringIO()
-        old_stdout = sys.stdout
-        sys.stdout = buffer
-
-        start = time_module.perf_counter()
-        try:
-            rc = func(*args, **kwargs)
-        finally:
-            end = time_module.perf_counter()
-            sys.stdout = old_stdout
-
-        output = buffer.getvalue()
-        elapsed = end - start
-
-        # ------------------------------------------------------------
-        # JSON MODE
-        # ------------------------------------------------------------
-        if json_mode:
-            json_obj = _safe_json_parse(output)
-            wrapped = {
-                "time": f"{elapsed:.3f}",
-                "output": json_obj,
-            }
-            click.echo(json.dumps(wrapped, indent=2, ensure_ascii=False))
-            return rc
-
-        # ------------------------------------------------------------
-        # RAW MODE
-        # ------------------------------------------------------------
-        click.echo(output, nl=False)
-        click.echo(f"[TIME] Completed in {elapsed:.3f}s")
-        return rc
-
-    return wrapper
-
-
-def _safe_json_parse(text):
-    try:
-        return json.loads(text)
-    except Exception:   # noqa
-        return None
 
 
 @click.group(
@@ -119,6 +57,7 @@ def version():
 
 @cli.command(help="Run a golden test case in normal, sandbox, or quicktest modes.")
 @timed_command
+@validate_sandbox_flags
 @click.option(
     "--sandbox",
     is_flag=True,
@@ -147,6 +86,7 @@ def run(sandbox, sandbox_keep, quicktest, case):
 
 @cli.command(help="Regen a golden test case in normal, sandbox, or dryrun.")
 @timed_command
+@validate_sandbox_flags
 @click.option(
     "--sandbox",
     is_flag=True,
@@ -290,6 +230,7 @@ def drift(case, names_only, drift_type, json_mode, summary, fail_on_drift, quiet
 
 @cli.command()
 @timed_command
+@validate_sandbox_flags
 @click.argument("src", type=click.Path(exists=True, file_okay=False))
 @click.argument("dst", type=click.Path())
 @click.option("--author", required=True, help="Set the author for the new case.")
@@ -320,16 +261,6 @@ def copy(
 ):
     """Copy a golden test case into a new case directory."""
 
-    # Validate incompatible flags
-    if sandbox and sandbox_keep:
-        raise click.ClickException("Cannot use --sandbox and --sandbox-keep together.")
-
-    if dry_run and (sandbox or sandbox_keep):
-        raise click.ClickException("--dry-run cannot be combined with sandbox modes.")
-
-    if open_after and (sandbox or sandbox_keep):
-        raise click.ClickException("--open cannot be used with sandbox modes.")
-
     return cmd_copy.copy(
         src=Path(src),
         dst=Path(dst),
@@ -345,6 +276,7 @@ def copy(
 
 @cli.command()
 @timed_command
+@validate_sandbox_flags
 @click.argument("src", type=click.Path(exists=True, file_okay=False))
 @click.option("--author", required=True, help="Set the author for the new case.")
 @click.option(
@@ -376,16 +308,6 @@ def duplicate(
 ):
     """Duplicate a golden test case into a new auto-named case directory."""
 
-    # Validate incompatible flags
-    if sandbox and sandbox_keep:
-        raise click.ClickException("Cannot use --sandbox and --sandbox-keep together.")
-
-    if dry_run and (sandbox or sandbox_keep):
-        raise click.ClickException("--dry-run cannot be combined with sandbox modes.")
-
-    if open_after and (sandbox or sandbox_keep):
-        raise click.ClickException("--open cannot be used with sandbox modes.")
-
     return cmd_duplicate.duplicate(
         src=Path(src).resolve(),
         author=author,
@@ -400,6 +322,7 @@ def duplicate(
 
 @cli.command()
 @timed_command
+@validate_sandbox_flags
 @click.argument("case", type=str)
 @click.option(
     "--builder",
@@ -433,16 +356,6 @@ def duplicate(
 def new(case, builder, author, sandbox, sandbox_keep, dry_run, open_after, verbose):
     """Create a new INTEGRATION golden test case."""
 
-    # Validation
-    if sandbox and sandbox_keep:
-        raise click.ClickException("Cannot use --sandbox and --sandbox-keep together.")
-
-    if dry_run and (sandbox or sandbox_keep):
-        raise click.ClickException("--dry-run cannot be combined with sandbox modes.")
-
-    if open_after and (sandbox or sandbox_keep):
-        raise click.ClickException("--open cannot be used with sandbox modes.")
-
     return cmd_new.new(
         case=Path(case).resolve(),
         builder=builder,
@@ -457,6 +370,7 @@ def new(case, builder, author, sandbox, sandbox_keep, dry_run, open_after, verbo
 
 @cli.command()
 @timed_command
+@validate_sandbox_flags
 @click.argument("case", type=click.Path(exists=True, file_okay=False))
 @click.option("--author", required=True, help="Set the author for the generating case.")
 @click.option(
@@ -499,12 +413,10 @@ def generate(
     )
 
 
-@cli.command("batch-generate")
-@click.option("--dry-run", is_flag=True)
-@click.argument("root", type=click.Path())
-def batch_generate(dry_run, root):
-    """Run `generate` on all cases inside a directory."""
-    return cmd_batch_generate.batch_generate(Path(root).resolve(), dry_run=dry_run)
+from .commands.batch_generate import cmd_batch_generate
+
+cmd_batch_generate.batch_generate = cmd_batch_generate
+cli.add_command(cast(click.Command, cmd_batch_generate))
 
 
 @cli.command("batch-regen")
