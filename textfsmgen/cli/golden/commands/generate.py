@@ -6,8 +6,8 @@ from pathlib import Path
 import click
 
 from textfsmgen import parse_textfsm_to_dicts
-
 from textfsmgen.libs import file
+
 from ..core.golden_case import GoldenCase
 from ..core.utils import catch_path_errors
 from .copy import _open_directory
@@ -16,6 +16,8 @@ from .copy import _open_directory
 @catch_path_errors
 def generate(
     case_path,
+    author="",
+    summary=False,
     dry_run=False,
     sandbox=False,
     sandbox_keep=False,
@@ -23,14 +25,27 @@ def generate(
     verbose=False,
 ):
     """
-    Generate snippet, template, and expected_results for a golden test case.
+    Generate snippet, template, expected_results, and update manifest
+    for an integration golden test case.
     """
+
     golden_case = GoldenCase.from_path(case_path)
 
+    # ------------------------------------------------------------------
+    # 0. Enforce: generate is ONLY allowed inside integration/
+    # ------------------------------------------------------------------
+    if golden_case.is_main():
+        raise click.ClickException(
+            "'generate' is only allowed for integration cases, "
+            "but this case is categorized as: main"
+        )
+
+    # ------------------------------------------------------------------
+    # 1. Load inputs
+    # ------------------------------------------------------------------
     if verbose:
         click.echo(f"[info] Loading inputs from {golden_case.name}")
 
-    # 1. Load inputs
     inputs = list(golden_case.data.load_inputs())
     if not inputs:
         raise click.ClickException(f"No inputs found in {golden_case.name}/inputs")
@@ -39,7 +54,9 @@ def generate(
     templates = []
     builders = []
 
-    # 2. Build for each input
+    # ------------------------------------------------------------------
+    # 2. Build snippet/template for each input
+    # ------------------------------------------------------------------
     for inp in inputs:
         if verbose:
             click.echo(f"[info] Building from input: {file.path_name(inp.fullname)}")
@@ -54,7 +71,9 @@ def generate(
         snippets.append(builder.snippet)
         templates.append(builder.template)
 
-    # 3. Ensure exactly one snippet and one template
+    # ------------------------------------------------------------------
+    # 3. Ensure exactly one snippet + one template
+    # ------------------------------------------------------------------
     unique_snippets = set(snippets)
     unique_templates = set(templates)
 
@@ -73,15 +92,26 @@ def generate(
     snippet = snippets[0]
     template = templates[0]
 
-    # 4. Validate template parses inputs
+    # ------------------------------------------------------------------
+    # 4. Validate template parses all inputs
+    # ------------------------------------------------------------------
     for inp in inputs:
         rows = parse_textfsm_to_dicts(template, inp.content)
         if not rows:
             raise click.ClickException(
-                f"Template failed to parse input or produced no records: {file.path_name(inp.fullname)}"
+                f"Template failed to parse input or produced no records: "
+                f"{file.path_name(inp.fullname)}"
             )
 
-    # 5. Determine output directory (sandbox or real)
+    # ------------------------------------------------------------------
+    # 5. Load + update manifest
+    # ------------------------------------------------------------------
+    manifest = golden_case.data.load_manifest()
+    manifest["author"] = author
+
+    # ------------------------------------------------------------------
+    # 6. Determine output directory (sandbox or real)
+    # ------------------------------------------------------------------
     out_dir = case_path
     temp_dir = None
 
@@ -98,50 +128,81 @@ def generate(
             shutil.rmtree(temp_dir)
         shutil.copytree(case_path, temp_dir)
 
-    # 6. Dry-run mode
+    manifest_path = out_dir / "manifest.json"
+    expected_dir = out_dir / "expected"
+    results_dir = out_dir / "expected_results"
+
+    # ------------------------------------------------------------------
+    # 7. Dry-run mode
+    # ------------------------------------------------------------------
     if dry_run:
         click.echo("[DRY-RUN] Would write:")
-        click.echo(f"  snippet → {file.path_name(out_dir / 'expected/snippet.txt')}")
-        click.echo(
-            f"  template → {file.path_name(out_dir / 'expected/textfsm.template')}"
-        )
+        click.echo(f"  manifest → {file.path_name(manifest_path)}")
+        click.echo(f"  snippet → {file.path_name(expected_dir / 'snippet.txt')}")
+        click.echo(f"  template → {file.path_name(expected_dir / 'textfsm.template')}")
+
         for inp in inputs:
             base = Path(inp.fullname).stem
             click.echo(
-                f"  result → {file.path_name(out_dir / 'expected_results' / f'{base}_result.json')}"
+                f"  result → {file.path_name(results_dir / f'{base}_result.json')}"
             )
         return
 
-    # 7. Write snippet + template
-    expected_dir = out_dir / "expected"
-    expected_dir.mkdir(parents=True, exist_ok=True)
+    # ------------------------------------------------------------------
+    # 8. Write manifest
+    # ------------------------------------------------------------------
+    manifest_path.write_text(json.dumps(manifest, indent=2))
+    if verbose:
+        click.echo(f"[write] {file.path_name(manifest_path)}")
 
+    # ------------------------------------------------------------------
+    # 9. Write snippet + template
+    # ------------------------------------------------------------------
+    expected_dir.mkdir(parents=True, exist_ok=True)
     (expected_dir / "snippet.txt").write_text(snippet)
     (expected_dir / "textfsm.template").write_text(template)
 
-    # 8. Write expected_results
-    results_dir = out_dir / "expected_results"
+    if verbose:
+        click.echo(f"[write] {file.path_name(expected_dir / 'snippet.txt')}")
+        click.echo(f"[write] {file.path_name(expected_dir / 'textfsm.template')}")
+
+    # ------------------------------------------------------------------
+    # 10. Write expected_results
+    # ------------------------------------------------------------------
     results_dir.mkdir(parents=True, exist_ok=True)
 
-    for inp in inputs:
+    for builder, inp in zip(builders, inputs):
         base = Path(inp.fullname).stem
         result_path = results_dir / f"{base}_result.json"
 
-        builder = golden_case.data.build(inp.content)
-        result = builder.result
-
-        result_path.write_text(json.dumps(result, indent=2))
+        result_path.write_text(json.dumps(builder.result, indent=2))
 
         if verbose:
             click.echo(f"[write] {file.path_name(result_path)}")
 
-    # 9. Cleanup sandbox
+    # ------------------------------------------------------------------
+    # 11. Optional summary
+    # ------------------------------------------------------------------
+    if summary:
+        click.echo("")
+        click.echo("[SUMMARY]")
+        click.echo(f"  Inputs  : {len(inputs)}")
+        click.echo(f"  Snippet : {file.path_name(expected_dir / 'snippet.txt')}")
+        click.echo(f"  Template: {file.path_name(expected_dir / 'textfsm.template')}")
+        click.echo(f"  Manifest: {file.path_name(manifest_path)}")
+        click.echo(f"  Results : {len(inputs)} files")
+
+    # ------------------------------------------------------------------
+    # 12. Cleanup sandbox
+    # ------------------------------------------------------------------
     if sandbox and temp_dir:
         shutil.rmtree(temp_dir)
         if verbose:
             click.echo("[sandbox] Temporary directory removed")
 
-    # 10. Final message
+    # ------------------------------------------------------------------
+    # 13. Final message
+    # ------------------------------------------------------------------
     click.echo(f"[SUCCESS] Generated golden test artifacts for {golden_case.name}")
 
     if open_after:

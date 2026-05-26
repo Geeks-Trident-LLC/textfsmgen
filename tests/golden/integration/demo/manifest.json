@@ -1,13 +1,12 @@
 {
   "builder": "category",
-  "parameters": {
-
-  },
+  "parameters": {},
   "meta": {
     "author": "John",
     "email": "",
     "description": "",
     "notes": "",
     "schema_version": "1.0"
-  }
+  },
+  "author": "dummy-user"
 }
