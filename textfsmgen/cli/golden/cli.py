@@ -10,6 +10,7 @@ from .cli_decorator import validate_sandbox_flags, timed_command
 
 from .commands.batch_generate import cmd_batch_generate
 from .commands.batch_regen import cmd_batch_regen
+from .commands.batch_quicktest import cmd_batch_quicktest
 
 from .commands import (
     run as cmd_run,
@@ -20,7 +21,7 @@ from .commands import (
     duplicate as cmd_duplicate,
     new as cmd_new,
     generate as cmd_generate,
-    batch_quicktest as cmd_batch_quicktest,
+    # batch_quicktest as cmd_batch_quicktest,
     merge as cmd_merge,
     merge_review as cmd_merge_review,
     merge_preview as cmd_merge_preview,
@@ -418,14 +419,7 @@ def generate(
 
 cli.add_command(cast(click.Command, cmd_batch_generate))
 cli.add_command(cast(click.Command, cmd_batch_regen))
-
-
-@cli.command("batch-quicktest")
-@click.option("--dry-run", is_flag=True)
-@click.argument("root", type=click.Path())
-def batch_quicktest(dry_run, root):
-    """Run quicktest on all cases inside a directory."""
-    return cmd_batch_quicktest.batch_quicktest(Path(root).resolve(), dry_run=dry_run)
+cli.add_command(cast(click.Command, cmd_batch_quicktest))
 
 
 @cli.command()
