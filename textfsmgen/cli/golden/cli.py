@@ -342,6 +342,17 @@ def copy(
     src, dst, author, sandbox, sandbox_keep, dry_run, no_quicktest, open_after, verbose
 ):
     """Copy a golden test case into a new case directory."""
+
+    # Validate incompatible flags
+    if sandbox and sandbox_keep:
+        raise click.ClickException("Cannot use --sandbox and --sandbox-keep together.")
+
+    if dry_run and (sandbox or sandbox_keep):
+        raise click.ClickException("--dry-run cannot be combined with sandbox modes.")
+
+    if open_after and (sandbox or sandbox_keep):
+        raise click.ClickException("--open cannot be used with sandbox modes.")
+
     return cmd_copy.copy(
         Path(src),
         Path(dst),
@@ -356,17 +367,56 @@ def copy(
 
 
 @cli.command()
-@click.argument("author")
-@click.argument("src", type=click.Path())
-@click.option("--dry-run", is_flag=True)
-@click.option("--force", is_flag=True)
-def duplicate(author, src, dry_run, force):
-    """Duplicate a golden test case into an auto-named sibling directory."""
-    return cmd_duplicate.duplicate_case(
+@timed_command
+@click.argument("src", type=click.Path(exists=True, file_okay=False))
+@click.option("--author", required=True, help="Set the author for the new case.")
+@click.option(
+    "--sandbox",
+    is_flag=True,
+    help="Duplicate into <dst>.temp and delete temp on success.",
+)
+@click.option(
+    "--sandbox-keep", is_flag=True, help="Duplicate into <dst>.temp and preserve it."
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Simulate the duplicate operation without writing anything.",
+)
+@click.option(
+    "--no-quicktest", is_flag=True, help="Skip running a quick test after duplicating."
+)
+@click.option(
+    "--open",
+    "open_after",
+    is_flag=True,
+    help="Open the new case directory after creation.",
+)
+@click.option("--verbose", is_flag=True, help="Show detailed duplicate operations.")
+def duplicate(
+    src, author, sandbox, sandbox_keep, dry_run, no_quicktest, open_after, verbose
+):
+    """Duplicate a golden test case into a new auto-named case directory."""
+
+    # Validate incompatible flags
+    if sandbox and sandbox_keep:
+        raise click.ClickException("Cannot use --sandbox and --sandbox-keep together.")
+
+    if dry_run and (sandbox or sandbox_keep):
+        raise click.ClickException("--dry-run cannot be combined with sandbox modes.")
+
+    if open_after and (sandbox or sandbox_keep):
+        raise click.ClickException("--open cannot be used with sandbox modes.")
+
+    return cmd_duplicate.duplicate(
+        src=Path(src).resolve(),
         author=author,
-        src=Path(src),
+        sandbox=sandbox,
+        sandbox_keep=sandbox_keep,
         dry_run=dry_run,
-        force=force,
+        no_quicktest=no_quicktest,
+        open_after=open_after,
+        verbose=verbose,
     )
 
 

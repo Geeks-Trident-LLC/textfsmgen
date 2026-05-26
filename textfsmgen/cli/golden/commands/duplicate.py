@@ -1,71 +1,117 @@
-"""
-Implementation of:
-
-    textfsmgen tester duplicate author=<author> <target-case>
-
-This action duplicates a golden test case by creating a new case
-with an auto-generated name:
-
-    <target-case>-duplicated
-    <target-case>-duplicated-2
-    <target-case>-duplicated-3
-    ...
-
-Rules:
-- EXACTLY ONE target-case is allowed (enforced by CLI).
-- Must provide: author=<name>
-- NEVER writes inside the source case's:
-      canonical/
-      expected/
-      expected_results/
-      inputs/
-- Delegates actual copying to the copy_case() logic.
-"""
-
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
+import click
 
-from ..core.utils import require_case_dir
-from .copy import copy_case
+from textfsmgen.libs import file
+
+from ..core.utils import catch_path_errors
+from .copy import _open_directory, copy
 
 
-def duplicate_case(
-    author: str,
+@catch_path_errors
+def duplicate(
     src: Path,
+    author: str = "",
+    sandbox: bool = False,
+    sandbox_keep: bool = False,
     dry_run: bool = False,
-    force: bool = False,
-) -> int:
+    no_quicktest: bool = False,
+    open_after: bool = False,
+    verbose: bool = False,
+):
 
-    if "=" in author:
-        _, author = author.split("=", maxsplit=1)
-
-    try:
-        require_case_dir(src)
-    except Exception as exc:
-        print(
-            "[FAIL]: Duplicate failed because source folder is not a test case folder\n"
-            f"  {type(exc).__name__}: {exc}"
+    # ------------------------------------------------------------
+    # Determine category
+    # ------------------------------------------------------------
+    def detect_category(path: Path) -> str:
+        parts = path.parts
+        if "main" in parts:
+            return "main"
+        if "integration" in parts:
+            return "integration"
+        raise click.ClickException(
+            f"Cannot determine category for: {file.path_name(path)}"
         )
-        return 1
 
+    category = detect_category(src)
+
+    # ------------------------------------------------------------
+    # Auto-generate destination name
+    # ------------------------------------------------------------
     parent = src.parent
     base = src.name
 
-    # Generate unique destination unless --force
-    if force:
-        dst = parent / f"{base}_copy"
-    else:
-        dst = parent / f"{base}_copy"
-        counter = 1
-        while dst.exists():
-            dst = parent / f"{base}_copy{counter}"
-            counter += 1
+    # First try: <name>-copy
+    dst = parent / f"{base}-copy"
+    counter = 2
 
-    return copy_case(
-        author=author,
+    while dst.exists():
+        dst = parent / f"{base}-copy-{counter}"
+        counter += 1
+
+    # ------------------------------------------------------------
+    # Dry-run
+    # ------------------------------------------------------------
+    if dry_run:
+        click.echo(f"[DRY-RUN] Duplicate {file.path_name(src)} → {file.path_name(dst)}")
+        click.echo(f"  category : {category}")
+        click.echo(f"  author   : {author}")
+        click.echo(f"  quicktest: {'no' if no_quicktest else 'yes'}")
+        click.echo(f"  regen    : {'yes' if category == 'main' else 'no'}")
+        click.echo(f"  sandbox  : {sandbox or sandbox_keep}")
+        return
+
+    # ------------------------------------------------------------
+    # Sandbox destination
+    # ------------------------------------------------------------
+    real_dst = dst
+    if sandbox or sandbox_keep:
+        dst = dst.with_name(dst.name + ".temp")
+        if verbose:
+            click.echo(f"[sandbox] Using temp directory: {file.path_name(dst)}")
+
+    # ------------------------------------------------------------
+    # Perform the copy (reuse copy logic)
+    # ------------------------------------------------------------
+
+    copy(
         src=src,
         dst=dst,
-        dry_run=dry_run,
-        force=force,
+        author=author,
+        no_quicktest=no_quicktest,
+        verbose=verbose,
     )
+
+    # ------------------------------------------------------------
+    # Auto-regen for main
+    # ------------------------------------------------------------
+    if category == "main":
+        from .regen import regen
+
+        regen(dst)
+
+    # ------------------------------------------------------------
+    # Sandbox cleanup
+    # ------------------------------------------------------------
+    if sandbox:
+        if verbose:
+            click.echo(f"[sandbox] Cleaning up temp directory: {file.path_name(dst)}")
+        shutil.rmtree(dst)
+        click.echo(
+            f"[SUCCESS] sandbox duplicate completed for {file.path_name(real_dst.name)}"
+        )
+        return
+
+    if sandbox_keep:
+        click.echo(f"[SUCCESS] sandbox-keep: preserved {file.path_name(dst)}")
+        return
+
+    # ------------------------------------------------------------
+    # Normal success
+    # ------------------------------------------------------------
+    click.echo(f"[SUCCESS] Duplicated {category} case to {file.path_name(dst)}")
+
+    if open_after:
+        _open_directory(dst)
