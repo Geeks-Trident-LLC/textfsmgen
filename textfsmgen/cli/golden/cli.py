@@ -471,15 +471,42 @@ def new(case, builder, author, sandbox, sandbox_keep, dry_run, open_after, verbo
 
 
 @cli.command()
-@click.option("--dry-run", is_flag=True)
-@click.argument("case", type=click.Path())
-def generate(dry_run, case):
+@timed_command
+@click.argument("case", type=click.Path(exists=True, file_okay=False))
+@click.option(
+    "--dry-run",
+    "--dryrun",
+    is_flag=True,
+    help="Simulate generation without writing files.",
+)
+@click.option(
+    "--sandbox", is_flag=True, help="Write into <case>.temp and delete on success."
+)
+@click.option(
+    "--sandbox-keep", is_flag=True, help="Write into <case>.temp and preserve it."
+)
+@click.option(
+    "--open",
+    "--open-after",
+    "open_after",
+    is_flag=True,
+    help="Open the case directory after generation.",
+)
+@click.option("--verbose", is_flag=True, help="Show detailed generation steps.")
+def generate(case, dry_run, sandbox, sandbox_keep, open_after, verbose):
     """Generate expected artifacts for an existing case."""
     case_path = Path(case).resolve()
     if not case_path.exists():
         click.echo(f"[FAIL] Case directory does not exist: {case_path}")
         return 1
-    return cmd_generate.generate(case_path, dry_run=dry_run)
+    return cmd_generate.generate(
+        case_path,
+        dry_run=dry_run,
+        sandbox=sandbox,
+        sandbox_keep=sandbox_keep,
+        open_after=open_after,
+        verbose=verbose,
+    )
 
 
 @cli.command("batch-generate")
