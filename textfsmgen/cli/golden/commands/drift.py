@@ -39,8 +39,27 @@ from ..core.utils import validate_case_path
 )
 @click.option("--quiet", is_flag=True, help="Suppress OK lines; only show drift.")
 def cmd_drift(case, names_only, drift_type, json_mode, summary, fail_on_drift, quiet):
+    return cmd_drift_(
+        Path(case).resolve(),
+        names_only=names_only,
+        drift_type=drift_type,
+        json_mode=json_mode,
+        summary=summary,
+        fail_on_drift=fail_on_drift,
+        quiet=quiet,
+    )
 
-    case_path = Path(case).resolve()
+
+def cmd_drift_(
+    case_path,
+    names_only=False,
+    drift_type="all",
+    json_mode=False,
+    summary=False,
+    fail_on_drift=False,
+    quiet=False,
+):
+
     ok = validate_case_path(case_path)
     if not ok:
         click.echo(f"[FAIL] {ok}")
