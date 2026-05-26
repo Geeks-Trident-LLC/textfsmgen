@@ -15,7 +15,6 @@ from .regen import cmd_regen_ as regen_single
 )
 @timed_command
 @validate_sandbox_flags
-@click.argument("base")
 @click.option("--dry-run", is_flag=True, help="Simulate regen without writing files.")
 @click.option(
     "--sandbox",
@@ -31,6 +30,7 @@ from .regen import cmd_regen_ as regen_single
     "--summary", is_flag=True, help="Show summary after processing all cases."
 )
 @click.option("--verbose", is_flag=True, help="Show detailed regen steps.")
+@click.argument("base", type=click.Path(exists=True, file_okay=False))
 def cmd_batch_regen(base, dry_run, sandbox, sandbox_keep, summary, verbose):
     """
     Batch version of `regen` — processes all integration cases under <base>.
