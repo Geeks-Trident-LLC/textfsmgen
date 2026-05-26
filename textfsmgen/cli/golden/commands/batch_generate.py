@@ -13,7 +13,6 @@ from .shared import discover_cases
 @timed_command
 @validate_sandbox_flags
 @integration_only
-@click.argument("base", type=click.Path(exists=True, file_okay=False))
 @click.option("--author", required=True, help="Set the author for all generated cases.")
 @click.option(
     "--dry-run", is_flag=True, help="Simulate generation without writing files."
@@ -32,14 +31,34 @@ from .shared import discover_cases
     "--summary", is_flag=True, help="Show summary after processing all cases."
 )
 @click.option("--verbose", is_flag=True, help="Show detailed generation steps.")
+@click.argument("base", type=click.Path(exists=True, file_okay=False))
 def cmd_batch_generate(base, author, dry_run, sandbox, sandbox_keep, summary, verbose):
+    return cmd_batch_generate_(
+        Path(base).resolve(),
+        author=author,
+        dry_run=dry_run,
+        sandbox=sandbox,
+        sandbox_keep=sandbox_keep,
+        summary=summary,
+        verbose=verbose,
+    )
+
+
+def cmd_batch_generate_(
+    base_dir,
+    author="",
+    dry_run=False,
+    sandbox=False,
+    sandbox_keep=False,
+    summary=False,
+    verbose=False,
+):
     """
     Batch version of `generate` — processes all integration cases under <base>.
     """
 
     from .generate import cmd_generate_ as generate_single
 
-    base_dir = Path(base).resolve()
     cases = list(discover_cases(base_dir))
 
     if not cases:
