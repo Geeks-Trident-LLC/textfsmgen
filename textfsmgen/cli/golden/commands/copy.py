@@ -15,8 +15,8 @@ from ..core.utils import catch_path_errors
 
 @catch_path_errors
 def copy(
-    src: Path,
-    dst: Path,
+    src: Path = None,
+    dst: Path = None,
     author="",
     sandbox=False,
     sandbox_keep=False,

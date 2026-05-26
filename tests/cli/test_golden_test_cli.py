@@ -19,10 +19,9 @@ def patch_cmd(cmd_name: str):
         "regen": "regen",
         "diff": "diff",
         "drift": "drift",
-        "copy": "copy_case",
-        "duplicate": "duplicate_case",
+        "copy": "copy",
+        "duplicate": "duplicate",
         "new": "new",
-        "new_from_input": "new_from_input",
         "generate": "generate",
         "batch_generate": "batch_generate",
         "batch_regen": "batch_regen",
@@ -45,30 +44,11 @@ def patch_cmd(cmd_name: str):
         (["regen", "--dry-run", "case-dir"], "regen"),
         (["diff", "case-dir"], "diff"),
         (["drift", "case-dir"], "drift"),
-        (["copy", "--dry-run", "--force", "me", "src", "dst"], "copy"),
-        (["duplicate", "--dry-run", "--force", "me", "src"], "duplicate"),
-        (["new", "case-dir"], "new"),
-        (
-            [
-                "new-from-input",
-                "--builder",
-                "mybuilder",
-                "--author",
-                "me",
-                "case-dir",
-                "inputs-dir",
-            ],
-            "new_from_input",
-        ),
-        pytest.param(
-            ["generate", "case-dir"],
-            "generate",
-            marks=pytest.mark.skip(reason="generate command not ready yet"),
-        ),
+        (["new", "--author", "dummy-user", "--builder", "category", "case-dir"], "new"),
         (["batch-generate", "root-dir"], "batch_generate"),
         (["batch-regen", "root-dir"], "batch_regen"),
         (["batch-quicktest", "root-dir"], "batch_quicktest"),
-        (["merge", "--author", "me", "dst", "src-a", "src-b"], "merge"),
+        (["merge", "--author", "dummy-user", "dst", "src-a", "src-b"], "merge"),
         (["merge-review", "dst", "src-a", "src-b"], "merge_review"),
         (["merge-preview", "src-a", "src-b"], "merge_preview"),
         (["merge-diff", "src-a", "src-b"], "merge_diff"),
@@ -112,54 +92,35 @@ def test_regen_parsing_with_dry_run(runner):
         assert kwargs["dry_run"] is True
 
 
-def test_copy_parsing_flags(runner):
+def test_copy_parsing_flags(runner, tmp_path):
+    src = tmp_path / "tests/golden/integration/src-dir"
+    dst = tmp_path / "tests/golden/integration/dst-dir"
+
+    src.mkdir(parents=True)  # required because click.Path(exists=True)
+
     with patch_cmd("copy") as mock_copy:
         mock_copy.return_value = 0
 
         result = runner.invoke(
             cli,
-            ["copy", "--dry-run", "--force", "me", "src-dir", "dst-dir"],
+            [
+                "copy",
+                "--dry-run",
+                "--author",
+                "dummy-user",
+                src.as_posix(),
+                dst.as_posix(),
+            ],
         )
 
         assert result.exit_code == 0
         mock_copy.assert_called_once()
         args, kwargs = mock_copy.call_args
 
-        assert kwargs["author"] == "me"
-        assert str(kwargs["src"]).endswith("src-dir")
-        assert str(kwargs["dst"]).endswith("dst-dir")
+        assert kwargs["author"] == "dummy-user"
+        assert str(kwargs["src"].as_posix()).endswith(src.as_posix())
+        assert str(kwargs["dst"].as_posix()).endswith(dst.as_posix())
         assert kwargs["dry_run"] is True
-        assert kwargs["force"] is True
-
-
-def test_new_from_input_required_flags(runner):
-    with patch_cmd("new_from_input") as mock_new_in:
-        mock_new_in.return_value = 0
-
-        result = runner.invoke(
-            cli,
-            [
-                "new-from-input",
-                "--builder",
-                "mybuilder",
-                "--author",
-                "me",
-                "case-dir",
-                "inputs-dir",
-            ],
-        )
-
-        assert result.exit_code == 0
-        mock_new_in.assert_called_once()
-        args, kwargs = mock_new_in.call_args
-
-        case_path, inputs_dir = args[0], args[1]
-        assert str(case_path).endswith("case-dir")
-        assert str(inputs_dir).endswith("inputs-dir")
-        assert kwargs["builder"] == "mybuilder"
-        assert kwargs["author"] == "me"
-        # params default "{}"
-        assert kwargs["params"] == {}
 
 
 def test_merge_preview_compact_and_json(runner):

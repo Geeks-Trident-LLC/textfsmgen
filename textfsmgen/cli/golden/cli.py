@@ -17,7 +17,6 @@ from .commands import (
     copy as cmd_copy,
     duplicate as cmd_duplicate,
     new as cmd_new,
-    new_from_input as cmd_new_from_input,
     generate as cmd_generate,
     batch_generate as cmd_batch_generate,
     batch_regen as cmd_batch_regen,
@@ -354,8 +353,8 @@ def copy(
         raise click.ClickException("--open cannot be used with sandbox modes.")
 
     return cmd_copy.copy(
-        Path(src),
-        Path(dst),
+        src=Path(src),
+        dst=Path(dst),
         author=author,
         sandbox=sandbox,
         sandbox_keep=sandbox_keep,
@@ -468,38 +467,6 @@ def new(case, builder, author, sandbox, sandbox_keep, dry_run, open_after, verbo
         dry_run=dry_run,
         open_after=open_after,
         verbose=verbose,
-    )
-
-
-@cli.command("new-from-input")
-@click.option("--builder", required=True)
-@click.option("--params", default="{}")
-@click.option("--author", required=True)
-@click.option("--force", is_flag=True)
-@click.option("--accept", is_flag=True)
-@click.option("--dry-run", is_flag=True)
-@click.argument("case")
-@click.argument("inputs")
-def new_from_input(builder, params, author, force, accept, dry_run, case, inputs):
-    """Create a new integration case from an input folder."""
-    case_path = Path(case).resolve()
-    inputs_dir = Path(inputs).resolve()
-
-    try:
-        params_obj = json.loads(params)
-    except Exception:
-        click.echo("[FAIL] --params must be valid JSON")
-        return 1
-
-    return cmd_new_from_input.new_from_input(
-        case_path,
-        inputs_dir,
-        builder=builder,
-        params=params_obj,
-        author=author,
-        accept=accept,
-        dry_run=dry_run,
-        force=force,
     )
 
 
