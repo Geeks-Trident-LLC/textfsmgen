@@ -6,7 +6,7 @@ import click
 
 from textfsmgen.libs import file
 
-from .copy import copy
+from .copy import cmd_copy_
 from .shared import _open_directory
 
 from ..core.utils import validate_case_path
@@ -112,7 +112,7 @@ def cmd_duplicate(
     # Perform the copy (reuse copy logic)
     # ------------------------------------------------------------
 
-    copy(
+    cmd_copy_(
         src=src,
         dst=dst,
         author=author,
