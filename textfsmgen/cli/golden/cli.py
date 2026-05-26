@@ -8,6 +8,8 @@ from typing import cast
 
 from .cli_decorator import validate_sandbox_flags, timed_command
 
+from .commands.drift import cmd_drift
+
 from .commands.duplicate import cmd_duplicate
 from .commands.new import cmd_new
 from .commands.generate import cmd_generate
@@ -19,7 +21,7 @@ from .commands import (
     run as cmd_run,
     regen as cmd_regen,
     diff as cmd_diff,
-    drift as cmd_drift,
+    # drift as cmd_drift,
     copy as cmd_copy,
     merge as cmd_merge,
     merge_review as cmd_merge_review,
@@ -199,40 +201,6 @@ def diff(
 
 @cli.command()
 @timed_command
-@click.argument("case", type=click.Path())
-@click.option(
-    "--names-only", "--names", is_flag=True, help="List only files that have drift."
-)
-@click.option(
-    "--type",
-    "drift_type",
-    type=click.Choice(["all", "results", "snippet", "template"]),
-    default="all",
-    help="Limit drift check to specific artifact types.",
-)
-@click.option(
-    "--json", "json_mode", is_flag=True, help="Emit machine-readable JSON drift report."
-)
-@click.option("--summary", is_flag=True, help="Show summary of drift results.")
-@click.option(
-    "--fail-on-drift", is_flag=True, help="Exit with code 1 if any drift is detected."
-)
-@click.option("--quiet", is_flag=True, help="Suppress OK lines; only show drift.")
-def drift(case, names_only, drift_type, json_mode, summary, fail_on_drift, quiet):
-    """Detect drift between current outputs and golden expected results."""
-    return cmd_drift.drift(
-        Path(case).resolve(),
-        names_only=names_only,
-        drift_type=drift_type,
-        json_mode=json_mode,
-        summary=summary,
-        fail_on_drift=fail_on_drift,
-        quiet=quiet,
-    )
-
-
-@cli.command()
-@timed_command
 @validate_sandbox_flags
 @click.argument("src", type=click.Path(exists=True, file_okay=False))
 @click.argument("dst", type=click.Path())
@@ -277,6 +245,7 @@ def copy(
     )
 
 
+cli.add_command(cast(click.Command, cmd_drift))
 cli.add_command(cast(click.Command, cmd_duplicate))
 cli.add_command(cast(click.Command, cmd_new))
 cli.add_command(cast(click.Command, cmd_generate))

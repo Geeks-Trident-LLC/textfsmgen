@@ -16,7 +16,10 @@ from ..cli_decorator import (
 )
 
 
-@click.command("duplicate", help="Duplicate a golden test case with an auto-generated name (<case>-copy).")
+@click.command(
+    "duplicate",
+    help="Duplicate a golden test case with an auto-generated name (<case>-copy).",
+)
 @timed_command
 @validate_sandbox_flags
 @click.argument("src", type=click.Path(exists=True, file_okay=False))

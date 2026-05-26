@@ -5,28 +5,54 @@ import json
 import click
 from dataclasses import dataclass
 
-from ..core.utils import catch_path_errors
 from ..core.golden_case import GoldenCase
 
+from ..cli_decorator import (
+    timed_command,
+    # validate_sandbox_flags,
+)
+from ..core.utils import validate_case_path
 
-@catch_path_errors
-def drift(
-    case_path: Path,
-    names_only=False,
-    drift_type="all",
-    json_mode=False,
-    summary=False,
-    fail_on_drift=False,
-    quiet=False,
-):
 
-    case = GoldenCase.from_path(case_path)
+@click.command(
+    name="drift",
+    help="Detect drift between current outputs and golden expected results.",
+)
+@timed_command
+@click.argument("case", type=click.Path())
+@click.option(
+    "--names-only", "--names", is_flag=True, help="List only files that have drift."
+)
+@click.option(
+    "--type",
+    "drift_type",
+    type=click.Choice(["all", "results", "snippet", "template"]),
+    default="all",
+    help="Limit drift check to specific artifact types.",
+)
+@click.option(
+    "--json", "json_mode", is_flag=True, help="Emit machine-readable JSON drift report."
+)
+@click.option("--summary", is_flag=True, help="Show summary of drift results.")
+@click.option(
+    "--fail-on-drift", is_flag=True, help="Exit with code 1 if any drift is detected."
+)
+@click.option("--quiet", is_flag=True, help="Suppress OK lines; only show drift.")
+def cmd_drift(case, names_only, drift_type, json_mode, summary, fail_on_drift, quiet):
+
+    case_path = Path(case).resolve()
+    ok = validate_case_path(case_path)
+    if not ok:
+        click.echo(f"[FAIL] {ok}")
+        return 1
+
+    gc = GoldenCase.from_path(case_path)
 
     # Integration cases do not define authoritative truth
-    if case.is_integration():
-        msg = f"[INFO] Drift check skipped for integration case '{case.name}'."
+    if gc.is_integration():
+        msg = f"[INFO] Drift check skipped for integration case '{gc.name}'."
         if json_mode:
-            payload = {"skipped": True, "case": case.name, "reason": "integration-case"}
+            payload = {"skipped": True, "case": gc.name, "reason": "integration-case"}
             click.echo(json.dumps(payload, indent=2))
 
             return 0
@@ -35,7 +61,7 @@ def drift(
         return 0
 
     # MAIN CASE DRIFT CHECK
-    checker = DriftChecker(case)
+    checker = DriftChecker(gc)
     drift_items = checker.check_drift(drift_type=drift_type)
 
     any_drift = any(item.has_drift for item in drift_items)
@@ -43,7 +69,7 @@ def drift(
     # JSON MODE
     if json_mode:
         payload = {
-            "case": case.name,
+            "case": gc.name,
             "drift": [
                 {
                     "name": item.name,
@@ -88,10 +114,10 @@ def drift(
 
     # Final message
     if not any_drift and not quiet:
-        click.echo(f"[OK] No drift detected in '{case.name}'.")
+        click.echo(f"[OK] No drift detected in '{gc.name}'.")
 
     if any_drift and not quiet:
-        click.echo(f"[FAIL] Golden files drift detected in '{case.name}'.")
+        click.echo(f"[FAIL] Golden files drift detected in '{gc.name}'.")
         click.echo("       The authoritative files have changed since last regen.")
 
     return 1 if any_drift and fail_on_drift else 0
