@@ -13,6 +13,9 @@ from pathlib import Path
 import functools
 
 from textfsmgen.exceptions import raise_runtime_error
+from textfsmgen.libs.generic import StatusString
+
+from textfsmgen.libs import file
 
 
 def catch_path_errors(func):
@@ -59,14 +62,18 @@ def require_case_dir(case_path: Path) -> Path:
             canonical/  OR  expected/
     """
 
+    case_path = Path(case_path).resolve()
+
     if not case_path.exists():
         raise_runtime_error(
-            obj="TestCasePathError", msg=f"Case path does not exist: {case_path}"
+            obj="TestCasePathError",
+            msg=f"Case path does not exist: {file.path_name(case_path)}",
         )
 
     if not case_path.is_dir():
         raise_runtime_error(
-            obj="TestCasePathError", msg=f"Case path is not a directory: {case_path}"
+            obj="TestCasePathError",
+            msg=f"Case path is not a directory: {file.path_name(case_path)}",
         )
 
     # Required folders
@@ -94,7 +101,7 @@ def require_case_dir(case_path: Path) -> Path:
                 "And one of:\n"
                 "  - canonical/\n"
                 "  - expected/\n"
-                f"Found in {case_path}:\n"
+                f"Found in {file.path_name(case_path)}:\n"
                 f"  inputs: {has_inputs}\n"
                 f"  expected_results: {has_results}\n"
                 f"  canonical: {has_canonical}\n"
@@ -103,6 +110,65 @@ def require_case_dir(case_path: Path) -> Path:
         )
 
     return case_path
+
+
+def validate_case_path(case_path: Path) -> Path:
+    """
+    Validate that `case_path` is a proper test case directory.
+
+    Requirements:
+      - Must exist and be a directory.
+      - Must contain:
+            inputs/
+            expected_results/
+        AND one of:
+            canonical/  OR  expected/
+    """
+
+    case_path = Path(case_path).resolve()
+
+    if not case_path.exists():
+        return StatusString(
+            f"Case path does not exist: {file.path_name(case_path)}", status=False
+        )
+
+    if not case_path.is_dir():
+        return StatusString(
+            f"Case path is not a directory: {file.path_name(case_path)}", status=False
+        )
+
+    # Required folders
+    inputs_path = case_path / "inputs"
+    results_path = case_path / "expected_results"
+
+    # Optional mutually exclusive folders
+    canonical_path = case_path / "canonical"
+    expected_path = case_path / "expected"
+
+    has_inputs = inputs_path.is_dir()
+    has_results = results_path.is_dir()
+    has_canonical = canonical_path.is_dir()
+    has_expected = expected_path.is_dir()
+
+    # Correct structure check
+    if not (has_inputs and has_results and (has_canonical or has_expected)):
+        msg = (
+            "Invalid test case structure.\n"
+            "Required folders:\n"
+            "  - inputs/\n"
+            "  - expected_results/\n"
+            "And one of:\n"
+            "  - canonical/\n"
+            "  - expected/\n"
+            f"Found in {file.path_name(case_path)}:\n"
+            f"  inputs: {has_inputs}\n"
+            f"  expected_results: {has_results}\n"
+            f"  canonical: {has_canonical}\n"
+            f"  expected: {has_expected}"
+        )
+        return StatusString(msg, status=False)
+
+    return StatusString(status=True)
 
 
 # ----------------------------------------------------------------------

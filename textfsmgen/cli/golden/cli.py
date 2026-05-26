@@ -8,6 +8,7 @@ from typing import cast
 
 from .cli_decorator import validate_sandbox_flags, timed_command
 
+from .commands.generate import cmd_generate
 from .commands.batch_generate import cmd_batch_generate
 from .commands.batch_regen import cmd_batch_regen
 from .commands.batch_quicktest import cmd_batch_quicktest
@@ -20,8 +21,6 @@ from .commands import (
     copy as cmd_copy,
     duplicate as cmd_duplicate,
     new as cmd_new,
-    generate as cmd_generate,
-    # batch_quicktest as cmd_batch_quicktest,
     merge as cmd_merge,
     merge_review as cmd_merge_review,
     merge_preview as cmd_merge_preview,
@@ -372,51 +371,7 @@ def new(case, builder, author, sandbox, sandbox_keep, dry_run, open_after, verbo
     )
 
 
-@cli.command()
-@timed_command
-@validate_sandbox_flags
-@click.argument("case", type=click.Path(exists=True, file_okay=False))
-@click.option("--author", required=True, help="Set the author for the generating case.")
-@click.option(
-    "--dry-run",
-    "--dryrun",
-    is_flag=True,
-    help="Simulate generation without writing files.",
-)
-@click.option(
-    "--sandbox", is_flag=True, help="Write into <case>.temp and delete on success."
-)
-@click.option(
-    "--sandbox-keep", is_flag=True, help="Write into <case>.temp and preserve it."
-)
-@click.option(
-    "--open",
-    "open_after",
-    is_flag=True,
-    help="Open the case directory after generation.",
-)
-@click.option("--summary", is_flag=True, help="Show summary of generated case.")
-@click.option("--verbose", is_flag=True, help="Show detailed generation steps.")
-def generate(
-    case, author, dry_run, sandbox, sandbox_keep, open_after, summary, verbose
-):
-    """Generate expected artifacts for an existing case."""
-    case_path = Path(case).resolve()
-    if not case_path.exists():
-        click.echo(f"[FAIL] Case directory does not exist: {case_path}")
-        return 1
-    return cmd_generate.generate(
-        case_path,
-        author=author,
-        dry_run=dry_run,
-        sandbox=sandbox,
-        sandbox_keep=sandbox_keep,
-        open_after=open_after,
-        summary=summary,
-        verbose=verbose,
-    )
-
-
+cli.add_command(cast(click.Command, cmd_generate))
 cli.add_command(cast(click.Command, cmd_batch_generate))
 cli.add_command(cast(click.Command, cmd_batch_regen))
 cli.add_command(cast(click.Command, cmd_batch_quicktest))

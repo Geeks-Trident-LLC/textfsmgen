@@ -37,7 +37,7 @@ def cmd_batch_generate(base, author, dry_run, sandbox, sandbox_keep, summary, ve
     Batch version of `generate` — processes all integration cases under <base>.
     """
 
-    from .generate import generate as generate_single
+    from .generate import cmd_generate as generate_single
 
     base_dir = Path(base).resolve()
     cases = list(discover_cases(base_dir))

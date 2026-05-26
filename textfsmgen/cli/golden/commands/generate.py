@@ -8,26 +8,49 @@ import click
 from textfsmgen import parse_textfsm_to_dicts
 from textfsmgen.libs import file
 
+from ..cli_decorator import (
+    timed_command,
+    validate_sandbox_flags,
+)
+from ..core.utils import validate_case_path
 from ..core.golden_case import GoldenCase
-from ..core.utils import catch_path_errors
 from .shared import _open_directory
 
 
-@catch_path_errors
-def generate(
-    case_path,
-    author="",
-    summary=False,
-    dry_run=False,
-    sandbox=False,
-    sandbox_keep=False,
-    open_after=False,
-    verbose=False,
+@click.command(name="generate")
+@timed_command
+@validate_sandbox_flags
+@click.argument("case", type=click.Path(exists=True, file_okay=False))
+@click.option("--author", required=True, help="Set the author for the generating case.")
+@click.option(
+    "--dry-run",
+    "--dryrun",
+    is_flag=True,
+    help="Simulate generation without writing files.",
+)
+@click.option(
+    "--sandbox", is_flag=True, help="Write into <case>.temp and delete on success."
+)
+@click.option(
+    "--sandbox-keep", is_flag=True, help="Write into <case>.temp and preserve it."
+)
+@click.option(
+    "--open",
+    "open_after",
+    is_flag=True,
+    help="Open the case directory after generation.",
+)
+@click.option("--summary", is_flag=True, help="Show summary of generated case.")
+@click.option("--verbose", is_flag=True, help="Show detailed generation steps.")
+def cmd_generate(
+    case, author, dry_run, sandbox, sandbox_keep, open_after, summary, verbose
 ):
-    """
-    Generate snippet, template, expected_results, and update manifest
-    for an integration golden test case.
-    """
+    """Generate expected artifacts for an existing case."""
+    case_path = Path(case).resolve()
+    ok = validate_case_path(case_path)
+    if not ok:
+        click.echo(f"[FAIL] {ok}")
+        return 1
 
     golden_case = GoldenCase.from_path(case_path)
 
