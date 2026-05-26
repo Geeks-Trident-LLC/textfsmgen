@@ -1,112 +1,133 @@
 from __future__ import annotations
 
-from pathlib import Path
 import json
 import shutil
+from pathlib import Path
+import click
 
-from ..core.data_loader import extract_subpath_after
+from textfsmgen.libs import file
+
+from ..core.utils import catch_path_errors
+from .copy import _open_directory
 
 
-def new(case_path: Path) -> int:
-    """
-    Create a new golden test case scaffold.
+@catch_path_errors
+def new(
+    case: Path,
+    builder: str,
+    author: str,
+    sandbox: bool,
+    sandbox_keep: bool,
+    dry_run: bool,
+    open_after: bool,
+    verbose: bool,
+):
 
-    Case type is auto-detected from the path:
-        .../main/<case>        → MAIN case
-        .../integration/<case> → INTEGRATION case
+    # ------------------------------------------------------------
+    # Resolve and validate case path
+    # ------------------------------------------------------------
+    dst = Path(case).resolve()
 
-    MAIN scaffold:
-        canonical/{sample.txt, snippet.txt, textfsm.template, result.json}
-        inputs/
-        expected_results/
-        manifest.json
+    # Must contain both golden and integration
+    if "golden" not in dst.parts or "integration" not in dst.parts:
+        raise click.ClickException(
+            f"Invalid case path: {file.path_name(dst)}. Must be inside tests/golden/integration."
+        )
 
-    INTEGRATION scaffold:
-        expected/{snippet.txt, textfsm.template}
-        inputs/
-        expected_results/
-        manifest.json
-    """
+    # Ensure correct directory structure: .../golden/integration/<case>
+    parts = dst.parts
+    idx = parts.index("integration")  # safe because we checked above
 
-    case_dir = Path(case_path)
-    case_dir.mkdir(parents=True, exist_ok=True)
+    integration_root = Path(*parts[: idx + 1])
 
-    # --------------------------------------------------------------
-    # Detect case type
-    # --------------------------------------------------------------
-    parts = case_dir.parts
-    if "main" in parts:
-        case_type = "main"
-    elif "integration" in parts:
-        case_type = "integration"
-    else:
-        print("[FAIL] Path must contain either 'main' or 'integration'")
-        return 1
+    if (
+        integration_root.name != "integration"
+        or integration_root.parent.name != "golden"
+    ):
+        raise click.ClickException(
+            f"Case must be under tests/golden/integration, got: {file.path_name(dst)}"
+        )
 
-    updated = []
+    if dry_run:
+        click.echo(f"[DRY-RUN] Create integration case → {file.path_name(dst)}")
+        click.echo(f"  builder  : {builder}")
+        click.echo(f"  author   : {author}")
+        click.echo(f"  sandbox  : {sandbox or sandbox_keep}")
 
-    # --------------------------------------------------------------
-    # MAIN CASE
-    # --------------------------------------------------------------
-    if case_type == "main":
-        canonical_dir = case_dir / "canonical"
-        canonical_dir.mkdir(exist_ok=True)
+        # Still validate existence AFTER printing DRY-RUN
+        if dst.exists():
+            raise click.ClickException(f"Case already exists: {file.path_name(dst)}")
 
-        for fname in ["sample.txt", "snippet.txt", "textfsm.template", "result.json"]:
-            fpath = canonical_dir / fname
-            fpath.write_text("")
-            updated.append(str(fpath))
+        return
 
-        for d in ["inputs", "expected_results"]:
-            dpath = case_dir / d
-            if dpath.exists():
-                shutil.rmtree(dpath)
-            dpath.mkdir(parents=True, exist_ok=True)
-            updated.append(str(dpath))
+    # Ensure case does not already exist
+    if dst.exists():
+        raise click.ClickException(f"Case already exists: {file.path_name(dst)}")
 
-    # --------------------------------------------------------------
-    # INTEGRATION CASE
-    # --------------------------------------------------------------
-    if case_type == "integration":
-        expected_dir = case_dir / "expected"
-        expected_dir.mkdir(exist_ok=True)
+    # ------------------------------------------------------------
+    # Sandbox rewrite
+    # ------------------------------------------------------------
+    real_dst = dst
+    if sandbox or sandbox_keep:
+        dst = dst.with_name(dst.name + ".temp")
+        if verbose:
+            click.echo(f"[sandbox] Using temp directory: {file.path_name(dst)}")
 
-        for fname in ["snippet.txt", "textfsm.template"]:
-            fpath = expected_dir / fname
-            fpath.write_text("")
-            updated.append(str(fpath))
+    # ------------------------------------------------------------
+    # Create directory structure
+    # ------------------------------------------------------------
+    if verbose:
+        click.echo(f"[mkdir] {file.path_name(dst)}")
 
-        for d in ["inputs", "expected_results"]:
-            dpath = case_dir / d
-            if dpath.exists():
-                shutil.rmtree(dpath)
-            dpath.mkdir(parents=True, exist_ok=True)
-            updated.append(str(dpath))
+    (dst / "expected").mkdir(parents=True)
+    (dst / "inputs").mkdir()
+    (dst / "expected_results").mkdir()
 
-    # --------------------------------------------------------------
-    # Write manifest.json
-    # --------------------------------------------------------------
-    manifest_path = case_dir / "manifest.json"
+    # Empty template + snippet
+    (dst / "expected" / "template.textfsm").write_text("")
+    (dst / "expected" / "snippet.txt").write_text("")
+
+    # ------------------------------------------------------------
+    # Build manifest.json
+    # ------------------------------------------------------------
+    from textfsmgen.cli.config_cmd import CONFIG_TYPES
+
+    params = CONFIG_TYPES[builder]["params"]
+
     manifest = {
-        "builder": "",
-        "parameters": {},
+        "builder": builder,
+        "parameters": params,
         "meta": {
-            "author": "",
+            "author": author,
             "email": "",
             "description": "",
             "notes": "",
             "schema_version": "1.0",
         },
     }
-    manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False))
-    updated.append(str(manifest_path))
 
-    # --------------------------------------------------------------
-    # Success output
-    # --------------------------------------------------------------
-    tc_name = extract_subpath_after("golden", case_dir)
-    print(f"[SUCCESS] created new {case_type} case {tc_name}")
-    for f in updated:
-        print(f"          + {f}")
+    (dst / "manifest.json").write_text(json.dumps(manifest, indent=2))
 
-    return 0
+    # ------------------------------------------------------------
+    # Sandbox cleanup
+    # ------------------------------------------------------------
+    if sandbox:
+        if verbose:
+            click.echo(f"[sandbox] Cleaning up temp directory: {file.path_name(dst)}")
+        shutil.rmtree(dst)
+        click.echo(
+            f"[SUCCESS] sandbox new-case completed for {file.path_name(real_dst.name)}"
+        )
+        return
+
+    if sandbox_keep:
+        click.echo(f"[SUCCESS] sandbox-keep: preserved {file.path_name(dst)}")
+        return
+
+    # ------------------------------------------------------------
+    # Normal success
+    # ------------------------------------------------------------
+    click.echo(f"[SUCCESS] Created integration case at {file.path_name(dst)}")
+
+    if open_after:
+        _open_directory(dst)

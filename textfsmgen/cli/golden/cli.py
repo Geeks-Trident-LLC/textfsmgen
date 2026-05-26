@@ -421,18 +421,54 @@ def duplicate(
 
 
 @cli.command()
-@click.argument("case")
+@timed_command
+@click.argument("case", type=str)
 @click.option(
-    "--force", is_flag=True, help="Overwrite the case directory if it already exists."
+    "--builder",
+    "builder",
+    required=True,
+    type=click.Choice(["tabular", "category"]),
+    help="Builder type for the new integration case.",
 )
-def new(case, force):
-    """Create a new golden test case scaffold."""
-    case_path = Path(case).resolve()
-    if case_path.exists() and not force:
-        click.echo(f"[FAIL] Case directory already exists: {case_path}")
-        click.echo("       Use --force to overwrite.")
-        return 1
-    return cmd_new.new(case_path)
+@click.option("--author", required=True, help="Author name for manifest.json.")
+@click.option(
+    "--sandbox",
+    is_flag=True,
+    help="Create into <case>.temp and delete temp on success.",
+)
+@click.option(
+    "--sandbox-keep", is_flag=True, help="Create into <case>.temp and preserve it."
+)
+@click.option(
+    "--dry-run", is_flag=True, help="Simulate creation without writing anything."
+)
+@click.option(
+    "--open-after", is_flag=True, help="Open the new case directory after creation."
+)
+@click.option("--verbose", is_flag=True, help="Show detailed creation steps.")
+def new(case, builder, author, sandbox, sandbox_keep, dry_run, open_after, verbose):
+    """Create a new INTEGRATION golden test case."""
+
+    # Validation
+    if sandbox and sandbox_keep:
+        raise click.ClickException("Cannot use --sandbox and --sandbox-keep together.")
+
+    if dry_run and (sandbox or sandbox_keep):
+        raise click.ClickException("--dry-run cannot be combined with sandbox modes.")
+
+    if open_after and (sandbox or sandbox_keep):
+        raise click.ClickException("--open-after cannot be used with sandbox modes.")
+
+    return cmd_new.new(
+        case=Path(case).resolve(),
+        builder=builder,
+        author=author,
+        sandbox=sandbox,
+        sandbox_keep=sandbox_keep,
+        dry_run=dry_run,
+        open_after=open_after,
+        verbose=verbose,
+    )
 
 
 @cli.command("new-from-input")
