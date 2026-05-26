@@ -51,6 +51,22 @@ from ..cli_decorator import (
 def cmd_duplicate(
     src, author, sandbox, sandbox_keep, dry_run, no_quicktest, open_after, verbose
 ):
+    return cmd_duplicate_(
+        Path(src).resolve(),
+        author=author,
+        sandbox=sandbox,
+        sandbox_keep=sandbox_keep,
+        dry_run=dry_run,
+        no_quicktest=no_quicktest,
+        open_after=open_after,
+        verbose=verbose,
+    )
+
+
+def cmd_duplicate_(
+    src, author="", sandbox=False, sandbox_keep=False,
+    dry_run=False, no_quicktest=False, open_after=False, verbose=False
+):
 
     # ------------------------------------------------------------
     # Determine category
