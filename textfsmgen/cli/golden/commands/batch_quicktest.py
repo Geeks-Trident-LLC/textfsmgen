@@ -36,7 +36,7 @@ def cmd_batch_quicktest(base, sandbox, sandbox_keep, summary, verbose):
     Batch version of `quicktest` — processes all integration cases under <base>.
     """
 
-    from .run import run as quicktest_single
+    from .run import cmd_run_ as quicktest_single
 
     base_dir = Path(base).resolve()
     if not base_dir.exists():

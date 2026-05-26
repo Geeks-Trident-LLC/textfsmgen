@@ -6,12 +6,11 @@ from pathlib import Path
 import click
 from typing import cast
 
-from .cli_decorator import validate_sandbox_flags, timed_command
-
+from .commands.run import cmd_run
 from .commands.regen import cmd_regen
 from .commands.diff import cmd_diff
 from .commands.drift import cmd_drift
-
+from .commands.copy import cmd_copy
 from .commands.duplicate import cmd_duplicate
 from .commands.new import cmd_new
 from .commands.generate import cmd_generate
@@ -20,9 +19,7 @@ from .commands.batch_regen import cmd_batch_regen
 from .commands.batch_quicktest import cmd_batch_quicktest
 
 from .commands import (
-    run as cmd_run,
-    # regen as cmd_regen,
-    copy as cmd_copy,
+    # run as cmd_run,
     merge as cmd_merge,
     merge_review as cmd_merge_review,
     merge_preview as cmd_merge_preview,
@@ -60,84 +57,11 @@ def version():
     click.echo(f"textfsmgen-golden-tests {__version__}")
 
 
-@cli.command(help="Run a golden test case in normal, sandbox, or quicktest modes.")
-@timed_command
-@validate_sandbox_flags
-@click.option(
-    "--sandbox",
-    is_flag=True,
-    help="Run inside <case>.temp and delete the sandbox on success.",
-)
-@click.option(
-    "--sandbox-keep",
-    is_flag=True,
-    help="Run inside <case>.temp and preserve the sandbox directory.",
-)
-@click.option(
-    "--quicktest",
-    is_flag=True,
-    help="Run a fast, no-write, logic-only validation (no temp dirs).",
-)
-@click.argument("case", type=click.Path())
-def run(sandbox, sandbox_keep, quicktest, case):
-    """Execute a golden test case."""
-    return cmd_run.run(
-        Path(case).resolve(),
-        sandbox=sandbox,
-        sandbox_keep=sandbox_keep,
-        quicktest=quicktest,
-    )
-
-
-@cli.command()
-@timed_command
-@validate_sandbox_flags
-@click.argument("src", type=click.Path(exists=True, file_okay=False))
-@click.argument("dst", type=click.Path())
-@click.option("--author", required=True, help="Set the author for the new case.")
-@click.option(
-    "--sandbox", is_flag=True, help="Copy into <dst>.temp and delete temp on success."
-)
-@click.option(
-    "--sandbox-keep", is_flag=True, help="Copy into <dst>.temp and preserve it."
-)
-@click.option(
-    "--dry-run",
-    "--dryrun",
-    is_flag=True,
-    help="Simulate the copy without writing anything.",
-)
-@click.option(
-    "--no-quicktest", is_flag=True, help="Skip running a quick test after copying."
-)
-@click.option(
-    "--open",
-    "open_after",
-    is_flag=True,
-    help="Open the new case directory after creation.",
-)
-@click.option("--verbose", is_flag=True, help="Show detailed copy operations.")
-def copy(
-    src, dst, author, sandbox, sandbox_keep, dry_run, no_quicktest, open_after, verbose
-):
-    """Copy a golden test case into a new case directory."""
-
-    return cmd_copy.copy(
-        src=Path(src),
-        dst=Path(dst),
-        author=author,
-        sandbox=sandbox,
-        sandbox_keep=sandbox_keep,
-        dry_run=dry_run,
-        no_quicktest=no_quicktest,
-        open_after=open_after,
-        verbose=verbose,
-    )
-
-
+cli.add_command(cast(click.Command, cmd_run))
 cli.add_command(cast(click.Command, cmd_regen))
 cli.add_command(cast(click.Command, cmd_diff))
 cli.add_command(cast(click.Command, cmd_drift))
+cli.add_command(cast(click.Command, cmd_copy))
 cli.add_command(cast(click.Command, cmd_duplicate))
 cli.add_command(cast(click.Command, cmd_new))
 cli.add_command(cast(click.Command, cmd_generate))

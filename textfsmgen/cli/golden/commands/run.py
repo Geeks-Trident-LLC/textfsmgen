@@ -24,23 +24,66 @@ from __future__ import annotations
 from pathlib import Path
 import shutil
 
-from .shared import run_canonical, run_expected, print_status
+import click
+
+from .shared import run_canonical, run_expected
 from ..core.utils import catch_path_errors
 
 from ..core.golden_case import GoldenCase
 
 from textfsmgen.libs import file
 
+from ..cli_decorator import (
+    timed_command,
+    validate_sandbox_flags,
+)
+from ..core.utils import validate_case_path
+
+
+@click.command(
+    name="run", help="Run a golden test case in normal, sandbox, or quicktest modes."
+)
+@timed_command
+@validate_sandbox_flags
+@click.option(
+    "--sandbox",
+    is_flag=True,
+    help="Run inside <case>.temp and delete the sandbox on success.",
+)
+@click.option(
+    "--sandbox-keep",
+    is_flag=True,
+    help="Run inside <case>.temp and preserve the sandbox directory.",
+)
+@click.option(
+    "--quicktest",
+    is_flag=True,
+    help="Run a fast, no-write, logic-only validation (no temp dirs).",
+)
+@click.argument("case", type=click.Path())
+def cmd_run(sandbox, sandbox_keep, quicktest, case):
+    """Execute a golden test case."""
+    return cmd_run_(
+        Path(case).resolve(),
+        sandbox=sandbox,
+        sandbox_keep=sandbox_keep,
+        quicktest=quicktest,
+    )
+
 
 @catch_path_errors
-def run(
+def cmd_run_(
     case_path: Path,
     *,
     sandbox: bool = False,
     sandbox_keep: bool = False,
     quicktest: bool = False,
 ) -> int:
-    case_path = case_path.resolve()
+
+    ok = validate_case_path(case_path)
+    if not ok:
+        click.echo(f"[FAIL] {ok}")
+        return 1
 
     # --------------------------------------------------------------
     # Quicktest: fast, no writes, no temp dirs
@@ -58,10 +101,7 @@ def run(
     # --------------------------------------------------------------
     if sandbox or sandbox_keep:
         temp_path = case_path.with_name(case_path.name + ".temp")
-        print_status(
-            f"Using temporary directory: {file.path_name(temp_path)}",
-            sandbox=True,
-        )
+        click.echo(f"[sandbox] Using temporary directory: {file.path_name(temp_path)}")
 
         if temp_path.exists():
             shutil.rmtree(temp_path)
@@ -78,12 +118,12 @@ def run(
 
         if sandbox:
             if rc == 0:
-                print_status("Cleaning up temporary directory.", sandbox=True)
+                click.echo("[sandbox] Cleaning up temporary directory.")
                 shutil.rmtree(case_path)
             else:
-                print_status("Run failed. Temporary directory preserved.", sandbox=True)
+                click.echo("[sandbox] Run failed. Temporary directory preserved.")
         else:
-            print_status("Preserving temporary directory.", sandbox=True)
+            click.echo("[sandbox] Preserving temporary directory.")
 
         return rc
 
