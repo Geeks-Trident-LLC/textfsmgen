@@ -47,10 +47,7 @@ from textfsmgen.libs import file
 
 from ..core.golden_case import GoldenCase
 
-# from ..core.utils import catch_path_errors
 from ..core.data_loader import extract_subpath_after
-
-from ..commands.shared import print_status
 
 from ..cli_decorator import (
     timed_command,
@@ -97,7 +94,7 @@ from ..core.utils import validate_case_path
 @click.argument("case", type=click.Path())
 def cmd_regen(case, sandbox, sandbox_keep, dry_run, force, verbose):
     return cmd_regen_(
-        case,
+        Path(case).resolve(),
         sandbox=sandbox,
         sandbox_keep=sandbox_keep,
         dry_run=dry_run,
@@ -107,9 +104,13 @@ def cmd_regen(case, sandbox, sandbox_keep, dry_run, force, verbose):
 
 
 def cmd_regen_(
-    case, sandbox=False, sandbox_keep=False, dry_run=False, force=False, verbose=False
+    case_path,
+    sandbox=False,
+    sandbox_keep=False,
+    dry_run=False,
+    force=False,
+    verbose=False,
 ):
-    case_path = Path(case).resolve()
     ok = validate_case_path(case_path)
     if not ok:
         click.echo(f"[FAIL] {ok}")
@@ -123,19 +124,15 @@ def cmd_regen_(
     if sandbox or sandbox_keep:
         temp_path = case_path.with_name(case_path.name + ".temp")
 
-        print_status(
-            f"Using temporary directory: {file.path_name(temp_path)}", sandbox=True
-        )
+        click.echo(f"[sandbox] Using temporary directory: {file.path_name(temp_path)}")
         _v("Preparing sandbox directory", verbose)
 
         if temp_path.exists():
             _v("Found existing sandbox directory:", verbose, path=temp_path)
             if not force:
-                print_status(
-                    f"Sandbox directory {file.path_name(temp_path)!r} already exists. "
+                click.echo(
+                    f"[FAIL] Sandbox directory {file.path_name(temp_path)!r} already exists. "
                     "Use --force to overwrite it.",
-                    fail=True,
-                    sandbox=True,
                 )
                 return 1
             _v("Overwriting existing sandbox directory (--force)", verbose)
@@ -152,16 +149,15 @@ def cmd_regen_(
 
         if sandbox:
             if rc == 0:
-                print_status("Cleaning up temporary directory.", sandbox=True)
+                click.echo("[sandbox] Cleaning up temporary directory.")
                 _v("Removing sandbox directory after successful regen", verbose)
                 shutil.rmtree(case_path)
             else:
-                print_status(
-                    "Regen failed. Temporary directory preserved for inspection.",
-                    fail=True,
+                click.echo(
+                    "[FAIL] Regen failed. Temporary directory preserved for inspection."
                 )
         else:
-            print_status("Preserving temporary directory.", sandbox=True)
+            click.echo("[sandbox] Preserving temporary directory.")
             _v("Sandbox-keep: leaving temp directory intact", verbose)
 
         return rc
@@ -185,13 +181,13 @@ def _v(message: str, verbose: bool, *, path: Path | None = None, case_name: str 
         return
 
     if path is None:
-        print_status(message, ok=True)
+        click.echo(f"[OK] {message}")
         return
 
     path = Path(path)
     case_name = case_name or "golden"
     rel = file.path_name(extract_subpath_after(case_name, path))
-    print_status(f"{message} {rel}", ok=True)
+    click.echo(f"[OK] {message} {rel}")
 
 
 # ---------------------------------------------------------------------------
@@ -270,7 +266,9 @@ def regen_integration(case: GoldenCase, dry_run=False, verbose=False) -> int:
 
         builder = loader.build(input_info.content)
         if not builder:
-            print_status(f"cannot build from input: {input_info.fullname}", fail=True)
+            click.echo(
+                f"[FAIL] cannot build from input: {file.path_name(input_info.fullname)}"
+            )
             return 1
 
         if not snippet_written:
@@ -306,7 +304,7 @@ def regen_integration(case: GoldenCase, dry_run=False, verbose=False) -> int:
 
 def _print(case: GoldenCase, files: list[str], dry_run=False) -> None:
     tc_name = extract_subpath_after("golden", case.case_dir)
-    message = f"regenerated {file.path_name(tc_name)}"
-    print_status(message, dryrun=True if dry_run else False, success=not dry_run)
+    prefix = "[DRY-RUN]" if dry_run else "[SUCCESS]"
+    click.echo(f"{prefix} regenerated {file.path_name(tc_name)}")
     for f in files:
-        print(f"  - {file.path_name(f)}")
+        click.echo(f"  - {file.path_name(f)}")
