@@ -106,9 +106,9 @@ def copy(
     # Auto-regen for MAIN cases
     # ------------------------------------------------------------
     if src_category == "main":
-        from .regen import regen
+        from .regen import cmd_regen
 
-        regen(dst)
+        cmd_regen(dst)
 
     # ------------------------------------------------------------
     # Sandbox cleanup

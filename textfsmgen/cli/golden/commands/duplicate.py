@@ -124,9 +124,9 @@ def cmd_duplicate(
     # Auto-regen for main
     # ------------------------------------------------------------
     if category == "main":
-        from .regen import regen
+        from .regen import cmd_regen
 
-        regen(dst)
+        cmd_regen(dst)
 
     # ------------------------------------------------------------
     # Sandbox cleanup

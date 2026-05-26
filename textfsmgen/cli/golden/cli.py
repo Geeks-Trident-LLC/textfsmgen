@@ -8,6 +8,7 @@ from typing import cast
 
 from .cli_decorator import validate_sandbox_flags, timed_command
 
+from .commands.regen import cmd_regen
 from .commands.diff import cmd_diff
 from .commands.drift import cmd_drift
 
@@ -20,7 +21,7 @@ from .commands.batch_quicktest import cmd_batch_quicktest
 
 from .commands import (
     run as cmd_run,
-    regen as cmd_regen,
+    # regen as cmd_regen,
     copy as cmd_copy,
     merge as cmd_merge,
     merge_review as cmd_merge_review,
@@ -88,48 +89,6 @@ def run(sandbox, sandbox_keep, quicktest, case):
     )
 
 
-@cli.command(help="Regen a golden test case in normal, sandbox, or dryrun.")
-@timed_command
-@validate_sandbox_flags
-@click.option(
-    "--sandbox",
-    is_flag=True,
-    help="Run regen inside <case>.temp and delete it on success.",
-)
-@click.option(
-    "--sandbox-keep",
-    is_flag=True,
-    help="Run regen inside <case>.temp and preserve it.",
-)
-@click.option(
-    "--dry-run",
-    "--dryrun",
-    is_flag=True,
-    help="Simulate what would be regenerated without writing files.",
-)
-@click.option(
-    "--force",
-    is_flag=True,
-    help="Overwrite existing files without confirmation.",
-)
-@click.option(
-    "--verbose",
-    is_flag=True,
-    help="Show detailed internal steps during regen.",
-)
-@click.argument("case", type=click.Path())
-def regen(sandbox, sandbox_keep, dry_run, force, case, verbose):
-    """Regenerate authoritative golden artifacts for a test case."""
-    return cmd_regen.regen(
-        Path(case).resolve(),
-        sandbox=sandbox,
-        sandbox_keep=sandbox_keep,
-        dry_run=dry_run,
-        force=force,
-        verbose=verbose,
-    )
-
-
 @cli.command()
 @timed_command
 @validate_sandbox_flags
@@ -176,6 +135,7 @@ def copy(
     )
 
 
+cli.add_command(cast(click.Command, cmd_regen))
 cli.add_command(cast(click.Command, cmd_diff))
 cli.add_command(cast(click.Command, cmd_drift))
 cli.add_command(cast(click.Command, cmd_duplicate))

@@ -40,54 +40,81 @@ from __future__ import annotations
 from pathlib import Path
 import json
 import shutil
+import click
 
 from textfsmgen.libs.common import parse_textfsm_to_dicts
 from textfsmgen.libs import file
 
 from ..core.golden_case import GoldenCase
-from ..core.utils import catch_path_errors
+
+# from ..core.utils import catch_path_errors
 from ..core.data_loader import extract_subpath_after
 
 from ..commands.shared import print_status
 
-
-# ---------------------------------------------------------------------------
-# VERBOSE HELPER
-# ---------------------------------------------------------------------------
-
-
-def _v(message: str, verbose: bool, *, path: Path | None = None, case_name: str = ""):
-    """Print a verbose message with optional path formatting."""
-    if not verbose:
-        return
-
-    if path is None:
-        print_status(message, ok=True)
-        return
-
-    path = Path(path)
-    case_name = case_name or "golden"
-    rel = file.path_name(extract_subpath_after(case_name, path))
-    print_status(f"{message} {rel}", ok=True)
-
+from ..cli_decorator import (
+    timed_command,
+    validate_sandbox_flags,
+)
+from ..core.utils import validate_case_path
 
 # ---------------------------------------------------------------------------
 # MAIN ENTRYPOINT
 # ---------------------------------------------------------------------------
 
 
-@catch_path_errors
-def regen(
-    case_path: Path,
-    *,
-    sandbox=False,
-    sandbox_keep=False,
-    dry_run=False,
-    force=False,
-    verbose=False,
-) -> int:
+@click.command(
+    name="regen", help="Regen a golden test case in normal, sandbox, or dryrun."
+)
+@timed_command
+@validate_sandbox_flags
+@click.option(
+    "--sandbox",
+    is_flag=True,
+    help="Run regen inside <case>.temp and delete it on success.",
+)
+@click.option(
+    "--sandbox-keep",
+    is_flag=True,
+    help="Run regen inside <case>.temp and preserve it.",
+)
+@click.option(
+    "--dry-run",
+    "--dryrun",
+    is_flag=True,
+    help="Simulate what would be regenerated without writing files.",
+)
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Overwrite existing files without confirmation.",
+)
+@click.option(
+    "--verbose",
+    is_flag=True,
+    help="Show detailed internal steps during regen.",
+)
+@click.argument("case", type=click.Path())
+def cmd_regen(case, sandbox, sandbox_keep, dry_run, force, verbose):
+    return cmd_regen_(
+        case,
+        sandbox=sandbox,
+        sandbox_keep=sandbox_keep,
+        dry_run=dry_run,
+        force=force,
+        verbose=verbose,
+    )
 
-    case_path = case_path.resolve()
+
+def cmd_regen_(
+    case, sandbox=False, sandbox_keep=False, dry_run=False, force=False, verbose=False
+):
+    case_path = Path(case).resolve()
+    ok = validate_case_path(case_path)
+    if not ok:
+        click.echo(f"[FAIL] {ok}")
+        return 1
+
     _v("Resolved case path:", verbose, path=case_path)
 
     # --------------------------------------------------------------
@@ -145,6 +172,26 @@ def regen(
     _v("Performing normal regen (no sandbox)", verbose)
     case = GoldenCase.from_path(case_path)
     return _dispatch_regen(case, dry_run=dry_run, verbose=verbose)
+
+
+# ---------------------------------------------------------------------------
+# VERBOSE HELPER
+# ---------------------------------------------------------------------------
+
+
+def _v(message: str, verbose: bool, *, path: Path | None = None, case_name: str = ""):
+    """Print a verbose message with optional path formatting."""
+    if not verbose:
+        return
+
+    if path is None:
+        print_status(message, ok=True)
+        return
+
+    path = Path(path)
+    case_name = case_name or "golden"
+    rel = file.path_name(extract_subpath_after(case_name, path))
+    print_status(f"{message} {rel}", ok=True)
 
 
 # ---------------------------------------------------------------------------

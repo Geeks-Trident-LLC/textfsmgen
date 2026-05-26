@@ -7,6 +7,8 @@ from ..cli_decorator import (
 )
 from .shared import discover_cases
 
+from .regen import cmd_regen_ as regen_single
+
 
 @click.command(
     name="batch-regen", help="Run `regen` on all integration cases under a directory."
@@ -34,7 +36,19 @@ def cmd_batch_regen(base, dry_run, sandbox, sandbox_keep, summary, verbose):
     Batch version of `regen` — processes all integration cases under <base>.
     """
 
-    from .regen import regen as regen_single
+    return cmd_batch_regen_(
+        base,
+        dry_run=dry_run,
+        sandbox=sandbox,
+        sandbox_keep=sandbox_keep,
+        summary=summary,
+        verbose=verbose,
+    )
+
+
+def cmd_batch_regen_(
+    base, dry_run=False, sandbox=False, sandbox_keep=False, summary=False, verbose=False
+):
 
     base_dir = Path(base).resolve()
     if not base_dir.exists():
@@ -65,6 +79,7 @@ def cmd_batch_regen(base, dry_run, sandbox, sandbox_keep, summary, verbose):
         except Exception as e:
             failed.append(gc)
             click.echo(f"[FAIL] {gc.name}: {e}")
+            return 1
 
     if summary:
         click.echo("\n==================== SUMMARY ====================")
@@ -79,6 +94,8 @@ def cmd_batch_regen(base, dry_run, sandbox, sandbox_keep, summary, verbose):
 
     if failed:
         raise click.ClickException("Some cases failed during batch-regen.")
+
+    return 0
 
 
 # Required for test suite patching
