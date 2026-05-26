@@ -3,15 +3,149 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import difflib
+import click
 
 from textfsmgen import parse_textfsm_to_dicts
 from textfsmgen.libs.generic import DotDict
 from textfsmgen.libs import file
 
 from .shared import print_status
-from ..core.utils import catch_path_errors
 from ..core.golden_case import GoldenCase
 from ..core.data_loader import extract_subpath_after
+
+from ..cli_decorator import (
+    timed_command,
+    # validate_sandbox_flags,
+)
+from ..core.utils import validate_case_path
+
+# ---------------------------------------------------------------------------
+# Main entrypoint
+# ---------------------------------------------------------------------------
+
+
+@click.command(
+    name="diff", help="Show differences between expected and generated results."
+)
+@timed_command
+@click.argument("case", type=click.Path())
+@click.option(
+    "--names-only",
+    "--names",
+    is_flag=True,
+    help="List only files that differ, without showing diff text.",
+)
+@click.option(
+    "--type",
+    "diff_type",
+    type=click.Choice(["all", "results", "snippet", "template"], case_sensitive=False),
+    default="all",
+    help="Limit diff to specific artifact types.",
+)
+@click.option(
+    "--unified",
+    "--context",
+    type=int,
+    default=3,
+    help="Number of context lines to show in unified diff (default: 3).",
+)
+@click.option(
+    "--json", "json_mode", is_flag=True, help="Emit machine-readable JSON diff."
+)
+@click.option("--summary", is_flag=True, help="Show summary of diff results.")
+@click.option(
+    "--fail-on-diff",
+    "--exit-code",
+    is_flag=True,
+    help="Exit with code 1 if any diff is found.",
+)
+@click.option("--quiet", is_flag=True, help="Suppress OK lines; only show failures.")
+@click.option(
+    "--verbose",
+    is_flag=True,
+    help="Show detailed internal steps during diff.",
+)
+def cmd_diff(
+    case,
+    names_only,
+    diff_type,
+    unified,
+    json_mode,
+    summary,
+    fail_on_diff,
+    quiet,
+    verbose,
+):
+    """
+    Display differences for a single golden test case.
+
+    Returns:
+        0 on no diff
+        1 if any diff is found
+    """
+
+    case_path = Path(case).resolve()
+    ok = validate_case_path(case_path)
+    if not ok:
+        click.echo(f"[FAIL] {ok}")
+        return 1
+
+    gc = GoldenCase.from_path(case_path)
+    tc_name = extract_subpath_after("golden", gc.case_dir)
+
+    items: list[DiffItem] = []
+
+    # MAIN CASE
+    if gc.is_main():
+        if diff_type in ("all", "snippet"):
+            items.append(diff_canonical_snippet(gc))
+        if diff_type in ("all", "template"):
+            items.append(diff_canonical_template(gc))
+        if diff_type in ("all", "result"):
+            items.append(diff_canonical_result(gc, unified=unified))
+        if diff_type in ("all", "results"):
+            items.extend(diff_results_using_canonical_template(gc, unified=unified))
+
+    # INTEGRATION CASE
+    else:
+        if diff_type in ("all", "snippet"):
+            items.extend(diff_expected_snippet(gc))
+        if diff_type in ("all", "template"):
+            items.extend(diff_expected_template(gc))
+        if diff_type in ("all", "results"):
+            items.extend(diff_results_using_expected_template(gc, unified=unified))
+
+    # Determine diff status
+    any_diff = any(not item.passed for item in items)
+
+    # JSON output mode
+    if json_mode:
+        print(json.dumps(items, indent=2, ensure_ascii=False))
+        return 1 if any_diff and fail_on_diff else 0
+
+    # Print items
+    for item in items:
+        if quiet and item.passed:
+            continue
+        print_diff_item(item, names_only=names_only, verbose=verbose)
+
+    # Summary mode
+    if summary:
+        total = len(items)
+        failed = sum(1 for i in items if not i.passed)
+        passed = total - failed
+        print_status(
+            f"Summary: {passed}/{total} passed, {failed} failed",
+            ok=(failed == 0),
+            fail=(failed > 0),
+        )
+
+    # Final no-diff message
+    if not any_diff and not quiet:
+        print_status(f"{file.path_name(tc_name)} — no differences found", ok=True)
+
+    # Fail-on-diff behavior
+    return 1 if any_diff and fail_on_diff else 0
 
 
 # ---------------------------------------------------------------------------
@@ -81,88 +215,6 @@ def print_diff_item(item: DiffItem, *, names_only=False, verbose=False):
 
     print_status(f"DIFF: {item.name}", fail=True)
     print(item.diff_text)
-
-
-# ---------------------------------------------------------------------------
-# Main entrypoint
-# ---------------------------------------------------------------------------
-
-
-@catch_path_errors
-def diff(
-    case_path: Path,
-    names_only=False,
-    diff_type="all",
-    unified=3,
-    json_mode=False,
-    summary=False,
-    fail_on_diff=False,
-    quiet=False,
-    verbose=False,
-) -> int:
-    """
-    Display differences for a single golden test case.
-
-    Returns:
-        0 on no diff
-        1 if any diff is found
-    """
-    case = GoldenCase.from_path(case_path)
-    tc_name = extract_subpath_after("golden", case.case_dir)
-
-    items: list[DiffItem] = []
-
-    # MAIN CASE
-    if case.is_main():
-        if diff_type in ("all", "snippet"):
-            items.append(diff_canonical_snippet(case))
-        if diff_type in ("all", "template"):
-            items.append(diff_canonical_template(case))
-        if diff_type in ("all", "result"):
-            items.append(diff_canonical_result(case, unified=unified))
-        if diff_type in ("all", "results"):
-            items.extend(diff_results_using_canonical_template(case, unified=unified))
-
-    # INTEGRATION CASE
-    else:
-        if diff_type in ("all", "snippet"):
-            items.extend(diff_expected_snippet(case))
-        if diff_type in ("all", "template"):
-            items.extend(diff_expected_template(case))
-        if diff_type in ("all", "results"):
-            items.extend(diff_results_using_expected_template(case, unified=unified))
-
-    # Determine diff status
-    any_diff = any(not item.passed for item in items)
-
-    # JSON output mode
-    if json_mode:
-        print(json.dumps(items, indent=2, ensure_ascii=False))
-        return 1 if any_diff and fail_on_diff else 0
-
-    # Print items
-    for item in items:
-        if quiet and item.passed:
-            continue
-        print_diff_item(item, names_only=names_only, verbose=verbose)
-
-    # Summary mode
-    if summary:
-        total = len(items)
-        failed = sum(1 for i in items if not i.passed)
-        passed = total - failed
-        print_status(
-            f"Summary: {passed}/{total} passed, {failed} failed",
-            ok=(failed == 0),
-            fail=(failed > 0),
-        )
-
-    # Final no-diff message
-    if not any_diff and not quiet:
-        print_status(f"{file.path_name(tc_name)} — no differences found", ok=True)
-
-    # Fail-on-diff behavior
-    return 1 if any_diff and fail_on_diff else 0
 
 
 # ---------------------------------------------------------------------------

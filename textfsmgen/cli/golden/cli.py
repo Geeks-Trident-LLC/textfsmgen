@@ -8,6 +8,7 @@ from typing import cast
 
 from .cli_decorator import validate_sandbox_flags, timed_command
 
+from .commands.diff import cmd_diff
 from .commands.drift import cmd_drift
 
 from .commands.duplicate import cmd_duplicate
@@ -20,8 +21,6 @@ from .commands.batch_quicktest import cmd_batch_quicktest
 from .commands import (
     run as cmd_run,
     regen as cmd_regen,
-    diff as cmd_diff,
-    # drift as cmd_drift,
     copy as cmd_copy,
     merge as cmd_merge,
     merge_review as cmd_merge_review,
@@ -131,74 +130,6 @@ def regen(sandbox, sandbox_keep, dry_run, force, case, verbose):
     )
 
 
-@cli.command(
-    help=(
-        "Show differences between expected and generated results for a golden test case."
-    )
-)
-@timed_command
-@click.argument("case", type=click.Path())
-@click.option(
-    "--names-only",
-    "--names",
-    is_flag=True,
-    help="List only files that differ, without showing diff text.",
-)
-@click.option(
-    "--type",
-    "diff_type",
-    type=click.Choice(["all", "results", "snippet", "template"], case_sensitive=False),
-    default="all",
-    help="Limit diff to specific artifact types.",
-)
-@click.option(
-    "--unified",
-    "--context",
-    type=int,
-    default=3,
-    help="Number of context lines to show in unified diff (default: 3).",
-)
-@click.option(
-    "--json", "json_mode", is_flag=True, help="Emit machine-readable JSON diff."
-)
-@click.option("--summary", is_flag=True, help="Show summary of diff results.")
-@click.option(
-    "--fail-on-diff",
-    "--exit-code",
-    is_flag=True,
-    help="Exit with code 1 if any diff is found.",
-)
-@click.option("--quiet", is_flag=True, help="Suppress OK lines; only show failures.")
-@click.option(
-    "--verbose",
-    is_flag=True,
-    help="Show detailed internal steps during diff.",
-)
-def diff(
-    case,
-    names_only,
-    diff_type,
-    unified,
-    json_mode,
-    summary,
-    fail_on_diff,
-    quiet,
-    verbose,
-):
-    """Show differences between expected and generated results."""
-    return cmd_diff.diff(
-        Path(case).resolve(),
-        names_only=names_only,
-        diff_type=diff_type,
-        unified=unified,
-        json_mode=json_mode,
-        summary=summary,
-        fail_on_diff=fail_on_diff,
-        quiet=quiet,
-        verbose=verbose,
-    )
-
-
 @cli.command()
 @timed_command
 @validate_sandbox_flags
@@ -245,6 +176,7 @@ def copy(
     )
 
 
+cli.add_command(cast(click.Command, cmd_diff))
 cli.add_command(cast(click.Command, cmd_drift))
 cli.add_command(cast(click.Command, cmd_duplicate))
 cli.add_command(cast(click.Command, cmd_new))
