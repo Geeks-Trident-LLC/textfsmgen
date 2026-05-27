@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 import json
 import shutil
 from pathlib import Path
@@ -10,10 +9,14 @@ from textfsmgen.libs.common import parse_textfsm_to_dicts
 from textfsmgen.libs import file
 
 from ..core.golden_case import GoldenCase
-from ..commands.shared import print_status
 from ..cli_decorator import timed_command, validate_sandbox_flags
 from ..core.utils import validate_case_path
 from .shared import _open_directory
+
+
+# ======================================================================
+# CLI ENTRYPOINT
+# ======================================================================
 
 
 @click.command(
@@ -71,6 +74,11 @@ def cmd_merge(
     )
 
 
+# ======================================================================
+# MAIN IMPLEMENTATION
+# ======================================================================
+
+
 def cmd_merge_(
     dst: Path,
     src_paths: list[Path],
@@ -90,7 +98,7 @@ def cmd_merge_(
     real_dst = dst
     if sandbox or sandbox_keep:
         dst = dst.with_name(dst.name + ".temp")
-        print_status(f"Using sandbox directory: {file.path_name(dst)}", sandbox=True)
+        click.echo(f"[sandbox] Using sandbox directory: {file.path_name(dst)}")
 
         if dst.exists() and not force:
             raise click.ClickException(
@@ -115,22 +123,31 @@ def cmd_merge_(
     # ------------------------------------------------------------
     # 2. Validate all cases
     # ------------------------------------------------------------
+    if verbose:
+        click.echo("[OK] builder = " + cases[0].data.load_manifest().get("builder", ""))
+
     for c in cases:
+        if verbose:
+            click.echo(f"[INFO] validating source: {file.path_name(c.case_dir)}")
+
         ok = validate_case_path(c.case_dir)
         if not ok:
-            raise click.ClickException(f"Invalid case: {ok}")
+            raise click.ClickException(f"[FAIL] {ok}")
 
         if not c.is_integration():
             raise click.ClickException(
-                f"Merge is only supported for integration cases: {file.path_name(c.case_dir)}"
+                f"[FAIL] merge is only supported for integration cases: {file.path_name(c.case_dir)}"
             )
 
         try:
             c.tested()
         except Exception as e:
             raise click.ClickException(
-                f"Case {file.path_name(c.case_dir)} is not tested:\n{e}"
+                f"[FAIL] case {file.path_name(c.case_dir)} is not tested:\n{e}"
             )
+
+        if verbose:
+            click.echo(f"[OK] {file.path_name(c.case_dir)} — tested and compatible")
 
     # Cross‑check all pairs
     for outer in cases:
@@ -142,25 +159,35 @@ def cmd_merge_(
     # ------------------------------------------------------------
     # 3. Find reference template + snippet
     # ------------------------------------------------------------
-    reference = _find_reference_case(cases, verbose=verbose)
+    if verbose:
+        click.echo("[INFO] evaluating reference candidates...")
+
+    reference, diagnostics = _find_reference_case(cases, verbose=verbose)
+
+    for diag in diagnostics:
+        print(diag)
+
+    click.echo(
+        f"[OK] Reference case selected: {file.path_name(reference.case_dir)}",
+    )
+
     ref_loader = reference.data
     ref_template = ref_loader.load_expected().template.content
     ref_snippet = ref_loader.load_expected().snippet.content
 
-    print_status(
-        f"Reference case selected: {file.path_name(reference.case_dir)}",
-        ok=True,
-    )
-
+    # ------------------------------------------------------------
+    # DRY-RUN: stop here
+    # ------------------------------------------------------------
     if dry_run:
-        print_status("[DRY-RUN] Would create merged case", dryrun=True)
-        if summary:
-            print_status("Summary not available in dry-run mode.", dryrun=True)
+        click.echo("[DRY-RUN] merge simulation completed.")
         return 0
 
     # ------------------------------------------------------------
     # 4. Create dst structure
     # ------------------------------------------------------------
+    if verbose:
+        click.echo(f"[INFO] creating destination case: {file.path_name(dst)}")
+
     (dst / "inputs").mkdir(parents=True)
     (dst / "expected").mkdir(parents=True)
     (dst / "expected_results").mkdir(parents=True)
@@ -168,17 +195,29 @@ def cmd_merge_(
     # ------------------------------------------------------------
     # 5. Merge inputs
     # ------------------------------------------------------------
-    merged_inputs = _merge_inputs(dst, cases, verbose=verbose)
+    if verbose:
+        click.echo("[INFO] merging inputs...")
+
+    merged_inputs, rename_logs = _merge_inputs(dst, cases, verbose=verbose)
+
+    for log in rename_logs:
+        print(log)
 
     # ------------------------------------------------------------
     # 6. Write reference template + snippet
     # ------------------------------------------------------------
+    if verbose:
+        click.echo("[INFO] writing template and snippet...")
+
     (dst / "expected" / "textfsm.template").write_text(ref_template)
     (dst / "expected" / "snippet.txt").write_text(ref_snippet)
 
     # ------------------------------------------------------------
     # 7. Generate expected_results
     # ------------------------------------------------------------
+    if verbose:
+        click.echo("[INFO] generating expected_results...")
+
     written_results = _write_expected_results(
         dst, merged_inputs, ref_template, verbose=verbose
     )
@@ -197,35 +236,33 @@ def cmd_merge_(
     # 9. Summary
     # ------------------------------------------------------------
     if summary:
-        print_status("===== MERGE SUMMARY =====", ok=True)
-        print_status(f"Reference case: {file.path_name(reference.case_dir)}", ok=True)
-        print_status(f"Inputs merged: {len(merged_inputs)}", ok=True)
+        click.echo("[INFO] ===== MERGE SUMMARY =====")
+        click.echo(f"[INFO] reference case: {file.path_name(reference.case_dir)}")
+        click.echo(f"[INFO] inputs merged: {len(merged_inputs)}")
         for p in merged_inputs:
             print(f"  - {file.path_name(p)}")
-        print_status(f"Expected results: {len(written_results)}", ok=True)
+        click.echo(f"[INFO] expected results: {len(written_results)}")
         for p in written_results:
             print(f"  - {file.path_name(p)}")
-        print_status("=========================", ok=True)
+        click.echo("[INFO] =========================")
 
     # ------------------------------------------------------------
     # 10. Sandbox cleanup
     # ------------------------------------------------------------
     if sandbox:
-        print_status("Cleaning up sandbox directory.", sandbox=True)
+        click.echo("[sandbox] cleaning up sandbox directory.")
         shutil.rmtree(dst)
-        print_status(
-            f"[SUCCESS] sandbox merge completed for {file.path_name(real_dst)}"
-        )
+        click.echo(f"[SUCCESS] sandbox merge completed for {file.path_name(real_dst)}")
         return 0
 
     if sandbox_keep:
-        print_status(f"[SUCCESS] sandbox-keep: preserved {file.path_name(dst)}")
+        click.echo(f"[SUCCESS] sandbox-keep: preserved {file.path_name(dst)}")
         return 0
 
     # ------------------------------------------------------------
     # 11. Normal success
     # ------------------------------------------------------------
-    print_status(f"[SUCCESS] Merge completed: {file.path_name(dst)}", success=True)
+    click.echo(f"[SUCCESS] merge completed: {file.path_name(dst)}")
 
     if open_after:
         _open_directory(dst)
@@ -238,33 +275,42 @@ def cmd_merge_(
 # ======================================================================
 
 
-def _find_reference_case(cases: list[GoldenCase], verbose=False) -> GoldenCase:
+def _find_reference_case(cases: list[GoldenCase], verbose=False):
+    diagnostics = []
+
     for candidate in cases:
+        cand_name = file.path_name(candidate.case_dir)
+        if verbose:
+            diagnostics.append(f"[INFO]   trying: {cand_name}")
+
         cand_loader = candidate.data
         cand_template = cand_loader.load_expected().template.content
 
-        all_ok = True
+        failures = []
 
         for other in cases:
             for input_info, exp_info in other.data.load_input_result_pairs():
                 rows = parse_textfsm_to_dicts(cand_template, input_info.content)
                 if rows != exp_info.content:
-                    all_ok = False
-                    break
-            if not all_ok:
-                break
+                    failures.append(
+                        f"[WARN]     - failed to parse {file.path_name(input_info.fullname)} "
+                        f"from {file.path_name(other.case_dir)}"
+                    )
 
-        if all_ok:
-            return candidate
+        if failures:
+            diagnostics.extend(failures)
+            continue
 
-    raise click.ClickException(
-        "No valid reference case found (no template matches all expected results)."
-    )
+        diagnostics.append(f"[OK]     {cand_name} is a valid reference candidate")
+        return candidate, diagnostics
+
+    raise click.ClickException("[FAIL] no valid reference case found.")
 
 
-def _merge_inputs(dst: Path, cases: list[GoldenCase], verbose=False) -> list[Path]:
+def _merge_inputs(dst: Path, cases: list[GoldenCase], verbose=False):
     dst_inputs = dst / "inputs"
     merged = {}
+    logs = []
 
     for case in cases:
         for inp in case.data.load_inputs():
@@ -273,11 +319,16 @@ def _merge_inputs(dst: Path, cases: list[GoldenCase], verbose=False) -> list[Pat
 
             if name not in merged:
                 merged[name] = content
+                if verbose:
+                    logs.append(f"[OK]   {name} — added")
                 continue
 
             if merged[name] == content:
+                if verbose:
+                    logs.append(f"[OK]   {name} — identical, kept")
                 continue
 
+            # rename
             base = Path(name).stem
             ext = Path(name).suffix
             counter = 2
@@ -286,6 +337,7 @@ def _merge_inputs(dst: Path, cases: list[GoldenCase], verbose=False) -> list[Pat
                 new_name = f"{base}_{counter}{ext}"
                 if new_name not in merged:
                     merged[new_name] = content
+                    logs.append(f"[rename] {name} → {new_name} (content differs)")
                     break
                 counter += 1
 
@@ -295,7 +347,7 @@ def _merge_inputs(dst: Path, cases: list[GoldenCase], verbose=False) -> list[Pat
         out_path.write_text(content)
         written.append(out_path)
 
-    return written
+    return written, logs
 
 
 def _write_expected_results(
@@ -313,176 +365,9 @@ def _write_expected_results(
         out_path.write_text(json.dumps(rows, indent=2, ensure_ascii=False))
         written.append(out_path)
 
+        if verbose:
+            click.echo(
+                f"[OK] {file.path_name(inp_path)} → {file.path_name(out_path)} ({len(rows)} rows)",
+            )
+
     return written
-
-
-# ==============================================================================
-#
-# from pathlib import Path
-# import shutil
-# import json
-#
-# from ..core.golden_case import GoldenCase
-# from .quicktest import quicktest
-#
-#
-# def merge(dst: Path, srcs: list[Path], *, author: str, dry_run: bool = False) -> int:
-#     """
-#     Merge multiple integration cases into a new destination case.
-#
-#     Workflow:
-#       - Ensure all dst, srcs are integration cases
-#       - Ensure all srcs share the same builder_type
-#       - Ensure all srcs pass quicktest
-#       - Create dst structure (real or temp)
-#       - Copy all src/inputs into dst/inputs (safe merge)
-#       - Invoke golden_case.data.create_merge()
-#       - Run quicktest on dst
-#       - Clean up dry-run temp directory on success
-#     """
-#
-#     # --------------------------------------------------------------
-#     # Resolve paths
-#     # --------------------------------------------------------------
-#     dst = dst.resolve()
-#     srcs = [p.resolve() for p in srcs]
-#
-#     # --------------------------------------------------------------
-#     # Validate all cases are integration
-#     # --------------------------------------------------------------
-#     for p in [dst] + srcs:
-#         case = GoldenCase.from_path(p)
-#         if not case.is_integration():
-#             print(f"[FAIL] Not an integration case: {p}")
-#             return 1
-#
-#     # --------------------------------------------------------------
-#     # Validate all sources share the same builder_type
-#     # --------------------------------------------------------------
-#     builder_types = set()
-#     for src in srcs:
-#         manifest = json.loads((src / "manifest.json").read_text())
-#         builder_types.add(manifest.get("builder"))
-#
-#     if len(builder_types) != 1:
-#         print(f"[FAIL] Sources have different builder_type values: {builder_types}")
-#         return 1
-#
-#     builder_type = builder_types.pop()
-#     print(f"[INFO] builder = {builder_type}")
-#
-#     # --------------------------------------------------------------
-#     # Validate all sources pass quicktest
-#     # --------------------------------------------------------------
-#     for src in srcs:
-#         print(f"[INFO] Validating source: {src}")
-#         if quicktest(src, dry_run=False) != 0:
-#             print(f"[FAIL] Source case failed quicktest: {src}")
-#             return 1
-#
-#     # --------------------------------------------------------------
-#     # Dry-run redirect BEFORE creating anything
-#     # --------------------------------------------------------------
-#     if dry_run:
-#         temp = dst.with_name(dst.name + ".temp")
-#         print(f"[DRY-RUN] Using temporary directory: {temp}")
-#         dst = temp
-#
-#     # --------------------------------------------------------------
-#     # Create destination directory (real or temp)
-#     # --------------------------------------------------------------
-#     if dst.exists():
-#         print(f"[FAIL] Destination already exists: {dst}")
-#         return 1
-#
-#     print(f"[INFO] Creating destination case: {dst}")
-#     (dst / "inputs").mkdir(parents=True)
-#     (dst / "expected").mkdir()
-#     (dst / "expected_results").mkdir()
-#
-#     # Write manifest.json
-#     manifest = {
-#         "builder": builder_type,
-#         "parameters": {},
-#         "meta": {
-#             "author": author,
-#             "saved": True,
-#             "email": "",
-#             "description": "",
-#             "notes": "",
-#             "schema_version": "1.0",
-#         },
-#     }
-#     (dst / "manifest.json").write_text(json.dumps(manifest, indent=2))
-#
-#     # --------------------------------------------------------------
-#     # Copy inputs from all sources (safe merge)
-#     # --------------------------------------------------------------
-#     src_cases = []
-#     for src in srcs:
-#         src_case = GoldenCase.from_path(src)
-#         src_cases.append(src_case)
-#
-#         for inp in src_case.data.load_inputs():
-#             name = Path(inp.fullname).name
-#             dst_path = dst / "inputs" / name
-#
-#             if not dst_path.exists():
-#                 # No conflict → copy normally
-#                 dst_path.write_text(inp.content)
-#                 continue
-#
-#             # Conflict: file exists → compare content
-#             existing_content = dst_path.read_text()
-#
-#             if existing_content == inp.content:
-#                 # Same content → skip
-#                 print(
-#                     f"[INFO] Input '{name}' already exists with identical content. Skipped."
-#                 )
-#                 continue
-#
-#             # Different content → generate new unique filename
-#             base = Path(name).stem
-#             ext = Path(name).suffix
-#
-#             counter = 2
-#             while True:
-#                 new_name = f"{base}_{counter}{ext}"
-#                 new_path = dst / "inputs" / new_name
-#                 if not new_path.exists():
-#                     new_path.write_text(inp.content)
-#                     print(f"[INFO] Input '{name}' differs. Saved as '{new_name}'.")
-#                     break
-#                 counter += 1
-#
-#     # --------------------------------------------------------------
-#     # Perform merge
-#     # --------------------------------------------------------------
-#     dst_case = GoldenCase.from_path(dst)
-#     print("[INFO] Creating merged expected artifacts...")
-#     is_merged = dst_case.data.create_merge(src_cases)
-#     if not is_merged:
-#         if dst_case.case_dir.exists():
-#             print("[INFO] Cleaning up directory.")
-#             shutil.rmtree(dst)
-#
-#         print("[FAIL] source cases dont have the common case for all cases.")
-#         return 1
-#
-#     # --------------------------------------------------------------
-#     # Quicktest on merged case
-#     # --------------------------------------------------------------
-#     print("[INFO] Running quicktest on merged case...")
-#     rc = quicktest(dst, dry_run=False)
-#
-#     # --------------------------------------------------------------
-#     # Dry-run cleanup
-#     # --------------------------------------------------------------
-#     if dry_run:
-#         print("[DRY-RUN] Cleaning up temporary directory.")
-#         shutil.rmtree(dst)
-#         if rc != 0:
-#             print("[DRY-RUN] Merge failed. Temporary directory preserved.")
-#
-#     return rc
