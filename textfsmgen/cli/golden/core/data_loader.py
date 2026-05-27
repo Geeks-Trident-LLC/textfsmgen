@@ -363,7 +363,8 @@ class DataLoader:
         if not manifest_path.is_file():
             return {}
         with manifest_path.open("r", encoding="utf-8") as f:
-            return json.load(f)
+            result = json.load(f)
+            return result if isinstance(result, dict) else {}
 
     def write_manifest(self, manifest: Dict[str, Any]) -> None:
         manifest_path = self.case_dir / MANIFEST_FILENAME
