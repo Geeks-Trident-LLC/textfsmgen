@@ -18,9 +18,9 @@ from .commands.batch_generate import cmd_batch_generate
 from .commands.batch_regen import cmd_batch_regen
 from .commands.batch_quicktest import cmd_batch_quicktest
 from .commands.merge import cmd_merge
+from .commands.merge_review import cmd_merge_review
 
 from .commands import (
-    merge_review as cmd_merge_review,
     merge_preview as cmd_merge_preview,
     merge_diff as cmd_merge_diff,
     identical as cmd_identical,
@@ -69,15 +69,7 @@ cli.add_command(cast(click.Command, cmd_batch_regen))
 cli.add_command(cast(click.Command, cmd_batch_quicktest))
 
 cli.add_command(cast(click.Command, cmd_merge))
-
-
-@cli.command("merge-review")
-@click.argument("dst")
-@click.argument("srcs", nargs=-1)
-def merge_review(dst, srcs):
-    """Preview a merge using <dst> as the reference case."""
-    return cmd_merge_review.merge_review(Path(dst), [Path(p) for p in srcs])
-
+cli.add_command(cast(click.Command, cmd_merge_review))
 
 @cli.command("merge-preview")
 @click.option("--compact", is_flag=True)

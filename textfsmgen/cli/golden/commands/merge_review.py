@@ -1,148 +1,253 @@
 from __future__ import annotations
 
 from pathlib import Path
-import json
+import click
 
-from ..core.golden_case import GoldenCase
-from ..core.utils import catch_path_errors
-from ..core.data_loader import extract_subpath_after
 from textfsmgen.libs.common import parse_textfsm_to_dicts
 
+from ..core.golden_case import GoldenCase
+from ..cli_decorator import timed_command
+from .shared import log, short_path
 
-@catch_path_errors
-def merge_review(dst: Path, srcs: list[Path]) -> int:
-    """
-    Preview merge with dst as the reference case.
-    Shows:
-      - whether dst's template can parse all src inputs
-      - detailed diagnostics for failures
-      - input merge plan (copy, skip, rename)
-      - expected artifacts that would be generated
-    """
 
-    print("[REVIEW] Merge review starting...\n")
+# ======================================================================
+# CLI ENTRYPOINT
+# ======================================================================
 
-    # --------------------------------------------------------------
-    # Validate integration cases
-    # --------------------------------------------------------------
-    all_cases = [dst] + srcs
-    for p in all_cases:
-        case = GoldenCase.from_path(p)
-        if not case.is_integration():
-            print(f"[FAIL] Not an integration case: {p}")
-            return 1
 
-    # --------------------------------------------------------------
-    # Validate builder_type consistency
-    # --------------------------------------------------------------
-    builder_types = set()
-    for p in all_cases:
-        manifest = json.loads((p / "manifest.json").read_text())
-        builder_types.add(manifest.get("builder"))
+@click.command(
+    name="merge-review",
+    help="Review whether dst is a valid reference candidate for the given src integration cases.",
+)
+@timed_command
+@click.option("--quiet", is_flag=True, help="Suppress non-essential output.")
+@click.option("--verbose", is_flag=True, help="Show detailed steps.")
+@click.option("--debug", is_flag=True, help="Show developer-level logs.")
+@click.argument("dst", type=click.Path(exists=True))
+@click.argument("srcs", nargs=-1, type=click.Path(exists=True))
+def cmd_merge_review(dst, srcs, quiet, verbose, debug):
+    return cmd_merge_review_(
+        dst=Path(dst).resolve(),
+        src_paths=[Path(s).resolve() for s in srcs],
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+    )
 
-    if len(builder_types) != 1:
-        print(f"[FAIL] Cases have different builder_type values: {builder_types}")
-        return 1
 
-    builder_type = next(iter(builder_types))
-    print(f"[REVIEW] builder = {builder_type}\n")
+# ======================================================================
+# MAIN IMPLEMENTATION
+# ======================================================================
 
-    # --------------------------------------------------------------
-    # Load reference template from dst
-    # --------------------------------------------------------------
+
+def cmd_merge_review_(
+    dst: Path, src_paths: list[Path], *, quiet=False, verbose=False, debug=False
+):
+    if not src_paths:
+        raise click.ClickException("No source cases provided.")
+
+    # ------------------------------------------------------------
+    # 1. Load and validate dst (reference)
+    # ------------------------------------------------------------
     dst_case = GoldenCase.from_path(dst)
-    dst_expected = dst_case.data.load_expected()
-    template = dst_expected.template.content
 
-    dst_case_name = extract_subpath_after("golden", dst_case.case_dir)
+    log(
+        f"validating dst: {short_path(dst)}",
+        level="info",
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+    )
 
-    print(f"[REVIEW] Reference case: {dst_case_name}\n")
+    if not dst_case.is_integration():
+        raise click.ClickException(
+            f"[FAIL] dst must be an integration case: {short_path(dst)}"
+        )
 
-    # --------------------------------------------------------------
-    # Check if dst template can parse all src inputs
-    # --------------------------------------------------------------
-    print("[REVIEW] Checking template compatibility...\n")
+    try:
+        dst_case.tested()
+    except Exception as e:
+        raise click.ClickException(f"[FAIL] dst is not tested:\n{e}")
 
-    ok = True
-    errors = []
+    log(
+        f"{short_path(dst)} — tested and valid",
+        level="OK",
+        indent=2,
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+    )
 
-    for src in srcs:
-        src_case = GoldenCase.from_path(src)
-        src_case_name = extract_subpath_after("golden", src_case.case_dir)
-        for input_info, result_info in src_case.data.load_input_result_pairs():
-            rows = parse_textfsm_to_dicts(template, input_info.content)
-            exp_result = result_info.content
-            if rows != exp_result:
-                ok = False
-                errors.append(
-                    f"Template from '{dst_case_name}' failed to parse "
-                    f"input '{input_info.fullname}' from case '{src_case_name}'."
+    ref_expected = dst_case.data.load_expected()
+    ref_template = ref_expected.template.content
+
+    log(
+        f"template length = {len(ref_template)} bytes",
+        level="debug",
+        indent=2,
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+    )
+
+    # ------------------------------------------------------------
+    # 2. Load and validate src cases
+    # ------------------------------------------------------------
+    # ------------------------------------------------------------
+    # 2. Load and validate src cases
+    # ------------------------------------------------------------
+    src_cases: list[GoldenCase] = []
+    compat_failures: list[str] = []
+
+    for p in src_paths:
+        log(
+            f"validating src: {short_path(p)}",
+            level="info",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+        )
+
+        c = GoldenCase.from_path(p)
+
+        # Must be integration
+        if not c.is_integration():
+            compat_failures.append(
+                f"[FAIL] src {short_path(p)} is not an integration case"
+            )
+            continue
+
+        # Must be tested
+        try:
+            c.tested()
+        except Exception as e:
+            compat_failures.append(f"[FAIL] src {short_path(p)} is not tested:\n{e}")
+            continue
+
+        # Must be compatible with dst
+        try:
+            ok = dst_case.check(c)
+            if not ok:
+                compat_failures.append(
+                    f"[FAIL] src {short_path(p)} is not compatible with dst"
                 )
+                continue
+        except Exception as e:
+            compat_failures.append(
+                f"[FAIL] compatibility check failed for src {short_path(p)}:\n{e}"
+            )
+            continue
 
-            if rows == exp_result and not rows:
-                ok = False
-                errors.append(
-                    f"Template from '{dst_case_name}' failed to parse "
-                    f"input '{input_info.fullname}' from case '{src_case_name}'"
-                    f"because parsed and expected result are empty."
-                )
+        # If we reach here → src is valid
+        log(
+            f"{short_path(p)} — tested and compatible",
+            level="OK",
+            indent=2,
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+        )
 
-    if not ok:
-        print("[FAIL] Reference template cannot parse all inputs.\n")
-        print("\n".join(f"  - {e}" for e in errors))
-        print("\n[REVIEW] Merge would fail.")
+        src_cases.append(c)
+
+    # If any failures occurred, print them and stop
+    if compat_failures:
+        for msg in compat_failures:
+            log(msg, level="FAIL", quiet=False, verbose=True, debug=debug)
         return 1
 
-    print("[OK] Reference template successfully parses all inputs.\n")
+    # ------------------------------------------------------------
+    # 3. Use dst.template to parse src.inputs and compare to src.expected_results
+    # ------------------------------------------------------------
+    all_ok = True
 
-    # --------------------------------------------------------------
-    # Input merge preview
-    # --------------------------------------------------------------
-    print("[REVIEW] Input merge plan:\n")
+    for c in src_cases:
+        log(
+            f"checking src: {short_path(c.case_dir)}",
+            level="info",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+        )
 
-    simulated_inputs = {}  # name → content
+        for input_info, exp_info in c.data.load_input_result_pairs():
+            short_in = short_path(input_info.fullname)
+            short_exp = short_path(exp_info.fullname)
 
-    for src in srcs:
-        src_case = GoldenCase.from_path(src)
-        src_case_name = extract_subpath_after("golden", src_case.case_dir)
-        for inp in src_case.data.load_inputs():
-            name = Path(inp.fullname).name
-            content = inp.content
+            log(
+                f"parsing {short_in}",
+                level="info",
+                indent=2,
+                quiet=quiet,
+                verbose=verbose,
+                debug=debug,
+            )
 
-            if name not in simulated_inputs:
-                simulated_inputs[name] = content
-                print(f"  COPY   {name}  (from {src_case_name})")
-                continue
+            rows = parse_textfsm_to_dicts(ref_template, input_info.content)
 
-            # conflict
-            if simulated_inputs[name] == content:
-                print(f"  SKIP   {name}  (identical content)")
+            log(
+                f"parsed rows preview: {rows[:2]}",
+                level="debug",
+                indent=6,
+                quiet=quiet,
+                verbose=verbose,
+                debug=debug,
+            )
+
+            if rows != exp_info.content:
+                all_ok = False
+                log(
+                    f"mismatch for {short_in}",
+                    level="FAIL",
+                    indent=4,
+                    quiet=quiet,
+                    verbose=True,
+                    debug=debug,
+                )
+                log(
+                    f"expected rows: {len(exp_info.content)}",
+                    level="debug",
+                    indent=6,
+                    quiet=quiet,
+                    verbose=verbose,
+                    debug=debug,
+                )
+                log(
+                    f"actual rows:   {len(rows)}",
+                    level="debug",
+                    indent=6,
+                    quiet=quiet,
+                    verbose=verbose,
+                    debug=debug,
+                )
             else:
-                # generate new name
-                base = Path(name).stem
-                ext = Path(name).suffix
-                counter = 2
+                log(
+                    f"{short_in} matches {short_exp} ({len(rows)} rows)",
+                    level="OK",
+                    indent=4,
+                    quiet=quiet,
+                    verbose=verbose,
+                    debug=debug,
+                )
 
-                while True:
-                    new_name = f"{base}_{counter}{ext}"
-                    if new_name not in simulated_inputs:
-                        simulated_inputs[new_name] = content
-                        print(
-                            f"  RENAME {name} → {new_name}  "
-                            f"(different content from {src_case_name})"
-                        )
-                        break
-                    counter += 1
+    # ------------------------------------------------------------
+    # 4. Final verdict
+    # ------------------------------------------------------------
+    if all_ok:
+        log(
+            f"dst {short_path(dst)} IS a valid reference candidate",
+            level="SUCCESS",
+            quiet=quiet,
+            verbose=True,
+            debug=debug,
+        )
+        return 0
 
-    print("\n[REVIEW] Total merged inputs:", len(simulated_inputs), "\n")
-
-    # --------------------------------------------------------------
-    # Expected artifacts preview
-    # --------------------------------------------------------------
-    print("[REVIEW] Expected artifacts to be generated:")
-    print("  - expected/snippet.txt (copied from dst)")
-    print("  - expected/textfsm.template (copied from dst)")
-    print("  - expected_results/<input>_result.json for each merged input\n")
-
-    print("[REVIEW] Merge would succeed.")
-    return 0
+    log(
+        f"dst {short_path(dst)} is NOT a valid reference candidate",
+        level="FAIL",
+        quiet=quiet,
+        verbose=True,
+        debug=debug,
+    )
+    return 1
