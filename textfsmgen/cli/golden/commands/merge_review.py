@@ -164,6 +164,7 @@ def cmd_merge_review_(
     any_ok = False
     matching_srcs = []
     nonmatching_srcs = []
+    mismatches = []  # collected mismatches for final FAIL reporting
 
     for c in src_cases:
         log(
@@ -211,26 +212,19 @@ def cmd_merge_review_(
                 )
             else:
                 src_matched = False
+                mismatches.append(
+                    (
+                        c.case_dir,
+                        input_info.fullname,
+                        len(exp_info.content),
+                        len(rows),
+                    )
+                )
+                # mismatch is DEBUG during matching
                 log(
                     f"mismatch for {short_in}",
-                    level="FAIL",
+                    level="debug",
                     indent=4,
-                    quiet=quiet,
-                    verbose=True,
-                    debug=debug,
-                )
-                log(
-                    f"expected rows: {len(exp_info.content)}",
-                    level="debug",
-                    indent=6,
-                    quiet=quiet,
-                    verbose=verbose,
-                    debug=debug,
-                )
-                log(
-                    f"actual rows:   {len(rows)}",
-                    level="debug",
-                    indent=6,
                     quiet=quiet,
                     verbose=verbose,
                     debug=debug,
@@ -293,7 +287,36 @@ def cmd_merge_review_(
         )
 
     # ------------------------------------------------------------
-    # 5. Final verdict
+    # 5. Print mismatches ONLY if dst is NOT a valid candidate
+    # ------------------------------------------------------------
+    if not any_ok:
+        for case_dir, input_path, exp_len, act_len in mismatches:
+            log(
+                f"mismatch for {short_path(input_path)}",
+                level="FAIL",
+                quiet=False,
+                verbose=True,
+                debug=debug,
+            )
+            log(
+                f"expected rows: {exp_len}",
+                level="debug",
+                indent=6,
+                quiet=quiet,
+                verbose=verbose,
+                debug=debug,
+            )
+            log(
+                f"actual rows:   {act_len}",
+                level="debug",
+                indent=6,
+                quiet=quiet,
+                verbose=verbose,
+                debug=debug,
+            )
+
+    # ------------------------------------------------------------
+    # 6. Final verdict
     # ------------------------------------------------------------
     if any_ok:
         log(
