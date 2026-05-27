@@ -215,15 +215,28 @@ def cmd_identical_(
         }
 
         if show_diff:
+            seen = set()
             for a in cases:
                 for b in cases:
                     if a is b:
                         continue
+
+                    key = tuple(
+                        sorted(
+                            [
+                                short_path(a.case_dir),
+                                short_path(b.case_dir),
+                            ]
+                        )
+                    )
+
+                    if key in seen:
+                        continue
+                    seen.add(key)
+
                     diffs = diff_cases(a, b)
                     if diffs:
-                        out["non_identical"][
-                            f"{short_path(a.case_dir)} vs {short_path(b.case_dir)}"
-                        ] = diffs
+                        out["non_identical"][f"{key[0]} vs {key[1]}"] = diffs
 
         print(json.dumps(out, indent=2))
         return 0
