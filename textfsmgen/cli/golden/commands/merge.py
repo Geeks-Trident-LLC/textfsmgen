@@ -43,8 +43,7 @@ from .shared import _open_directory, log, short_path
 @click.option("--quiet", is_flag=True, help="Suppress all non-essential output.")
 @click.option("--author", help="Set author metadata for the merged case.")
 @click.option(
-    "--open",
-    "open_after",
+    "--open-after",
     is_flag=True,
     help="Open the merged case directory after completion.",
 )
@@ -103,7 +102,6 @@ def cmd_merge_(
     # ------------------------------------------------------------
     # 0. Resolve sandbox destination
     # ------------------------------------------------------------
-
     real_dst = dst
     if sandbox or sandbox_keep:
         dst = dst.with_name(dst.name + ".temp")
@@ -134,6 +132,16 @@ def cmd_merge_(
 
     # Load GoldenCase objects
     cases = [GoldenCase.from_path(p) for p in src_paths]
+
+    # Debug: manifest
+    log(
+        f"manifest: {cases[0].data.load_manifest()}",
+        level="debug",
+        indent=2,
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+    )
 
     # ------------------------------------------------------------
     # 2. Validate all cases
@@ -238,6 +246,15 @@ def cmd_merge_(
     (dst / "expected").mkdir(parents=True)
     (dst / "expected_results").mkdir(parents=True)
 
+    log(
+        "created directories: inputs/, expected/, expected_results/",
+        level="debug",
+        indent=2,
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+    )
+
     # ------------------------------------------------------------
     # 5. Merge inputs
     # ------------------------------------------------------------
@@ -262,6 +279,23 @@ def cmd_merge_(
     (dst / "expected" / "textfsm.template").write_text(ref_template)
     (dst / "expected" / "snippet.txt").write_text(ref_snippet)
 
+    log(
+        f"template length = {len(ref_template)} bytes",
+        level="debug",
+        indent=2,
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+    )
+    log(
+        f"snippet length = {len(ref_snippet)} bytes",
+        level="debug",
+        indent=2,
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+    )
+
     # ------------------------------------------------------------
     # 7. Generate expected_results
     # ------------------------------------------------------------
@@ -285,16 +319,23 @@ def cmd_merge_(
         "notes": "",
         "description": "",
     }
+
+    log(
+        f"meta.json content: {meta}",
+        level="debug",
+        indent=2,
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+    )
+
     (dst / "meta.json").write_text(json.dumps(meta, indent=2))
 
     # ------------------------------------------------------------
     # 9. Summary
     # ------------------------------------------------------------
-    # ------------------------------------------------------------
-    # 9. Summary
-    # ------------------------------------------------------------
     if summary:
-        # Summary should always print regardless of quiet/verbose/debug
+        # Summary always prints regardless of quiet/verbose
         log(
             "===== MERGE SUMMARY =====",
             level="info",
@@ -302,7 +343,6 @@ def cmd_merge_(
             verbose=True,
             debug=debug,
         )
-
         log(
             f"reference case: {short_path(reference.case_dir)}",
             level="info",
@@ -310,7 +350,6 @@ def cmd_merge_(
             verbose=True,
             debug=debug,
         )
-
         log(
             f"inputs merged: {len(merged_inputs)}",
             level="info",
@@ -318,10 +357,8 @@ def cmd_merge_(
             verbose=True,
             debug=debug,
         )
-
         for p in merged_inputs:
             print(f"  - {short_path(p)}")
-
         log(
             f"expected results: {len(written_results)}",
             level="info",
@@ -329,10 +366,8 @@ def cmd_merge_(
             verbose=True,
             debug=debug,
         )
-
         for p in written_results:
             print(f"  - {short_path(p)}")
-
         log(
             "=========================",
             level="info",
@@ -352,7 +387,18 @@ def cmd_merge_(
             verbose=verbose,
             debug=debug,
         )
+
+        log(
+            f"removing sandbox directory: {short_path(dst)}",
+            level="debug",
+            indent=2,
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+        )
+
         shutil.rmtree(dst)
+
         log(
             f"sandbox merge completed for {short_path(real_dst)}",
             level="SUCCESS",
@@ -404,16 +450,30 @@ def _find_reference_case(cases, verbose, debug, quiet):
         cand_loader = candidate.data
         cand_template = cand_loader.load_expected().template.content
 
+        # Debug: template length
+        diagnostics.append(
+            f"[debug]     candidate {cand_name}: template length = {len(cand_template)} bytes"
+        )
+
         failures = []
 
         for other in cases:
             for input_info, exp_info in other.data.load_input_result_pairs():
+                diagnostics.append(
+                    f"[debug]       comparing against {short_path(input_info.fullname)}"
+                )
+
                 rows = parse_textfsm_to_dicts(cand_template, input_info.content)
+
                 if rows != exp_info.content:
                     failures.append(
                         f"[warn]       failed to parse {short_path(input_info.fullname)} "
                         f"from {short_path(other.case_dir)}"
                     )
+                    failures.append(
+                        f"[debug]         expected rows: {len(exp_info.content)}"
+                    )
+                    failures.append(f"[debug]         actual rows:   {len(rows)}")
 
         if failures:
             diagnostics.extend(failures)
@@ -430,10 +490,28 @@ def _merge_inputs(dst, cases, verbose, debug, quiet):
     merged = {}
     logs = []
 
+    log(
+        f"starting merge_inputs with {len(cases)} cases",
+        level="debug",
+        indent=2,
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+    )
+
     for case in cases:
         for inp in case.data.load_inputs():
             name = Path(inp.fullname).name
             content = inp.content
+
+            log(
+                f"existing names: {list(merged.keys())}",
+                level="debug",
+                indent=4,
+                quiet=quiet,
+                verbose=verbose,
+                debug=debug,
+            )
 
             if name not in merged:
                 merged[name] = content
@@ -443,6 +521,15 @@ def _merge_inputs(dst, cases, verbose, debug, quiet):
             if merged[name] == content:
                 logs.append(f"[OK]     {name} — identical, kept")
                 continue
+
+            log(
+                f"collision detected: {name} already exists",
+                level="debug",
+                indent=4,
+                quiet=quiet,
+                verbose=verbose,
+                debug=debug,
+            )
 
             base = Path(name).stem
             ext = Path(name).suffix
@@ -472,6 +559,15 @@ def _write_expected_results(dst, merged_inputs, template, verbose, debug, quiet)
     for inp_path in merged_inputs:
         sample = inp_path.read_text()
         rows = parse_textfsm_to_dicts(template, sample)
+
+        log(
+            f"parsed rows preview: {rows[:2]}",
+            level="debug",
+            indent=6,
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+        )
 
         stem = inp_path.stem
         out_path = out_dir / f"{stem}_result.json"

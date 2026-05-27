@@ -20,8 +20,6 @@ from .commands.batch_quicktest import cmd_batch_quicktest
 from .commands.merge import cmd_merge
 
 from .commands import (
-    # run as cmd_run,
-    # merge as cmd_merge,
     merge_review as cmd_merge_review,
     merge_preview as cmd_merge_preview,
     merge_diff as cmd_merge_diff,
@@ -71,22 +69,6 @@ cli.add_command(cast(click.Command, cmd_batch_regen))
 cli.add_command(cast(click.Command, cmd_batch_quicktest))
 
 cli.add_command(cast(click.Command, cmd_merge))
-
-
-# @cli.command()
-# @click.option("--dry-run", is_flag=True)
-# @click.option("--author", required=True)
-# @click.argument("dst")
-# @click.argument("srcs", nargs=-1)
-# def merge(dry_run, author, dst, srcs):
-#     """Merge multiple integration cases into a new destination case."""
-#     return cmd_merge.merge(
-#         Path(dst),
-#         [Path(p) for p in srcs],
-#         author=author,
-#         dry_run=dry_run,
-#     )
-#
 
 
 @cli.command("merge-review")
