@@ -13,6 +13,53 @@ from .shared import log, short_path
 from .run import cmd_run_
 
 
+def _sandbox_cleanup(
+    case_temp: Path, promote_temp: Path, keep: bool, quiet, verbose, debug, compact
+):
+    """Remove or preserve sandbox directories."""
+    if keep:
+        log(
+            "[sandbox-keep] preserved sandbox directories:",
+            level="sandbox",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+            compact=compact,
+        )
+        log(
+            f"  {short_path(case_temp)}",
+            level="sandbox",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+            compact=compact,
+        )
+        log(
+            f"  {short_path(promote_temp)}",
+            level="sandbox",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+            compact=compact,
+        )
+        return
+
+    # Remove both sandbox dirs
+    if case_temp.exists():
+        shutil.rmtree(case_temp)
+    if promote_temp.exists():
+        shutil.rmtree(promote_temp)
+
+    log(
+        "[sandbox] cleaned up sandbox directories",
+        level="sandbox",
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+        compact=compact,
+    )
+
+
 @click.command(
     name="promote",
     help="Promote an integration case into a main case by generating canonical sample and result.",
@@ -26,10 +73,7 @@ from .run import cmd_run_
     "--description", default="", help="Description metadata for manifest.json."
 )
 @click.option(
-    "--dry-run",
-    "--dryrun",
-    is_flag=True,
-    help="Simulate promotion without writing files.",
+    "--dry-run", is_flag=True, help="Simulate promotion without writing files."
 )
 @click.option(
     "--sandbox",
@@ -96,44 +140,50 @@ def cmd_promote_(
     summary=False,
 ):
     # ------------------------------------------------------------
-    # 0. Resolve sandbox destination
+    # 0. Sandbox setup
     # ------------------------------------------------------------
-    real_dst = case_path
+    real_case_path = case_path
+    case_temp = None
+
     if sandbox or sandbox_keep:
-        sandbox_path = case_path.with_name(case_path.name + ".temp")
+        case_temp = real_case_path.with_name(real_case_path.name + ".temp")
 
         log(
-            f"Using sandbox directory: {short_path(sandbox_path)}",
+            f"Using sandbox directory: {short_path(case_temp)}",
             level="sandbox",
             quiet=quiet,
             verbose=verbose,
             debug=debug,
         )
 
-        # Remove old sandbox
-        if sandbox_path.exists():
-            shutil.rmtree(sandbox_path)
+        if case_temp.exists():
+            shutil.rmtree(case_temp)
 
-        # COPY integration case → sandbox
-        shutil.copytree(real_dst, sandbox_path)
-
-        # Now operate inside sandbox
-        case_path = sandbox_path
+        shutil.copytree(real_case_path, case_temp)
+        case_path = case_temp
 
     # ------------------------------------------------------------
-    # 1. Load and validate integration case (using run(...quicktest=True))
+    # 1. Validate integration case via full quicktest
     # ------------------------------------------------------------
-    case = GoldenCase.from_path(
-        case_path if (sandbox or sandbox_keep) else real_dst or case_path
-    )
+    case = GoldenCase.from_path(case_path)
 
     if not case.is_integration():
+        if sandbox or sandbox_keep:
+            _sandbox_cleanup(
+                case_temp,
+                case_temp,
+                keep=sandbox_keep,
+                quiet=quiet,
+                verbose=verbose,
+                debug=debug,
+                compact=compact,
+            )
         raise click.ClickException(
-            f"{short_path(case.case_dir)} is not an integration case"
+            f"{short_path(case_path)} is not an integration case"
         )
 
     rc = cmd_run_(
-        case.case_dir,
+        case_path,
         quicktest=True,
         # quiet=quiet,
         # verbose=verbose,
@@ -141,10 +191,20 @@ def cmd_promote_(
         # compact=compact,
     )
     if rc != 0:
-        raise click.ClickException(f"{short_path(case.case_dir)} failed quicktest")
+        if sandbox or sandbox_keep:
+            _sandbox_cleanup(
+                case_temp,
+                case_temp,
+                keep=sandbox_keep,
+                quiet=quiet,
+                verbose=verbose,
+                debug=debug,
+                compact=compact,
+            )
+        raise click.ClickException(f"{short_path(case_path)} failed quicktest")
 
     log(
-        f"{short_path(case.case_dir)} — integration and tested",
+        f"{short_path(case_path)} — integration and tested",
         level="OK",
         quiet=quiet,
         verbose=verbose,
@@ -155,22 +215,30 @@ def cmd_promote_(
     # ------------------------------------------------------------
     # 2. Determine promote path (integration → main)
     # ------------------------------------------------------------
-    parts = list(case.case_dir.parts)
-    try:
-        idx = parts.index("integration")
-    except ValueError:
-        raise click.ClickException("Path does not contain 'integration'")
-
+    parts = list(case_path.parts)
+    idx = parts.index("integration")
     parts[idx] = "main"
     promote_path = Path(*parts)
 
+    promote_temp = promote_path
+
     if promote_path.exists():
+        if sandbox or sandbox_keep:
+            _sandbox_cleanup(
+                case_temp,
+                promote_temp,
+                keep=sandbox_keep,
+                quiet=quiet,
+                verbose=verbose,
+                debug=debug,
+                compact=compact,
+            )
         raise click.ClickException(
             f"Main case already exists: {short_path(promote_path)}"
         )
 
     # ------------------------------------------------------------
-    # 3. Find canonical sample by loader.build(sample)
+    # 3. Find canonical sample
     # ------------------------------------------------------------
     loader = case.data
     expected = loader.load_expected()
@@ -178,8 +246,8 @@ def cmd_promote_(
 
     canonical_sample = None
     canonical_result = None
+    canonical_name = None
 
-    name = ""
     for inp in loader.load_inputs():
         sample = inp.content
         name = Path(inp.fullname).name
@@ -194,9 +262,10 @@ def cmd_promote_(
         )
 
         built = loader.build(sample)
-        generated_template = built.template
-
-        if generated_template == expected_template:
+        if built.template == expected_template:
+            canonical_sample = sample
+            canonical_result = parse_textfsm_to_dicts(built.template, sample)
+            canonical_name = name
             log(
                 f"canonical sample found: {name}",
                 level="SUCCESS",
@@ -205,27 +274,31 @@ def cmd_promote_(
                 debug=debug,
                 compact=compact,
             )
-
-            canonical_sample = sample
-            canonical_result = parse_textfsm_to_dicts(generated_template, sample)
             break
 
     if canonical_sample is None:
+        if sandbox or sandbox_keep:
+            _sandbox_cleanup(
+                case_temp,
+                promote_temp,
+                keep=sandbox_keep,
+                quiet=quiet,
+                verbose=verbose,
+                debug=debug,
+                compact=compact,
+            )
         raise click.ClickException(
             "No input sample can reproduce expected template; cannot promote."
         )
 
     # ------------------------------------------------------------
-    # DRY-RUN: stop here
-    # ------------------------------------------------------------
-    # ------------------------------------------------------------
-    # DRY-RUN: show what would happen
+    # DRY-RUN
     # ------------------------------------------------------------
     if dry_run:
         print("[PROMOTE] DRY-RUN")
-        print(f"  source:        {short_path(case.case_dir)}")
-        print(f"  promote-path:  {short_path(promote_path)}")
-        print(f"  canonical sample: {name}")
+        print(f"  source:          {short_path(case_path)}")
+        print(f"  promote-path:    {short_path(promote_path)}")
+        print(f"  canonical sample: {canonical_name}")
         print(f"  canonical result: {len(canonical_result)} rows")
         print("  manifest metadata:")
         print(f"    author:       {author}")
@@ -238,7 +311,7 @@ def cmd_promote_(
         print("    canonical/snippet.txt")
         print("    canonical/sample.txt")
         print("    canonical/result.json")
-        print(f"    inputs/* ({len(list(loader.load_inputs()))} files)")
+        print(f"    inputs/* ({len(loader.load_inputs())} files)")
         print(
             f"    expected_results/* ({len(list(loader.load_input_result_pairs()))} files)"
         )
@@ -250,18 +323,15 @@ def cmd_promote_(
     # 4. Create promote directory structure
     # ------------------------------------------------------------
     promote_path.mkdir(parents=True)
-
     canonical_dir = promote_path / "canonical"
     canonical_dir.mkdir()
-
     inputs_dir = promote_path / "inputs"
     expected_results_dir = promote_path / "expected_results"
-
     inputs_dir.mkdir()
     expected_results_dir.mkdir()
 
     # ------------------------------------------------------------
-    # 5. Write manifest.json (apply metadata)
+    # 5. Write manifest.json with metadata
     # ------------------------------------------------------------
     manifest = loader.load_manifest()
     meta = manifest.setdefault("meta", {})
@@ -275,28 +345,24 @@ def cmd_promote_(
     )
 
     # ------------------------------------------------------------
-    # 6. Write canonical template + snippet
+    # 6. Write canonical artifacts
     # ------------------------------------------------------------
     (canonical_dir / "textfsm.template").write_text(expected.template.content)
     (canonical_dir / "snippet.txt").write_text(expected.snippet.content)
-
-    # ------------------------------------------------------------
-    # 7. Write canonical sample + result
-    # ------------------------------------------------------------
     (canonical_dir / "sample.txt").write_text(canonical_sample)
     (canonical_dir / "result.json").write_text(
         json.dumps(canonical_result, indent=2, ensure_ascii=False)
     )
 
     # ------------------------------------------------------------
-    # 8. Copy inputs
+    # 7. Copy inputs
     # ------------------------------------------------------------
     for inp in loader.load_inputs():
         name = Path(inp.fullname).name
         (inputs_dir / name).write_text(inp.content)
 
     # ------------------------------------------------------------
-    # 9. Copy expected_results
+    # 8. Copy expected_results
     # ------------------------------------------------------------
     for _, exp in loader.load_input_result_pairs():
         name = Path(exp.fullname).name
@@ -305,10 +371,11 @@ def cmd_promote_(
         )
 
     # ------------------------------------------------------------
-    # 10. Run quicktest on promoted case (must generate golden.hash/meta.json)
+    # 9. Run quicktest on promoted case
     # ------------------------------------------------------------
     rc = cmd_run_(
         promote_path,
+        quicktest=True,
         # quiet=quiet,
         # verbose=verbose,
         # debug=debug,
@@ -316,30 +383,28 @@ def cmd_promote_(
     )
 
     if rc != 0:
-        shutil.rmtree(promote_path)
+        if sandbox or sandbox_keep:
+            _sandbox_cleanup(
+                case_temp,
+                promote_temp,
+                keep=sandbox_keep,
+                quiet=quiet,
+                verbose=verbose,
+                debug=debug,
+                compact=compact,
+            )
         raise click.ClickException(
             "Promoted case failed quicktest (golden.hash/meta.json not valid)"
         )
 
     # ------------------------------------------------------------
-    # 11. Sandbox cleanup
+    # 10. Sandbox cleanup
     # ------------------------------------------------------------
-    if sandbox:
-        shutil.rmtree(case_path)
-        log(
-            f"sandbox promotion completed for {short_path(promote_path)}",
-            level="SUCCESS",
-            quiet=quiet,
-            verbose=verbose,
-            debug=debug,
-            compact=compact,
-        )
-        return 0
-
-    if sandbox_keep:
-        log(
-            f"sandbox-keep: preserved {short_path(case_path)}",
-            level="SUCCESS",
+    if sandbox or sandbox_keep:
+        _sandbox_cleanup(
+            case_temp,
+            promote_temp,
+            keep=sandbox_keep,
             quiet=quiet,
             verbose=verbose,
             debug=debug,
@@ -348,20 +413,20 @@ def cmd_promote_(
         return 0
 
     # ------------------------------------------------------------
-    # 12. Compact mode
+    # 11. Compact mode
     # ------------------------------------------------------------
     if compact:
-        print(f"[PROMOTE] Case: {short_path(case.case_dir)}")
+        print(f"[PROMOTE] Case: {short_path(case_path)}")
         print(f"[PROMOTE] Promoted: {short_path(promote_path)}")
         print("[PROMOTE] Result: success")
         return 0
 
     # ------------------------------------------------------------
-    # 13. Summary mode
+    # 12. Summary mode
     # ------------------------------------------------------------
     if summary:
         print("===== PROMOTE SUMMARY =====")
-        print(f"source:   {short_path(case.case_dir)}")
+        print(f"source:   {short_path(case_path)}")
         print(f"promoted: {short_path(promote_path)}")
         print("canonical:")
         print("  template: canonical/textfsm.template")
@@ -372,7 +437,7 @@ def cmd_promote_(
         return 0
 
     # ------------------------------------------------------------
-    # 14. Normal output
+    # 13. Normal output
     # ------------------------------------------------------------
     log(
         f"promotion completed: {short_path(promote_path)}",
