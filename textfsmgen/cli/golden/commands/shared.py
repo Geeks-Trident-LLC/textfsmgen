@@ -574,46 +574,68 @@ def log(
     compact=False,
 ):
     """
-    Unified logging helper with:
-      - quiet mode
-      - verbose mode
-      - debug mode
-      - compact mode (suppresses all logs)
-      - automatic severity prefixing
-      - prevention of double prefixes
+    Unified logging helper with strict, predictable behavior:
+
+      quiet:
+        - show only FAIL and SUCCESS
+
+      compact:
+        - suppress all logs (caller prints summary)
+
+      verbose:
+        - show info + verbose + OK + FAIL + SUCCESS + sandbox
+
+      debug:
+        - show EVERYTHING (debug + verbose + info + OK + FAIL + SUCCESS)
+
+      normal:
+        - show info + OK + FAIL + SUCCESS + sandbox
+        - suppress verbose + debug
     """
 
+    # ------------------------------------------------------------
     # Compact mode suppresses ALL logs
+    # ------------------------------------------------------------
     if compact:
         return
 
-    # Quiet mode suppresses everything except FAIL and SUCCESS
+    # ------------------------------------------------------------
+    # Quiet mode: only FAIL and SUCCESS
+    # ------------------------------------------------------------
     if quiet and level not in ("FAIL", "SUCCESS"):
         return
 
-    # Debug mode prints everything
+    # ------------------------------------------------------------
+    # Debug mode: show everything
+    # ------------------------------------------------------------
     if not debug:
+        # suppress debug logs unless --debug
         if level == "debug":
             return
 
-        # Skip info/warn/merge logs unless verbose
-        if not verbose and level in ("info", "warn", "merge"):
+        # suppress verbose logs unless --verbose or --debug
+        if level == "verbose" and not verbose:
             return
 
+        # suppress info logs unless normal or verbose
+        if level == "info" and not verbose:
+            # normal mode still shows info
+            pass
+
     # ------------------------------------------------------------
-    # FIX: remove any existing [SEVERITY] prefix from msg
+    # Strip existing prefix like [FAIL], [info], etc.
     # ------------------------------------------------------------
     if msg.startswith("["):
-        # strip leading "[XXX]" prefix
         end = msg.find("]")
         if end != -1:
             msg = msg[end + 1 :].lstrip()
 
     # ------------------------------------------------------------
-    # Add our own prefix
+    # Prefix mapping
     # ------------------------------------------------------------
-    if level.upper() in ("OK", "SUCCESS", "FAIL", "DRY-RUN"):
-        prefix = f"[{level.upper()}]"
+    level_upper = level.upper()
+    if level_upper in ("OK", "SUCCESS", "FAIL", "DRY-RUN"):
+        prefix = f"[{level_upper}]"
     else:
         prefix = f"[{level.lower()}]"
 
