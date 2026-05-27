@@ -22,6 +22,7 @@ from .commands.merge_preview import cmd_merge_preview
 from .commands.merge_diff import cmd_merge_diff
 from .commands.merge_plan import cmd_merge_plan
 from .commands.identical import cmd_identical
+from .commands.promote import cmd_promote
 
 
 __version__ = "1.0.0"
@@ -73,3 +74,4 @@ cli.add_command(cast(click.Command, cmd_merge_diff))
 cli.add_command(cast(click.Command, cmd_merge_plan))
 
 cli.add_command(cast(click.Command, cmd_identical))
+cli.add_command(cast(click.Command, cmd_promote))
