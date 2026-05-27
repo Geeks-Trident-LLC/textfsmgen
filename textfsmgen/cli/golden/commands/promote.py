@@ -371,11 +371,16 @@ def cmd_promote_(
         )
 
     # ------------------------------------------------------------
-    # 9. Run quicktest on promoted case
+    # 9. Ensure expected/ exists before quicktest
+    # ------------------------------------------------------------
+    expected_dir = promote_path / "expected"
+    expected_dir.mkdir(exist_ok=True)
+
+    # ------------------------------------------------------------
+    # 10. Run quicktest on promoted case
     # ------------------------------------------------------------
     rc = cmd_run_(
         promote_path,
-        quicktest=True,
         # quiet=quiet,
         # verbose=verbose,
         # debug=debug,
@@ -398,7 +403,7 @@ def cmd_promote_(
         )
 
     # ------------------------------------------------------------
-    # 10. Sandbox cleanup
+    # 11. Sandbox cleanup
     # ------------------------------------------------------------
     if sandbox or sandbox_keep:
         _sandbox_cleanup(
@@ -413,7 +418,7 @@ def cmd_promote_(
         return 0
 
     # ------------------------------------------------------------
-    # 11. Compact mode
+    # 12. Compact mode
     # ------------------------------------------------------------
     if compact:
         print(f"[PROMOTE] Case: {short_path(case_path)}")
@@ -422,7 +427,7 @@ def cmd_promote_(
         return 0
 
     # ------------------------------------------------------------
-    # 12. Summary mode
+    # 13. Summary mode
     # ------------------------------------------------------------
     if summary:
         print("===== PROMOTE SUMMARY =====")
@@ -437,7 +442,7 @@ def cmd_promote_(
         return 0
 
     # ------------------------------------------------------------
-    # 13. Normal output
+    # 14. Normal output
     # ------------------------------------------------------------
     log(
         f"promotion completed: {short_path(promote_path)}",
