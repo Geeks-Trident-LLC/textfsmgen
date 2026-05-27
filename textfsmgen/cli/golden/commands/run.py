@@ -95,6 +95,15 @@ def cmd_run_(
         )
         return 1
 
+    log(
+        f"Loading case: {short_path(case_path)}",
+        level="debug",
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+        compact=compact,
+    )
+
     # ------------------------------------------------------------
     # 1. Sandbox setup
     # ------------------------------------------------------------
@@ -105,7 +114,7 @@ def cmd_run_(
         case_temp = real_case_path.with_name(real_case_path.name + ".temp")
 
         log(
-            f"Using sandbox directory: {short_path(case_temp)}",
+            f"[sandbox] copying case to {short_path(case_temp)}",
             level="sandbox",
             quiet=quiet,
             verbose=verbose,
@@ -138,14 +147,29 @@ def cmd_run_(
             compact=compact,
         )
 
-        # Load canonical sample
         canonical = loader.load_canonical()
         sample = canonical.sample.content
 
-        # Build from canonical sample
+        log(
+            "validating canonical template",
+            level="verbose",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+            compact=compact,
+        )
+
         built = loader.build(sample)
 
-        # Validate template
+        log(
+            f"template length={len(built.template)} bytes",
+            level="debug",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+            compact=compact,
+        )
+
         if built.template != canonical.template.content:
             log(
                 "canonical template mismatch",
@@ -157,7 +181,15 @@ def cmd_run_(
             )
             return 1
 
-        # Validate snippet
+        log(
+            "validating canonical snippet",
+            level="verbose",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+            compact=compact,
+        )
+
         if built.snippet != canonical.snippet.content:
             log(
                 "canonical snippet mismatch",
@@ -169,8 +201,25 @@ def cmd_run_(
             )
             return 1
 
-        # Validate canonical result
+        log(
+            "validating canonical result",
+            level="verbose",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+            compact=compact,
+        )
+
         parsed = parse_textfsm_to_dicts(built.template, sample)
+        log(
+            f"parsed rows={len(parsed)}",
+            level="debug",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+            compact=compact,
+        )
+
         if parsed != canonical.result.content:
             log(
                 "canonical result mismatch",
@@ -184,7 +233,25 @@ def cmd_run_(
 
         # Validate all inputs
         for inp, exp in loader.load_input_result_pairs():
+            log(
+                f"validating input: {Path(inp.fullname).name}",
+                level="verbose",
+                quiet=quiet,
+                verbose=verbose,
+                debug=debug,
+                compact=compact,
+            )
+
             parsed = parse_textfsm_to_dicts(built.template, inp.content)
+            log(
+                f"parsed rows={len(parsed)}",
+                level="debug",
+                quiet=quiet,
+                verbose=verbose,
+                debug=debug,
+                compact=compact,
+            )
+
             if parsed != exp.content:
                 log(
                     f"input mismatch: {Path(inp.fullname).name}",
@@ -196,9 +263,7 @@ def cmd_run_(
                 )
                 return 1
 
-        # --------------------------------------------------------
-        # Quicktest: stop here
-        # --------------------------------------------------------
+        # Quicktest
         if quicktest:
             log(
                 f"{short_path(case_path)} — quicktest OK",
@@ -208,11 +273,11 @@ def cmd_run_(
                 debug=debug,
                 compact=compact,
             )
+            if compact:
+                print(f"[RUN] {short_path(case_path)} rc=0")
             return 0
 
-        # --------------------------------------------------------
-        # Dry-run: show what would happen
-        # --------------------------------------------------------
+        # Dry-run
         if dry_run:
             print("[RUN] DRY-RUN")
             print(f"  case: {short_path(case_path)}")
@@ -223,28 +288,36 @@ def cmd_run_(
             print("[DRY-RUN] run simulation completed.")
             return 0
 
-        # --------------------------------------------------------
         # Write metadata + golden.hash
-        # --------------------------------------------------------
+        log(
+            "writing meta.json and golden.hash",
+            level="verbose",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+            compact=compact,
+        )
+
         if author:
             manifest = loader.load_manifest()
             meta = manifest.setdefault("meta", {})
             meta["author"] = author
+            meta["email"] = ""
             (case_path / "manifest.json").write_text(
                 json.dumps(manifest, indent=2, ensure_ascii=False)
             )
 
-        meta_status_before = (case_path / "meta.json").exists()
-        hash_status_before = (case_path / "golden.hash").exists()
+        meta_path = case_path / "meta.json"
+        hash_path = case_path / "golden.hash"
+
+        meta_before = meta_path.exists()
+        hash_before = hash_path.exists()
 
         loader.write_meta()
         loader.write_golden_hash()
 
-        meta_path = case_path / "meta.json"
-        hash_path = case_path / "golden.hash"
-
-        meta_status = describe_file_update(meta_path, exist=meta_status_before)
-        hash_status = describe_file_update(hash_path, exist=hash_status_before)
+        meta_status = describe_file_update(meta_path, exist=meta_before)
+        hash_status = describe_file_update(hash_path, exist=hash_before)
 
         print_status(
             f"{short_path(case_path)} — run completed\n"
@@ -253,9 +326,6 @@ def cmd_run_(
             ok=True,
         )
 
-        # --------------------------------------------------------
-        # Sandbox cleanup
-        # --------------------------------------------------------
         if sandbox:
             shutil.rmtree(case_temp)
             log(
@@ -267,6 +337,8 @@ def cmd_run_(
                 compact=compact,
             )
 
+        if compact:
+            print(f"[RUN] {short_path(case_path)} rc=0")
         return 0
 
     # ------------------------------------------------------------
@@ -281,12 +353,28 @@ def cmd_run_(
         compact=compact,
     )
 
-    # Validate expected template + snippet + results
     expected = loader.load_expected()
 
-    # Build from each input
     for inp, exp in loader.load_input_result_pairs():
+        log(
+            f"validating input: {Path(inp.fullname).name}",
+            level="verbose",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+            compact=compact,
+        )
+
         parsed = parse_textfsm_to_dicts(expected.template.content, inp.content)
+        log(
+            f"parsed rows={len(parsed)}",
+            level="debug",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+            compact=compact,
+        )
+
         if parsed != exp.content:
             log(
                 f"result mismatch for {Path(inp.fullname).name}",
@@ -298,9 +386,7 @@ def cmd_run_(
             )
             return 1
 
-    # ------------------------------------------------------------
-    # Quicktest: stop here
-    # ------------------------------------------------------------
+    # Quicktest
     if quicktest:
         log(
             f"{short_path(case_path)} — quicktest OK",
@@ -310,11 +396,11 @@ def cmd_run_(
             debug=debug,
             compact=compact,
         )
+        if compact:
+            print(f"[RUN] {short_path(case_path)} rc=0")
         return 0
 
-    # ------------------------------------------------------------
-    # Dry-run: integration never writes
-    # ------------------------------------------------------------
+    # Dry-run
     if dry_run:
         print("[RUN] DRY-RUN")
         print(f"  case: {short_path(case_path)}")
@@ -322,9 +408,7 @@ def cmd_run_(
         print("[DRY-RUN] run simulation completed.")
         return 0
 
-    # ------------------------------------------------------------
-    # Normal integration run: no writes
-    # ------------------------------------------------------------
+    # Normal integration run
     log(
         f"{short_path(case_path)} — run completed (integration, no writes)",
         level="OK",
@@ -334,9 +418,6 @@ def cmd_run_(
         compact=compact,
     )
 
-    # ------------------------------------------------------------
-    # Sandbox cleanup
-    # ------------------------------------------------------------
     if sandbox:
         shutil.rmtree(case_temp)
         log(
@@ -347,5 +428,8 @@ def cmd_run_(
             debug=debug,
             compact=compact,
         )
+
+    if compact:
+        print(f"[RUN] {short_path(case_path)} rc=0")
 
     return 0
