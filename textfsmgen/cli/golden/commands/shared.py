@@ -567,13 +567,13 @@ def log(msg, *, level="info", indent=0, quiet=False, verbose=False, debug=False)
     """
     Unified logging helper with indentation, quiet mode, and debug mode.
     """
+
     # Quiet mode suppresses everything except FAIL and SUCCESS
     if quiet and level not in ("FAIL", "SUCCESS"):
         return
 
     # Debug mode prints everything
     if not debug:
-        # Skip debug-only logs
         if level == "debug":
             return
 
@@ -581,7 +581,18 @@ def log(msg, *, level="info", indent=0, quiet=False, verbose=False, debug=False)
         if not verbose and level in ("info", "warn", "merge"):
             return
 
-    # Prefix formatting
+    # ------------------------------------------------------------
+    # FIX: remove any existing [SEVERITY] prefix from msg
+    # ------------------------------------------------------------
+    if msg.startswith("["):
+        # strip leading "[XXX]" prefix
+        end = msg.find("]")
+        if end != -1:
+            msg = msg[end + 1 :].lstrip()
+
+    # ------------------------------------------------------------
+    # Add our own prefix
+    # ------------------------------------------------------------
     if level in ("OK", "SUCCESS", "FAIL", "DRY-RUN"):
         prefix = f"[{level}]"
     else:
