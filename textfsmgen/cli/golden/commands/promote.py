@@ -185,10 +185,6 @@ def cmd_promote_(
     rc = cmd_run_(
         case_path,
         quicktest=True,
-        # quiet=quiet,
-        # verbose=verbose,
-        # debug=debug,
-        # compact=compact,
     )
     if rc != 0:
         if sandbox or sandbox_keep:
@@ -381,10 +377,10 @@ def cmd_promote_(
     # ------------------------------------------------------------
     rc = cmd_run_(
         promote_path,
-        # quiet=quiet,
-        # verbose=verbose,
-        # debug=debug,
-        # compact=compact,
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+        compact=compact,
     )
 
     if rc != 0:
