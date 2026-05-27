@@ -24,6 +24,7 @@ from .commands.merge_plan import cmd_merge_plan
 from .commands.identical import cmd_identical
 from .commands.promote import cmd_promote
 from .commands.promote_plan import cmd_promote_plan
+from .commands.promote_review import cmd_promote_review
 
 
 __version__ = "1.0.0"
@@ -78,3 +79,4 @@ cli.add_command(cast(click.Command, cmd_identical))
 
 cli.add_command(cast(click.Command, cmd_promote))
 cli.add_command(cast(click.Command, cmd_promote_plan))
+cli.add_command(cast(click.Command, cmd_promote_review))
