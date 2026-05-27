@@ -1,156 +1,133 @@
+from __future__ import annotations
+
+from pathlib import Path
 import json
+import click
+import pathlib
 
-from textfsmgen.libs.common import parse_textfsm_to_dicts, extract_textfsm_headers
+from textfsmgen.libs.common import parse_textfsm_to_dicts
+from textfsmgen.libs import file
+
 from ..core.golden_case import GoldenCase
-from ..core.data_loader import extract_subpath_after
+from ..cli_decorator import timed_command
+from .shared import log, short_path, canonical_json
 
 
-def run_identical(case_dirs, compact=False, is_json=False):
+@click.command(
+    name="identical",
+    help="Identify integration cases that are completely identical (template, snippet, inputs, expected_results)."
+)
+@timed_command
+@click.option("--quiet", is_flag=True, help="Suppress non-essential output.")
+@click.option("--verbose", is_flag=True, help="Show detailed steps.")
+@click.option("--debug", is_flag=True, help="Show developer-level logs.")
+@click.option("--compact", is_flag=True, help="Compact summary output only.")
+@click.argument("srcs", nargs=-1, type=click.Path(exists=True))
+def cmd_identical(srcs, quiet, verbose, debug, compact):
+    return cmd_identical_(
+        src_paths=[Path(s).resolve() for s in srcs],
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+        compact=compact,
+    )
 
-    cases = [GoldenCase.from_path(p) for p in case_dirs]
 
-    # mapping: case_name -> list of identical cases
-    mapping = {str(c.case_dir): [str(c.case_dir)] for c in cases}
-
-    # ------------------------------------------------------------
-    # Outer loop: choose reference template
-    # ------------------------------------------------------------
-    for outer in cases:
-        outer_template = outer.data.load_expected().template.content
-        outer_columns = set(extract_textfsm_headers(outer_template))
-
-        # --------------------------------------------------------
-        # Inner loop: compare with every other case
-        # --------------------------------------------------------
-        for inner in cases:
-            if inner is outer:
-                continue
-
-            if _cases_are_identical(inner, outer_template, outer_columns):
-                mapping[str(outer.case_dir)].append(str(inner.case_dir))
-
-    # ------------------------------------------------------------
-    # Extract unique groups
-    # ------------------------------------------------------------
-    groups = _extract_identical_groups(mapping)
+def cmd_identical_(src_paths, *, quiet, verbose, debug, compact):
+    if not src_paths:
+        raise click.ClickException("No source cases provided.")
 
     # ------------------------------------------------------------
-    # Output
+    # 1. Load + validate cases
     # ------------------------------------------------------------
-    if is_json:
-        return _print_json(groups)
+    cases = []
+    validation_failures = []
 
-    if compact:
-        return _print_compact(groups)
+    for p in src_paths:
+        log(f"validating src: {short_path(p)}", level="info",
+            quiet=quiet, verbose=verbose, debug=debug, compact=compact)
 
-    return _print_normal(groups)
+        c = GoldenCase.from_path(p)
 
-
-# ======================================================================
-# INTERNAL HELPERS
-# ======================================================================
-
-
-def _cases_are_identical(inner, outer_template, outer_columns):
-    """
-    True if:
-    - outer template parses all inner inputs
-    - parsed rows == inner expected rows
-    - column sets match
-    """
-    for inp, res in inner.data.load_input_result_pairs():
-        sample = inp.content
-        expected_rows = res.content
-        try:
-            rows = parse_textfsm_to_dicts(outer_template, sample)
-        except Exception:  # noqa
-            return False
-
-        if not expected_rows or not rows:
-            return False
-
-        # Compare row content
-        if rows != expected_rows:
-            return False
-
-        # Compare columns
-        if not _columns_match(rows, expected_rows, outer_columns):
-            return False
-
-    return True
-
-
-def _columns_match(rows, expected_rows, outer_columns):
-    """
-    Ensure that:
-    - outer template columns == expected columns
-    - and rows contain only those columns
-    """
-    if not expected_rows:
-        return True
-
-    expected_cols = set(expected_rows[0].keys())
-    if expected_cols != outer_columns:
-        return False
-
-    for r in rows:
-        if set(r.keys()) != expected_cols:
-            return False
-
-    return True
-
-
-def _extract_identical_groups(mapping):
-    """
-    Convert mapping:
-        { "a": ["a", "b"], "b": ["b"], "c": ["c"] }
-    into unique groups:
-        [["a", "b"]]
-    """
-    seen = set()
-    groups = []
-
-    for key, group in mapping.items():
-        g = tuple(sorted(group))
-        if len(g) < 2:
+        if not c.is_integration():
+            validation_failures.append(f"{short_path(p)} is not an integration case")
             continue
-        if g not in seen:
-            seen.add(g)
-            groups.append(list(g))
 
-    return groups
+        try:
+            c.tested()
+        except Exception as e:
+            validation_failures.append(f"{short_path(p)} is not tested:\n{e}")
+            continue
 
+        log(f"{short_path(p)} — tested and valid", level="OK",
+            indent=2, quiet=quiet, verbose=verbose, debug=debug, compact=compact)
 
-# ======================================================================
-# OUTPUT MODES
-# ======================================================================
+        cases.append(c)
 
+    if validation_failures:
+        for msg in validation_failures:
+            log(msg, level="FAIL", quiet=False, verbose=True, debug=debug, compact=compact)
+        return 1
 
-def _print_normal(groups):
+    # ------------------------------------------------------------
+    # 2. Build canonical signatures for each case
+    # ------------------------------------------------------------
+    signatures = {}  # signature → list of cases
+
+    for c in cases:
+        expected = c.data.load_expected()
+
+        # Template + snippet
+        template = expected.template.content
+        snippet = expected.snippet.content
+
+        # Inputs
+        inputs = []
+        for inp in c.data.load_inputs():
+            name = Path(inp.fullname).name
+            inputs.append((name, inp.content))
+        inputs.sort()
+
+        # Expected results
+        results = []
+        for input_info, exp_info in c.data.load_input_result_pairs():
+            name = Path(exp_info.fullname).name
+            results.append((name, canonical_json(exp_info.content)))
+        results.sort()
+
+        signature = (
+            template,
+            snippet,
+            tuple(inputs),
+            tuple(results),
+        )
+
+        signatures.setdefault(signature, []).append(c)
+
+    # ------------------------------------------------------------
+    # 3. Collect identical groups
+    # ------------------------------------------------------------
+    groups = [group for group in signatures.values() if len(group) > 1]
+
+    # ------------------------------------------------------------
+    # 4. Compact mode
+    # ------------------------------------------------------------
+    if compact:
+        print(f"[IDENTICAL] Groups: {len(groups)}")
+        return 0
+
+    # ------------------------------------------------------------
+    # 5. Normal output
+    # ------------------------------------------------------------
     if not groups:
-        print("[IDENTICAL] No identical cases found.")
-        return
+        log("[IDENTICAL] No identical cases found", level="info",
+            quiet=quiet, verbose=True, debug=debug, compact=compact)
+        return 0
 
-    print("[IDENTICAL] Identical case groups:")
-    for group in groups:
-        clean_grp = [str(extract_subpath_after("golden", item)) for item in group]
-        print("  - " + ", ".join(clean_grp))
+    for idx, group in enumerate(groups, start=1):
+        print(f"[IDENTICAL] Group {idx}:")
+        for c in group:
+            print(f"  - {short_path(c.case_dir)}")
+        print()
 
-
-def _print_compact(groups):
-    count = len(groups)
-    print(f"[IDENTICAL] Groups: {count}")
-    if count > 0:
-        print("[IDENTICAL] Result: identical")
-    else:
-        print("[IDENTICAL] Result: distinct")
-
-
-def _print_json(groups):
-    clean_groups = []
-    for group in groups:
-        clean_grp = [str(extract_subpath_after("golden", item)) for item in group]
-        clean_groups.append(clean_grp)
-
-    obj = {"identical_groups": clean_groups}
-    print(json.dumps(obj, indent=2))
+    return 0

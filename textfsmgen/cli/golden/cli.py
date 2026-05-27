@@ -22,10 +22,8 @@ from .commands.merge_review import cmd_merge_review
 from .commands.merge_preview import cmd_merge_preview
 from .commands.merge_diff import cmd_merge_diff
 from .commands.merge_plan import cmd_merge_plan
+from .commands.identical import cmd_identical
 
-from .commands import (
-    identical as cmd_identical,
-)
 
 __version__ = "1.0.0"
 
@@ -75,15 +73,4 @@ cli.add_command(cast(click.Command, cmd_merge_preview))
 cli.add_command(cast(click.Command, cmd_merge_diff))
 cli.add_command(cast(click.Command, cmd_merge_plan))
 
-
-@cli.command()
-@click.option("--compact", is_flag=True)
-@click.option("--json", is_flag=True)
-@click.argument("srcs", nargs=-1)
-def identical(compact, json, srcs):
-    """Identify integration cases that produce identical results."""
-    return cmd_identical.run_identical(
-        [Path(p) for p in srcs],
-        compact=compact,
-        is_json=json,
-    )
+cli.add_command(cast(click.Command, cmd_identical))
