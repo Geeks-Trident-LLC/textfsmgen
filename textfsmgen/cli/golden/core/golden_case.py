@@ -68,7 +68,7 @@ class GoldenCase:
     def is_integration(self) -> bool:
         return self.data.is_integration_case()
 
-    def tested(self) -> None:
+    def tested(self):
         """
         Validate that this golden test case is internally consistent.
 
@@ -150,9 +150,9 @@ class GoldenCase:
         # ------------------------------------------------------------
         # All checks passed
         # ------------------------------------------------------------
-        return None
+        return True
 
-    def check(self, other: "GoldenCase") -> None:
+    def check(self, other: "GoldenCase"):
         """
         Validate that two GoldenCase instances are structurally compatible.
 
@@ -220,6 +220,7 @@ class GoldenCase:
                 f"  this case : {my_sig}\n"
                 f"  other case: {other_sig}"
             )
+        return True
 
     def _structure_signature(self) -> tuple[str, ...]:
         """
