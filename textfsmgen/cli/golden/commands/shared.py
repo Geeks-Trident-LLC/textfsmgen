@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import pathlib
 # ============================================================================
@@ -563,10 +564,29 @@ def _open_directory(path: Path):
         subprocess.run(["xdg-open", str(path)])
 
 
-def log(msg, *, level="info", indent=0, quiet=False, verbose=False, debug=False):
+def log(
+    msg,
+    *,
+    level="info",
+    indent=0,
+    quiet=False,
+    verbose=False,
+    debug=False,
+    compact=False,
+):
     """
-    Unified logging helper with indentation, quiet mode, and debug mode.
+    Unified logging helper with:
+      - quiet mode
+      - verbose mode
+      - debug mode
+      - compact mode (suppresses all logs)
+      - automatic severity prefixing
+      - prevention of double prefixes
     """
+
+    # Compact mode suppresses ALL logs
+    if compact:
+        return
 
     # Quiet mode suppresses everything except FAIL and SUCCESS
     if quiet and level not in ("FAIL", "SUCCESS"):
@@ -593,10 +613,10 @@ def log(msg, *, level="info", indent=0, quiet=False, verbose=False, debug=False)
     # ------------------------------------------------------------
     # Add our own prefix
     # ------------------------------------------------------------
-    if level in ("OK", "SUCCESS", "FAIL", "DRY-RUN"):
-        prefix = f"[{level}]"
+    if level.upper() in ("OK", "SUCCESS", "FAIL", "DRY-RUN"):
+        prefix = f"[{level.upper()}]"
     else:
-        prefix = f"[{level}]"
+        prefix = f"[{level.lower()}]"
 
     pad = " " * indent
     print(f"{prefix} {pad}{msg}")
@@ -610,3 +630,7 @@ def short_path(value):
         value = str(value)
 
     return file.path_name(value)
+
+
+def canonical_json(obj) -> str:
+    return json.dumps(obj, sort_keys=True, indent=2, ensure_ascii=False)

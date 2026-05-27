@@ -1,262 +1,335 @@
 from __future__ import annotations
 
 from pathlib import Path
-import json
 import difflib
+import click
 
 from textfsmgen.libs.common import parse_textfsm_to_dicts
 
-from ..core.data_loader import extract_subpath_after
 from ..core.golden_case import GoldenCase
-from ..core.utils import catch_path_errors
+from ..cli_decorator import timed_command
+from .shared import log, short_path, canonical_json
 
-# Reuse merge-preview helpers
-from .merge_preview import (
-    merge_preview_load_and_validate_cases,
-    merge_preview_validate_builder_type,
-    merge_preview_select_reference_case,
-    merge_preview_simulate_input_merge,
+
+# ======================================================================
+# CLI ENTRYPOINT
+# ======================================================================
+
+
+@click.command(
+    name="merge-diff",
+    help="Show diffs between golden expected_results and results from merged reference template.",
 )
-
-
-@catch_path_errors
-def merge_diff(
-    srcs: list[Path],
-    *,
-    compact: bool = False,
-    is_json: bool = False,
-    diff_count: int = 2,
-    diff_names_only: bool = False,
-) -> int:
-
-    display = not (compact or is_json)
-
-    if display:
-        print("[MERGE-DIFF] Starting diff...\n")
-
-    # 1. Load and validate cases
-    cases = merge_preview_load_and_validate_cases(srcs, display=display)
-    if cases is None:
-        return 1
-
-    # 2. Validate builder type
-    builder_type = merge_preview_validate_builder_type(cases, display=display)
-    if builder_type is None:
-        return 1
-
-    # 3. Evaluate reference candidates (internal only)
-    ref_case, candidate_info = merge_preview_select_reference_case(cases, display=False)
-    if ref_case is None:
-        if is_json:
-            print(merge_diff_json_fail(candidate_info))
-        else:
-            print("[MERGE-DIFF] No valid reference case found. Merge would fail.")
-        return 1
-
-    ref_case_name = extract_subpath_after("golden", ref_case.case_dir)
-
-    if display:
-        print(f"[MERGE-DIFF] Reference case: {ref_case_name}")
-
-    # 4. Simulate input merge
-    merge_actions, simulated_inputs = merge_preview_simulate_input_merge(
-        cases, ref_case
+@timed_command
+@click.option("--quiet", is_flag=True, help="Suppress non-essential output.")
+@click.option("--verbose", is_flag=True, help="Show detailed steps.")
+@click.option("--debug", is_flag=True, help="Show developer-level logs.")
+@click.option("--summary", is_flag=True, help="Show summary of merge-diff results.")
+@click.option("--compact", is_flag=True, help="Compact summary output only.")
+@click.argument("srcs", nargs=-1, type=click.Path(exists=True))
+def cmd_merge_diff(srcs, quiet, verbose, debug, summary, compact):
+    return cmd_merge_diff_(
+        src_paths=[Path(s).resolve() for s in srcs],
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+        summary=summary,
+        compact=compact,
     )
 
-    if display:
-        print(f"[MERGE-DIFF] Total merged inputs: {len(simulated_inputs)}\n")
 
-    # 5. Generate merged expected_results
-    merged_results = merge_diff_generate_results(ref_case, simulated_inputs)
+# ======================================================================
+# MAIN IMPLEMENTATION
+# ======================================================================
 
-    # 6. Compare merged vs golden expected_results
-    diffs = merge_diff_compare_results(ref_case, merged_results)
 
-    # 7. Output modes
-    # JSON mode
-    if is_json:
-        print(merge_diff_json_success(ref_case_name, diffs, len(simulated_inputs)))
-        return 0 if all(v == "match" for v in diffs.values()) else 1
+def cmd_merge_diff_(
+    src_paths: list[Path],
+    *,
+    quiet=False,
+    verbose=False,
+    debug=False,
+    summary=False,
+    compact=False,
+):
+    if not src_paths:
+        raise click.ClickException("No source cases provided.")
 
-    # Compact mode
-    if compact:
-        merge_diff_print_compact(ref_case_name, diffs, len(simulated_inputs))
-        return 0 if all(v == "match" for v in diffs.values()) else 1
+    # ------------------------------------------------------------
+    # 1. Load and validate src cases
+    # ------------------------------------------------------------
+    src_cases: list[GoldenCase] = []
+    validation_failures: list[str] = []
 
-    # Names-only mode
-    if diff_names_only:
-        diff_list = [name for name, status in diffs.items() if status != "match"]
+    for p in src_paths:
+        log(
+            f"validating src: {short_path(p)}",
+            level="info",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+            compact=compact,
+        )
 
-        print("[MERGE-DIFF] Files with differences:")
-        if not diff_list:
-            print("  (none)")
-            print("\n[MERGE-DIFF] All results match.")
-            return 0
+        c = GoldenCase.from_path(p)
 
-        for name in diff_list:
-            print(f"  expected_results/{name}_result.json")
+        if not c.is_integration():
+            validation_failures.append(
+                f"src {short_path(p)} is not an integration case"
+            )
+            continue
 
-        print("\n[MERGE-DIFF] Differences detected.")
+        try:
+            c.tested()
+        except Exception as e:
+            validation_failures.append(f"src {short_path(p)} is not tested:\n{e}")
+            continue
+
+        log(
+            f"{short_path(p)} — tested and valid",
+            level="OK",
+            indent=2,
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+            compact=compact,
+        )
+
+        src_cases.append(c)
+
+    if validation_failures:
+        for msg in validation_failures:
+            log(
+                msg,
+                level="FAIL",
+                quiet=False,
+                verbose=True,
+                debug=debug,
+                compact=compact,
+            )
         return 1
 
-    # Normal mode
-    merge_diff_print_normal(ref_case, diffs, merged_results, diff_count)
-    all_match = all(v == "match" for v in diffs.values())
+    # ------------------------------------------------------------
+    # 2. Find reference candidate (same as merge-preview)
+    # ------------------------------------------------------------
+    reference_case: GoldenCase | None = None
 
-    if all_match:
-        print("\n[MERGE-DIFF] All results match.")
-        return 0
+    for candidate in src_cases:
+        cand_name = short_path(candidate.case_dir)
 
-    print("\n[MERGE-DIFF] Differences detected.")
-    return 1
-
-
-# ---------------------------------------------------------------------------
-# Generate merged expected_results
-# ---------------------------------------------------------------------------
-
-
-def merge_diff_generate_results(ref_case: GoldenCase, simulated_inputs: dict[str, str]):
-    template = ref_case.data.load_expected().template.content
-    merged = {}
-
-    for name, content in simulated_inputs.items():
-        rows = parse_textfsm_to_dicts(template, content)
-        merged[name] = rows
-
-    return merged
-
-
-# ---------------------------------------------------------------------------
-# Compare merged vs golden expected_results
-# ---------------------------------------------------------------------------
-
-
-def merge_diff_compare_results(
-    ref_case: GoldenCase, merged_results: dict[str, list[dict]]
-):
-    diffs = {}
-    for name, merged_rows in merged_results.items():
-        base = Path(name).stem
-        base_dir_path = Path(name).parent.parent
-        expected_path = base_dir_path / "expected_results" / f"{base}_result.json"
-        if not expected_path.exists():
-            diffs[name] = "missing"
-            continue
-
-        expected_rows = json.loads(expected_path.read_text())
-
-        if expected_rows == merged_rows:
-            diffs[name] = "match"
-        else:
-            diffs[name] = "diff"
-
-    return diffs
-
-
-# ---------------------------------------------------------------------------
-# Normal mode printing
-# ---------------------------------------------------------------------------
-
-
-def merge_diff_print_normal(ref_case, diffs, merged_results, diff_count):
-    for name, status in diffs.items():
-        # name is now a full path, so extract just the filename
-        file_path = Path(name)
-        base = file_path.stem  # e.g. "list_files.txt"
-        result_path = extract_subpath_after(
-            "golden",
-            file_path.parent.parent / "expected_results" / f"{base}_result.json",
+        log(
+            f"trying candidate: {cand_name}",
+            level="info",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+            compact=compact,
         )
 
-        # Print the diff header
-        print(f"[DIFF] {result_path}")
+        cand_template = candidate.data.load_expected().template.content
 
-        if status == "match":
-            print("  ✓ No differences\n")
-            continue
+        candidate_ok = True
 
-        # Golden expected result file
-        expected_path = ref_case.case_dir / "expected_results" / f"{base}_result.json"
-        expected_text = expected_path.read_text() if expected_path.exists() else ""
-
-        # Generated merged result
-        merged_text = json.dumps(merged_results[name], indent=2)
-
-        # Unified diff lines
-        diff_lines = list(
-            difflib.unified_diff(
-                expected_text.splitlines(),
-                merged_text.splitlines(),
-                fromfile="expected",
-                tofile="merged",
-                lineterm="",
-            )
-        )
-
-        printed = 0
-        for line in diff_lines:
-            print(line)
-            if line.startswith("@@"):
-                printed += 1
-                if printed >= diff_count:
-                    print("  ... (diff truncated)\n")
+        for other in src_cases:
+            for input_info, exp_info in other.data.load_input_result_pairs():
+                rows = parse_textfsm_to_dicts(cand_template, input_info.content)
+                if rows != exp_info.content:
+                    candidate_ok = False
                     break
+            if not candidate_ok:
+                break
 
-        print()
+        if candidate_ok:
+            reference_case = candidate
+            log(
+                f"{cand_name} selected as reference candidate",
+                level="SUCCESS",
+                indent=2,
+                quiet=quiet,
+                verbose=verbose,
+                debug=debug,
+                compact=compact,
+            )
+            break
+        else:
+            log(
+                f"{cand_name} rejected as reference candidate",
+                level="info",
+                indent=2,
+                quiet=quiet,
+                verbose=verbose,
+                debug=debug,
+                compact=compact,
+            )
 
+    if reference_case is None:
+        if compact:
+            print("[MERGE-DIFF] Reference: (none)")
+            print("[MERGE-DIFF] Inputs: 0, diffs: 0")
+            print("[MERGE-DIFF] Result: fail")
+        else:
+            log(
+                "no valid reference candidates found",
+                level="FAIL",
+                quiet=False,
+                verbose=True,
+                debug=debug,
+                compact=compact,
+            )
+        return 1
 
-# ---------------------------------------------------------------------------
-# Compact mode
-# ---------------------------------------------------------------------------
+    ref_name = short_path(reference_case.case_dir)
 
+    # ------------------------------------------------------------
+    # 3. Diff template + snippet + expected_results
+    # ------------------------------------------------------------
+    ref_expected = reference_case.data.load_expected()
+    ref_template_text = ref_expected.template.content
+    ref_snippet_text = ref_expected.snippet.content
 
-def merge_diff_print_compact(ref_case_name, diffs, total_inputs):
-    diff_count = sum(1 for v in diffs.values() if v != "match")
+    diffs: dict[str, list[str]] = {}
+    total_inputs = 0
 
-    print(f"[MERGE-DIFF] Reference: {ref_case_name}")
-    print(f"[MERGE-DIFF] Inputs: {total_inputs}, diffs: {diff_count}")
-    print(f"[MERGE-DIFF] Result: {'success' if diff_count == 0 else 'fail'}")
+    for c in src_cases:
+        if c.case_dir == reference_case.case_dir:
+            continue
 
+        case_name = short_path(c.case_dir)
 
-# ---------------------------------------------------------------------------
-# JSON mode
-# ---------------------------------------------------------------------------
+        # Template diff
+        case_template_text = c.data.load_expected().template.content
+        if case_template_text != ref_template_text:
+            diffs[f"{case_name}/template"] = ["template diff"]
+            if not compact:
+                diff_lines = list(
+                    difflib.unified_diff(
+                        ref_template_text.splitlines(keepends=True),
+                        case_template_text.splitlines(keepends=True),
+                        fromfile=f"ref:{ref_name}/template",
+                        tofile=f"case:{case_name}/template",
+                    )
+                )
+                for line in diff_lines:
+                    print(line, end="")
 
+        # Snippet diff
+        case_snippet_text = c.data.load_expected().snippet.content
+        if case_snippet_text != ref_snippet_text:
+            diffs[f"{case_name}/snippet"] = ["snippet diff"]
+            if not compact:
+                diff_lines = list(
+                    difflib.unified_diff(
+                        ref_snippet_text.splitlines(keepends=True),
+                        case_snippet_text.splitlines(keepends=True),
+                        fromfile=f"ref:{ref_name}/snippet",
+                        tofile=f"case:{case_name}/snippet",
+                    )
+                )
+                for line in diff_lines:
+                    print(line, end="")
 
-def merge_diff_json_success(ref_case_name, diffs, total_inputs):
-    clean_diffs = {}
-    for file_name, value in diffs.items():
-        file_path = Path(file_name)
-        key = (
-            str(extract_subpath_after("golden", file_path))
-            if file_path.is_absolute()
-            else str(file_path)
+        # expected_results diff
+        for input_info, exp_info in c.data.load_input_result_pairs():
+            total_inputs += 1
+
+            merged_rows = parse_textfsm_to_dicts(ref_template_text, input_info.content)
+            merged_json = canonical_json(merged_rows)
+            golden_json = canonical_json(exp_info.content)
+
+            if merged_json != golden_json:
+                diffs[short_path(exp_info.fullname)] = ["expected_results diff"]
+                if not compact:
+                    diff_lines = list(
+                        difflib.unified_diff(
+                            golden_json.splitlines(keepends=True),
+                            merged_json.splitlines(keepends=True),
+                            fromfile=f"golden:{short_path(exp_info.fullname)}",
+                            tofile=f"merged:{short_path(exp_info.fullname)}",
+                        )
+                    )
+                    for line in diff_lines:
+                        print(line, end="")
+
+    # ------------------------------------------------------------
+    # 4. Compact summary
+    # ------------------------------------------------------------
+    if compact:
+        print(f"[MERGE-DIFF] Reference: {ref_name}")
+        print(f"[MERGE-DIFF] Inputs: {total_inputs}, diffs: {len(diffs)}")
+        print(f"[MERGE-DIFF] Result: {'fail' if diffs else 'success'}")
+        return 1 if diffs else 0
+
+    # ------------------------------------------------------------
+    # 5. Full summary (if --summary)
+    # ------------------------------------------------------------
+    if summary:
+        log(
+            "===== MERGE-DIFF SUMMARY =====",
+            level="info",
+            quiet=False,
+            verbose=True,
+            debug=debug,
+            compact=compact,
         )
-        clean_diffs[key] = value
 
-    data = {
-        "reference_case": str(ref_case_name),
-        "inputs_total": total_inputs,
-        "diffs": clean_diffs,
-        "result": "success" if all(v == "match" for v in diffs.values()) else "fail",
-    }
-    return json.dumps(data, indent=2)
-
-
-def merge_diff_json_fail(candidate_info):
-    reference_candidates = {}
-    for case_path, value in candidate_info.items():
-        key = (
-            str(extract_subpath_after("golden", case_path))
-            if isinstance(case_path, Path) and case_path.is_absolute()
-            else str(case_path)
+        log(
+            f"reference_case: {ref_name}",
+            level="info",
+            quiet=False,
+            verbose=True,
+            debug=debug,
+            compact=compact,
         )
-        reference_candidates[key] = value
 
-    data = {
-        "reference_case": None,
-        "reference_candidates": reference_candidates,
-        "result": "fail",
-    }
-    return json.dumps(data, indent=2)
+        log(
+            f"inputs_total: {total_inputs}",
+            level="info",
+            quiet=False,
+            verbose=True,
+            debug=debug,
+            compact=compact,
+        )
+
+        log(
+            f"diff_files: {len(diffs)}",
+            level="info",
+            quiet=False,
+            verbose=True,
+            debug=debug,
+            compact=compact,
+        )
+
+        if diffs:
+            log(
+                "files_with_diffs:",
+                level="info",
+                quiet=False,
+                verbose=True,
+                debug=debug,
+                compact=compact,
+            )
+            for name in sorted(diffs.keys()):
+                print(f"  - {name}")
+        else:
+            log(
+                "files_with_diffs: (none)",
+                level="info",
+                quiet=False,
+                verbose=True,
+                debug=debug,
+                compact=compact,
+            )
+
+        log(
+            "================================",
+            level="info",
+            quiet=False,
+            verbose=True,
+            debug=debug,
+            compact=compact,
+        )
+
+    # ------------------------------------------------------------
+    # 6. Exit code
+    # ------------------------------------------------------------
+    return 1 if diffs else 0

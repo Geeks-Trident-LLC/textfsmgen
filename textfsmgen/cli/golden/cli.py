@@ -20,9 +20,9 @@ from .commands.batch_quicktest import cmd_batch_quicktest
 from .commands.merge import cmd_merge
 from .commands.merge_review import cmd_merge_review
 from .commands.merge_preview import cmd_merge_preview
+from .commands.merge_diff import cmd_merge_diff
 
 from .commands import (
-    # merge_diff as cmd_merge_diff,
     identical as cmd_identical,
 )
 
@@ -71,23 +71,7 @@ cli.add_command(cast(click.Command, cmd_batch_quicktest))
 cli.add_command(cast(click.Command, cmd_merge))
 cli.add_command(cast(click.Command, cmd_merge_review))
 cli.add_command(cast(click.Command, cmd_merge_preview))
-
-
-# @cli.command("merge-diff")
-# @click.option("--compact", is_flag=True)
-# @click.option("--json", "is_json", is_flag=True)
-# @click.option("--diff-count", type=int, default=2)
-# @click.option("--diff-names-only", is_flag=True)
-# @click.argument("srcs", nargs=-1)
-# def merge_diff(compact, is_json, diff_count, diff_names_only, srcs):
-#     """Diff merged expected_results against golden expected_results."""
-#     return cmd_merge_diff.merge_diff(
-#         [Path(p) for p in srcs],
-#         compact=compact,
-#         is_json=is_json,
-#         diff_count=diff_count,
-#         diff_names_only=diff_names_only,
-#     )
+cli.add_command(cast(click.Command, cmd_merge_diff))
 
 
 @cli.command()
