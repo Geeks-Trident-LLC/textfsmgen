@@ -41,9 +41,11 @@ from .shared import _open_directory, log, short_path
 @click.option("--verbose", is_flag=True, help="Show detailed merge steps.")
 @click.option("--debug", is_flag=True, help="Show ultra-verbose developer logs.")
 @click.option("--quiet", is_flag=True, help="Suppress all non-essential output.")
+@click.option("--compact", is_flag=True, help="Compact summary output only.")
 @click.option("--author", help="Set author metadata for the merged case.")
 @click.option(
-    "--open-after",
+    "--open",
+    "open_after",
     is_flag=True,
     help="Open the merged case directory after completion.",
 )
@@ -60,6 +62,7 @@ def cmd_merge(
     verbose,
     debug,
     quiet,
+    compact,
     author,
     open_after,
 ):
@@ -74,6 +77,7 @@ def cmd_merge(
         verbose=verbose,
         debug=debug,
         quiet=quiet,
+        compact=compact,
         author=author,
         open_after=open_after,
     )
@@ -96,6 +100,7 @@ def cmd_merge_(
     verbose=False,
     debug=False,
     quiet=False,
+    compact=False,
     author=None,
     open_after=False,
 ):
@@ -141,13 +146,23 @@ def cmd_merge_(
         quiet=quiet,
         verbose=verbose,
         debug=debug,
+        compact=compact,
     )
 
     # ------------------------------------------------------------
     # 2. Validate all cases
     # ------------------------------------------------------------
     builder = cases[0].data.load_manifest().get("builder", "")
-    log(f"builder = {builder}", level="OK", quiet=quiet, verbose=verbose, debug=debug)
+    log(
+        f"builder = {builder}",
+        level="OK",
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+        compact=compact,
+    )
+
+    validation_failures = []
 
     for c in cases:
         log(
@@ -156,23 +171,27 @@ def cmd_merge_(
             quiet=quiet,
             verbose=verbose,
             debug=debug,
+            compact=compact,
         )
 
         ok = validate_case_path(c.case_dir)
         if not ok:
-            raise click.ClickException(f"[FAIL] {ok}")
+            validation_failures.append(f"[FAIL] {ok}")
+            continue
 
         if not c.is_integration():
-            raise click.ClickException(
+            validation_failures.append(
                 f"[FAIL] merge is only supported for integration cases: {short_path(c.case_dir)}"
             )
+            continue
 
         try:
             c.tested()
         except Exception as e:
-            raise click.ClickException(
+            validation_failures.append(
                 f"[FAIL] case {short_path(c.case_dir)} is not tested:\n{e}"
             )
+            continue
 
         log(
             f"{short_path(c.case_dir)} — tested and compatible",
@@ -181,7 +200,25 @@ def cmd_merge_(
             quiet=quiet,
             verbose=verbose,
             debug=debug,
+            compact=compact,
         )
+
+    if validation_failures:
+        if compact:
+            print("[MERGE] Reference: (none)")
+            print("[MERGE] Result: fail")
+            return 1
+
+        for msg in validation_failures:
+            log(
+                msg,
+                level="FAIL",
+                quiet=False,
+                verbose=True,
+                debug=debug,
+                compact=compact,
+            )
+        return 1
 
     # Cross-check all pairs
     for outer in cases:
@@ -199,12 +236,32 @@ def cmd_merge_(
         quiet=quiet,
         verbose=verbose,
         debug=debug,
+        compact=compact,
     )
 
     reference, diagnostics = _find_reference_case(cases, verbose, debug, quiet)
 
-    for diag in diagnostics:
-        print(diag)
+    if reference is None:
+        if compact:
+            print("[MERGE] Reference: (none)")
+            print("[MERGE] Result: fail")
+        else:
+            if not quiet and not compact:
+                for diag in diagnostics:
+                    print(diag)
+            log(
+                "no valid reference candidates found",
+                level="FAIL",
+                quiet=False,
+                verbose=True,
+                debug=debug,
+                compact=compact,
+            )
+        return 1
+
+    if not quiet and not compact:
+        for diag in diagnostics:
+            print(diag)
 
     log(
         f"Reference case selected: {short_path(reference.case_dir)}",
@@ -212,6 +269,7 @@ def cmd_merge_(
         quiet=quiet,
         verbose=verbose,
         debug=debug,
+        compact=compact,
     )
 
     ref_loader = reference.data
@@ -228,6 +286,7 @@ def cmd_merge_(
             quiet=quiet,
             verbose=verbose,
             debug=debug,
+            compact=compact,
         )
         return 0
 
@@ -240,6 +299,7 @@ def cmd_merge_(
         quiet=quiet,
         verbose=verbose,
         debug=debug,
+        compact=compact,
     )
 
     (dst / "inputs").mkdir(parents=True)
@@ -253,14 +313,24 @@ def cmd_merge_(
         quiet=quiet,
         verbose=verbose,
         debug=debug,
+        compact=compact,
     )
 
     # ------------------------------------------------------------
     # 5. Merge inputs
     # ------------------------------------------------------------
-    log("merging inputs...", level="info", quiet=quiet, verbose=verbose, debug=debug)
+    log(
+        "merging inputs...",
+        level="info",
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+        compact=compact,
+    )
 
-    merged_inputs, rename_logs = _merge_inputs(dst, cases, verbose, debug, quiet)
+    merged_inputs, rename_logs = _merge_inputs(
+        dst, cases, verbose, debug, quiet, compact
+    )
 
     for log_line in rename_logs:
         print(log_line)
@@ -274,6 +344,7 @@ def cmd_merge_(
         quiet=quiet,
         verbose=verbose,
         debug=debug,
+        compact=compact,
     )
 
     (dst / "expected" / "textfsm.template").write_text(ref_template)
@@ -286,6 +357,7 @@ def cmd_merge_(
         quiet=quiet,
         verbose=verbose,
         debug=debug,
+        compact=compact,
     )
     log(
         f"snippet length = {len(ref_snippet)} bytes",
@@ -294,6 +366,7 @@ def cmd_merge_(
         quiet=quiet,
         verbose=verbose,
         debug=debug,
+        compact=compact,
     )
 
     # ------------------------------------------------------------
@@ -305,10 +378,11 @@ def cmd_merge_(
         quiet=quiet,
         verbose=verbose,
         debug=debug,
+        compact=compact,
     )
 
     written_results = _write_expected_results(
-        dst, merged_inputs, ref_template, verbose, debug, quiet
+        dst, merged_inputs, ref_template, verbose, debug, quiet, compact
     )
 
     # ------------------------------------------------------------
@@ -331,6 +405,7 @@ def cmd_merge_(
         quiet=quiet,
         verbose=verbose,
         debug=debug,
+        compact=compact,
     )
 
     # Write manifest.json
@@ -344,7 +419,17 @@ def cmd_merge_(
         quiet=quiet,
         verbose=verbose,
         debug=debug,
+        compact=compact,
     )
+
+    # ------------------------------------------------------------
+    # 5. Compact mode
+    # ------------------------------------------------------------
+    if compact:
+        print(f"[MERGE] Reference: {short_path(reference.case_dir)}")
+        print(f"[MERGE] Inputs: {len(merged_inputs)}")
+        print("[MERGE] Result: success")
+        return 0
 
     # ------------------------------------------------------------
     # 9. Summary
@@ -357,6 +442,7 @@ def cmd_merge_(
             quiet=False,
             verbose=True,
             debug=debug,
+            compact=compact,
         )
         log(
             f"reference case: {short_path(reference.case_dir)}",
@@ -364,6 +450,7 @@ def cmd_merge_(
             quiet=False,
             verbose=True,
             debug=debug,
+            compact=compact,
         )
         log(
             f"inputs merged: {len(merged_inputs)}",
@@ -371,6 +458,7 @@ def cmd_merge_(
             quiet=False,
             verbose=True,
             debug=debug,
+            compact=compact,
         )
         for p in merged_inputs:
             print(f"  - {short_path(p)}")
@@ -380,6 +468,7 @@ def cmd_merge_(
             quiet=False,
             verbose=True,
             debug=debug,
+            compact=compact,
         )
         for p in written_results:
             print(f"  - {short_path(p)}")
@@ -389,6 +478,7 @@ def cmd_merge_(
             quiet=False,
             verbose=True,
             debug=debug,
+            compact=compact,
         )
 
     # ------------------------------------------------------------
@@ -401,6 +491,7 @@ def cmd_merge_(
             quiet=quiet,
             verbose=verbose,
             debug=debug,
+            compact=compact,
         )
 
         log(
@@ -410,6 +501,7 @@ def cmd_merge_(
             quiet=quiet,
             verbose=verbose,
             debug=debug,
+            compact=compact,
         )
 
         shutil.rmtree(dst)
@@ -420,6 +512,7 @@ def cmd_merge_(
             quiet=quiet,
             verbose=verbose,
             debug=debug,
+            compact=compact,
         )
         return 0
 
@@ -430,6 +523,7 @@ def cmd_merge_(
             quiet=quiet,
             verbose=verbose,
             debug=debug,
+            compact=compact,
         )
         return 0
 
@@ -442,6 +536,7 @@ def cmd_merge_(
         quiet=quiet,
         verbose=verbose,
         debug=debug,
+        compact=compact,
     )
 
     if open_after:
@@ -500,7 +595,7 @@ def _find_reference_case(cases, verbose, debug, quiet):
     raise click.ClickException("[FAIL] no valid reference case found.")
 
 
-def _merge_inputs(dst, cases, verbose, debug, quiet):
+def _merge_inputs(dst, cases, verbose, debug, quiet, compact):
     dst_inputs = dst / "inputs"
     merged = {}
     logs = []
@@ -512,6 +607,7 @@ def _merge_inputs(dst, cases, verbose, debug, quiet):
         quiet=quiet,
         verbose=verbose,
         debug=debug,
+        compact=compact,
     )
 
     for case in cases:
@@ -526,6 +622,7 @@ def _merge_inputs(dst, cases, verbose, debug, quiet):
                 quiet=quiet,
                 verbose=verbose,
                 debug=debug,
+                compact=compact,
             )
 
             if name not in merged:
@@ -544,6 +641,7 @@ def _merge_inputs(dst, cases, verbose, debug, quiet):
                 quiet=quiet,
                 verbose=verbose,
                 debug=debug,
+                compact=compact,
             )
 
             base = Path(name).stem
@@ -567,7 +665,9 @@ def _merge_inputs(dst, cases, verbose, debug, quiet):
     return written, logs
 
 
-def _write_expected_results(dst, merged_inputs, template, verbose, debug, quiet):
+def _write_expected_results(
+    dst, merged_inputs, template, verbose, debug, quiet, compact
+):
     out_dir = dst / "expected_results"
     written = []
 
@@ -582,6 +682,7 @@ def _write_expected_results(dst, merged_inputs, template, verbose, debug, quiet)
             quiet=quiet,
             verbose=verbose,
             debug=debug,
+            compact=compact,
         )
 
         stem = inp_path.stem
@@ -596,6 +697,7 @@ def _write_expected_results(dst, merged_inputs, template, verbose, debug, quiet)
             quiet=quiet,
             verbose=verbose,
             debug=debug,
+            compact=compact,
         )
 
     return written
