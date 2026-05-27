@@ -21,6 +21,7 @@ from .commands.merge import cmd_merge
 from .commands.merge_review import cmd_merge_review
 from .commands.merge_preview import cmd_merge_preview
 from .commands.merge_diff import cmd_merge_diff
+from .commands.merge_plan import cmd_merge_plan
 
 from .commands import (
     identical as cmd_identical,
@@ -72,6 +73,7 @@ cli.add_command(cast(click.Command, cmd_merge))
 cli.add_command(cast(click.Command, cmd_merge_review))
 cli.add_command(cast(click.Command, cmd_merge_preview))
 cli.add_command(cast(click.Command, cmd_merge_diff))
+cli.add_command(cast(click.Command, cmd_merge_plan))
 
 
 @cli.command()
