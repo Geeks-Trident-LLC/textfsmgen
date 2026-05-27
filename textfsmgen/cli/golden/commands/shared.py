@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import os
-import pathlib
 # ============================================================================
 # Imports
 # ============================================================================
@@ -626,9 +625,6 @@ def short_path(value):
     """
     Convert absolute paths to short golden-relative paths.
     """
-    if isinstance(value, pathlib.Path):
-        value = str(value)
-
     return file.path_name(value)
 
 

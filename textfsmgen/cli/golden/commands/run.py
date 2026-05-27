@@ -1,73 +1,67 @@
-"""
-Implementation of:
-
-    textfsmgen tester run <case>
-
-This action performs a non-destructive test run.
-
-MAIN CASE:
-    - Writes meta.json
-    - Writes golden.hash
-
-INTEGRATION CASE:
-    - Writes nothing
-
-NEVER writes inside:
-    canonical/
-    expected/
-    expected_results/
-    inputs/
-"""
-
 from __future__ import annotations
 
 from pathlib import Path
+import json
 import shutil
-
 import click
 
-from .shared import run_canonical, run_expected
-from ..core.utils import catch_path_errors
+from textfsmgen.libs.common import parse_textfsm_to_dicts
 
 from ..core.golden_case import GoldenCase
-
-from textfsmgen.libs import file
-
-from ..cli_decorator import (
-    timed_command,
-    validate_sandbox_flags,
-)
-from ..core.utils import validate_case_path
+from ..core.utils import catch_path_errors, validate_case_path
+from ..cli_decorator import timed_command, validate_sandbox_flags
+from .shared import log, short_path, describe_file_update, print_status
 
 
 @click.command(
-    name="run", help="Run a golden test case in normal, sandbox, or quicktest modes."
+    name="run",
+    help="Run a golden test case in normal, sandbox, dry-run, or quicktest modes.",
 )
 @timed_command
 @validate_sandbox_flags
 @click.option(
-    "--sandbox",
-    is_flag=True,
-    help="Run inside <case>.temp and delete the sandbox on success.",
+    "--sandbox", is_flag=True, help="Run inside <case>.temp and delete on success."
 )
 @click.option(
-    "--sandbox-keep",
-    is_flag=True,
-    help="Run inside <case>.temp and preserve the sandbox directory.",
+    "--sandbox-keep", is_flag=True, help="Run inside <case>.temp and preserve it."
 )
 @click.option(
-    "--quicktest",
-    is_flag=True,
-    help="Run a fast, no-write, logic-only validation (no temp dirs).",
+    "--dry-run", "--dryrun", is_flag=True, help="Simulate run without writing files."
 )
+@click.option(
+    "--quicktest", is_flag=True, help="Fast logic-only validation (no writes)."
+)
+@click.option(
+    "--author", default="", help="Optional author override for manifest.json."
+)
+@click.option("--quiet", is_flag=True, help="Suppress non-essential output.")
+@click.option("--verbose", is_flag=True, help="Show detailed steps.")
+@click.option("--debug", is_flag=True, help="Show developer-level logs.")
+@click.option("--compact", is_flag=True, help="Compact summary output only.")
 @click.argument("case", type=click.Path())
-def cmd_run(sandbox, sandbox_keep, quicktest, case):
-    """Execute a golden test case."""
+def cmd_run(
+    sandbox,
+    sandbox_keep,
+    dry_run,
+    quicktest,
+    author,
+    quiet,
+    verbose,
+    debug,
+    compact,
+    case,
+):
     return cmd_run_(
         Path(case).resolve(),
         sandbox=sandbox,
         sandbox_keep=sandbox_keep,
+        dry_run=dry_run,
         quicktest=quicktest,
+        author=author,
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+        compact=compact,
     )
 
 
@@ -75,64 +69,283 @@ def cmd_run(sandbox, sandbox_keep, quicktest, case):
 def cmd_run_(
     case_path: Path,
     *,
-    sandbox: bool = False,
-    sandbox_keep: bool = False,
-    quicktest: bool = False,
+    sandbox=False,
+    sandbox_keep=False,
+    dry_run=False,
+    quicktest=False,
+    author="",
+    quiet=False,
+    verbose=False,
+    debug=False,
+    compact=False,
 ) -> int:
 
+    # ------------------------------------------------------------
+    # 0. Validate case path
+    # ------------------------------------------------------------
     ok = validate_case_path(case_path)
     if not ok:
-        click.echo(f"[FAIL] {ok}")
+        log(
+            f"{ok}",
+            level="FAIL",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+            compact=compact,
+        )
         return 1
 
-    # --------------------------------------------------------------
-    # Quicktest: fast, no writes, no temp dirs
-    # --------------------------------------------------------------
-    if quicktest:
-        case = GoldenCase.from_path(case_path)
-        return (
-            run_canonical(case, quicktest=True)
-            if case.is_main()
-            else run_expected(case, quicktest=True)
-        )
+    # ------------------------------------------------------------
+    # 1. Sandbox setup
+    # ------------------------------------------------------------
+    real_case_path = case_path
+    case_temp = None
 
-    # --------------------------------------------------------------
-    # Sandbox modes: create <case>.temp and run inside it
-    # --------------------------------------------------------------
     if sandbox or sandbox_keep:
-        temp_path = case_path.with_name(case_path.name + ".temp")
-        click.echo(f"[sandbox] Using temporary directory: {file.path_name(temp_path)}")
+        case_temp = real_case_path.with_name(real_case_path.name + ".temp")
 
-        if temp_path.exists():
-            shutil.rmtree(temp_path)
-
-        shutil.copytree(case_path, temp_path)
-        case_path = temp_path
-
-        case = GoldenCase.from_path(case_path)
-        rc = (
-            run_canonical(case, quicktest=False)
-            if case.is_main()
-            else run_expected(case, quicktest=False)
+        log(
+            f"Using sandbox directory: {short_path(case_temp)}",
+            level="sandbox",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+            compact=compact,
         )
 
-        if sandbox:
-            if rc == 0:
-                click.echo("[sandbox] Cleaning up temporary directory.")
-                shutil.rmtree(case_path)
-            else:
-                click.echo("[sandbox] Run failed. Temporary directory preserved.")
-        else:
-            click.echo("[sandbox] Preserving temporary directory.")
+        if case_temp.exists():
+            shutil.rmtree(case_temp)
 
-        return rc
+        shutil.copytree(real_case_path, case_temp)
+        case_path = case_temp
 
-    # --------------------------------------------------------------
-    # Normal run (in-place)
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------
+    # 2. Load case
+    # ------------------------------------------------------------
     case = GoldenCase.from_path(case_path)
-    return (
-        run_canonical(case, quicktest=False)
-        if case.is_main()
-        else run_expected(case, quicktest=False)
+    loader = case.data
+
+    # ------------------------------------------------------------
+    # 3. MAIN CASE WORKFLOW
+    # ------------------------------------------------------------
+    if case.is_main():
+        log(
+            f"{short_path(case_path)} — main case",
+            level="info",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+            compact=compact,
+        )
+
+        # Load canonical sample
+        canonical = loader.load_canonical()
+        sample = canonical.sample.content
+
+        # Build from canonical sample
+        built = loader.build(sample)
+
+        # Validate template
+        if built.template != canonical.template.content:
+            log(
+                "canonical template mismatch",
+                level="FAIL",
+                quiet=quiet,
+                verbose=verbose,
+                debug=debug,
+                compact=compact,
+            )
+            return 1
+
+        # Validate snippet
+        if built.snippet != canonical.snippet.content:
+            log(
+                "canonical snippet mismatch",
+                level="FAIL",
+                quiet=quiet,
+                verbose=verbose,
+                debug=debug,
+                compact=compact,
+            )
+            return 1
+
+        # Validate canonical result
+        parsed = parse_textfsm_to_dicts(built.template, sample)
+        if parsed != canonical.result.content:
+            log(
+                "canonical result mismatch",
+                level="FAIL",
+                quiet=quiet,
+                verbose=verbose,
+                debug=debug,
+                compact=compact,
+            )
+            return 1
+
+        # Validate all inputs
+        for inp, exp in loader.load_input_result_pairs():
+            parsed = parse_textfsm_to_dicts(built.template, inp.content)
+            if parsed != exp.content:
+                log(
+                    f"input mismatch: {Path(inp.fullname).name}",
+                    level="FAIL",
+                    quiet=quiet,
+                    verbose=verbose,
+                    debug=debug,
+                    compact=compact,
+                )
+                return 1
+
+        # --------------------------------------------------------
+        # Quicktest: stop here
+        # --------------------------------------------------------
+        if quicktest:
+            log(
+                f"{short_path(case_path)} — quicktest OK",
+                level="OK",
+                quiet=quiet,
+                verbose=verbose,
+                debug=debug,
+                compact=compact,
+            )
+            return 0
+
+        # --------------------------------------------------------
+        # Dry-run: show what would happen
+        # --------------------------------------------------------
+        if dry_run:
+            print("[RUN] DRY-RUN")
+            print(f"  case: {short_path(case_path)}")
+            print("  would update:")
+            print("    manifest.json (if author provided)")
+            print("    golden.hash")
+            print("    meta.json")
+            print("[DRY-RUN] run simulation completed.")
+            return 0
+
+        # --------------------------------------------------------
+        # Write metadata + golden.hash
+        # --------------------------------------------------------
+        if author:
+            manifest = loader.load_manifest()
+            meta = manifest.setdefault("meta", {})
+            meta["author"] = author
+            (case_path / "manifest.json").write_text(
+                json.dumps(manifest, indent=2, ensure_ascii=False)
+            )
+
+        meta_status_before = (case_path / "meta.json").exists()
+        hash_status_before = (case_path / "golden.hash").exists()
+
+        loader.write_meta()
+        loader.write_golden_hash()
+
+        meta_path = case_path / "meta.json"
+        hash_path = case_path / "golden.hash"
+
+        meta_status = describe_file_update(meta_path, exist=meta_status_before)
+        hash_status = describe_file_update(hash_path, exist=hash_status_before)
+
+        print_status(
+            f"{short_path(case_path)} — run completed\n"
+            f"  Updated: {short_path(meta_path)} ({meta_status})\n"
+            f"  Updated: {short_path(hash_path)} ({hash_status})",
+            ok=True,
+        )
+
+        # --------------------------------------------------------
+        # Sandbox cleanup
+        # --------------------------------------------------------
+        if sandbox:
+            shutil.rmtree(case_temp)
+            log(
+                "[sandbox] cleaned up sandbox directory",
+                level="sandbox",
+                quiet=quiet,
+                verbose=verbose,
+                debug=debug,
+                compact=compact,
+            )
+
+        return 0
+
+    # ------------------------------------------------------------
+    # 4. INTEGRATION CASE WORKFLOW
+    # ------------------------------------------------------------
+    log(
+        f"{short_path(case_path)} — integration case",
+        level="info",
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+        compact=compact,
     )
+
+    # Validate expected template + snippet + results
+    expected = loader.load_expected()
+
+    # Build from each input
+    for inp, exp in loader.load_input_result_pairs():
+        parsed = parse_textfsm_to_dicts(expected.template.content, inp.content)
+        if parsed != exp.content:
+            log(
+                f"result mismatch for {Path(inp.fullname).name}",
+                level="FAIL",
+                quiet=quiet,
+                verbose=verbose,
+                debug=debug,
+                compact=compact,
+            )
+            return 1
+
+    # ------------------------------------------------------------
+    # Quicktest: stop here
+    # ------------------------------------------------------------
+    if quicktest:
+        log(
+            f"{short_path(case_path)} — quicktest OK",
+            level="OK",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+            compact=compact,
+        )
+        return 0
+
+    # ------------------------------------------------------------
+    # Dry-run: integration never writes
+    # ------------------------------------------------------------
+    if dry_run:
+        print("[RUN] DRY-RUN")
+        print(f"  case: {short_path(case_path)}")
+        print("  integration case: would NOT write anything")
+        print("[DRY-RUN] run simulation completed.")
+        return 0
+
+    # ------------------------------------------------------------
+    # Normal integration run: no writes
+    # ------------------------------------------------------------
+    log(
+        f"{short_path(case_path)} — run completed (integration, no writes)",
+        level="OK",
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+        compact=compact,
+    )
+
+    # ------------------------------------------------------------
+    # Sandbox cleanup
+    # ------------------------------------------------------------
+    if sandbox:
+        shutil.rmtree(case_temp)
+        log(
+            "[sandbox] cleaned up sandbox directory",
+            level="sandbox",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+            compact=compact,
+        )
+
+    return 0
