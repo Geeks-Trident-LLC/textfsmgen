@@ -173,6 +173,7 @@ def cmd_promote_(
     canonical_sample = None
     canonical_result = None
 
+    name = ""
     for inp in loader.load_inputs():
         sample = inp.content
         name = Path(inp.fullname).name
@@ -211,15 +212,32 @@ def cmd_promote_(
     # ------------------------------------------------------------
     # DRY-RUN: stop here
     # ------------------------------------------------------------
+    # ------------------------------------------------------------
+    # DRY-RUN: show what would happen
+    # ------------------------------------------------------------
     if dry_run:
-        log(
-            "promotion simulation completed.",
-            level="DRY-RUN",
-            quiet=quiet,
-            verbose=verbose,
-            debug=debug,
-            compact=compact,
+        print("[PROMOTE] DRY-RUN")
+        print(f"  source:        {short_path(case.case_dir)}")
+        print(f"  promote-path:  {short_path(promote_path)}")
+        print(f"  canonical sample: {name}")
+        print(f"  canonical result: {len(canonical_result)} rows")
+        print("  manifest metadata:")
+        print(f"    author:       {author}")
+        print(f"    email:        {email}")
+        print(f"    notes:        {notes}")
+        print(f"    description:  {description}")
+        print("  would write:")
+        print("    manifest.json")
+        print("    canonical/textfsm.template")
+        print("    canonical/snippet.txt")
+        print("    canonical/sample.txt")
+        print("    canonical/result.json")
+        print(f"    inputs/* ({len(list(loader.load_inputs()))} files)")
+        print(
+            f"    expected_results/* ({len(list(loader.load_input_result_pairs()))} files)"
         )
+        print("  would run quicktest on promoted case")
+        print("[DRY-RUN] promotion simulation completed.")
         return 0
 
     # ------------------------------------------------------------
