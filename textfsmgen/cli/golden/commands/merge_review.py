@@ -23,15 +23,17 @@ from .shared import log, short_path
 @click.option("--quiet", is_flag=True, help="Suppress non-essential output.")
 @click.option("--verbose", is_flag=True, help="Show detailed steps.")
 @click.option("--debug", is_flag=True, help="Show developer-level logs.")
+@click.option("--summary", is_flag=True, help="Show summary of merge-review results.")
 @click.argument("dst", type=click.Path(exists=True))
 @click.argument("srcs", nargs=-1, type=click.Path(exists=True))
-def cmd_merge_review(dst, srcs, quiet, verbose, debug):
+def cmd_merge_review(dst, srcs, quiet, verbose, debug, summary):
     return cmd_merge_review_(
         dst=Path(dst).resolve(),
         src_paths=[Path(s).resolve() for s in srcs],
         quiet=quiet,
         verbose=verbose,
         debug=debug,
+        summary=summary,
     )
 
 
@@ -41,7 +43,13 @@ def cmd_merge_review(dst, srcs, quiet, verbose, debug):
 
 
 def cmd_merge_review_(
-    dst: Path, src_paths: list[Path], *, quiet=False, verbose=False, debug=False
+    dst: Path,
+    src_paths: list[Path],
+    *,
+    quiet=False,
+    verbose=False,
+    debug=False,
+    summary=False,
 ):
     if not src_paths:
         raise click.ClickException("No source cases provided.")
@@ -91,10 +99,7 @@ def cmd_merge_review_(
     )
 
     # ------------------------------------------------------------
-    # 2. Load and validate src cases
-    # ------------------------------------------------------------
-    # ------------------------------------------------------------
-    # 2. Load and validate src cases
+    # 2. Load and validate src cases (integration, tested, compatible)
     # ------------------------------------------------------------
     src_cases: list[GoldenCase] = []
     compat_failures: list[str] = []
@@ -112,16 +117,14 @@ def cmd_merge_review_(
 
         # Must be integration
         if not c.is_integration():
-            compat_failures.append(
-                f"[FAIL] src {short_path(p)} is not an integration case"
-            )
+            compat_failures.append(f"src {short_path(p)} is not an integration case")
             continue
 
         # Must be tested
         try:
             c.tested()
         except Exception as e:
-            compat_failures.append(f"[FAIL] src {short_path(p)} is not tested:\n{e}")
+            compat_failures.append(f"src {short_path(p)} is not tested:\n{e}")
             continue
 
         # Must be compatible with dst
@@ -129,16 +132,15 @@ def cmd_merge_review_(
             ok = dst_case.check(c)
             if not ok:
                 compat_failures.append(
-                    f"[FAIL] src {short_path(p)} is not compatible with dst"
+                    f"src {short_path(p)} is not compatible with dst"
                 )
                 continue
         except Exception as e:
             compat_failures.append(
-                f"[FAIL] compatibility check failed for src {short_path(p)}:\n{e}"
+                f"compatibility check failed for src {short_path(p)}:\n{e}"
             )
             continue
 
-        # If we reach here → src is valid
         log(
             f"{short_path(p)} — tested and compatible",
             level="OK",
@@ -159,7 +161,9 @@ def cmd_merge_review_(
     # ------------------------------------------------------------
     # 3. Use dst.template to parse src.inputs and compare to src.expected_results
     # ------------------------------------------------------------
-    all_ok = True
+    any_ok = False
+    matching_srcs = []
+    nonmatching_srcs = []
 
     for c in src_cases:
         log(
@@ -169,6 +173,8 @@ def cmd_merge_review_(
             verbose=verbose,
             debug=debug,
         )
+
+        src_matched = True
 
         for input_info, exp_info in c.data.load_input_result_pairs():
             short_in = short_path(input_info.fullname)
@@ -194,8 +200,17 @@ def cmd_merge_review_(
                 debug=debug,
             )
 
-            if rows != exp_info.content:
-                all_ok = False
+            if rows == exp_info.content:
+                log(
+                    f"{short_in} matches {short_exp} ({len(rows)} rows)",
+                    level="OK",
+                    indent=4,
+                    quiet=quiet,
+                    verbose=verbose,
+                    debug=debug,
+                )
+            else:
+                src_matched = False
                 log(
                     f"mismatch for {short_in}",
                     level="FAIL",
@@ -220,20 +235,67 @@ def cmd_merge_review_(
                     verbose=verbose,
                     debug=debug,
                 )
-            else:
-                log(
-                    f"{short_in} matches {short_exp} ({len(rows)} rows)",
-                    level="OK",
-                    indent=4,
-                    quiet=quiet,
-                    verbose=verbose,
-                    debug=debug,
-                )
+
+        if src_matched:
+            any_ok = True
+            matching_srcs.append(c.case_dir)
+        else:
+            nonmatching_srcs.append(c.case_dir)
 
     # ------------------------------------------------------------
-    # 4. Final verdict
+    # 4. Summary (optional)
     # ------------------------------------------------------------
-    if all_ok:
+    if summary:
+        log(
+            "===== MERGE-REVIEW SUMMARY =====",
+            level="info",
+            quiet=False,
+            verbose=True,
+            debug=debug,
+        )
+
+        log(
+            f"dst: {short_path(dst)}",
+            level="info",
+            quiet=False,
+            verbose=True,
+            debug=debug,
+        )
+
+        log(
+            f"valid reference candidate: {'YES' if any_ok else 'NO'}",
+            level="info",
+            quiet=False,
+            verbose=True,
+            debug=debug,
+        )
+
+        log("matching srcs:", level="info", quiet=False, verbose=True, debug=debug)
+        if matching_srcs:
+            for p in matching_srcs:
+                print(f"  - {short_path(p)}")
+        else:
+            print("  (none)")
+
+        log("non-matching srcs:", level="info", quiet=False, verbose=True, debug=debug)
+        if nonmatching_srcs:
+            for p in nonmatching_srcs:
+                print(f"  - {short_path(p)}")
+        else:
+            print("  (none)")
+
+        log(
+            "================================",
+            level="info",
+            quiet=False,
+            verbose=True,
+            debug=debug,
+        )
+
+    # ------------------------------------------------------------
+    # 5. Final verdict
+    # ------------------------------------------------------------
+    if any_ok:
         log(
             f"dst {short_path(dst)} IS a valid reference candidate",
             level="SUCCESS",

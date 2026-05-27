@@ -71,6 +71,7 @@ cli.add_command(cast(click.Command, cmd_batch_quicktest))
 cli.add_command(cast(click.Command, cmd_merge))
 cli.add_command(cast(click.Command, cmd_merge_review))
 
+
 @cli.command("merge-preview")
 @click.option("--compact", is_flag=True)
 @click.option("--json", "is_json", is_flag=True)
