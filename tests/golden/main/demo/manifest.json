@@ -1,11 +1,9 @@
 {
   "builder": "tabular",
-  "parameters": {
-
-  },
+  "parameters": {},
   "meta": {
-    "author": "demo",
-    "email": "demo@demo.com",
+    "author": "dummy",
+    "email": "",
     "description": "",
     "notes": "",
     "schema_version": "1.0"

@@ -26,6 +26,7 @@ from .commands.promote import cmd_promote
 from .commands.promote_plan import cmd_promote_plan
 from .commands.promote_review import cmd_promote_review
 from .commands.promote_diff import cmd_promote_diff
+from .commands.promote_verify import cmd_promote_verify
 
 
 __version__ = "1.0.0"
@@ -82,3 +83,4 @@ cli.add_command(cast(click.Command, cmd_promote))
 cli.add_command(cast(click.Command, cmd_promote_plan))
 cli.add_command(cast(click.Command, cmd_promote_review))
 cli.add_command(cast(click.Command, cmd_promote_diff))
+cli.add_command(cast(click.Command, cmd_promote_verify))

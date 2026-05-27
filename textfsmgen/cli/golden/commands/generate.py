@@ -17,7 +17,9 @@ from ..core.golden_case import GoldenCase
 from .shared import _open_directory
 
 
-@click.command(name="generate")
+@click.command(
+    name="generate", help="Generate expected artifacts for an existing case."
+)
 @timed_command
 @validate_sandbox_flags
 @click.option("--author", required=True, help="Set the author for the generating case.")

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import pytest
 import os
 from pathlib import Path
@@ -14,6 +15,80 @@ from click.testing import CliRunner
 @pytest.fixture
 def runner():
     return CliRunner()
+
+
+@pytest.fixture
+def valid_case(tmp_path):
+    """
+    Creates a fully valid minimal INTEGRATION golden test case:
+
+    integration/demo/
+        inputs/demo.txt
+        expected_results/demo_result.json
+        expected/textfsm.template
+        expected/snippet.txt
+        manifest.json
+    """
+
+    case = tmp_path / "tests" / "golden" / "integration" / "demo"
+    case.mkdir(parents=True)
+
+    # Directories
+    (case / "inputs").mkdir()
+    (case / "expected_results").mkdir()
+    (case / "expected").mkdir()
+
+    # Minimal valid TextFSM template
+    template = """\
+Value name (\\S+)
+
+Start
+  ^${name}$$ -> Record
+"""
+    (case / "expected" / "textfsm.template").write_text(template)
+
+    # Minimal snippet (not used by parser but required)
+    (case / "expected" / "snippet.txt").write_text("word(var_name)")
+
+    # Input file
+    (case / "inputs" / "demo.txt").write_text("hello")
+
+    # Expected result
+    expected = [{"name": "hello"}]
+    (case / "expected_results" / "demo_result.json").write_text(
+        json.dumps(expected, indent=2)
+    )
+
+    # Manifest
+    manifest = {
+        "name": "demo",
+        "author": "tester",
+        "description": "valid minimal test case",
+        "version": 1,
+    }
+    (case / "manifest.json").write_text(json.dumps(manifest, indent=2))
+
+    return case
+
+
+
+@pytest.fixture
+def tmpcase(tmp_path):
+    """Creates a minimal golden test case directory."""
+    case = tmp_path / "tests" / "golden" / "integration" / "demo"
+    case.mkdir(parents=True)
+
+    # minimal authoritative files
+    (case / "inputs").mkdir()
+    (case / "expected_results").mkdir()
+    (case / "expected").mkdir()
+
+    (case / "inputs" / "demo.txt").write_text("hello")
+    (case / "expected_results" / "demo_result.json").write_text("[]")
+    (case / "expected" / "textfsm.template").write_text("")
+    (case / "expected" / "snippet.txt").write_text("")
+
+    return case
 
 
 @pytest.fixture

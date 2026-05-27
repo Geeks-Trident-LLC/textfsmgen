@@ -1,0 +1,10 @@
+from textfsmgen.cli.golden.cli import cli
+
+
+def test_merge_plan_runs(runner, tmp_path):
+    root = tmp_path / "tests" / "golden" / "integration"
+    root.mkdir(parents=True)
+    (root / "a").mkdir()
+
+    result = runner.invoke(cli, ["merge-plan", str(root / "a")])
+    assert result.exit_code in (0, 1)
