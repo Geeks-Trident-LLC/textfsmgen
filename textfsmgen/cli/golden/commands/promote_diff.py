@@ -6,7 +6,6 @@ import shutil
 import difflib
 import click
 
-
 from ..core.golden_case import GoldenCase
 from ..core.utils import catch_path_errors, validate_case_path
 from ..cli_decorator import timed_command, validate_sandbox_flags
@@ -35,7 +34,6 @@ from .shared import log, short_path
 @click.option(
     "--manifest", "diff_manifest", is_flag=True, help="Diff manifest.json only."
 )
-@click.option("--all", "diff_all", is_flag=True, help="Diff everything (default).")
 @click.option(
     "--json", "json_output", is_flag=True, help="Output machine-readable JSON summary."
 )
@@ -53,7 +51,6 @@ def cmd_promote_diff(
     diff_results,
     diff_inputs,
     diff_manifest,
-    diff_all,
     json_output,
     quiet,
     verbose,
@@ -61,6 +58,7 @@ def cmd_promote_diff(
     compact,
     case,
 ):
+    diff_all = not (diff_template or diff_snippet or diff_results or diff_inputs)
     return cmd_promote_diff_(
         Path(case).resolve(),
         sandbox=sandbox,
@@ -438,14 +436,23 @@ def cmd_promote_diff_(
     # ------------------------------------------------------------
     # 13. Normal summary
     # ------------------------------------------------------------
+    def status(value):
+        if value is False or value == []:
+            return "identical"
+        if value is True:
+            return "diff"
+        if isinstance(value, list):
+            return f"diff ({len(value)})"
+        return "diff"
+
     print("[PROMOTE-DIFF]")
     print(f"  source:     {short_path(case_path)}")
     print(f"  main:       {short_path(main_path)}")
-    print(f"  template:   {diffs['template']}")
-    print(f"  snippet:    {diffs['snippet']}")
-    print(f"  manifest:   {diffs['manifest']}")
-    print(f"  results:    {diffs['results']}")
-    print(f"  inputs:     {diffs['inputs']}")
+    print(f"  template:   {status(diffs['template'])}")
+    print(f"  snippet:    {status(diffs['snippet'])}")
+    print(f"  manifest:   {status(diffs['manifest'])}")
+    print(f"  results:    {status(diffs['results'])}")
+    print(f"  inputs:     {status(diffs['inputs'])}")
 
     # ------------------------------------------------------------
     # 14. Sandbox cleanup
