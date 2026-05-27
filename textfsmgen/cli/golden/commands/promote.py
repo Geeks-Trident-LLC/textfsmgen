@@ -98,21 +98,27 @@ def cmd_promote_(
     # ------------------------------------------------------------
     # 0. Resolve sandbox destination
     # ------------------------------------------------------------
-    real_dst = None
+    real_dst = case_path
     if sandbox or sandbox_keep:
-        real_dst = case_path
-        case_path = case_path.with_name(case_path.name + ".temp")
+        sandbox_path = case_path.with_name(case_path.name + ".temp")
 
         log(
-            f"Using sandbox directory: {short_path(case_path)}",
+            f"Using sandbox directory: {short_path(sandbox_path)}",
             level="sandbox",
             quiet=quiet,
             verbose=verbose,
             debug=debug,
         )
 
-        if case_path.exists():
-            shutil.rmtree(case_path)
+        # Remove old sandbox
+        if sandbox_path.exists():
+            shutil.rmtree(sandbox_path)
+
+        # COPY integration case → sandbox
+        shutil.copytree(real_dst, sandbox_path)
+
+        # Now operate inside sandbox
+        case_path = sandbox_path
 
     # ------------------------------------------------------------
     # 1. Load and validate integration case (using run(...quicktest=True))
