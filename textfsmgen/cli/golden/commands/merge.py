@@ -312,16 +312,20 @@ def cmd_merge_(
     )
 
     # ------------------------------------------------------------
-    # 8. Write metadata
+    # 8. Write manifest.json (correct behavior)
     # ------------------------------------------------------------
-    meta = {
-        "author": author or "",
-        "notes": "",
-        "description": "",
-    }
+    # Use manifest from the first src case as the base
+    manifest = cases[0].data.load_manifest()
+
+    # Update meta fields
+    meta = manifest.setdefault("meta", {})
+    meta["author"] = author or ""
+    meta["email"] = ""
+    meta["notes"] = ""
+    meta["description"] = ""
 
     log(
-        f"meta.json content: {meta}",
+        f"manifest meta updated: {meta}",
         level="debug",
         indent=2,
         quiet=quiet,
@@ -329,7 +333,18 @@ def cmd_merge_(
         debug=debug,
     )
 
-    (dst / "meta.json").write_text(json.dumps(meta, indent=2))
+    # Write manifest.json
+    manifest_path = dst / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False))
+
+    log(
+        f"wrote manifest.json → {short_path(manifest_path)}",
+        level="OK",
+        indent=2,
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+    )
 
     # ------------------------------------------------------------
     # 9. Summary
