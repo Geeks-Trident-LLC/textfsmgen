@@ -38,9 +38,6 @@ from .shared import log, short_path
 @click.option(
     "--json", "json_output", is_flag=True, help="Output machine-readable JSON summary."
 )
-@click.option(
-    "--json-only", is_flag=True, help="Output JSON only, no human-readable output."
-)
 @click.option("--quiet", is_flag=True, help="Suppress non-essential output.")
 @click.option("--verbose", is_flag=True, help="Show detailed steps.")
 @click.option("--debug", is_flag=True, help="Show developer-level logs.")
@@ -56,7 +53,6 @@ def cmd_promote_diff(
     diff_inputs,
     diff_manifest,
     json_output,
-    json_only,
     quiet,
     verbose,
     debug,
@@ -79,7 +75,6 @@ def cmd_promote_diff(
         diff_manifest=diff_manifest,
         diff_all=diff_all,
         json_output=json_output,
-        json_only=json_only,
         quiet=quiet,
         verbose=verbose,
         debug=debug,
@@ -101,7 +96,6 @@ def cmd_promote_diff_(
     diff_manifest=False,
     diff_all=False,
     json_output=False,
-    json_only=False,
     quiet=False,
     verbose=False,
     debug=False,
@@ -111,12 +105,12 @@ def cmd_promote_diff_(
     json_events = []
     json_summary = {}
 
-    def record(step, status, **details):
+    def record_fail(message: str, diff_lines: list[str] | None = None):
         json_events.append(
             {
-                "step": step,
-                "status": status,
-                "details": details,
+                "status": "fail",
+                "message": message,
+                "diff": diff_lines if diff_lines is not None else [],
             }
         )
 
@@ -125,21 +119,19 @@ def cmd_promote_diff_(
     # ------------------------------------------------------------
     ok = validate_case_path(case_path)
     if not ok:
-        record("validate-case", "fail", message=str(ok))
-        if json_output or json_only:
-            print(json.dumps({"steps": json_events}, indent=2))
+        record_fail(str(ok))
+        if json_output:
+            print(json.dumps({"events": json_events}, indent=2))
         return 1
 
     case = GoldenCase.from_path(case_path)
     if not case.is_integration():
-        record("validate-case", "fail", message="not an integration case")
-        if json_output or json_only:
-            print(json.dumps({"steps": json_events}, indent=2))
+        record_fail("not an integration case")
+        if json_output:
+            print(json.dumps({"events": json_events}, indent=2))
         return 1
 
-    record("validate-case", "success", path=str(case_path))
-
-    if not json_only:
+    if not json_output:
         log(
             f"{short_path(case_path)} — integration case",
             level="info",
@@ -158,14 +150,12 @@ def cmd_promote_diff_(
     main_path = Path(*parts)
 
     if not main_path.exists():
-        record("locate-main-case", "fail", path=str(main_path))
-        if json_output or json_only:
-            print(json.dumps({"steps": json_events}, indent=2))
+        record_fail(f"main case does not exist: {main_path}")
+        if json_output:
+            print(json.dumps({"events": json_events}, indent=2))
         return 1
 
-    record("locate-main-case", "success", path=str(main_path))
-
-    if not json_only:
+    if not json_output:
         log(
             f"main case: {short_path(main_path)}",
             level="info",
@@ -187,9 +177,7 @@ def cmd_promote_diff_(
         case_temp = real_case_path.with_name(real_case_path.name + ".temp")
         sandbox_info["path"] = str(case_temp)
 
-        record("sandbox-create", "success", path=str(case_temp))
-
-        if not json_only:
+        if not json_output:
             log(
                 f"[sandbox] copying integration case to {short_path(case_temp)}",
                 level="sandbox",
@@ -210,8 +198,6 @@ def cmd_promote_diff_(
     # ------------------------------------------------------------
     integ = GoldenCase.from_path(case_path).data
     main = GoldenCase.from_path(main_path).data
-
-    record("load-cases", "success")
 
     # ------------------------------------------------------------
     # 4. Determine diff scope
@@ -259,9 +245,9 @@ def cmd_promote_diff_(
                 "integration/expected/textfsm.template",
                 "main/canonical/textfsm.template",
             )
-            record("diff-template", "fail", diff_lines=len(diff_lines))
+            record_fail("template mismatch", diff_lines)
 
-            if not json_only:
+            if not json_output:
                 log(
                     "template mismatch",
                     level="FAIL",
@@ -272,8 +258,6 @@ def cmd_promote_diff_(
                 )
                 for line in diff_lines:
                     print(line)
-        else:
-            record("diff-template", "success")
 
     # ------------------------------------------------------------
     # 7. Snippet diff
@@ -290,9 +274,9 @@ def cmd_promote_diff_(
                 "integration/expected/snippet.txt",
                 "main/canonical/snippet.txt",
             )
-            record("diff-snippet", "fail", diff_lines=len(diff_lines))
+            record_fail("snippet mismatch", diff_lines)
 
-            if not json_only:
+            if not json_output:
                 log(
                     "snippet mismatch",
                     level="FAIL",
@@ -303,8 +287,6 @@ def cmd_promote_diff_(
                 )
                 for line in diff_lines:
                     print(line)
-        else:
-            record("diff-snippet", "success")
 
     # ------------------------------------------------------------
     # 8. Expected results diff
@@ -322,8 +304,8 @@ def cmd_promote_diff_(
 
             if main_expected_result is None:
                 mismatches.append(name)
-                record("diff-result", "fail", file=name, reason="missing")
-                if not json_only:
+                record_fail(f"missing expected_result: {name}", diff_lines=[])
+                if not json_output:
                     log(
                         f"missing expected_result in main case: {name}",
                         level="FAIL",
@@ -345,9 +327,9 @@ def cmd_promote_diff_(
                     f"integration/expected_results/{name}",
                     f"main/expected_results/{name}",
                 )
-                record("diff-result", "fail", file=name, diff_lines=len(diff_lines))
+                record_fail(f"result mismatch: {name}", diff_lines)
 
-                if not json_only:
+                if not json_output:
                     log(
                         f"result mismatch: {name}",
                         level="FAIL",
@@ -358,8 +340,6 @@ def cmd_promote_diff_(
                     )
                     for line in diff_lines:
                         print(line)
-            else:
-                record("diff-result", "success", file=name)
 
         diffs["results"] = mismatches
 
@@ -379,8 +359,8 @@ def cmd_promote_diff_(
 
             if main_input is None:
                 mismatches.append(name)
-                record("diff-input", "fail", file=name, reason="missing")
-                if not json_only:
+                record_fail(f"missing input: {name}", diff_lines=[])
+                if not json_output:
                     log(
                         f"missing input in main case: {name}",
                         level="FAIL",
@@ -402,9 +382,9 @@ def cmd_promote_diff_(
                     f"integration/inputs/{name}",
                     f"main/inputs/{name}",
                 )
-                record("diff-input", "fail", file=name, diff_lines=len(diff_lines))
+                record_fail(f"input mismatch: {name}", diff_lines)
 
-                if not json_only:
+                if not json_output:
                     log(
                         f"input mismatch: {name}",
                         level="FAIL",
@@ -415,8 +395,6 @@ def cmd_promote_diff_(
                     )
                     for line in diff_lines:
                         print(line)
-            else:
-                record("diff-input", "success", file=name)
 
         diffs["inputs"] = mismatches
 
@@ -435,9 +413,9 @@ def cmd_promote_diff_(
                 "integration/manifest.json",
                 "main/manifest.json",
             )
-            record("diff-manifest", "fail", diff_lines=len(diff_lines))
+            record_fail("manifest mismatch", diff_lines)
 
-            if not json_only:
+            if not json_output:
                 log(
                     "manifest mismatch",
                     level="FAIL",
@@ -448,8 +426,6 @@ def cmd_promote_diff_(
                 )
                 for line in diff_lines:
                     print(line)
-        else:
-            record("diff-manifest", "success")
 
     # ------------------------------------------------------------
     # 11. Build summary
@@ -469,44 +445,38 @@ def cmd_promote_diff_(
         "manifest": status(diffs["manifest"]),
         "results": status(diffs["results"]),
         "inputs": status(diffs["inputs"]),
+        "total_diffs": (
+            int(diffs["template"])
+            + int(diffs["snippet"])
+            + int(diffs["manifest"])
+            + len(diffs["results"])
+            + len(diffs["inputs"])
+        ),
     }
 
     # ------------------------------------------------------------
     # 12. JSON output
     # ------------------------------------------------------------
-    if json_output or json_only:
+    if json_output:
         output = {
             "case": str(case_path),
             "main_case": str(main_path),
             "sandbox": sandbox_info,
-            "steps": json_events,
+            "events": json_events,
             "summary": json_summary,
         }
         print(json.dumps(output, indent=2))
-        has_diff = any(
-            [
-                diffs["template"],
-                diffs["snippet"],
-                diffs["manifest"],
-                diffs["results"],
-                diffs["inputs"],
-            ]
-        )
+        has_diff = json_summary["total_diffs"] > 0
         return 0 if not has_diff else 1
 
     # ------------------------------------------------------------
     # 13. Compact summary
     # ------------------------------------------------------------
     if compact:
-        diff_count = (
-            int(diffs["template"])
-            + int(diffs["snippet"])
-            + int(diffs["manifest"])
-            + len(diffs["results"])
-            + len(diffs["inputs"])
+        print(
+            f"[PROMOTE-DIFF] {short_path(case_path)} diffs={json_summary['total_diffs']}"
         )
-        print(f"[PROMOTE-DIFF] {short_path(case_path)} diffs={diff_count}")
-        return 0 if diff_count == 0 else 1
+        return 0 if json_summary["total_diffs"] == 0 else 1
 
     # ------------------------------------------------------------
     # 14. Human summary
@@ -526,9 +496,8 @@ def cmd_promote_diff_(
     if sandbox:
         shutil.rmtree(case_temp)
         sandbox_info["kept"] = False
-        record("sandbox-cleanup", "success")
 
-        if not json_only:
+        if not json_output:
             log(
                 "[sandbox] cleaned up sandbox directory",
                 level="sandbox",
@@ -540,18 +509,8 @@ def cmd_promote_diff_(
 
     if sandbox_keep:
         sandbox_info["kept"] = True
-        record("sandbox-cleanup", "skipped", reason="sandbox-keep")
 
     # ------------------------------------------------------------
     # 16. Exit code
     # ------------------------------------------------------------
-    has_diff = any(
-        [
-            diffs["template"],
-            diffs["snippet"],
-            diffs["manifest"],
-            diffs["results"],
-            diffs["inputs"],
-        ]
-    )
-    return 0 if not has_diff else 1
+    return 0 if json_summary["total_diffs"] == 0 else 1
