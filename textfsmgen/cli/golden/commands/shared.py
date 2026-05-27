@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import pathlib
 # ============================================================================
 # Imports
 # ============================================================================
@@ -560,3 +561,41 @@ def _open_directory(path: Path):
         subprocess.run(["open", str(path)])
     else:
         subprocess.run(["xdg-open", str(path)])
+
+
+def log(msg, *, level="info", indent=0, quiet=False, verbose=False, debug=False):
+    """
+    Unified logging helper with indentation, quiet mode, and debug mode.
+    """
+    # Quiet mode suppresses everything except FAIL and SUCCESS
+    if quiet and level not in ("FAIL", "SUCCESS"):
+        return
+
+    # Debug mode prints everything
+    if not debug:
+        # Skip debug-only logs
+        if level == "debug":
+            return
+
+        # Skip info/warn/merge logs unless verbose
+        if not verbose and level in ("info", "warn", "merge"):
+            return
+
+    # Prefix formatting
+    if level in ("OK", "SUCCESS", "FAIL", "DRY-RUN"):
+        prefix = f"[{level}]"
+    else:
+        prefix = f"[{level}]"
+
+    pad = " " * indent
+    print(f"{prefix} {pad}{msg}")
+
+
+def short_path(value):
+    """
+    Convert absolute paths to short golden-relative paths.
+    """
+    if isinstance(value, pathlib.Path):
+        value = str(value)
+
+    return file.path_name(value)

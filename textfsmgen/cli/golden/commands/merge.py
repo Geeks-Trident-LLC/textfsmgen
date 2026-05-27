@@ -6,12 +6,11 @@ from pathlib import Path
 import click
 
 from textfsmgen.libs.common import parse_textfsm_to_dicts
-from textfsmgen.libs import file
 
 from ..core.golden_case import GoldenCase
 from ..cli_decorator import timed_command, validate_sandbox_flags
 from ..core.utils import validate_case_path
-from .shared import _open_directory
+from .shared import _open_directory, log, short_path
 
 
 # ======================================================================
@@ -40,9 +39,12 @@ from .shared import _open_directory
     "--summary", is_flag=True, help="Show summary of merged inputs and results."
 )
 @click.option("--verbose", is_flag=True, help="Show detailed merge steps.")
+@click.option("--debug", is_flag=True, help="Show ultra-verbose developer logs.")
+@click.option("--quiet", is_flag=True, help="Suppress all non-essential output.")
 @click.option("--author", help="Set author metadata for the merged case.")
 @click.option(
-    "--open-after",
+    "--open",
+    "open_after",
     is_flag=True,
     help="Open the merged case directory after completion.",
 )
@@ -57,6 +59,8 @@ def cmd_merge(
     force,
     summary,
     verbose,
+    debug,
+    quiet,
     author,
     open_after,
 ):
@@ -69,6 +73,8 @@ def cmd_merge(
         force=force,
         summary=summary,
         verbose=verbose,
+        debug=debug,
+        quiet=quiet,
         author=author,
         open_after=open_after,
     )
@@ -89,20 +95,29 @@ def cmd_merge_(
     force=False,
     summary=False,
     verbose=False,
+    debug=False,
+    quiet=False,
     author=None,
     open_after=False,
 ):
     # ------------------------------------------------------------
     # 0. Resolve sandbox destination
     # ------------------------------------------------------------
+
     real_dst = dst
     if sandbox or sandbox_keep:
         dst = dst.with_name(dst.name + ".temp")
-        click.echo(f"[sandbox] Using sandbox directory: {file.path_name(dst)}")
+        log(
+            f"Using sandbox directory: {short_path(dst)}",
+            level="sandbox",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+        )
 
         if dst.exists() and not force:
             raise click.ClickException(
-                f"Sandbox directory {file.path_name(dst)} already exists. Use --force to overwrite."
+                f"Sandbox directory {short_path(dst)} already exists. Use --force to overwrite."
             )
 
         if dst.exists():
@@ -112,7 +127,7 @@ def cmd_merge_(
     # 1. dst must not exist (normal mode)
     # ------------------------------------------------------------
     if not (sandbox or sandbox_keep) and dst.exists():
-        raise click.ClickException(f"Destination already exists: {file.path_name(dst)}")
+        raise click.ClickException(f"Destination already exists: {short_path(dst)}")
 
     if not src_paths:
         raise click.ClickException("No source cases provided.")
@@ -123,12 +138,17 @@ def cmd_merge_(
     # ------------------------------------------------------------
     # 2. Validate all cases
     # ------------------------------------------------------------
-    if verbose:
-        click.echo("[OK] builder = " + cases[0].data.load_manifest().get("builder", ""))
+    builder = cases[0].data.load_manifest().get("builder", "")
+    log(f"builder = {builder}", level="OK", quiet=quiet, verbose=verbose, debug=debug)
 
     for c in cases:
-        if verbose:
-            click.echo(f"[INFO] validating source: {file.path_name(c.case_dir)}")
+        log(
+            f"validating source: {short_path(c.case_dir)}",
+            level="info",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+        )
 
         ok = validate_case_path(c.case_dir)
         if not ok:
@@ -136,20 +156,26 @@ def cmd_merge_(
 
         if not c.is_integration():
             raise click.ClickException(
-                f"[FAIL] merge is only supported for integration cases: {file.path_name(c.case_dir)}"
+                f"[FAIL] merge is only supported for integration cases: {short_path(c.case_dir)}"
             )
 
         try:
             c.tested()
         except Exception as e:
             raise click.ClickException(
-                f"[FAIL] case {file.path_name(c.case_dir)} is not tested:\n{e}"
+                f"[FAIL] case {short_path(c.case_dir)} is not tested:\n{e}"
             )
 
-        if verbose:
-            click.echo(f"[OK] {file.path_name(c.case_dir)} — tested and compatible")
+        log(
+            f"{short_path(c.case_dir)} — tested and compatible",
+            level="OK",
+            indent=2,
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+        )
 
-    # Cross‑check all pairs
+    # Cross-check all pairs
     for outer in cases:
         for inner in cases:
             if outer is inner:
@@ -159,16 +185,25 @@ def cmd_merge_(
     # ------------------------------------------------------------
     # 3. Find reference template + snippet
     # ------------------------------------------------------------
-    if verbose:
-        click.echo("[INFO] evaluating reference candidates...")
+    log(
+        "evaluating reference candidates...",
+        level="info",
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+    )
 
-    reference, diagnostics = _find_reference_case(cases, verbose=verbose)
+    reference, diagnostics = _find_reference_case(cases, verbose, debug, quiet)
 
     for diag in diagnostics:
         print(diag)
 
-    click.echo(
-        f"[OK] Reference case selected: {file.path_name(reference.case_dir)}",
+    log(
+        f"Reference case selected: {short_path(reference.case_dir)}",
+        level="OK",
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
     )
 
     ref_loader = reference.data
@@ -179,14 +214,25 @@ def cmd_merge_(
     # DRY-RUN: stop here
     # ------------------------------------------------------------
     if dry_run:
-        click.echo("[DRY-RUN] merge simulation completed.")
+        log(
+            "merge simulation completed.",
+            level="DRY-RUN",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+        )
         return 0
 
     # ------------------------------------------------------------
     # 4. Create dst structure
     # ------------------------------------------------------------
-    if verbose:
-        click.echo(f"[INFO] creating destination case: {file.path_name(dst)}")
+    log(
+        f"creating destination case: {short_path(dst)}",
+        level="info",
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+    )
 
     (dst / "inputs").mkdir(parents=True)
     (dst / "expected").mkdir(parents=True)
@@ -195,19 +241,23 @@ def cmd_merge_(
     # ------------------------------------------------------------
     # 5. Merge inputs
     # ------------------------------------------------------------
-    if verbose:
-        click.echo("[INFO] merging inputs...")
+    log("merging inputs...", level="info", quiet=quiet, verbose=verbose, debug=debug)
 
-    merged_inputs, rename_logs = _merge_inputs(dst, cases, verbose=verbose)
+    merged_inputs, rename_logs = _merge_inputs(dst, cases, verbose, debug, quiet)
 
-    for log in rename_logs:
-        print(log)
+    for log_line in rename_logs:
+        print(log_line)
 
     # ------------------------------------------------------------
     # 6. Write reference template + snippet
     # ------------------------------------------------------------
-    if verbose:
-        click.echo("[INFO] writing template and snippet...")
+    log(
+        "writing template and snippet...",
+        level="info",
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+    )
 
     (dst / "expected" / "textfsm.template").write_text(ref_template)
     (dst / "expected" / "snippet.txt").write_text(ref_snippet)
@@ -215,11 +265,16 @@ def cmd_merge_(
     # ------------------------------------------------------------
     # 7. Generate expected_results
     # ------------------------------------------------------------
-    if verbose:
-        click.echo("[INFO] generating expected_results...")
+    log(
+        "generating expected_results...",
+        level="info",
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+    )
 
     written_results = _write_expected_results(
-        dst, merged_inputs, ref_template, verbose=verbose
+        dst, merged_inputs, ref_template, verbose, debug, quiet
     )
 
     # ------------------------------------------------------------
@@ -235,34 +290,98 @@ def cmd_merge_(
     # ------------------------------------------------------------
     # 9. Summary
     # ------------------------------------------------------------
+    # ------------------------------------------------------------
+    # 9. Summary
+    # ------------------------------------------------------------
     if summary:
-        click.echo("[INFO] ===== MERGE SUMMARY =====")
-        click.echo(f"[INFO] reference case: {file.path_name(reference.case_dir)}")
-        click.echo(f"[INFO] inputs merged: {len(merged_inputs)}")
+        # Summary should always print regardless of quiet/verbose/debug
+        log(
+            "===== MERGE SUMMARY =====",
+            level="info",
+            quiet=False,
+            verbose=True,
+            debug=debug,
+        )
+
+        log(
+            f"reference case: {short_path(reference.case_dir)}",
+            level="info",
+            quiet=False,
+            verbose=True,
+            debug=debug,
+        )
+
+        log(
+            f"inputs merged: {len(merged_inputs)}",
+            level="info",
+            quiet=False,
+            verbose=True,
+            debug=debug,
+        )
+
         for p in merged_inputs:
-            print(f"  - {file.path_name(p)}")
-        click.echo(f"[INFO] expected results: {len(written_results)}")
+            print(f"  - {short_path(p)}")
+
+        log(
+            f"expected results: {len(written_results)}",
+            level="info",
+            quiet=False,
+            verbose=True,
+            debug=debug,
+        )
+
         for p in written_results:
-            print(f"  - {file.path_name(p)}")
-        click.echo("[INFO] =========================")
+            print(f"  - {short_path(p)}")
+
+        log(
+            "=========================",
+            level="info",
+            quiet=False,
+            verbose=True,
+            debug=debug,
+        )
 
     # ------------------------------------------------------------
     # 10. Sandbox cleanup
     # ------------------------------------------------------------
     if sandbox:
-        click.echo("[sandbox] cleaning up sandbox directory.")
+        log(
+            "cleaning up sandbox directory.",
+            level="sandbox",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+        )
         shutil.rmtree(dst)
-        click.echo(f"[SUCCESS] sandbox merge completed for {file.path_name(real_dst)}")
+        log(
+            f"sandbox merge completed for {short_path(real_dst)}",
+            level="SUCCESS",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+        )
         return 0
 
     if sandbox_keep:
-        click.echo(f"[SUCCESS] sandbox-keep: preserved {file.path_name(dst)}")
+        log(
+            f"sandbox-keep: preserved {short_path(dst)}",
+            level="SUCCESS",
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+        )
         return 0
 
     # ------------------------------------------------------------
     # 11. Normal success
     # ------------------------------------------------------------
-    click.echo(f"[SUCCESS] merge completed: {file.path_name(dst)}")
+    log(
+        f"merge completed: {short_path(dst)}",
+        level="SUCCESS",
+        quiet=quiet,
+        verbose=verbose,
+        debug=debug,
+    )
 
     if open_after:
         _open_directory(dst)
@@ -275,13 +394,12 @@ def cmd_merge_(
 # ======================================================================
 
 
-def _find_reference_case(cases: list[GoldenCase], verbose=False):
+def _find_reference_case(cases, verbose, debug, quiet):
     diagnostics = []
 
     for candidate in cases:
-        cand_name = file.path_name(candidate.case_dir)
-        if verbose:
-            diagnostics.append(f"[INFO]   trying: {cand_name}")
+        cand_name = short_path(candidate.case_dir)
+        diagnostics.append(f"[info]   trying: {cand_name}")
 
         cand_loader = candidate.data
         cand_template = cand_loader.load_expected().template.content
@@ -293,21 +411,21 @@ def _find_reference_case(cases: list[GoldenCase], verbose=False):
                 rows = parse_textfsm_to_dicts(cand_template, input_info.content)
                 if rows != exp_info.content:
                     failures.append(
-                        f"[WARN]     - failed to parse {file.path_name(input_info.fullname)} "
-                        f"from {file.path_name(other.case_dir)}"
+                        f"[warn]       failed to parse {short_path(input_info.fullname)} "
+                        f"from {short_path(other.case_dir)}"
                     )
 
         if failures:
             diagnostics.extend(failures)
             continue
 
-        diagnostics.append(f"[OK]     {cand_name} is a valid reference candidate")
+        diagnostics.append(f"[OK]       {cand_name} is a valid reference candidate")
         return candidate, diagnostics
 
     raise click.ClickException("[FAIL] no valid reference case found.")
 
 
-def _merge_inputs(dst: Path, cases: list[GoldenCase], verbose=False):
+def _merge_inputs(dst, cases, verbose, debug, quiet):
     dst_inputs = dst / "inputs"
     merged = {}
     logs = []
@@ -319,16 +437,13 @@ def _merge_inputs(dst: Path, cases: list[GoldenCase], verbose=False):
 
             if name not in merged:
                 merged[name] = content
-                if verbose:
-                    logs.append(f"[OK]   {name} — added")
+                logs.append(f"[OK]     {name} — added")
                 continue
 
             if merged[name] == content:
-                if verbose:
-                    logs.append(f"[OK]   {name} — identical, kept")
+                logs.append(f"[OK]     {name} — identical, kept")
                 continue
 
-            # rename
             base = Path(name).stem
             ext = Path(name).suffix
             counter = 2
@@ -350,9 +465,7 @@ def _merge_inputs(dst: Path, cases: list[GoldenCase], verbose=False):
     return written, logs
 
 
-def _write_expected_results(
-    dst: Path, merged_inputs: list[Path], template: str, verbose=False
-):
+def _write_expected_results(dst, merged_inputs, template, verbose, debug, quiet):
     out_dir = dst / "expected_results"
     written = []
 
@@ -365,9 +478,13 @@ def _write_expected_results(
         out_path.write_text(json.dumps(rows, indent=2, ensure_ascii=False))
         written.append(out_path)
 
-        if verbose:
-            click.echo(
-                f"[OK] {file.path_name(inp_path)} → {file.path_name(out_path)} ({len(rows)} rows)",
-            )
+        log(
+            f"{short_path(inp_path)} → {short_path(out_path)} ({len(rows)} rows)",
+            level="OK",
+            indent=4,
+            quiet=quiet,
+            verbose=verbose,
+            debug=debug,
+        )
 
     return written

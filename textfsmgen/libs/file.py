@@ -43,7 +43,46 @@ def safe_load_yaml(filename: str):
         raise ex
 
 
-def path_name(value):
+def path_name_old(value):
     if isinstance(value, pathlib.Path):
         return value.as_posix()
+    return str(value).replace("\\", "/")
+
+
+def path_name(value, root="", name=False, golden=True):
+    """
+    Normalize a path for display:
+      - If name=True → return only the filename
+      - If golden=True → strip everything before 'golden' (or before root if provided)
+      - Otherwise → return relative path if possible
+    """
+    # Convert to Path if possible
+    if isinstance(value, pathlib.Path) or (
+        isinstance(value, str) and pathlib.Path(value).exists()
+    ):
+        path = pathlib.Path(value).resolve()
+
+        if name:
+            return path.name
+
+        # Determine lookup folder
+        if golden:
+            lookup = root or "golden"
+        else:
+            lookup = root or ""
+
+        parts = path.parts
+
+        # Strip prefix up to lookup
+        if lookup and lookup in parts:
+            idx = parts.index(lookup)
+            return pathlib.Path(*parts[idx + 1 :]).as_posix()
+
+        # Fallback: return relative path if possible
+        try:
+            return path.relative_to(path.cwd()).as_posix()
+        except Exception:
+            return path.as_posix()
+
+    # Not a path → normalize slashes
     return str(value).replace("\\", "/")
