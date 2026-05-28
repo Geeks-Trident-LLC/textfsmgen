@@ -11,14 +11,14 @@ parent_path = pathlib.Path(__file__).parent
 
 
 @pytest.mark.parametrize("test_case", get_testcases(parent_path))
-def test_main_golden(test_case):
+def test_main_golden(test_case) -> None:
+    # if os.getenv("CI"):
+    #     pytest.skip("Skipping golden drift check in CI while stabilizing determinism")
+
     loader = CaseLoader(test_case)
 
     # Run main golden test
     CaseRunner(loader).run()
-
-    if os.getenv("CI"):
-        pytest.skip("Skipping drift check in CI")
 
     # Check drift (main cases only)
     DriftChecker(loader).check_drift()

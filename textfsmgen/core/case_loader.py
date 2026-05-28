@@ -1,5 +1,7 @@
 # textfsmgen/core/case_loader.py
 
+from __future__ import annotations
+
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -62,7 +64,7 @@ class CaseLoader:
     # ----------------------------------------------------------------------
 
     @classmethod
-    def _validate_test_case(cls, test_case: str) -> Path:
+    def _validate_test_case(cls, test_case: str) -> Path | None:
         raw = Path(test_case)
         folder = raw if raw.is_absolute() else Path.cwd() / raw
         folder = folder.resolve()
