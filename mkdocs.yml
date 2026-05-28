@@ -81,8 +81,9 @@ nav:
       - 🚢 Release Process: development/release.md
       - 🏗️ Architecture: development/architecture.md
       - 🗺️ Roadmap: development/roadmap.md
+      - 🧭 Onboarding: development/onboarding.md
+      - 📦 Release Process (Legacy): development/release-process.md
 
-  - ---
   - 📄 Quick Tools:
       - 🧭 Cheat Sheet: cheatsheet.md
       - 👥 Quickstart Roles: quickstart-roles.md
@@ -92,7 +93,8 @@ nav:
       - 🟢 Testing Maintenance: maintenance/testing.md
       - 🟧 Release Maintenance: maintenance/release.md
       - 🟪 Deployment Maintenance: maintenance/deployment.md
+      - 📋 Release Checklist: maintenance/release-checklist.md
+      - 🧹 Maintenance Guide (Legacy): maintenance/release-maintenance.md
 
-  - ---
   - 🧷 Miscellaneous:
       - ⚙️ Installing PowerShell 7: miscellaneous/powershell-install.md
