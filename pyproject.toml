@@ -7,7 +7,6 @@ name = "textfsmgen"
 version = "0.7.0"
 description = "TextFSM Generator transforms plain‑English snippets into production‑ready TextFSM templates using a low‑code, no‑code workflow and built‑in Golden Master Testing, empowering both professional and citizen developers to create reliable, reusable parsing logic."
 readme = "README.md"
-readme-content-type = "text/markdown"
 license = "BSD-3-Clause"
 requires-python = ">=3.9"
 
