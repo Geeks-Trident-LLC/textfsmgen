@@ -71,7 +71,6 @@ Start
     return case
 
 
-
 @pytest.fixture
 def tmpcase(tmp_path):
     """Creates a minimal golden test case directory."""

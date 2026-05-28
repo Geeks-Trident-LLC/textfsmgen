@@ -14,4 +14,3 @@ def test_promote_verify_json(runner, valid_case, tmp_path):
 
     data = json.loads(result.output)
     assert "events" in data
-

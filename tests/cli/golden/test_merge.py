@@ -11,4 +11,3 @@ def test_merge_runs(runner, valid_case, tmp_path):
     dst = tmp_path / "merged"
     result = runner.invoke(cli, ["merge", str(dst), str(valid_case), str(case2)])
     assert result.exit_code in (0, 1)
-
