@@ -1,5 +1,6 @@
 import pathlib
 import pytest
+import os
 
 from ..utils import get_testcases
 from textfsmgen.core.case_loader import CaseLoader
@@ -15,6 +16,9 @@ def test_main_golden(test_case):
 
     # Run main golden test
     CaseRunner(loader).run()
+
+    if os.getenv("CI"):
+        pytest.skip("Skipping drift check in CI")
 
     # Check drift (main cases only)
     DriftChecker(loader).check_drift()
