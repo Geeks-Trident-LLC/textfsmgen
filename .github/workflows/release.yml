@@ -9,6 +9,10 @@ jobs:
   publish:
     runs-on: ubuntu-latest
 
+    permissions:
+      id-token: write      # REQUIRED for PyPI trusted publishing
+      contents: read       # REQUIRED to read the repo
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -29,5 +33,3 @@ jobs:
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@v1.8.11
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}

@@ -1,19 +1,24 @@
 # Global ownership
 * @geekstrident
 
-* @geekstrident/maintainers
-
 # Documentation
 /docs/ @geekstrident
 
 # Core engine
 /textfsmgen/engine/ @geekstrident
+/textfsmgen/core/ @geekstrident
 
 # Libraries
 /textfsmgen/libs/ @geekstrident
 
 # Tools
 /textfsmgen/tools/ @geekstrident
+
+# CLI
+/textfsmgen/cli/ @geekstrident
+
+# UI
+/textfsmgen/ui/ @geekstrident
 
 # Tests
 /tests/ @geekstrident

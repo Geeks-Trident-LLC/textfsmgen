@@ -9,6 +9,10 @@ jobs:
   publish:
     runs-on: ubuntu-latest
 
+    permissions:
+      id-token: write      # REQUIRED for TestPyPI trusted publishing
+      contents: read       # REQUIRED to read the repo
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,4 +35,3 @@ jobs:
         uses: pypa/gh-action-pypi-publish@v1.8.11
         with:
           repository-url: https://test.pypi.org/legacy/
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
