@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ develop ]
 
+permissions:
+  contents: read
+  metadata: read
+  organization: read
+
 jobs:
   validate-codeowners:
     runs-on: ubuntu-latest
