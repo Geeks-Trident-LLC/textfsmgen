@@ -8,3 +8,5 @@ include textfsmgen/ui/images/icon_logo.xbm
 
 # Source files
 recursive-include textfsmgen *.py
+
+recursive-include textfsmgen/tests/golden *
