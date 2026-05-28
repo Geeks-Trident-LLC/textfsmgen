@@ -1,0 +1,9 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: Documentation
+    url: https://geeks-trident-llc.github.io/textfsmgen/
+    about: Check the official documentation before opening an issue.
+  - name: Discussions
+    url: https://github.com/Geeks-Trident-LLC/textfsmgen/discussions
+    about: Ask general questions or share ideas here.
