@@ -7,6 +7,12 @@ pytest-asyncio
 pytest-cov
 requests
 
+# Docs
+mkdocs
+mkdocs-material
+mkdocstrings
+mkdocstrings-python
+
 # Linting / formatting
 ruff
 
