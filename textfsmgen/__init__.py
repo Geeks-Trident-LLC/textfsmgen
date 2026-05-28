@@ -16,7 +16,7 @@ from textfsmgen.core.verify import (
 )
 from textfsmgen.libs.common import parse_textfsm_to_dicts
 
-__version__ = "0.6.3"
+__version__ = "0.7.0"
 version = __version__
 
 __all__ = [
