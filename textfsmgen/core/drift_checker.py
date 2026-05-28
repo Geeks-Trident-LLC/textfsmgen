@@ -57,13 +57,14 @@ class DriftChecker:
             )
 
     def iter_files(self):
+        # Always include manifest
         yield self.loader.manifest_path
 
+        # Canonical files (main cases only)
         if self.loader.kind == "main":
-            yield self.loader.canonical_dir / "sample.txt"
-            yield self.loader.canonical_dir / "snippet.txt"
-            yield self.loader.canonical_dir / "textfsm.template"
-            yield self.loader.canonical_dir / "result.json"
+            for f in sorted(self.loader.canonical_dir.glob("*")):
+                yield f
 
-        for inp in self.loader.inputs_path.glob("*"):
+        # Expected results for each input
+        for inp in sorted(self.loader.inputs_path.glob("*")):
             yield self.loader.expected_results_path / f"{inp.stem}_result.json"
