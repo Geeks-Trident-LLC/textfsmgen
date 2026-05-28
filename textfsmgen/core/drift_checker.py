@@ -3,7 +3,7 @@
 import os
 import hashlib
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Optional
 
 from textfsmgen.core.case_loader import CaseLoader
 
@@ -44,7 +44,7 @@ class DriftChecker:
     def hash_path(self) -> Path:
         return self.loader.file_path / "golden.hash"
 
-    def read_stored_hash(self) -> str | None:
+    def read_stored_hash(self) -> Optional[str]:
         path = self.hash_path()
         if not path.exists():
             return None
